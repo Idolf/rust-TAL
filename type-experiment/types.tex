@@ -10,16 +10,20 @@
 \newcommand \isctx[1] {{#1}\ \ \mathbf{ctx}}
 \newcommand \isstack[2] {{#1} \vdash {#2}\ \ \mathbf{stack}}
 \newcommand \islifetime[3] {{#1}, {#2} \vdash {#3}\ \ \mathbf{lifetime}}
-\newcommand \issub[4]{{#1}, {#2} \vdash {#3} <: {#4}}
+\newcommand \issub[4]{{#1}, {#2} \vdash {#3} \leq {#4}}
 \newcommand \istype[3] {{#1}, {#2} \vdash {#3}\ \ \mathbf{type}}
 \newcommand \istypen[4] {{#1}, {#2} \vdash {#3}\ \ \mathbf{type}_{#4}}
+\newcommand \isregister[2] {{#1} \vdash {#2}\ \ \mathbf{register}}
 \newcommand \isqualifier[1] {{#1}\ \ \mathbf{qualifer}}
 \newcommand \ownedptr[1] {\sim {#1}}
 \newcommand \refptr[3] {\&\,{#1}\ {#2}\ {#3}}
 \newcommand \nil {\mathtt{nil}}
 \newcommand \cons {\dblcolon}
+\newcommand \static {\mathtt{static}}
 \newcommand \intt {\mathtt{int}}
 \newcommand \void[1] {\mathtt{void}_{#1}}
+\newcommand \mut {\mathtt{mut}}
+\newcommand \imm {\mathtt{imm}}
 \newcommand{\xmid}{\;\mid\;}
 \newcommand{\defeq}{\;\Coloneqq\;\;}
 \begin{document}
@@ -32,7 +36,7 @@
 \infer{\isctx{\Delta}}{\isctx{\Delta, \rho}} \and
 \infer{\isctx{\Delta} \and \isstack{\Delta}{\sigma}}{\isctx{\Delta, \alpha_{n,\sigma}}} \and
 \infer{\isctx{\Delta} \and \isstack{\Delta}{\sigma}}{\isctx{\Delta, \ell_\sigma}} \and
-\infer{\isctx{\Delta} \and \islifetime{\Delta}{\sigma}{\ell_1} \and \islifetime{\Delta}{\sigma}{\ell_2}}{\isctx{\Delta, \ell_1 <:_\sigma \ell_2}}
+\infer{\isctx{\Delta} \and \islifetime{\Delta}{\sigma}{\ell_1} \and \islifetime{\Delta}{\sigma}{\ell_2}}{\isctx{\Delta, \ell_1 \leq_\sigma \ell_2}}
 \end{mathpar}
 
 \fbox{$\isstack{\Delta}{\sigma}$}
@@ -47,7 +51,8 @@
 \begin{mathpar}
 \infer{\islifetime{\Delta}{\sigma}{\ell}}{\islifetime{\Delta}{\_ \cons \sigma}{\ell}} \and
 \infer{\ell_\sigma \in \Delta}{\islifetime{\Delta}{\sigma}{\ell_\sigma}} \and
-\infer{ }{\islifetime{\Delta}{\ell \cons \sigma}{\ell}}
+\infer{ }{\islifetime{\Delta}{\ell \cons \sigma}{\ell}} \and
+\infer{ }{\islifetime{\Delta}{\sigma}{\static}}
 \end{mathpar}
 
 \fbox{$\istype{\Delta}{\sigma}{\tau}$}
@@ -78,16 +83,34 @@
        \and \dots
        \and \istypen{\Delta}{\sigma}{\tau_k}{n}}
       {\istypen{\Delta}{\sigma}{\langle\tau_i\rangle_{i \in \{1 \dots k\}}}{4 + n}} \and
+\infer{\isregister{\Delta + \Delta'}{\Gamma}}
+      {\istypen{\Delta}{\sigma}{\forall[\Delta']\Gamma}{4}}
+\end{mathpar}
+
+\fbox{$\isregister{\Delta}{\Gamma}$}
+\begin{mathpar}
+\infer{\isstack{\Delta}{\sigma}
+       \and \istypen{\Delta}{\sigma}{\tau_1}{4}
+       \and \dots
+       \and \istypen{\Delta}{\sigma}{\tau_k}{4}}
+      {\isregister{\Delta}{\{r_1:\tau_1, \dots, r_k:\tau_k, \mathtt{sp}:\sigma\}}}
 \end{mathpar}
 
 \fbox{$\issub{\Delta}{\sigma}{\ell_1}{\ell_2}$}
 \begin{mathpar}
 \infer{\issub{\Delta}{\sigma}{\ell_1}{\ell_2}}
       {\issub{\Delta}{\_ \cons \sigma}{\ell_1}{\ell_2}} \and
-\infer{\ell_1 <:_\sigma \ell_2 \in \Delta}
+\infer{\ell_1 \leq_\sigma \ell_2 \in \Delta}
       {\issub{\Delta}{\sigma}{\ell_1}{\ell_2}} \and
 \infer{ \islifetime{\Delta}{\ell_1 \cons \sigma}{\ell_2}}
       {\issub{\Delta}{\ell_1 \cons \sigma}{\ell_1}{\ell_2}} \and
+\infer{ \islifetime{\Delta}{\sigma}{\ell}}
+      {\issub{\Delta}{\sigma}{\ell}{\static}} \and
 \end{mathpar}
 
+\fbox{$\isqualifier{q}$}
+\begin{mathpar}
+\infer{ }{\isqualifier{\mut}} \and
+\infer{ }{\isqualifier{\imm}}
+\end{mathpar}
 \end{document}
