@@ -1,11 +1,11 @@
 open import Types
+open import Eq
 
-open import Data.Nat using (_≟_)
+open import Data.Nat using (ℕ)
 open import Data.Product using (_×_ ; _,_ ; proj₁ ; proj₂)
 open import Relation.Binary.Core using (_≡_ ; refl ; Decidable)
 open import Relation.Nullary using (yes ; no)
-
-infix 4 _≟Δ_ _≟a_ _≟σ_ _≟v_ _≟τ_ _≟Γ_ _≟ℓ_ _≟q_
+open import Function
 
 ,-injective : ∀ {Δ₁ Δ₂ a₁ a₂} → Δ₁ Types., a₁ ≡ Δ₂ , a₂ → Δ₁ ≡ Δ₂ × a₁ ≡ a₂
 ,-injective refl = refl , refl
@@ -53,146 +53,168 @@ register-injective refl = refl , (refl , (refl , refl))
 γ⁼-injective : ∀ {n₁ n₂} → γ⁼ n₁ ≡ γ⁼ n₂ → n₁ ≡ n₂
 γ⁼-injective refl = refl
 
-DecidableEq : ∀ {ℓ} → Set ℓ → Set ℓ
-DecidableEq A = Decidable {A = A} _≡_
 
-mutual
-  _≟Δ_ : DecidableEq Ctx
-  Ɛ ≟Δ Ɛ = yes refl
-  Ɛ ≟Δ Δ₂ , a₁ = no (λ ())
-  Δ₁ , a₁ ≟Δ Ɛ = no (λ ())
-  Δ₁ , a₁ ≟Δ Δ₂ , a₂ with Δ₁ ≟Δ Δ₂ | a₁ ≟a a₂
-  Δ  , a  ≟Δ .Δ , .a | yes refl | yes refl = yes refl
-  Δ₁ , a₁ ≟Δ Δ₂ , a₂ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (,-injective eq)))
-  Δ₁ , a₁ ≟Δ Δ₂ , a₂ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (,-injective eq)))
+private
+  infix 4 _≟Δ_ _≟a_ _≟σ_ _≟v_ _≟τ_ _≟Γ_ _≟ℓ_ _≟q_
+  mutual
+    _≟Δ_ : DecidableEq Ctx
+    Ɛ ≟Δ Ɛ = yes refl
+    Ɛ ≟Δ Δ₂ , a₁ = no (λ ())
+    Δ₁ , a₁ ≟Δ Ɛ = no (λ ())
+    Δ₁ , a₁ ≟Δ Δ₂ , a₂ with Δ₁ ≟Δ Δ₂ | a₁ ≟a a₂
+    Δ  , a  ≟Δ .Δ , .a | yes refl | yes refl = yes refl
+    Δ₁ , a₁ ≟Δ Δ₂ , a₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ ,-injective)
+    Δ₁ , a₁ ≟Δ Δ₂ , a₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ ,-injective)
 
-  _≟a_ : DecidableEq CtxVal
-  ρ ≟a ρ = yes refl
-  ρ ≟a α σ₂ = no (λ ())
-  ρ ≟a β σ₂ ♯b₂ = no (λ ())
-  ρ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ = no (λ ())
-  α σ₁ ≟a ρ = no (λ ())
-  α σ₁ ≟a α σ₂ with σ₁ ≟σ σ₂
-  α σ  ≟a α .σ | yes refl = yes refl
-  α σ₁ ≟a α σ₂ | no ¬eq = no (λ eq → ¬eq (α-injective eq))
-  α σ₁ ≟a β σ₂ ♯b₂ = no (λ ())
-  α σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ = no (λ ())
-  β σ₁ ♯b₁ ≟a ρ = no (λ ())
-  β σ₁ ♯b₁ ≟a α σ₂ = no (λ ())
-  β σ₁ ♯b₁ ≟a β σ₂ ♯b₂ with σ₁ ≟σ σ₂ | ♯b₁ ≟ ♯b₂
-  β σ  ♯b  ≟a β .σ .♯b | yes refl | yes refl = yes refl
-  β σ₁ ♯b₁ ≟a β σ₂ ♯b₂ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (β-injective eq)))
-  β σ₁ ♯b₁ ≟a β σ₂ ♯b₂ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (β-injective eq)))
-  β σ₁ ♯b₁ ≟a ℓ₂₂ ≤a ℓ₂₁ / σ₂ = no (λ ())
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ρ = no (λ ())
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a α σ = no (λ ())
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a β σ ♯b = no (λ ())
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ with ℓ₁₁ ≟ℓ ℓ₂₁ | ℓ₁₂ ≟ℓ ℓ₂₂ | σ₁ ≟σ σ₂
-  ℓ₁  ≤a ℓ₂  / σ  ≟a .ℓ₁ ≤a .ℓ₂ / .σ | yes refl | yes refl | yes refl = yes refl
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | no ¬eq | _ | _ = no (λ eq → ¬eq (proj₁ (≤a-injective eq)))
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | _ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (proj₂ (≤a-injective eq))))
-  ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | _ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (proj₂ (≤a-injective eq))))
+    _≟a_ : DecidableEq CtxVal
+    ρ ≟a ρ = yes refl
+    ρ ≟a α σ₂ = no (λ ())
+    ρ ≟a β σ₂ ♯b₂ = no (λ ())
+    ρ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ = no (λ ())
+    α σ₁ ≟a ρ = no (λ ())
+    α σ₁ ≟a α σ₂ with σ₁ ≟σ σ₂
+    α σ  ≟a α .σ | yes refl = yes refl
+    α σ₁ ≟a α σ₂ | no ¬eq = no (¬eq ∘ α-injective)
+    α σ₁ ≟a β σ₂ ♯b₂ = no (λ ())
+    α σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ = no (λ ())
+    β σ₁ ♯b₁ ≟a ρ = no (λ ())
+    β σ₁ ♯b₁ ≟a α σ₂ = no (λ ())
+    β σ₁ ♯b₁ ≟a β σ₂ ♯b₂ with σ₁ ≟σ σ₂ | ♯b₁ ≟ ♯b₂
+    β σ  ♯b  ≟a β .σ .♯b | yes refl | yes refl = yes refl
+    β σ₁ ♯b₁ ≟a β σ₂ ♯b₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ β-injective)
+    β σ₁ ♯b₁ ≟a β σ₂ ♯b₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ β-injective)
+    β σ₁ ♯b₁ ≟a ℓ₂₂ ≤a ℓ₂₁ / σ₂ = no (λ ())
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ρ = no (λ ())
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a α σ = no (λ ())
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a β σ ♯b = no (λ ())
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ with ℓ₁₁ ≟ℓ ℓ₂₁ | ℓ₁₂ ≟ℓ ℓ₂₂ | σ₁ ≟σ σ₂
+    ℓ₁  ≤a ℓ₂  / σ  ≟a .ℓ₁ ≤a .ℓ₂ / .σ | yes refl | yes refl | yes refl = yes refl
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | no ¬eq | _ | _ = no (¬eq ∘ proj₁ ∘ ≤a-injective)
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | _ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ ≤a-injective)
+    ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | _ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ proj₂ ∘ ≤a-injective)
 
-  _≟σ_ : DecidableEq Stack
-  nil ≟σ nil = yes refl
-  nil ≟σ v₂ ∷ σ₂ = no (λ ())
-  nil ≟σ ρ⁼ n₂ = no (λ ())
-  v₁ ∷ σ₁ ≟σ nil = no (λ ())
-  v₁ ∷ σ₁ ≟σ v₂ ∷ σ₂ with v₁ ≟v v₂ | σ₁ ≟σ σ₂
-  v  ∷ σ  ≟σ .v ∷ .σ | yes refl | yes refl = yes refl
-  v₁ ∷ σ₁ ≟σ v₂ ∷ σ₂ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (∷-injective eq)))
-  v₁ ∷ σ₁ ≟σ v₂ ∷ σ₂ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (∷-injective eq)))
-  v₁ ∷ σ₁ ≟σ ρ⁼ n₂ = no (λ ())
-  ρ⁼ n₁ ≟σ nil = no (λ ())
-  ρ⁼ n₁ ≟σ v₂ ∷ σ₂ = no (λ ())
-  ρ⁼ n₁ ≟σ ρ⁼ n₂ with n₁ ≟ n₂
-  ρ⁼ n  ≟σ ρ⁼ .n | yes refl = yes refl
-  ρ⁼ n₁ ≟σ ρ⁼ n₂ | no ¬eq = no (λ eq → ¬eq (ρ⁼-injective eq))
+    _≟σ_ : DecidableEq Stack
+    nil ≟σ nil = yes refl
+    nil ≟σ v₂ ∷ σ₂ = no (λ ())
+    nil ≟σ ρ⁼ n₂ = no (λ ())
+    v₁ ∷ σ₁ ≟σ nil = no (λ ())
+    v₁ ∷ σ₁ ≟σ v₂ ∷ σ₂ with v₁ ≟v v₂ | σ₁ ≟σ σ₂
+    v  ∷ σ  ≟σ .v ∷ .σ | yes refl | yes refl = yes refl
+    v₁ ∷ σ₁ ≟σ v₂ ∷ σ₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ ∷-injective)
+    v₁ ∷ σ₁ ≟σ v₂ ∷ σ₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ ∷-injective)
+    v₁ ∷ σ₁ ≟σ ρ⁼ n₂ = no (λ ())
+    ρ⁼ n₁ ≟σ nil = no (λ ())
+    ρ⁼ n₁ ≟σ v₂ ∷ σ₂ = no (λ ())
+    ρ⁼ n₁ ≟σ ρ⁼ n₂ with n₁ ≟ n₂
+    ρ⁼ n  ≟σ ρ⁼ .n | yes refl = yes refl
+    ρ⁼ n₁ ≟σ ρ⁼ n₂ | no ¬eq = no (¬eq ∘ ρ⁼-injective)
 
-  _≟v_ : DecidableEq StackVal
-  type τ₁ ≟v type τ₂ with τ₁ ≟τ τ₂
-  type τ  ≟v type .τ | yes refl = yes refl
-  type τ₁ ≟v type τ₂ | no ¬eq = no (λ eq → ¬eq (type-injective eq))
-  type τ₁ ≟v γ = no (λ ())
-  γ ≟v type τ₂ = no (λ ())
-  γ ≟v γ = yes refl
+    _≟v_ : DecidableEq StackVal
+    type τ₁ ≟v type τ₂ with τ₁ ≟τ τ₂
+    type τ  ≟v type .τ | yes refl = yes refl
+    type τ₁ ≟v type τ₂ | no ¬eq = no (¬eq ∘ type-injective)
+    type τ₁ ≟v γ = no (λ ())
+    γ ≟v type τ₂ = no (λ ())
+    γ ≟v γ = yes refl
 
-  _≟τ_ : DecidableEq Type
-  β⁼ n₁ ≟τ β⁼ n₂ with n₁ ≟ n₂
-  β⁼ n  ≟τ β⁼ .n | yes refl = yes refl
-  β⁼ n₁ ≟τ β⁼ n₂ | no ¬eq = no (λ eq → ¬eq (β⁼-injective eq))
-  β⁼ n₁ ≟τ int = no (λ ())
-  β⁼ n₁ ≟τ void ♯b₂ = no (λ ())
-  β⁼ n₁ ≟τ ~ τ₂ = no (λ ())
-  β⁼ n₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
-  β⁼ n₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
-  int ≟τ β⁼ n₂ = no (λ ())
-  int ≟τ int = yes refl
-  int ≟τ void ♯b₂ = no (λ ())
-  int ≟τ ~ τ₂ = no (λ ())
-  int ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
-  int ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
-  void ♯b₁ ≟τ β⁼ n₂ = no (λ ())
-  void ♯b₁ ≟τ int = no (λ ())
-  void ♯b₁ ≟τ void ♯b₂ with ♯b₁ ≟ ♯b₂
-  void ♯b  ≟τ void .♯b | yes refl = yes refl
-  void ♯b₁ ≟τ void ♯b₂ | no ¬eq = no (λ eq → ¬eq (void-injective eq))
-  void ♯b₁ ≟τ ~ τ₂ = no (λ ())
-  void ♯b₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
-  void ♯b₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
-  ~ τ₁ ≟τ β⁼ n₂ = no (λ ())
-  ~ τ₁ ≟τ int = no (λ ())
-  ~ τ₁ ≟τ void ♯b₂ = no (λ ())
-  ~ τ₁ ≟τ ~ τ₂ with τ₁ ≟τ τ₂
-  ~ τ  ≟τ ~ .τ | yes refl = yes refl
-  ~ τ₁ ≟τ ~ τ₂ | no ¬eq = no (λ eq → ¬eq (~-injective eq))
-  ~ τ₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
-  ~ τ₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
-  & ℓ₁ q₁ τ₁ ≟τ β⁼ n₂ = no (λ ())
-  & ℓ₁ q₁ τ₁ ≟τ int = no (λ ())
-  & ℓ₁ q₁ τ₁ ≟τ void ♯b₂ = no (λ ())
-  & ℓ₁ q₁ τ₁ ≟τ ~ τ₂ = no (λ ())
-  & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ with ℓ₁ ≟ℓ ℓ₂ | q₁ ≟q q₂ | τ₁ ≟τ τ₂
-  & ℓ  q  τ  ≟τ & .ℓ .q .τ | yes refl | yes refl | yes refl = yes refl
-  & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ | no ¬eq | _ | _ = no (λ eq → ¬eq (proj₁ (&-injective eq)))
-  & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ | _ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (proj₂ (&-injective eq))))
-  & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ | _ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (proj₂ (&-injective eq))))
-  & ℓ₁ q₁ τ₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
-  ∀[ Δ₁ ] Γ₁ ≟τ β⁼ n₂ = no (λ ())
-  ∀[ Δ₁ ] Γ₁ ≟τ int = no (λ ())
-  ∀[ Δ₁ ] Γ₁ ≟τ void ♯b₂ = no (λ ())
-  ∀[ Δ₁ ] Γ₁ ≟τ ~ τ₂ = no (λ ())
-  ∀[ Δ₁ ] Γ₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
-  ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ with Δ₁ ≟Δ Δ₂ | Γ₁ ≟Γ Γ₂
-  ∀[ Δ  ] Γ  ≟τ ∀[ .Δ ] .Γ | yes refl | yes refl = yes refl
-  ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (∀-injective eq)))
-  ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (∀-injective eq)))
+    _≟τ_ : DecidableEq Type
+    β⁼ n₁ ≟τ β⁼ n₂ with n₁ ≟ n₂
+    β⁼ n  ≟τ β⁼ .n | yes refl = yes refl
+    β⁼ n₁ ≟τ β⁼ n₂ | no ¬eq = no (¬eq ∘ β⁼-injective)
+    β⁼ n₁ ≟τ int = no (λ ())
+    β⁼ n₁ ≟τ void ♯b₂ = no (λ ())
+    β⁼ n₁ ≟τ ~ τ₂ = no (λ ())
+    β⁼ n₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
+    β⁼ n₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
+    int ≟τ β⁼ n₂ = no (λ ())
+    int ≟τ int = yes refl
+    int ≟τ void ♯b₂ = no (λ ())
+    int ≟τ ~ τ₂ = no (λ ())
+    int ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
+    int ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
+    void ♯b₁ ≟τ β⁼ n₂ = no (λ ())
+    void ♯b₁ ≟τ int = no (λ ())
+    void ♯b₁ ≟τ void ♯b₂ with ♯b₁ ≟ ♯b₂
+    void ♯b  ≟τ void .♯b | yes refl = yes refl
+    void ♯b₁ ≟τ void ♯b₂ | no ¬eq = no (¬eq ∘ void-injective)
+    void ♯b₁ ≟τ ~ τ₂ = no (λ ())
+    void ♯b₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
+    void ♯b₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
+    ~ τ₁ ≟τ β⁼ n₂ = no (λ ())
+    ~ τ₁ ≟τ int = no (λ ())
+    ~ τ₁ ≟τ void ♯b₂ = no (λ ())
+    ~ τ₁ ≟τ ~ τ₂ with τ₁ ≟τ τ₂
+    ~ τ  ≟τ ~ .τ | yes refl = yes refl
+    ~ τ₁ ≟τ ~ τ₂ | no ¬eq = no (¬eq ∘ ~-injective)
+    ~ τ₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
+    ~ τ₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
+    & ℓ₁ q₁ τ₁ ≟τ β⁼ n₂ = no (λ ())
+    & ℓ₁ q₁ τ₁ ≟τ int = no (λ ())
+    & ℓ₁ q₁ τ₁ ≟τ void ♯b₂ = no (λ ())
+    & ℓ₁ q₁ τ₁ ≟τ ~ τ₂ = no (λ ())
+    & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ with ℓ₁ ≟ℓ ℓ₂ | q₁ ≟q q₂ | τ₁ ≟τ τ₂
+    & ℓ  q  τ  ≟τ & .ℓ .q .τ | yes refl | yes refl | yes refl = yes refl
+    & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ | no ¬eq | _ | _ = no (¬eq ∘ proj₁ ∘ &-injective)
+    & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ | _ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ &-injective)
+    & ℓ₁ q₁ τ₁ ≟τ & ℓ₂ q₂ τ₂ | _ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ proj₂ ∘ &-injective)
+    & ℓ₁ q₁ τ₁ ≟τ ∀[ Δ₂ ] Γ₂ = no (λ ())
+    ∀[ Δ₁ ] Γ₁ ≟τ β⁼ n₂ = no (λ ())
+    ∀[ Δ₁ ] Γ₁ ≟τ int = no (λ ())
+    ∀[ Δ₁ ] Γ₁ ≟τ void ♯b₂ = no (λ ())
+    ∀[ Δ₁ ] Γ₁ ≟τ ~ τ₂ = no (λ ())
+    ∀[ Δ₁ ] Γ₁ ≟τ & ℓ₂ q₂ τ₂ = no (λ ())
+    ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ with Δ₁ ≟Δ Δ₂ | Γ₁ ≟Γ Γ₂
+    ∀[ Δ  ] Γ  ≟τ ∀[ .Δ ] .Γ | yes refl | yes refl = yes refl
+    ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ ∀-injective)
+    ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ ∀-injective)
 
-  _≟Γ_ : DecidableEq Register
-  register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ with sp₁ ≟σ sp₂ | r0₁ ≟τ r0₂ | r1₁ ≟τ r1₂ | r2₁ ≟τ r2₂
-  register sp  r0  r1  r2  ≟Γ register .sp .r0 .r1 .r2 | yes refl | yes refl | yes refl | yes refl = yes refl
-  register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | no ¬eq | _ | _ | _ = no (λ eq → ¬eq (proj₁ (register-injective eq)))
-  register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | no ¬eq | _ | _ = no (λ eq → ¬eq (proj₁ (proj₂ (register-injective eq))))
-  register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | _ | no ¬eq | _ = no (λ eq → ¬eq (proj₁ (proj₂ (proj₂ (register-injective eq)))))
-  register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | _ | _ | no ¬eq = no (λ eq → ¬eq (proj₂ (proj₂ (proj₂ (register-injective eq)))))
+    _≟Γ_ : DecidableEq Register
+    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ with sp₁ ≟σ sp₂ | r0₁ ≟τ r0₂ | r1₁ ≟τ r1₂ | r2₁ ≟τ r2₂
+    register sp  r0  r1  r2  ≟Γ register .sp .r0 .r1 .r2 | yes refl | yes refl | yes refl | yes refl = yes refl
+    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | no ¬eq | _ | _ | _ = no (¬eq ∘ proj₁ ∘ register-injective)
+    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | no ¬eq | _ | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ register-injective)
+    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | _ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ proj₂ ∘ register-injective)
+    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | _ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ proj₂ ∘ proj₂ ∘ register-injective)
 
-  _≟ℓ_ : DecidableEq Lifetime
-  α⁼ n₁ ≟ℓ α⁼ n₂ with n₁ ≟ n₂
-  α⁼ n  ≟ℓ α⁼ .n | yes refl = yes refl
-  α⁼ n₁ ≟ℓ α⁼ n₂ | no ¬eq = no (λ eq → ¬eq (α⁼-injective eq))
-  α⁼ n₁ ≟ℓ γ⁼ n₂ = no (λ ())
-  α⁼ n₁ ≟ℓ static = no (λ ())
-  γ⁼ n₁ ≟ℓ α⁼ n₂ = no (λ ())
-  γ⁼ n₁ ≟ℓ γ⁼ n₂ with n₁ ≟ n₂
-  γ⁼ n  ≟ℓ γ⁼ .n | yes refl = yes refl
-  γ⁼ n₁ ≟ℓ γ⁼ n₂ | no ¬eq = no (λ eq → ¬eq (γ⁼-injective eq))
-  γ⁼ n₁ ≟ℓ static = no (λ ())
-  static ≟ℓ α⁼ n₂ = no (λ ())
-  static ≟ℓ γ⁼ n₂ = no (λ ())
-  static ≟ℓ static = yes refl
+    _≟ℓ_ : DecidableEq Lifetime
+    α⁼ n₁ ≟ℓ α⁼ n₂ with n₁ ≟ n₂
+    α⁼ n  ≟ℓ α⁼ .n | yes refl = yes refl
+    α⁼ n₁ ≟ℓ α⁼ n₂ | no ¬eq = no (¬eq ∘ α⁼-injective)
+    α⁼ n₁ ≟ℓ γ⁼ n₂ = no (λ ())
+    α⁼ n₁ ≟ℓ static = no (λ ())
+    γ⁼ n₁ ≟ℓ α⁼ n₂ = no (λ ())
+    γ⁼ n₁ ≟ℓ γ⁼ n₂ with n₁ ≟ n₂
+    γ⁼ n  ≟ℓ γ⁼ .n | yes refl = yes refl
+    γ⁼ n₁ ≟ℓ γ⁼ n₂ | no ¬eq = no (¬eq ∘ γ⁼-injective)
+    γ⁼ n₁ ≟ℓ static = no (λ ())
+    static ≟ℓ α⁼ n₂ = no (λ ())
+    static ≟ℓ γ⁼ n₂ = no (λ ())
+    static ≟ℓ static = yes refl
 
-  _≟q_ : DecidableEq Qualifier
-  mut ≟q mut = yes refl
-  mut ≟q imm = no (λ ())
-  imm ≟q mut = no (λ ())
-  imm ≟q imm = yes refl
+    _≟q_ : DecidableEq Qualifier
+    mut ≟q mut = yes refl
+    mut ≟q imm = no (λ ())
+    imm ≟q mut = no (λ ())
+    imm ≟q imm = yes refl
+
+instance
+  Ctx-Eq : Eq Ctx
+  Ctx-Eq = record { _≟_ = _≟Δ_ }
+
+  CtxVal-Eq : Eq CtxVal
+  CtxVal-Eq = record { _≟_ = _≟a_ }
+
+  Stack-Eq : Eq Stack
+  Stack-Eq = record { _≟_ = _≟σ_ }
+
+  StackVal-Eq : Eq StackVal
+  StackVal-Eq = record { _≟_ = _≟v_ }
+
+  Type-Eq : Eq Type
+  Type-Eq = record { _≟_ = _≟τ_ }
+
+  Register-Eq : Eq Register
+  Register-Eq = record { _≟_ = _≟Γ_ }
+
+  Lifetime-Eq : Eq Lifetime
+  Lifetime-Eq = record { _≟_ = _≟ℓ_ }

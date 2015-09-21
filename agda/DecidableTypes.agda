@@ -1,4 +1,5 @@
 open import Types
+open import Weakening
 open import ValidTypes
 open import ContradictionLemmas
 open import UniquenessLemmas
@@ -19,18 +20,18 @@ mutual
   ⊢? Δ , a Ctx | _ | no ¬a⋆ = no (λ { (valid-∷ Δ⋆ a⋆) → ¬a⋆ a⋆ })
 
   _⊢?_CtxVal : ∀ Δ a → Dec (Δ ⊢ a CtxVal)
-  Δ ⊢? ρ              CtxVal = yes valid-ρ
-  Δ ⊢? α σ            CtxVal with Δ ⊢? σ Stack
-  Δ ⊢? α σ            CtxVal | yes σ⋆ = yes (valid-α σ⋆)
-  Δ ⊢? α σ            CtxVal | no ¬σ⋆ = no (λ { (valid-α σ⋆) → ¬σ⋆ σ⋆ })
-  Δ ⊢? β σ ♯b         CtxVal with Δ ⊢? σ Stack
-  Δ ⊢? β σ ♯b         CtxVal | yes σ⋆ = yes (valid-β σ⋆)
-  Δ ⊢? β σ ♯b         CtxVal | no ¬σ⋆ = no (λ { (valid-β σ⋆) → ¬σ⋆ σ⋆ })
-  Δ ⊢? (ℓ₁ ≤a ℓ₂ / σ) CtxVal with Δ ⊢? σ Stack | Δ , σ ⊢? ℓ₁ Lifetime | Δ , σ ⊢? ℓ₂ Lifetime
-  Δ ⊢? (ℓ₁ ≤a ℓ₂ / σ) CtxVal | yes ⋆σ | yes ⋆ℓ₁ | yes ⋆ℓ₂ = yes (valid-≤a ⋆σ ⋆ℓ₁ ⋆ℓ₂)
-  Δ ⊢? (ℓ₁ ≤a ℓ₂ / σ) CtxVal | no ¬σ⋆ | _ | _ = no (λ { (valid-≤a σ⋆ ℓ₁⋆ ℓ₂⋆) → ¬σ⋆ σ⋆ })
-  Δ ⊢? (ℓ₁ ≤a ℓ₂ / σ) CtxVal | _ | no ¬ℓ₁ | _ = no (λ { (valid-≤a σ⋆ ℓ₁⋆ ℓ₂⋆) → ¬ℓ₁ ℓ₁⋆ })
-  Δ ⊢? (ℓ₁ ≤a ℓ₂ / σ) CtxVal | _ | _ | no ¬ℓ₂ = no (λ { (valid-≤a σ⋆ ℓ₁⋆ ℓ₂⋆) → ¬ℓ₂ ℓ₂⋆ })
+  Δ ⊢? ρ            CtxVal = yes valid-ρ
+  Δ ⊢? α σ          CtxVal with Δ ⊢? σ Stack
+  Δ ⊢? α σ          CtxVal | yes σ⋆ = yes (valid-α σ⋆)
+  Δ ⊢? α σ          CtxVal | no ¬σ⋆ = no (λ { (valid-α σ⋆) → ¬σ⋆ σ⋆ })
+  Δ ⊢? β σ ♯b       CtxVal with Δ ⊢? σ Stack
+  Δ ⊢? β σ ♯b       CtxVal | yes σ⋆ = yes (valid-β σ⋆)
+  Δ ⊢? β σ ♯b       CtxVal | no ¬σ⋆ = no (λ { (valid-β σ⋆) → ¬σ⋆ σ⋆ })
+  Δ ⊢? ℓ₁ ≤a ℓ₂ / σ CtxVal with Δ , σ ⊢? ℓ₁ Lifetime | Δ , σ ⊢? ℓ₂ Lifetime | Δ ⊢? σ Stack
+  Δ ⊢? ℓ₁ ≤a ℓ₂ / σ CtxVal | yes ℓ₁⋆ | yes ℓ₂⋆ | yes σ⋆ = yes (valid-≤a ℓ₁⋆ ℓ₂⋆ σ⋆)
+  Δ ⊢? ℓ₁ ≤a ℓ₂ / σ CtxVal | no ¬ℓ₁⋆ | _ | _ = no (λ { (valid-≤a ℓ₁⋆ ℓ₂⋆ σ⋆) → ¬ℓ₁⋆ ℓ₁⋆ })
+  Δ ⊢? ℓ₁ ≤a ℓ₂ / σ CtxVal | _ | no ¬ℓ₂⋆ | _ = no (λ { (valid-≤a ℓ₁⋆ ℓ₂⋆ σ⋆) → ¬ℓ₂⋆ ℓ₂⋆ })
+  Δ ⊢? ℓ₁ ≤a ℓ₂ / σ CtxVal | _ | _ | no ¬σ⋆  = no (λ { (valid-≤a ℓ₁⋆ ℓ₂⋆ σ⋆) → ¬σ⋆ σ⋆ })
 
   _⊢?_Stack : ∀ Δ σ → Dec (Δ ⊢ σ Stack)
   Δ ⊢? nil Stack = yes valid-nil
@@ -59,8 +60,8 @@ mutual
   Δ , σ ⊢? β⁼ ι Type | yes (β σ' ♯b , l) | yes suf = yes (♯b , valid-β⁼ l suf)
   Δ , σ ⊢? β⁼ ι Type | yes (β σ' ♯b , l) | no ¬suf = no (help l ¬suf)
     where help : ∀ {Δ ι σ σ₁ ♯b₁} → Δ ↓ₐ ι ≡ β σ₁ ♯b₁
-                                  → ¬ (σ₁ ⊏ σ)
-                                  → ¬ (Δ , σ ⊢ β⁼ ι Type)
+                                  → ¬ σ₁ ⊏ σ
+                                  → ¬ Δ , σ ⊢ β⁼ ι Type
           help l₁ ¬suf₁ (♯b₂ , valid-β⁼ l₂ suf₂) with ↓ₐ-unique l₁ l₂
           help l₁ ¬suf₁ (♯b₁ , valid-β⁼ l₂ suf₂) | refl = ¬suf₁ suf₂
   Δ , σ ⊢? β⁼ ι Type | yes ((x ≤a x₁ / x₂) , l) = no (λ { (♯b , valid-β⁼ l' suf) → β≢≤a (↓ₐ-unique l' l) })
@@ -82,7 +83,7 @@ mutual
   _,_⊢?_Typeₙ_ : ∀ Δ σ τ ♯b → Dec (Δ , σ ⊢ τ Typeₙ ♯b)
   Δ , σ ⊢? τ Typeₙ ♯b₁ with Δ , σ ⊢? τ Type
   Δ , σ ⊢? τ Typeₙ ♯b₁ | yes (♯b₂ , τ⋆) with ♯b₁ ≟ ♯b₂
-  Δ , σ ⊢? τ Typeₙ ♯b₁ | yes (.♯b₁ , τ⋆) | yes refl = yes τ⋆
+  Δ , σ ⊢? τ Typeₙ ♯b  | yes (.♯b , τ⋆) | yes refl = yes τ⋆
   Δ , σ ⊢? τ Typeₙ ♯b₁ | yes (♯b₂ , τ⋆) | no ¬eq = no (λ τ⋆' → ¬eq (Typeₙ-unique τ⋆' τ⋆))
   Δ , σ ⊢? τ Typeₙ ♯b₁ | no ¬τ⋆ = no (λ {τ⋆ → ¬τ⋆ (♯b₁ , τ⋆)})
 
@@ -101,8 +102,8 @@ mutual
   Δ , σ ⊢? α⁼ ι Lifetime | yes (α σ' , l) | yes suf = yes (valid-α⁼ l suf)
   Δ , σ ⊢? α⁼ ι Lifetime | yes (α σ' , l) | no ¬suf = no (help l ¬suf)
     where help : ∀ {Δ ι σ σ₁} → Δ ↓ₐ ι ≡ α σ₁
-                   → ¬ (σ₁ ⊏ σ)
-                   → ¬ (Δ , σ ⊢ α⁼ ι Lifetime)
+                   → ¬ σ₁ ⊏ σ
+                   → ¬ Δ , σ ⊢ α⁼ ι Lifetime
           help l₁ ¬suf₁ (valid-α⁼ l₂ suf₂) with ↓ₐ-unique l₁ l₂
           help l₁ ¬suf₁ (valid-α⁼ l₂ suf₂) | refl = ¬suf₁ suf₂
   Δ , σ ⊢? α⁼ ι Lifetime | yes (β σ' ♯b , l) = no (λ { (valid-α⁼ l' suf) → α≢β (↓ₐ-unique l' l) })

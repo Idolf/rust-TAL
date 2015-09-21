@@ -1,9 +1,10 @@
 open import Types
+open import Weakening
 
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax)
 
-infix 4 ⊢_Ctx _⊢_CtxVal _⊢_Stack _,_⊢_StackVal _,_⊢_Typeₙ_ _⊢_Register _,_⊢_Lifetime
+infix 4 ⊢_Ctx _⊢_CtxVal _⊢_Stack _,_⊢_StackVal _,_⊢_Type _,_⊢_Typeₙ_ _⊢_Register _,_⊢_Lifetime
 
 mutual
   data ⊢_Ctx : Ctx → Set where
@@ -35,9 +36,9 @@ mutual
 
     valid-≤a :
             ∀ {σ ℓ₁ ℓ₂} →
-            Δ ⊢ σ Stack →
         Δ , σ ⊢ ℓ₁ Lifetime →
         Δ , σ ⊢ ℓ₂ Lifetime →
+            Δ ⊢ σ Stack →
       -------------------------
       Δ ⊢ ℓ₁ ≤a ℓ₂ / σ CtxVal
 
