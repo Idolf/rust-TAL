@@ -1,5 +1,11 @@
 open import Data.Nat using (ℕ ; zero ; suc)
 
+infixr 6 _,_ _∷_
+infixr 5 _++_
+
+infix 6 _≤a_/_  ∀[_]_
+infix 4 _↓ₐ_≡_ _↓ᵥ_≡_ _⊏_
+
 mutual
   -- Δ
   data Ctx : Set where
@@ -15,7 +21,7 @@ mutual
 
   -- σ
   data Stack : Set where
-    nil  : Stack                    -- Empty stack
+    nil  : Stack                   -- Empty stack
     _∷_ : StackVal → Stack → Stack -- Stack cons
     ρ⁼  : ℕ → Stack                -- Stack assumption
 
@@ -54,18 +60,34 @@ mutual
 
 open Register public
 
-data Δ-lookup : Ctx → ℕ → CtxVal → Set where
-  here  : ∀ {Δ a}      → Δ-lookup (Δ , a) zero a
-  there : ∀ {Δ a a' ι} → Δ-lookup Δ ι a → Δ-lookup (Δ , a') (suc ι) a
+data _↓ₐ_≡_ : Ctx → ℕ → CtxVal → Set where
+  here  :
+        ∀ {Δ a} →
+    -----------------
+    Δ , a ↓ₐ zero ≡ a
 
-data σ-lookup : Stack → ℕ → StackVal → Set where
-  here  : ∀ {σ v}      → σ-lookup (v ∷ σ) zero v
-  there : ∀ {σ v v' ι} → σ-lookup σ ι v → σ-lookup (v' ∷ σ) (suc ι) v
+  there :
+      ∀ {Δ a₁ a₂ ι} →
+       Δ ↓ₐ ι ≡ a₁ →
+    --------------------
+    Δ , a₂ ↓ₐ suc ι ≡ a₁
 
-data IsStackSuffix : Stack → Stack → Set where
-  here  : ∀ {σ}      → IsStackSuffix σ σ
-  there : ∀ {σ σ' v} → IsStackSuffix σ σ' → IsStackSuffix σ (v ∷ σ')
+data _↓ᵥ_≡_ : Stack → ℕ → StackVal → Set where
+  here :
+         ∀ {σ v} →
+    -----------------
+    v ∷ σ ↓ᵥ zero ≡ v
+
+  there :
+       ∀ {σ v₁ v₂ ι} →
+        σ ↓ᵥ ι ≡ v₁ →
+    --------------------
+    v₂ ∷ σ ↓ᵥ suc ι ≡ v₁
+
+data _⊏_ : Stack → Stack → Set where
+  here  : ∀ {σ}      → σ ⊏ σ
+  there : ∀ {σ σ' v} → σ ⊏ σ' → σ ⊏ v ∷ σ'
 
 _++_ : Ctx → Ctx → Ctx
 Δ₁ ++ Ɛ = Δ₁
-Δ₁ ++ (Δ₂ , a) = (Δ₁ ++ Δ₂) , a
+Δ₁ ++ Δ₂ , a = (Δ₁ ++ Δ₂) , a

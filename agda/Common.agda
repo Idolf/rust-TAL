@@ -1,7 +1,17 @@
+-- Base datatypes
 open import Types
-open import ListProperties
 open import ValidTypes
-open import Equality
-open import EqualityContradictions
+
+-- We have decidable equality for all of the definitions
+open import TypesEq
+
+-- A few lemmas
+open import UniquenessLemmas
+open import DecidabilityLemmas
+open import ContradictionLemmas
+
+-- It is decidable to check validity
 open import DecidableTypes
-open import Concatenation
+
+-- A few properties on contexts
+open import CtxProperties

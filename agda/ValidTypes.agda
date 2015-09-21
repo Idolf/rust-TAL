@@ -1,61 +1,134 @@
 open import Types
-open import ListProperties
 
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax)
-open import Relation.Binary.PropositionalEquality using (_≡_ ; refl)
+
+infix 4 ⊢_Ctx _⊢_CtxVal _⊢_Stack _,_⊢_StackVal _,_⊢_Typeₙ_ _⊢_Register _,_⊢_Lifetime
 
 mutual
-  data IsValidCtx : Ctx → Set where
-    valid-Ɛ : IsValidCtx Ɛ
-    valid-∷ : ∀ {Δ a} → IsValidCtx Δ → IsValidCtxVal Δ a → IsValidCtx (Δ , a)
+  data ⊢_Ctx : Ctx → Set where
+    valid-Ɛ :
+         ⊢ Ɛ Ctx
 
-  data IsValidCtxVal (Δ : Ctx) : CtxVal → Set where
-    valid-ρ  : IsValidCtxVal Δ ρ
-    valid-α  : ∀ {σ}   → IsValidStack Δ σ → IsValidCtxVal Δ (α σ)
-    valid-β  : ∀ {σ ♯b} → IsValidStack Δ σ → IsValidCtxVal Δ (β σ ♯b)
-    valid-≤a : ∀ {σ ℓ₁ ℓ₂} → IsValidStack Δ σ → IsValidLifetime Δ σ ℓ₁ → IsValidLifetime Δ σ ℓ₂ → IsValidCtxVal Δ (ℓ₁ ≤a ℓ₂ / σ)
+    valid-∷ :
+        ∀ {Δ a} →
+        ⊢ Δ Ctx →
+      Δ ⊢ a CtxVal →
+      --------------
+        ⊢ Δ , a Ctx
 
-  data IsValidStack (Δ : Ctx) : Stack → Set where
-    valid-nil : IsValidStack Δ nil
-    valid-∷   : ∀ {σ v} → IsValidStack Δ σ → IsValidStackVal Δ σ v → IsValidStack Δ (v ∷ σ)
-    valid-ρ⁼  : ∀ {ι} → Δ-lookup Δ ι ρ → IsValidStack Δ (ρ⁼ ι)
+  data _⊢_CtxVal (Δ : Ctx) : CtxVal → Set where
+    valid-ρ :
+      Δ ⊢ ρ CtxVal
 
-  data IsValidStackVal (Δ : Ctx) (σ : Stack) : StackVal → Set where
-    valid-type  : ∀ {τ} → IsValidType Δ σ τ → IsValidStackVal Δ σ (type τ)
-    valid-γ     : IsValidStackVal Δ σ γ
+    valid-α :
+          ∀ {σ} →
+       Δ ⊢ σ Stack →
+      --------------
+      Δ ⊢ α σ CtxVal
 
-  IsValidType : (Δ : Ctx) (σ : Stack) → Type → Set
-  IsValidType Δ σ τ = Σ[ ♯b ∈ ℕ ] IsValidTypeₙ Δ σ τ ♯b
+    valid-β :
+         ∀ {σ ♯b} →
+        Δ ⊢ σ Stack →
+      -----------------
+      Δ ⊢ β σ ♯b CtxVal
 
-  data IsValidTypeₙ (Δ : Ctx) (σ : Stack) : Type → ℕ → Set where
-    valid-β⁼     : ∀ {σ' ι ♯b} → Δ-lookup Δ ι (β σ' ♯b) → IsStackSuffix σ' σ → IsValidTypeₙ Δ σ (β⁼ ι) ♯b
-    valid-int    : IsValidTypeₙ Δ σ int 4
-    valid-void   : ∀ {♯b}      → IsValidTypeₙ Δ σ (void ♯b) ♯b
-    valid-~      : ∀ {τ}       → IsValidType Δ σ τ → IsValidTypeₙ Δ σ (~ τ) 4
-    valid-&      : ∀ {ℓ q τ}   → IsValidLifetime Δ σ ℓ → IsValidType Δ σ τ → IsValidTypeₙ Δ σ (& ℓ q τ) 4
-    valid-∀      : ∀ {Δ' Γ}    → IsValidCtx Δ' → IsValidRegister (Δ ++ Δ') Γ → IsValidTypeₙ Δ σ (∀[ Δ' ] Γ) 4
+    valid-≤a :
+            ∀ {σ ℓ₁ ℓ₂} →
+            Δ ⊢ σ Stack →
+        Δ , σ ⊢ ℓ₁ Lifetime →
+        Δ , σ ⊢ ℓ₂ Lifetime →
+      -------------------------
+      Δ ⊢ ℓ₁ ≤a ℓ₂ / σ CtxVal
 
-  record IsValidRegister (Δ : Ctx) (Γ : Register) : Set where
+  data _⊢_Stack (Δ : Ctx) : Stack → Set where
+    valid-nil :
+      Δ ⊢ nil Stack
+
+    valid-∷ :
+            ∀ {σ v} →
+          Δ ⊢ σ Stack →
+      Δ , σ ⊢ v StackVal →
+      --------------------
+         Δ ⊢ v ∷ σ Stack
+
+    valid-ρ⁼ :
+           ∀ {ι} →
+         Δ ↓ₐ ι ≡ ρ →
+      ----------------
+        Δ ⊢ ρ⁼ ι Stack
+
+  data _,_⊢_StackVal (Δ : Ctx) (σ : Stack) : StackVal → Set where
+    valid-type :
+               ∀ {τ} →
+          Δ , σ ⊢ τ Type →
+      -----------------------
+      Δ , σ ⊢ type τ StackVal
+
+    valid-γ :
+      Δ , σ ⊢ γ StackVal
+
+  _,_⊢_Type : (Δ : Ctx) (σ : Stack) → Type → Set
+  Δ , σ ⊢ τ Type = Σ[ ♯b ∈ ℕ ] Δ , σ ⊢ τ Typeₙ ♯b
+
+  data _,_⊢_Typeₙ_ (Δ : Ctx) (σ : Stack) : Type → ℕ → Set where
+    valid-β⁼ :
+           ∀ {σ' ι ♯b} →
+       Δ ↓ₐ ι ≡ β σ' ♯b →
+            σ' ⊏ σ →
+      ---------------------
+      Δ , σ ⊢ β⁼ ι Typeₙ ♯b
+
+    valid-int :
+      Δ , σ ⊢ int Typeₙ 4
+
+    valid-void :
+              ∀ {♯b} →
+      ------------------------
+      Δ , σ ⊢ void ♯b Typeₙ ♯b
+
+    valid-~ :
+            ∀ {τ} →
+       Δ , σ ⊢ τ Type →
+      -------------------
+      Δ , σ ⊢ ~ τ Typeₙ 4
+
+    valid-& :
+             ∀ {ℓ q τ} →
+          Δ , σ ⊢ ℓ Lifetime →
+          Δ , σ ⊢ τ Type →
+      -----------------------
+      Δ , σ ⊢ & ℓ q τ Typeₙ 4
+
+    valid-∀ :
+             ∀ {Δ' Γ} →
+                ⊢ Δ' Ctx →
+        Δ ++ Δ' ⊢ Γ Register →
+      -------------------------
+      Δ , σ ⊢ ∀[ Δ' ] Γ Typeₙ 4
+
+  record _⊢_Register (Δ : Ctx) (Γ : Register) : Set where
     inductive
     constructor valid-register
     field
-      valid-sp : IsValidStack Δ (sp Γ)
-      valid-r0 : IsValidTypeₙ Δ (sp Γ) (r0 Γ) 4
-      valid-r1 : IsValidTypeₙ Δ (sp Γ) (r1 Γ) 4
-      valid-r2 : IsValidTypeₙ Δ (sp Γ) (r2 Γ) 4
+      sp⋆ : Δ ⊢ sp Γ Stack
+      r0⋆ : Δ , sp Γ ⊢ r0 Γ Typeₙ 4
+      r1⋆ : Δ , sp Γ ⊢ r1 Γ Typeₙ 4
+      r2⋆ : Δ , sp Γ ⊢ r2 Γ Typeₙ 4
 
-  data IsValidLifetime (Δ : Ctx) (σ : Stack) : Lifetime → Set where
-    valid-α⁼     : ∀ {σ' ι} → Δ-lookup Δ ι (α σ') → IsStackSuffix σ' σ → IsValidLifetime Δ σ (α⁼ ι)
-    valid-γ⁼     : ∀ {ι}    → σ-lookup σ ι γ → IsValidLifetime Δ σ (γ⁼ ι)
-    valid-static : IsValidLifetime Δ σ static
+  data _,_⊢_Lifetime (Δ : Ctx) (σ : Stack) : Lifetime → Set where
+    valid-α⁼ :
+           ∀ {σ' ι} →
+          Δ ↓ₐ ι ≡ α σ' →
+            σ' ⊏ σ →
+      ---------------------
+      Δ , σ ⊢ α⁼ ι Lifetime
 
+    valid-γ⁼ :
+             ∀ {ι} →
+           σ ↓ᵥ ι ≡ γ →
+      ---------------------
+      Δ , σ ⊢ γ⁼ ι Lifetime
 
-IsValidTypeₙ-unique : ∀ {Δ σ₁ σ₂ τ ♯b₁ ♯b₂} → IsValidTypeₙ Δ σ₁ τ ♯b₁ → IsValidTypeₙ Δ σ₂ τ ♯b₂ → ♯b₁ ≡ ♯b₂
-IsValidTypeₙ-unique (valid-β⁼ l₁ suf₁) (valid-β⁼ l₂ suf₂) with Δ-lookup-unique l₁ l₂
-IsValidTypeₙ-unique (valid-β⁼ l₁ suf₁) (valid-β⁼ l₂ suf₂) | refl = refl
-IsValidTypeₙ-unique valid-int valid-int = refl
-IsValidTypeₙ-unique valid-void valid-void = refl
-IsValidTypeₙ-unique (valid-~ τ₁⋆) (valid-~ τ₂⋆) = refl
-IsValidTypeₙ-unique (valid-& ℓ₁⋆ τ₁⋆) (valid-& ℓ₂⋆ τ₂⋆) = refl
-IsValidTypeₙ-unique (valid-∀ Δ₁⋆ Γ₁⋆) (valid-∀ Δ₂⋆ Γ₂⋆) = refl
+    valid-static :
+      Δ , σ ⊢ static Lifetime
