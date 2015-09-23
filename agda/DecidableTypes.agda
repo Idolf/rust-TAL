@@ -6,6 +6,7 @@ open import UniquenessLemmas
 open import DecidabilityLemmas
 
 open import Data.Nat using (_≟_)
+open import Data.Vec using (Vec ; [] ; _∷_)
 open import Data.Product using (_,_ ; Σ-syntax ; ∃)
 
 open import Relation.Binary.PropositionalEquality using (refl)
@@ -87,13 +88,18 @@ mutual
   Δ , σ ⊢? τ Typeₙ ♯b₁ | yes (♯b₂ , τ⋆) | no ¬eq = no (λ τ⋆' → ¬eq (Typeₙ-unique τ⋆' τ⋆))
   Δ , σ ⊢? τ Typeₙ ♯b₁ | no ¬τ⋆ = no (λ {τ⋆ → ¬τ⋆ (♯b₁ , τ⋆)})
 
+  _,_⊢?_Typesₙ_ : ∀ Δ σ {m} (τs : Vec Type m) ♯b → Dec (Δ , σ ⊢ τs Typesₙ ♯b)
+  Δ , σ ⊢? [] Typesₙ ♯b = yes valid-[]
+  Δ , σ ⊢? τ ∷ τs Typesₙ ♯b with Δ , σ ⊢? τ Typeₙ ♯b | Δ , σ ⊢? τs Typesₙ ♯b
+  Δ , σ ⊢? τ ∷ τs Typesₙ ♯b | yes τ⋆ | yes τs⋆ = yes (valid-∷ τ⋆ τs⋆)
+  Δ , σ ⊢? τ ∷ τs Typesₙ ♯b | no ¬τ⋆ | _  = no (λ { (valid-∷ τ⋆ τs⋆) → ¬τ⋆ τ⋆ })
+  Δ , σ ⊢? τ ∷ τs Typesₙ ♯b | _ | no ¬τs⋆ = no (λ { (valid-∷ τ⋆ τs⋆) → ¬τs⋆ τs⋆ })
+
   _⊢?_Register : ∀ Δ Γ → Dec (Δ ⊢ Γ Register)
-  Δ ⊢? register sp r0 r1 r2 Register with Δ ⊢? sp Stack | Δ , sp ⊢? r0 Typeₙ 4 | Δ , sp ⊢? r1 Typeₙ 4 | Δ , sp ⊢? r2 Typeₙ 4
-  Δ ⊢? register sp r0 r1 r2 Register | yes sp⋆ | yes r0⋆ | yes r1⋆ | yes r2⋆ = yes (valid-register sp⋆ r0⋆ r1⋆ r2⋆)
-  Δ ⊢? register sp r0 r1 r2 Register | no ¬sp⋆ | _ | _ | _ = no (λ { (valid-register sp⋆ r0⋆ r1⋆ r2⋆) → ¬sp⋆ sp⋆ })
-  Δ ⊢? register sp r0 r1 r2 Register | _ | no ¬r0⋆ | _ | _ = no (λ { (valid-register sp⋆ r0⋆ r1⋆ r2⋆) → ¬r0⋆ r0⋆ })
-  Δ ⊢? register sp r0 r1 r2 Register | _ | _ | no ¬r1⋆ | _ = no (λ { (valid-register sp⋆ r0⋆ r1⋆ r2⋆) → ¬r1⋆ r1⋆ })
-  Δ ⊢? register sp r0 r1 r2 Register | _ | _ | _ | no ¬r2⋆ = no (λ { (valid-register sp⋆ r0⋆ r1⋆ r2⋆) → ¬r2⋆ r2⋆ })
+  Δ ⊢? register sp regs Register with Δ ⊢? sp Stack | Δ , sp ⊢? regs Typesₙ 4
+  Δ ⊢? register sp regs Register | yes sp⋆ | yes regs⋆ = yes (valid-register sp⋆ regs⋆)
+  Δ ⊢? register sp regs Register | no ¬sp⋆ | _   = no (λ { (valid-register sp⋆ regs⋆) → ¬sp⋆ sp⋆ })
+  Δ ⊢? register sp regs Register | _ | no ¬regs⋆ = no (λ { (valid-register sp⋆ regs⋆) → ¬regs⋆ regs⋆ })
 
   _,_⊢?_Lifetime : ∀ Δ σ ℓ → Dec (Δ , σ ⊢ ℓ Lifetime)
   Δ , σ ⊢? α⁼ ι Lifetime with Δ ↓ₐ? ι

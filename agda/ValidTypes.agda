@@ -2,6 +2,7 @@ open import Types
 open import Weakening
 
 open import Data.Nat using (ℕ)
+open import Data.Vec using (Vec ; [] ; _∷_)
 open import Data.Product using (Σ-syntax)
 
 infix 4 ⊢_Ctx _⊢_CtxVal _⊢_Stack _,_⊢_StackVal _,_⊢_Type _,_⊢_Typeₙ_ _⊢_Register _,_⊢_Lifetime
@@ -108,14 +109,25 @@ mutual
       -------------------------
       Δ , σ ⊢ ∀[ Δ' ] Γ Typeₙ 4
 
+  data _,_⊢_Typesₙ_ (Δ : Ctx) (σ : Stack) : ∀ {m} → Vec Type m → ℕ → Set where
+    valid-[] :
+             ∀ {♯b} →
+      --------------------
+      Δ , σ ⊢ [] Typesₙ ♯b
+
+    valid-∷ :
+      ∀ {♯b τ m} {τs : Vec Type m} →
+           Δ , σ ⊢ τ  Typeₙ ♯b →
+           Δ , σ ⊢ τs Typesₙ ♯b →
+         ------------------------
+         Δ , σ ⊢ τ ∷ τs Typesₙ ♯b
+
   record _⊢_Register (Δ : Ctx) (Γ : Register) : Set where
     inductive
     constructor valid-register
     field
-      sp⋆ : Δ ⊢ sp Γ Stack
-      r0⋆ : Δ , sp Γ ⊢ r0 Γ Typeₙ 4
-      r1⋆ : Δ , sp Γ ⊢ r1 Γ Typeₙ 4
-      r2⋆ : Δ , sp Γ ⊢ r2 Γ Typeₙ 4
+      sp⋆   : Δ ⊢ sp Γ Stack
+      regs⋆ : Δ , sp Γ ⊢ regs Γ Typesₙ 4
 
   data _,_⊢_Lifetime (Δ : Ctx) (σ : Stack) : Lifetime → Set where
     valid-α⁼ :

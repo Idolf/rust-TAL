@@ -1,8 +1,12 @@
 open import Data.Nat using (ℕ ; zero ; suc)
+open import Data.Vec using (Vec)
 
 infix 7 _≤a_/_  ∀[_]_
 infixr 6 _,_ _∷_
 infixr 5 _++_
+
+♯regs : ℕ
+♯regs = 4
 
 mutual
   -- Δ
@@ -43,7 +47,7 @@ mutual
     constructor register
     field
       sp : Stack
-      r0 r1 r2 : Type
+      regs : Vec Type ♯regs
 
   -- ℓ
   data Lifetime : Set where

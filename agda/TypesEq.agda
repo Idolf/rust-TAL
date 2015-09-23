@@ -2,6 +2,8 @@ open import Types
 open import Eq
 
 open import Data.Nat using (ℕ)
+open import Data.Vec using (Vec ; [] ; _∷_)
+import Data.Vec.Properties as VP
 open import Data.Product using (_×_ ; _,_ ; proj₁ ; proj₂)
 open import Relation.Binary.Core using (_≡_ ; refl ; Decidable)
 open import Relation.Nullary using (yes ; no)
@@ -19,7 +21,7 @@ open import Function
 ≤a-injective : ∀ {ℓ₁₁ ℓ₁₂ ℓ₂₁ ℓ₂₂ σ₁ σ₂} → ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≡ ℓ₂₁ ≤a ℓ₂₂ / σ₂ → ℓ₁₁ ≡ ℓ₂₁ × ℓ₁₂ ≡ ℓ₂₂ × σ₁ ≡ σ₂
 ≤a-injective refl = refl , (refl , refl)
 
-∷-injective : ∀ {v₁ v₂ σ₁ σ₂} → v₁ ∷ σ₁ ≡ v₂ ∷ σ₂ → v₁ ≡ v₂ × σ₁ ≡ σ₂
+∷-injective : ∀ {v₁ v₂ σ₁ σ₂} → v₁ Types.∷ σ₁ ≡ v₂ ∷ σ₂ → v₁ ≡ v₂ × σ₁ ≡ σ₂
 ∷-injective refl = refl , refl
 
 ρ⁼-injective : ∀ {n₁ n₂} → ρ⁼ n₁ ≡ ρ⁼ n₂ → n₁ ≡ n₂
@@ -43,9 +45,9 @@ void-injective refl = refl
 ∀-injective : ∀ {Δ₁ Δ₂ Γ₁ Γ₂} → ∀[ Δ₁ ] Γ₁ ≡ ∀[ Δ₂ ] Γ₂ → Δ₁ ≡ Δ₂ × Γ₁ ≡ Γ₂
 ∀-injective refl = refl , refl
 
-register-injective : ∀ {sp₁ sp₂ r0₁ r0₂ r1₁ r1₂ r2₁ r2₂} → register sp₁ r0₁ r1₁ r2₁ ≡ register sp₂ r0₂ r1₂ r2₂ →
-                       sp₁ ≡ sp₂ × r0₁ ≡ r0₂ × r1₁ ≡ r1₂ × r2₁ ≡ r2₂
-register-injective refl = refl , (refl , (refl , refl))
+register-injective : ∀ {sp₁ sp₂ regs₁ regs₂} → register sp₁ regs₁ ≡ register sp₂ regs₂ →
+                       sp₁ ≡ sp₂ × regs₁ ≡ regs₂
+register-injective refl = refl , refl
 
 α⁼-injective : ∀ {n₁ n₂} → α⁼ n₁ ≡ α⁼ n₂ → n₁ ≡ n₂
 α⁼-injective refl = refl
@@ -168,13 +170,18 @@ private
     ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ ∀-injective)
     ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ ∀-injective)
 
+    _≟τs_ : ∀ {m} → DecidableEq (Vec Type m)
+    [] ≟τs [] = yes refl
+    (τ₁ ∷ τs₁) ≟τs (τ₂ ∷ τs₂) with τ₁ ≟τ τ₂ | τs₁ ≟τs τs₂
+    (τ  ∷ τs ) ≟τs (.τ ∷ .τs) | yes refl | yes refl = yes refl
+    (τ₁ ∷ τs₁) ≟τs (τ₂ ∷ τs₂) | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ VP.∷-injective)
+    (τ₁ ∷ τs₁) ≟τs (τ₂ ∷ τs₂) | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ VP.∷-injective)
+
     _≟Γ_ : DecidableEq Register
-    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ with sp₁ ≟σ sp₂ | r0₁ ≟τ r0₂ | r1₁ ≟τ r1₂ | r2₁ ≟τ r2₂
-    register sp  r0  r1  r2  ≟Γ register .sp .r0 .r1 .r2 | yes refl | yes refl | yes refl | yes refl = yes refl
-    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | no ¬eq | _ | _ | _ = no (¬eq ∘ proj₁ ∘ register-injective)
-    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | no ¬eq | _ | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ register-injective)
-    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | _ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ proj₂ ∘ register-injective)
-    register sp₁ r0₁ r1₁ r2₁ ≟Γ register sp₂ r0₂ r1₂ r2₂ | _ | _ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ proj₂ ∘ proj₂ ∘ register-injective)
+    register sp₁ regs₁ ≟Γ register sp₂ regs₂ with sp₁ ≟σ sp₂ | regs₁ ≟τs regs₂
+    register sp  regs  ≟Γ register .sp .regs | yes refl | yes refl = yes refl
+    register sp₁ regs₁ ≟Γ register sp₂ regs₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ register-injective)
+    register sp₁ regs₁ ≟Γ register sp₂ resg₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ register-injective)
 
     _≟ℓ_ : DecidableEq Lifetime
     α⁼ n₁ ≟ℓ α⁼ n₂ with n₁ ≟ n₂
@@ -212,6 +219,9 @@ instance
 
   Type-Eq : Eq Type
   Type-Eq = record { _≟_ = _≟τ_ }
+
+  Types-Eq : ∀ {m} → Eq (Vec Type m)
+  Types-Eq = record { _≟_ = _≟τs_ }
 
   Register-Eq : Eq Register
   Register-Eq = record { _≟_ = _≟Γ_ }

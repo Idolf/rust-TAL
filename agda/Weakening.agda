@@ -1,6 +1,7 @@
 open import Types
 open import Eq
 
+open import Data.Vec using (Vec ; [] ; _∷_)
 open import Data.Nat using (ℕ ; suc ; zero ; _+_ ; _<_ ; _≥_ ; _≤_ ; z≤n ; s≤s ; _∸_)
 open import Relation.Binary.PropositionalEquality using (_≡_ ; refl ; cong ; cong₂)
 import Data.Nat.Properties as P
@@ -286,29 +287,33 @@ private
         weaken-Type (weaken-Type (∀[ Δ ] Γ) (Δ-pos ∸ e₁ + pos) e₂) pos e₁
       ∎
 
+    weaken-Types : ∀ {m} → Vec Type m → ℕ → ℕ → Vec Type m
+    weaken-Types [] pos e = []
+    weaken-Types (τ ∷ τs) pos e = weaken-Type τ pos e ∷ weaken-Types τs pos e
+
+    weaken-Types-id : ∀ {m} (τs : Vec Type m) {pos} → weaken-Types τs pos 0 ≡ τs
+    weaken-Types-id [] = refl
+    weaken-Types-id (τ ∷ τs) = cong₂ _∷_ (weaken-Type-id τ) (weaken-Types-id τs)
+
+    weaken-Types-comp₁ : ∀ {m} (τs : Vec Type m) {pos e₁ e₂} → weaken-Types (weaken-Types τs pos e₁) pos e₂ ≡ weaken-Types τs pos (e₁ + e₂)
+    weaken-Types-comp₁ [] = refl
+    weaken-Types-comp₁ (τ ∷ τs) = cong₂ _∷_ (weaken-Type-comp₁ τ) (weaken-Types-comp₁ τs)
+
+    weaken-Types-comp₂ : ∀ {m} (τs : Vec Type m) {pos Δ-pos e₁ e₂} → weaken-Types (weaken-Types τs pos e₁) (Δ-pos + pos) e₂ ≡ weaken-Types (weaken-Types τs (Δ-pos ∸ e₁ + pos) e₂) pos e₁
+    weaken-Types-comp₂ [] = refl
+    weaken-Types-comp₂ (τ ∷ τs) = cong₂ _∷_ (weaken-Type-comp₂ τ) (weaken-Types-comp₂ τs)
+
     weaken-Register : Register → ℕ → ℕ → Register
-    weaken-Register (register sp r0 r1 r2) pos e = register (weaken-Stack sp pos e) (weaken-Type r0 pos e) (weaken-Type r1 pos e) (weaken-Type r2 pos e)
+    weaken-Register (register sp regs) pos e = register (weaken-Stack sp pos e) (weaken-Types regs pos e)
 
     weaken-Register-id : ∀ Γ {pos} → weaken-Register Γ pos 0 ≡ Γ
-    weaken-Register-id (register sp r0 r1 r2) = cong₄ register
-                                                      (weaken-Stack-id sp)
-                                                      (weaken-Type-id r0)
-                                                      (weaken-Type-id r1)
-                                                      (weaken-Type-id r2)
+    weaken-Register-id (register sp regs) = cong₂ register (weaken-Stack-id sp) (weaken-Types-id regs)
 
     weaken-Register-comp₁ : ∀ Γ {pos e₁ e₂} → weaken-Register (weaken-Register Γ pos e₁) pos e₂ ≡ weaken-Register Γ pos (e₁ + e₂)
-    weaken-Register-comp₁ (register sp r0 r1 r2) = cong₄ register
-                                                         (weaken-Stack-comp₁ sp)
-                                                         (weaken-Type-comp₁ r0)
-                                                         (weaken-Type-comp₁ r1)
-                                                         (weaken-Type-comp₁ r2)
+    weaken-Register-comp₁ (register sp regs) = cong₂ register (weaken-Stack-comp₁ sp) (weaken-Types-comp₁ regs)
 
     weaken-Register-comp₂ : ∀ Γ {pos Δ-pos e₁ e₂} → weaken-Register (weaken-Register Γ pos e₁) (Δ-pos + pos) e₂ ≡ weaken-Register (weaken-Register Γ (Δ-pos ∸ e₁ + pos) e₂) pos e₁
-    weaken-Register-comp₂ (register sp r0 r1 r2) = cong₄ register
-                                                         (weaken-Stack-comp₂ sp)
-                                                         (weaken-Type-comp₂ r0)
-                                                         (weaken-Type-comp₂ r1)
-                                                         (weaken-Type-comp₂ r2)
+    weaken-Register-comp₂ (register sp regs) = cong₂ register (weaken-Stack-comp₂ sp) (weaken-Types-comp₂ regs)
 
     weaken-Lifetime : Lifetime → ℕ → ℕ → Lifetime
     weaken-Lifetime (α⁼ ι) pos e = α⁼ (weaken-ℕ ι pos e)
