@@ -6,7 +6,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_ ; refl ; cong)
 
 ↓ₐ-unique : ∀ {Δ ι a₁ a₂} → Δ ↓ₐ ι ≡ a₁ → Δ ↓ₐ ι ≡ a₂ → a₁ ≡ a₂
 ↓ₐ-unique here here = refl
-↓ₐ-unique (there l₁) (there l₂) = cong weaken1 (↓ₐ-unique l₁ l₂)
+↓ₐ-unique (there l₁) (there l₂) = cong weaken¹ (↓ₐ-unique l₁ l₂)
 
 ↓ᵥ-unique : ∀ {σ ι v₁ v₂} → σ ↓ᵥ ι ≡ v₁ → σ ↓ᵥ ι ≡ v₂ → v₁ ≡ v₂
 ↓ᵥ-unique here here = refl

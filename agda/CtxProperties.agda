@@ -15,110 +15,13 @@ open P.SemiringSolver
 module R = A.CommutativeSemiring P.commutativeSemiring
 module M = A.CommutativeMonoid R.+-commutativeMonoid renaming (_∙_ to _+_ ; _≈_ to _≡_)
 
-cong₃ : ∀ {A B C D : Set}
-          {a₁ a₂ : A} {b₁ b₂ : B} {c₁ c₂ : C}
-          (F : A → B → C → D) →
-          a₁ ≡ a₂ → b₁ ≡ b₂ → c₁ ≡ c₂ →
-          F a₁ b₁ c₁ ≡ F a₂ b₂ c₂
-cong₃ _ refl refl refl = refl
+-- ↓ₐ-add-left : ∀ {Δ₁ Δ₂ ι a} → Δ₂ ↓ₐ ι ≡ a → Δ₁ ++ Δ₂ ↓ₐ ι ≡ a
+-- ↓ₐ-add-left here = here
+-- ↓ₐ-add-left (there l) = there (↓ₐ-add-left l)
 
-cong₄ : ∀ {A B C D E : Set}
-          {a₁ a₂ : A} {b₁ b₂ : B} {c₁ c₂ : C} {d₁ d₂ : D}
-          (F : A → B → C → D → E) →
-          a₁ ≡ a₂ → b₁ ≡ b₂ → c₁ ≡ c₂ → d₁ ≡ d₂ →
-          F a₁ b₁ c₁ d₁ ≡ F a₂ b₂ c₂ d₂
-cong₄ _ refl refl refl refl = refl
-
--- data foo (n m : ℕ) : Set where
---   foo< : n < m → foo n m
---   foo≥ : n ≥ m → foo n m
-
--- bar : ∀ n m → foo n m
--- bar n zero = foo≥ z≤n
--- bar zero (suc m) = foo< (s≤s z≤n)
--- bar (suc n) (suc m) with bar n m
--- bar (suc n) (suc m) | foo< x = foo< (s≤s x)
--- bar (suc n) (suc m) | foo≥ x = foo≥ (s≤s x)
-
-linear : {A : Set} → (f : A → ℕ → ℕ → A) → Set
-linear f = ∀ {pos e₁ e₂} x → f (f x pos e₁) pos e₂ ≡ f x pos (e₁ + e₂)
-
-mutual
-
-  linear-weaken-CtxVal : linear weaken-CtxVal
-  linear-weaken-CtxVal ρ = refl
-  linear-weaken-CtxVal (α σ) = cong α (linear-weaken-Stack σ)
-  linear-weaken-CtxVal (β σ ♯b) = cong₂ β (linear-weaken-Stack σ) refl
-  linear-weaken-CtxVal (ℓ₁ ≤a ℓ₂ / σ) = cong₃ _≤a_/_ (linear-weaken-Lifetime ℓ₁) (linear-weaken-Lifetime ℓ₂) (linear-weaken-Stack σ)
-
-  linear-weaken-Stack : linear weaken-Stack
-  linear-weaken-Stack nil = refl
-  linear-weaken-Stack (v ∷ σ) = cong₂ _∷_ (linear-weaken-StackVal v) (linear-weaken-Stack σ)
-  linear-weaken-Stack {pos} {e₁} {e₂} (ρ⁼ ι) = cong ρ⁼ (linear-weaken-ℕ {pos} {e₁} {e₂} ι)
-
-  linear-weaken-StackVal : linear weaken-StackVal
-  linear-weaken-StackVal (type τ) = cong type (linear-weaken-Type τ)
-  linear-weaken-StackVal γ = refl
-
-  linear-weaken-Type : linear weaken-Type
-  linear-weaken-Type {pos} {e₁} {e₂} (β⁼ ι) = cong β⁼ (linear-weaken-ℕ {pos} {e₁} {e₂} ι)
-  linear-weaken-Type int = refl
-  linear-weaken-Type (void ♯b) = refl
-  linear-weaken-Type (~ τ) = cong ~ (linear-weaken-Type τ)
-  linear-weaken-Type (& ℓ q τ) = cong₃ & (linear-weaken-Lifetime ℓ) refl (linear-weaken-Type τ)
-  linear-weaken-Type (∀[ Δ ] Γ) = cong₂ ∀[_]_ refl (linear-weaken-Register Γ)
-
-  linear-weaken-Register : linear weaken-Register
-  linear-weaken-Register (register sp r0 r1 r2) = cong₄ register
-                                                        (linear-weaken-Stack sp)
-                                                        (linear-weaken-Type r0)
-                                                        (linear-weaken-Type r1)
-                                                        (linear-weaken-Type r2)
-
-  linear-weaken-Lifetime : linear weaken-Lifetime
-  linear-weaken-Lifetime {pos} {e₁} {e₂} (α⁼ ι) = cong α⁼ (linear-weaken-ℕ {pos} {e₁} {e₂} ι)
-  linear-weaken-Lifetime (γ⁼ ι) = refl
-  linear-weaken-Lifetime static = refl
-
-identity : {A : Set} → (f : A → ℕ → ℕ → A) → Set
-identity f = ∀ {pos} x → f x pos 0 ≡ x
-
-mutual
-  identity-weaken-ℕ : identity weaken-ℕ
-  identity-weaken-ℕ {zero} zero = refl
-  identity-weaken-ℕ {zero} (suc n) = M.comm (suc n) 0
-  identity-weaken-ℕ {suc pos} zero = refl
-  identity-weaken-ℕ {suc pos} (suc n) = cong suc (identity-weaken-ℕ {pos} n)
-
-  identity-weaken-CtxVal : identity weaken-CtxVal
-  identity-weaken-CtxVal ρ = refl
-  identity-weaken-CtxVal (α σ) = cong α (identity-weaken-CtxVal{!!}
-  identity-weaken-CtxVal (β x x₁) = {!!}
-  identity-weaken-CtxVal (x ≤a x₁ / x₂) = {!!}
-
-  identity-weaken-Stack : identity weaken-Stack
-  identity-weaken-Stack a = {!!}
-
-  identity-weaken-StackVal : identity weaken-StackVal
-  identity-weaken-StackVal a = {!!}
-
-  identity-weaken-Type : identity weaken-Type
-  identity-weaken-Type a = {!!}
-
-  identity-weaken-Register : identity weaken-Register
-  identity-weaken-Register a = {!!}
-
-  identity-weaken-Lifetime : identity weaken-Lifetime
-  identity-weaken-Lifetime a = {!!}
-
-
-↓ₐ-add-left : ∀ {Δ₁ Δ₂ ι a} → Δ₂ ↓ₐ ι ≡ a → Δ₁ ++ Δ₂ ↓ₐ ι ≡ a
-↓ₐ-add-left here = here
-↓ₐ-add-left (there l) = there (↓ₐ-add-left l)
-
-↓ₐ-add-right : ∀ {Δ₁ Δ₂ ι a} → Δ₁ ↓ₐ ι ≡ a → Δ₁ ++ Δ₂ ↓ₐ length Δ₂ + ι ≡ weaken-CtxVal a 0 (length Δ₂)
-↓ₐ-add-right {Δ₂ = Ɛ} l = {!!}
-↓ₐ-add-right {Δ₂ = Δ₂ , a} l = {!!}
+-- ↓ₐ-add-right : ∀ {Δ₁ Δ₂ ι a} → Δ₁ ↓ₐ ι ≡ a → Δ₁ ++ Δ₂ ↓ₐ length Δ₂ + ι ≡ weaken-CtxVal a 0 (length Δ₂)
+-- ↓ₐ-add-right {Δ₂ = Ɛ} l = {!!}
+-- ↓ₐ-add-right {Δ₂ = Δ₂ , a} l = {!!}
 
 -- ↓ₐ-add-right' : ∀ {Δ₁ Δ₂ ι a} → Δ₁ ↓ₐ ι ≡ a → Δ₁ ++ Δ₂ ↓ₐ ι + length Δ₂ ≡ a
 -- ↓ₐ-add-right' {Δ₂ = Δ₂} {ι} l rewrite M.comm ι (length Δ₂) = ↓ₐ-add-right {Δ₂ = Δ₂} l
