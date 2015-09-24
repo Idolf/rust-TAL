@@ -1,21 +1,65 @@
-open import Relation.Binary.Core using (_≡_ ; Decidable ; refl)
-open import Relation.Nullary using (Dec)
-open import Level
 import Data.Nat as N
+import Data.Vec as V
+import Data.Vec.Properties as VP
+import Relation.Binary as R
+import Relation.Binary.Core as RC
+open import Data.Product using (proj₁ ; proj₂)
+open import Relation.Binary.PropositionalEquality as P using (_≡_ ; refl)
+open import Relation.Nullary using (Dec ; yes ; no)
+open import Level using (_⊔_)
+open import Function using (_∘_)
 
-DecidableEq : ∀ {a} → Set a → Set a
-DecidableEq A = Decidable {A = A} _≡_
+-- Decidable propositional equality
+DecEqFun : ∀ {a} (A : Set a) → Set a
+DecEqFun A = RC.Decidable (_≡_ {A = A})
 
-record Eq {a} (A : Set a) : Set a where
-  infix 4 _≟_
-  field
-    _≟_ : DecidableEq A
+DecEq : ∀ {a} (A : Set a) → Set a
+DecEq A = R.IsDecEquivalence (_≡_ {A = A})
 
-open Eq {{...}} public
+infix 4 _≟_
+_≟_ : {a : Level.Level} {A : Set a} {{_ : DecEq A}} → DecEqFun A
+_≟_ {{eq}} = R.IsDecEquivalence._≟_ eq
+
+mkEq : ∀ {a} {A : Set a} → DecEqFun A → DecEq A
+mkEq _≟_ = record { isEquivalence = P.isEquivalence ; _≟_ = _≟_ }
+
+-- Decidable total orders
+TotalOrder : ∀ {a} {ℓ} {A : Set a} (_≤_ : RC.Rel A ℓ) → Set (ℓ ⊔ a)
+TotalOrder _≤_ = R.IsTotalOrder _≡_ _≤_
+
+DecTotalOrder : ∀ {a} {ℓ} {A : Set a} (_≤_ : RC.Rel A ℓ) → Set (ℓ ⊔ a)
+DecTotalOrder _≤_ = R.IsDecTotalOrder _≡_ _≤_
+
+infix 4 _≤?_
+_≤?_ : {a ℓ₂ : Level.Level} {A : Set a} {_≤_ : R.Rel A ℓ₂} {{_ : DecTotalOrder _≤_}} → R.Decidable _≤_
+_≤?_ {{to}} = R.IsDecTotalOrder._≤?_ to
+
+mkTotalOrder : ∀ {a} {ℓ} {A : Set a} {_≤_ : R.Rel A ℓ}
+         {{to : TotalOrder _≤_}} {{dec-eq : DecEq A}} →
+         RC.Decidable _≤_ → DecTotalOrder _≤_
+mkTotalOrder {{to}} _≤?_ = record { isTotalOrder = to ; _≟_ = _≟_ ; _≤?_ = _≤?_ }
 
 instance
-  ℕ-Eq : Eq N.ℕ
-  ℕ-Eq = record { _≟_ = N._≟_ }
+  ℕ-dec-eq : DecEq N.ℕ
+  ℕ-dec-eq = mkEq N._≟_
+
+  ℕ-to : TotalOrder N._≤_
+  ℕ-to = R.DecTotalOrder.isTotalOrder N.decTotalOrder
+
+  ℕ-dec-to : DecTotalOrder N._≤_
+  ℕ-dec-to = mkTotalOrder N._≤?_
+
+  Vec-dec-eq : ∀ {a} {A : Set a} {m}
+                 {{_ : DecEq A}} → DecEq (V.Vec A m)
+  Vec-dec-eq = mkEq _==_
+    where _==_ : ∀ {a} {A : Set a} {m}
+                   {{_ : DecEq A}} →
+                   (x y : V.Vec A m) → Dec (x ≡ y)
+          V.[] == V.[] = yes refl
+          (x V.∷ xs) == (y V.∷ ys) with x ≟ y | xs == ys
+          (x₂ V.∷ xs) == (.x₂ V.∷ .xs) | yes refl | yes refl = yes refl
+          (x₂ V.∷ xs) == (y V.∷ ys) | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ VP.∷-injective)
+          (x₂ V.∷ xs) == (y V.∷ ys) | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ VP.∷-injective)
 
 infixr 3 _∎
 infixr 2 _≡⟨_⟩_ _⟨_⟩≡_ _≡⟨_∥_⟩_ _⟨_∥_⟩≡_
@@ -46,10 +90,3 @@ cong₃ : ∀ {A B C D : Set}
           a₁ ≡ a₂ → b₁ ≡ b₂ → c₁ ≡ c₂ →
           F a₁ b₁ c₁ ≡ F a₂ b₂ c₂
 cong₃ _ refl refl refl = refl
-
-cong₄ : ∀ {A B C D E : Set}
-          {a₁ a₂ : A} {b₁ b₂ : B} {c₁ c₂ : C} {d₁ d₂ : D}
-          (F : A → B → C → D → E) →
-          a₁ ≡ a₂ → b₁ ≡ b₂ → c₁ ≡ c₂ → d₁ ≡ d₂ →
-          F a₁ b₁ c₁ d₁ ≡ F a₂ b₂ c₂ d₂
-cong₄ _ refl refl refl refl = refl

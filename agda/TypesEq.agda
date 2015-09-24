@@ -56,10 +56,11 @@ register-injective refl = refl , refl
 γ⁼-injective refl = refl
 
 
+
 private
   infix 4 _≟Δ_ _≟a_ _≟σ_ _≟v_ _≟τ_ _≟Γ_ _≟ℓ_ _≟q_
   mutual
-    _≟Δ_ : DecidableEq Ctx
+    _≟Δ_ : DecEqFun Ctx
     Ɛ ≟Δ Ɛ = yes refl
     Ɛ ≟Δ Δ₂ , a₁ = no (λ ())
     Δ₁ , a₁ ≟Δ Ɛ = no (λ ())
@@ -68,7 +69,7 @@ private
     Δ₁ , a₁ ≟Δ Δ₂ , a₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ ,-injective)
     Δ₁ , a₁ ≟Δ Δ₂ , a₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ ,-injective)
 
-    _≟a_ : DecidableEq CtxVal
+    _≟a_ : DecEqFun CtxVal
     ρ ≟a ρ = yes refl
     ρ ≟a α σ₂ = no (λ ())
     ρ ≟a β σ₂ ♯b₂ = no (λ ())
@@ -95,7 +96,7 @@ private
     ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | _ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ proj₂ ∘ ≤a-injective)
     ℓ₁₁ ≤a ℓ₁₂ / σ₁ ≟a ℓ₂₁ ≤a ℓ₂₂ / σ₂ | _ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ proj₂ ∘ ≤a-injective)
 
-    _≟σ_ : DecidableEq Stack
+    _≟σ_ : DecEqFun Stack
     nil ≟σ nil = yes refl
     nil ≟σ v₂ ∷ σ₂ = no (λ ())
     nil ≟σ ρ⁼ n₂ = no (λ ())
@@ -111,7 +112,7 @@ private
     ρ⁼ n  ≟σ ρ⁼ .n | yes refl = yes refl
     ρ⁼ n₁ ≟σ ρ⁼ n₂ | no ¬eq = no (¬eq ∘ ρ⁼-injective)
 
-    _≟v_ : DecidableEq StackVal
+    _≟v_ : DecEqFun StackVal
     type τ₁ ≟v type τ₂ with τ₁ ≟τ τ₂
     type τ  ≟v type .τ | yes refl = yes refl
     type τ₁ ≟v type τ₂ | no ¬eq = no (¬eq ∘ type-injective)
@@ -119,7 +120,7 @@ private
     γ ≟v type τ₂ = no (λ ())
     γ ≟v γ = yes refl
 
-    _≟τ_ : DecidableEq Type
+    _≟τ_ : DecEqFun Type
     β⁼ n₁ ≟τ β⁼ n₂ with n₁ ≟ n₂
     β⁼ n  ≟τ β⁼ .n | yes refl = yes refl
     β⁼ n₁ ≟τ β⁼ n₂ | no ¬eq = no (¬eq ∘ β⁼-injective)
@@ -170,20 +171,20 @@ private
     ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ ∀-injective)
     ∀[ Δ₁ ] Γ₁ ≟τ ∀[ Δ₂ ] Γ₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ ∀-injective)
 
-    _≟τs_ : ∀ {m} → DecidableEq (Vec Type m)
+    _≟τs_ : ∀ {m} → DecEqFun (Vec Type m)
     [] ≟τs [] = yes refl
     (τ₁ ∷ τs₁) ≟τs (τ₂ ∷ τs₂) with τ₁ ≟τ τ₂ | τs₁ ≟τs τs₂
     (τ  ∷ τs ) ≟τs (.τ ∷ .τs) | yes refl | yes refl = yes refl
     (τ₁ ∷ τs₁) ≟τs (τ₂ ∷ τs₂) | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ VP.∷-injective)
     (τ₁ ∷ τs₁) ≟τs (τ₂ ∷ τs₂) | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ VP.∷-injective)
 
-    _≟Γ_ : DecidableEq Register
+    _≟Γ_ : DecEqFun Register
     register sp₁ regs₁ ≟Γ register sp₂ regs₂ with sp₁ ≟σ sp₂ | regs₁ ≟τs regs₂
     register sp  regs  ≟Γ register .sp .regs | yes refl | yes refl = yes refl
     register sp₁ regs₁ ≟Γ register sp₂ regs₂ | no ¬eq | _ = no (¬eq ∘ proj₁ ∘ register-injective)
     register sp₁ regs₁ ≟Γ register sp₂ resg₂ | _ | no ¬eq = no (¬eq ∘ proj₂ ∘ register-injective)
 
-    _≟ℓ_ : DecidableEq Lifetime
+    _≟ℓ_ : DecEqFun Lifetime
     α⁼ n₁ ≟ℓ α⁼ n₂ with n₁ ≟ n₂
     α⁼ n  ≟ℓ α⁼ .n | yes refl = yes refl
     α⁼ n₁ ≟ℓ α⁼ n₂ | no ¬eq = no (¬eq ∘ α⁼-injective)
@@ -198,33 +199,30 @@ private
     static ≟ℓ γ⁼ n₂ = no (λ ())
     static ≟ℓ static = yes refl
 
-    _≟q_ : DecidableEq Qualifier
+    _≟q_ : DecEqFun Qualifier
     mut ≟q mut = yes refl
     mut ≟q imm = no (λ ())
     imm ≟q mut = no (λ ())
     imm ≟q imm = yes refl
 
 instance
-  Ctx-Eq : Eq Ctx
-  Ctx-Eq = record { _≟_ = _≟Δ_ }
+  Ctx-dec-eq : DecEq Ctx
+  Ctx-dec-eq = mkEq _≟Δ_
 
-  CtxVal-Eq : Eq CtxVal
-  CtxVal-Eq = record { _≟_ = _≟a_ }
+  CtxVal-dec-eq : DecEq CtxVal
+  CtxVal-dec-eq = mkEq _≟a_
 
-  Stack-Eq : Eq Stack
-  Stack-Eq = record { _≟_ = _≟σ_ }
+  Stack-dec-eq : DecEq Stack
+  Stack-dec-eq = mkEq _≟σ_
 
-  StackVal-Eq : Eq StackVal
-  StackVal-Eq = record { _≟_ = _≟v_ }
+  StackVal-dec-eq : DecEq StackVal
+  StackVal-dec-eq = mkEq _≟v_
 
-  Type-Eq : Eq Type
-  Type-Eq = record { _≟_ = _≟τ_ }
+  Type-dec-eq : DecEq Type
+  Type-dec-eq = mkEq _≟τ_
 
-  Types-Eq : ∀ {m} → Eq (Vec Type m)
-  Types-Eq = record { _≟_ = _≟τs_ }
+  Register-dec-eq : DecEq Register
+  Register-dec-eq = mkEq _≟Γ_
 
-  Register-Eq : Eq Register
-  Register-Eq = record { _≟_ = _≟Γ_ }
-
-  Lifetime-Eq : Eq Lifetime
-  Lifetime-Eq = record { _≟_ = _≟ℓ_ }
+  Lifetime-dec-eq : DecEq Lifetime
+  Lifetime-dec-eq = mkEq _≟ℓ_
