@@ -4,11 +4,8 @@ open import Data.Nat using (ℕ ; zero ; suc) public
 import Data.Nat as N
 
 open import Util.Eq
-open import Util.Dec
-
-suc-injective : ∀ {n₁ n₂} → suc n₁ ≡ suc n₂ → n₁ ≡ n₂
-suc-injective refl = refl
+open import Util.Tree
 
 instance
-  ℕ-dec-eq : DecEq ℕ
-  ℕ-dec-eq = decEq N._≟_
+  ℕ-Tree : ToTree ℕ
+  ℕ-Tree = tree T₀ (λ { (node n _) → n }) (λ x → refl)

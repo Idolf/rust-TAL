@@ -3,7 +3,7 @@ open import Util
 
 -- Base datatypes and validity for them
 open import Grammar
-open import ValidGrammar
+open import TypeJudgments
 
--- Equality for the basic datatypes
-open import GrammarEq
+-- Mapping the grammar to a tree structure to get equality
+open import GrammarTree
