@@ -1,7 +1,9 @@
 module Util.Tree where
 
 open import Util.Dec
+open import Util.Eq
 open import Util.Function
+open import Util.Maybe
 
 open import Data.Product using (_,_)
 open import Data.Nat as N using (ℕ)
@@ -18,20 +20,17 @@ record ToTree {a} (A : Set a) : Set a where
   constructor tree
   field
     toTree : A → Tree
-    fromTree : Tree → A
+    fromTree : Tree → ¿ A
     invTree : IsInverse toTree fromTree
 
 toTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → A → Tree
 toTree {{t}} = ToTree.toTree t
 
-fromTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → Tree → A
+fromTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → Tree → ¿ A
 fromTree {{t}} = ToTree.fromTree t
 
 invTree : ∀ {a} {A : Set a} {{t : ToTree A}} → IsInverse (toTree {{t}}) (fromTree {{t}})
 invTree {{t}} = ToTree.invTree t
-
-default : ∀ {a} {A : Set a} {{t : ToTree A}} → A
-default = fromTree (node 0 [])
 
 T₀ : ℕ → Tree
 T₀ n = node n []
@@ -60,20 +59,25 @@ private
     where
       mutual
         _==_ : DecEqFun Tree
-        node i₁ nodes₁ == node i₂ nodes₂ = dec-cong₂ node-injective (i₁ N.≟ i₂) (nodes₁ ==⋆ nodes₂)
+        node i₁ nodes₁ == node i₂ nodes₂ = dec-cong₂ node-injective (i₁ N.≟ i₂) (nodes₁ ==Just nodes₂)
 
         -- This is just to make the termination checker happy
-        _==⋆_ : DecEqFun (List Tree)
-        [] ==⋆ [] = yes refl
-        [] ==⋆ (node₂ ∷ nodes₂) = no (λ ())
-        (node₁ ∷ nodes₁) ==⋆ [] = no (λ ())
-        (node₁ ∷ nodes₁) ==⋆ (node₂ ∷ nodes₂) = dec-cong₂ LP.∷-injective (node₁ == node₂) (nodes₁ ==⋆ nodes₂)
+        _==Just_ : DecEqFun (List Tree)
+        [] ==Just [] = yes refl
+        [] ==Just (node₂ ∷ nodes₂) = no (λ ())
+        (node₁ ∷ nodes₁) ==Just [] = no (λ ())
+        (node₁ ∷ nodes₁) ==Just (node₂ ∷ nodes₂) = dec-cong₂ LP.∷-injective (node₁ == node₂) (nodes₁ ==Just nodes₂)
 
 instance
   Tree-Tree : ToTree Tree
-  Tree-Tree = tree id id (λ x → refl)
+  Tree-Tree = tree id Just (λ x → refl)
 
   ToTree-dec-eq : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → DecEq A
   ToTree-dec-eq {{t}} = decEq (to-eqfun t)
     where to-eqfun : ∀ {a} {A : Set a} → ToTree A → DecEqFun A
           to-eqfun t = Inverse-eqFun {{Tree-eq-dec}} (ToTree.fromTree t , ToTree.invTree t)
+
+  ¿-Tree : ∀ {a} {A : Set a} {{_ : ToTree A}} → ToTree (¿ A)
+  ¿-Tree = tree (λ {Nothing → T₀ 0 ; (Just v) → T₁ 1 v })
+                (λ {(node 0 _) → Just Nothing ; (node 1 (v ∷ _)) → Just (fromTree v) ; _ → Nothing })
+                (λ {Nothing → refl ; (Just v) → cong Just (invTree v) })

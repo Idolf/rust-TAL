@@ -35,75 +35,75 @@ private
     regs↓ (τ ∷ τs) = T₂ 1 (τ↓ τ) (regs↓ τs)
 
   mutual
-    τ↑ : Tree → Type
-    τ↑ (node 0 (ι ∷ _)) = α⁼ (fromTree ι)
-    τ↑ (node 1 _) = int
-    τ↑ (node 2 _) = ns
-    τ↑ (node 3 (Δ ∷ Γ ∷ _)) = ∀[ Δ↑ Δ ] Γ↑ Γ
-    τ↑ (node 4 (τs ∷ _)) = tuple (τs↑ τs)
-    τ↑ _ = ns
+    τ↑ : Tree → ¿ Type
+    τ↑ (node 0 (ι ∷ _)) = α⁼ <$> fromTree ι
+    τ↑ (node 1 _) = Just int
+    τ↑ (node 2 _) = Just ns
+    τ↑ (node 3 (Δ ∷ Γ ∷ _)) = ∀[_]_ <$> Δ↑ Δ <*> Γ↑ Γ
+    τ↑ (node 4 (τs ∷ _)) = tuple <$> τs↑ τs
+    τ↑ _ = Nothing
 
-    τs↑ : Tree → List (Type × InitializationFlag)
-    τs↑ (node 0 _) = []
-    τs↑ (node 1 (τ ∷ φ ∷ τs ∷ _)) = (τ↑ τ , fromTree φ) ∷ τs↑ τs
-    τs↑ _ = []
+    τs↑ : Tree → ¿ List (Type × InitializationFlag)
+    τs↑ (node 0 _) = Just []
+    τs↑ (node 1 (τ ∷ φ ∷ τs ∷ _)) = (λ τ φ τs → (τ , φ) ∷ τs) <$> τ↑ τ <*> fromTree φ <*> τs↑ τs
+    τs↑ _ = Nothing
 
-    σ↑ : Tree → StackType
-    σ↑ (node 0 (ι ∷ _)) = ρ⁼ (fromTree ι)
-    σ↑ (node 1 _) = nil
-    σ↑ (node 2 (τ ∷ σ ∷ _)) = τ↑ τ ∷ σ↑ σ
-    σ↑ _ = nil
+    σ↑ : Tree → ¿ StackType
+    σ↑ (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
+    σ↑ (node 1 _) = Just nil
+    σ↑ (node 2 (τ ∷ σ ∷ _)) = _∷_ <$> τ↑ τ <*> σ↑ σ
+    σ↑ _ = Nothing
 
-    Δ↑ : Tree → TypeAssignment
-    Δ↑ (node 0 _) = ∙
-    Δ↑ (node 1 (a ∷ Δ ∷ _)) = a↑ a , Δ↑ Δ
-    Δ↑ _ = ∙
+    Δ↑ : Tree → ¿ TypeAssignment
+    Δ↑ (node 0 _) = Just ∙
+    Δ↑ (node 1 (a ∷ Δ ∷ _)) = _,_ <$> a↑ a <*> Δ↑ Δ
+    Δ↑ _ = Nothing
 
-    a↑ : Tree → TypeAssignmentValue
-    a↑ (node 0 _) = α
-    a↑ (node 1 _) = ρ
-    a↑ _ = ρ
+    a↑ : Tree → ¿ TypeAssignmentValue
+    a↑ (node 0 _) = Just α
+    a↑ (node 1 _) = Just ρ
+    a↑ _ = Nothing
 
-    Γ↑ : Tree → RegisterAssignment
-    Γ↑ (node _ (regs ∷ sp ∷ _)) = registerₐ (regs↑ regs) (σ↑ sp)
-    Γ↑ _ = registerₐ (repeat ns) nil
+    Γ↑ : Tree → ¿ RegisterAssignment
+    Γ↑ (node _ (regs ∷ sp ∷ _)) = registerₐ <$> regs↑ regs <*> σ↑ sp
+    Γ↑ _ = Nothing
 
-    regs↑ : ∀ {m} → Tree → Vec Type m
-    regs↑ {zero} (node 0 _) = []
-    regs↑ {suc i} (node 1 (τ ∷ τs ∷ _)) = τ↑ τ ∷ regs↑ τs
-    regs↑ _ = repeat ns
+    regs↑ : ∀ {m} → Tree → ¿ Vec Type m
+    regs↑ {zero} (node 0 _) = Just []
+    regs↑ {suc i} (node 1 (τ ∷ τs ∷ _)) = _∷_ <$> τ↑ τ <*> regs↑ τs
+    regs↑ _ = Nothing
 
   mutual
     τ≡ : IsInverse τ↓ τ↑
     τ≡ (α⁼ ι) = refl
     τ≡ int = refl
     τ≡ ns = refl
-    τ≡ (∀[ Δ ] Γ) = cong₂ ∀[_]_ (Δ≡ Δ) (Γ≡ Γ)
-    τ≡ (tuple τs) = cong tuple (τs≡ τs)
+    τ≡ (∀[ Δ ] Γ) = ∀[_]_ <$=> Δ≡ Δ <*=> Γ≡ Γ
+    τ≡ (tuple τs) = tuple <$=> τs≡ τs
 
     τs≡ : IsInverse τs↓ τs↑
     τs≡ [] = refl
-    τs≡ ((τ , φ) ∷ τs) = cong₃ (λ τ φ τs → (τ , φ) ∷ τs) (τ≡ τ) (invTree φ) (τs≡ τs)
+    τs≡ ((τ , φ) ∷ τs) = (λ τ φ τs → (τ , φ) ∷ τs) <$=> τ≡ τ <*=> invTree φ <*=> τs≡ τs
 
     σ≡ : IsInverse σ↓ σ↑
     σ≡ (ρ⁼ ι) = refl
     σ≡ nil = refl
-    σ≡ (τ ∷ σ) = cong₂ _∷_ (τ≡ τ) (σ≡ σ)
+    σ≡ (τ ∷ σ) = _∷_ <$=> τ≡ τ <*=> σ≡ σ
 
     Δ≡ : IsInverse Δ↓ Δ↑
     Δ≡ ∙ = refl
-    Δ≡ (a , Δ) = cong₂ _,_ (a≡ a) (Δ≡ Δ)
+    Δ≡ (a , Δ) = _,_ <$=> a≡ a <*=> Δ≡ Δ
 
     a≡ : IsInverse a↓ a↑
     a≡ α = refl
     a≡ ρ = refl
 
     Γ≡ : IsInverse Γ↓ Γ↑
-    Γ≡ (registerₐ regs sp) = cong₂ registerₐ (regs≡ regs) (σ≡ sp)
+    Γ≡ (registerₐ regs sp) = registerₐ <$=> regs≡ regs <*=> σ≡ sp
 
     regs≡ : ∀ {m} → IsInverse (regs↓ {m}) regs↑
     regs≡ [] = refl
-    regs≡ (τ ∷ τs) = cong₂ _∷_ (τ≡ τ) (regs≡ τs)
+    regs≡ (τ ∷ τs) = _∷_ <$=> τ≡ τ <*=> regs≡ τs
 
 instance
   Type-Tree : ToTree Type
@@ -126,13 +126,13 @@ instance
     where to : InstantiationValue → Tree
           to (inst-ρ σ) = T₁ 0 σ
           to (inst-α τ) = T₁ 1 τ
-          from : Tree → InstantiationValue
-          from (node 0 (σ ∷ _)) = inst-ρ (fromTree σ)
-          from (node 1 (τ ∷ _)) = inst-α (fromTree τ)
-          from _ = inst-ρ default
+          from : Tree → ¿ InstantiationValue
+          from (node 0 (σ ∷ _)) = inst-ρ <$> fromTree σ
+          from (node 1 (τ ∷ _)) = inst-α <$> fromTree τ
+          from _ = Nothing
           eq : IsInverse to from
-          eq (inst-ρ σ) = cong inst-ρ (invTree σ)
-          eq (inst-α τ) = cong inst-α (invTree τ)
+          eq (inst-ρ σ) = inst-ρ <$=> invTree σ
+          eq (inst-α τ) = inst-α <$=> invTree τ
 
   WordValue-Tree : ToTree WordValue
   WordValue-Tree = tree to from eq
@@ -143,21 +143,21 @@ instance
           to ns = T₀ 3
           to (uninit τ) = T₁ 4 τ
           to (w ⟦ i ⟧) = T₂ 5 (to w) i
-          from : Tree → WordValue
-          from (node 0 (l ∷ _)) = globval (fromTree l)
-          from (node 1 (lₕ ∷ _)) = heapval (fromTree lₕ)
-          from (node 2 (n ∷ _)) = const (fromTree n)
-          from (node 3 _) = ns
-          from (node 4 (τ ∷ _)) = uninit (fromTree τ)
-          from (node 5 (w ∷ i ∷ _)) = from w ⟦ fromTree i ⟧
-          from _ = ns
+          from : Tree → ¿ WordValue
+          from (node 0 (l ∷ _)) = globval <$> fromTree l
+          from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
+          from (node 2 (n ∷ _)) = const <$> fromTree n
+          from (node 3 _) = Just ns
+          from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
+          from (node 5 (w ∷ i ∷ _)) = _⟦_⟧ <$> from w <*> fromTree i
+          from _ = Nothing
           eq : IsInverse to from
           eq (globval l) = refl
           eq (heapval lₕ) = refl
           eq (const n) = refl
           eq ns = refl
-          eq (uninit τ) = cong uninit (invTree τ)
-          eq (w ⟦ i ⟧) = cong₂ _⟦_⟧ (eq w) (invTree i)
+          eq (uninit τ) = uninit <$=> invTree τ
+          eq (w ⟦ i ⟧) = _⟦_⟧ <$=> eq w <*=> invTree i
 
   SmallValue-Tree : ToTree SmallValue
   SmallValue-Tree = tree to from eq
@@ -165,15 +165,15 @@ instance
           to (reg ♯r) = T₁ 0 ♯r
           to (word w) = T₁ 1 w
           to (v ⟦ i ⟧ᵥ) = T₂ 2 (to v) i
-          from : Tree → SmallValue
-          from (node 0 (♯r ∷ _)) = reg (fromTree ♯r)
-          from (node 1 (w ∷ _)) = word (fromTree w)
-          from (node 2 (v ∷ i ∷ _)) = from v ⟦ fromTree i ⟧ᵥ
-          from _ = reg default
+          from : Tree → ¿ SmallValue
+          from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
+          from (node 1 (w ∷ _)) = word <$> fromTree w
+          from (node 2 (v ∷ i ∷ _)) = _⟦_⟧ᵥ <$> from v <*> fromTree i
+          from _ = Nothing
           eq : IsInverse to from
-          eq (reg ♯r) = cong reg (invTree ♯r)
-          eq (word w) = cong word (invTree w)
-          eq (v ⟦ i ⟧ᵥ) = cong₂ _⟦_⟧ᵥ (eq v) (invTree i)
+          eq (reg ♯r) = reg <$=> (invTree ♯r)
+          eq (word w) = word <$=> (invTree w)
+          eq (v ⟦ i ⟧ᵥ) = _⟦_⟧ᵥ <$=> eq v <*=> invTree i
 
   Instruction-Tree : ToTree Instruction
   Instruction-Tree = tree to from eq
@@ -187,60 +187,60 @@ instance
           to (sst i ♯r) = T₂ 6 i ♯r
           to (ld ♯r₁ ♯r₂ i) = T₃ 7 ♯r₁ ♯r₂ i
           to (st ♯r₁ i ♯r₂) = T₃ 8 ♯r₁ i ♯r₂
-          from : Tree → Instruction
-          from (node 0 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) = add (fromTree ♯r₁) (fromTree ♯r₂) (fromTree v)
-          from (node 1 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) = sub (fromTree ♯r₁) (fromTree ♯r₂) (fromTree v)
-          from (node 2 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) = mul (fromTree ♯r₁) (fromTree ♯r₂) (fromTree v)
-          from (node 3 (v ∷ _)) = push (fromTree v)
-          from (node 4 _) = pop
-          from (node 5 (♯r ∷ i ∷ _)) = sld (fromTree ♯r) (fromTree i)
-          from (node 6 (i ∷ ♯r ∷ _)) = sst (fromTree i) (fromTree ♯r)
-          from (node 7 (♯r₁ ∷ ♯r₂ ∷ i ∷ _)) = ld (fromTree ♯r₁) (fromTree ♯r₂) (fromTree i)
-          from (node 8 (♯r₁ ∷ i ∷ ♯r₂ ∷ _)) = st (fromTree ♯r₁) (fromTree i) (fromTree ♯r₂)
-          from _ = pop
+          from : Tree → ¿ Instruction
+          from (node 0 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) = add <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
+          from (node 1 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) = sub <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
+          from (node 2 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) = mul <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
+          from (node 3 (v ∷ _)) = push <$> fromTree v
+          from (node 4 _) = Just pop
+          from (node 5 (♯r ∷ i ∷ _)) = sld <$> fromTree ♯r <*> fromTree i
+          from (node 6 (i ∷ ♯r ∷ _)) = sst <$> fromTree i <*> fromTree ♯r
+          from (node 7 (♯r₁ ∷ ♯r₂ ∷ i ∷ _)) = ld <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree i
+          from (node 8 (♯r₁ ∷ i ∷ ♯r₂ ∷ _)) = st <$> fromTree ♯r₁ <*> fromTree i <*> fromTree ♯r₂
+          from _ = Nothing
           eq : IsInverse to from
-          eq (add ♯r₁ ♯r₂ v) = cong₃ add (invTree ♯r₁) (invTree ♯r₂) (invTree v)
-          eq (sub ♯r₁ ♯r₂ v) = cong₃ sub (invTree ♯r₁) (invTree ♯r₂) (invTree v)
-          eq (mul ♯r₁ ♯r₂ v) = cong₃ mul (invTree ♯r₁) (invTree ♯r₂) (invTree v)
-          eq (push v) = cong push (invTree v)
+          eq (add ♯r₁ ♯r₂ v) = add <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
+          eq (sub ♯r₁ ♯r₂ v) = sub <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
+          eq (mul ♯r₁ ♯r₂ v) = mul <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
+          eq (push v) = push <$=> invTree v
           eq pop = refl
-          eq (sld ♯r i) = cong₂ sld (invTree ♯r) (invTree i)
-          eq (sst i ♯r) = cong₂ sst (invTree i) (invTree ♯r)
-          eq (ld ♯r₁ ♯r₂ i) = cong₃ ld (invTree ♯r₁) (invTree ♯r₂) (invTree i)
-          eq (st ♯r₁ i ♯r₂) = cong₃ st (invTree ♯r₁) (invTree i) (invTree ♯r₂)
+          eq (sld ♯r i) = sld <$=> invTree ♯r <*=> invTree i
+          eq (sst i ♯r) = sst <$=> invTree i <*=> invTree ♯r
+          eq (ld ♯r₁ ♯r₂ i) = ld <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree i
+          eq (st ♯r₁ i ♯r₂) = st <$=> invTree ♯r₁ <*=> invTree i <*=> invTree ♯r₂
 
   InstructionSequence-Tree : ToTree InstructionSequence
   InstructionSequence-Tree = tree to from eq
     where to : InstructionSequence → Tree
           to (I ~> Is) = T₂ 0 I (to Is)
           to (jmp v) = T₁ 1 v
-          from : Tree → InstructionSequence
-          from (node 0 (I ∷ Is ∷ _)) = fromTree I ~> from Is
-          from (node 1 (v ∷ _)) = jmp (fromTree v)
-          from _ = jmp default
+          from : Tree → ¿ InstructionSequence
+          from (node 0 (I ∷ Is ∷ _)) = _~>_ <$> fromTree I <*> from Is
+          from (node 1 (v ∷ _)) = jmp <$> fromTree v
+          from _ = Nothing
           eq : IsInverse to from
-          eq (I ~> Is) = cong₂ _~>_ (invTree I) (eq Is)
-          eq (jmp v) = cong jmp (invTree v)
+          eq (I ~> Is) = _~>_ <$=> invTree I <*=> eq Is
+          eq (jmp v) = jmp <$=> invTree v
 
   GlobalValue-Tree : ToTree GlobalValue
   GlobalValue-Tree = tree
     (λ { (∀ᵢ[ Δ ] Γ ∙ Is) → T₃ 0 Δ Γ Is })
-    (λ { (node _ (Δ ∷ Γ ∷ Is ∷ _)) → ∀ᵢ[ fromTree Δ ] fromTree Γ ∙ fromTree Is
-       ; _ → ∀ᵢ[ default ] default ∙ default })
-    (λ { (∀ᵢ[ Δ ] Γ ∙ Is) → cong₃ ∀ᵢ[_]_∙_ (invTree Δ) (invTree Γ) (invTree Is) })
+    (λ { (node _ (Δ ∷ Γ ∷ Is ∷ _)) → ∀ᵢ[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree Is
+       ; _ → Nothing })
+    (λ { (∀ᵢ[ Δ ] Γ ∙ Is) → ∀ᵢ[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree Is })
 
   RegisterFile-Tree : ToTree RegisterFile
   RegisterFile-Tree = tree
     (λ { (register regs stack) → T₂ 0 regs stack })
-    (λ { (node _ (regs ∷ stack ∷ [])) → register (fromTree regs) (fromTree stack) ; _ → register default default })
-    (λ { (register regs stack) → cong₂ register (invTree regs) (invTree stack) })
+    (λ { (node _ (regs ∷ stack ∷ [])) → register <$> fromTree regs <*> fromTree stack ; _ → Nothing })
+    (λ { (register regs stack) → register <$=> invTree regs <*=> invTree stack })
 
   Program-Tree : ToTree Program
   Program-Tree = tree
     (λ { (program globals heap registers instructions) → T₄ 0 globals heap registers instructions })
     (λ { (node _ (globals ∷ heap ∷ registers ∷ instructions ∷ _)) →
-               program (fromTree globals) (fromTree heap) (fromTree registers) (fromTree instructions)
-       ; _ → program default default default default })
+               program <$> fromTree globals <*> fromTree heap <*> fromTree registers <*> fromTree instructions
+       ; _ → Nothing })
     (λ { (program globals heap registers instructions) →
-               cong₄ program (invTree globals) (invTree heap) (invTree registers) (invTree instructions)
+               program <$=> invTree globals <*=> invTree heap <*=> invTree registers <*=> invTree instructions
     })

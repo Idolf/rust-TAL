@@ -5,6 +5,7 @@ open import Data.List.All using (All) public
 open import Data.List.Properties using () renaming (∷-injective to List-∷-injective) public
 
 open import Util.Tree
+open import Util.Maybe
 open import Util.Function
 open import Util.Eq
 open import Util.Nat
@@ -24,8 +25,11 @@ instance
   List-Tree = tree to from eq
     where to : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → List A → Tree
           to xs = node 0 (map toTree xs)
-          from : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → Tree → List A
-          from (node _ xs) = map fromTree xs
-          eq : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → IsInverse (to {{t}}) (from {{t}})
+          from' : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → List Tree → ¿ List A
+          from' [] = Just []
+          from' {{t}} (x ∷ xs) = _∷_ <$> fromTree {{t}} x <*> from' {{t}} xs
+          from : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → Tree → ¿ List A
+          from (node _ xs) = from' xs
+          eq : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → IsInverse (to {{t}}) from
           eq [] = refl
-          eq (x ∷ xs) = cong₂ _∷_ (invTree x) (eq xs)
+          eq (x ∷ xs) = _∷_ <$=> invTree x <*=> eq xs

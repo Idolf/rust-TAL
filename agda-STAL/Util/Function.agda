@@ -3,6 +3,7 @@ module Util.Function where
 open import Function using (_∘_ ; id) public
 
 open import Util.Eq
+open import Util.Maybe
 open import Data.Product using (_×_ ; ∃ ; _,_)
 open import Level
 
@@ -24,8 +25,8 @@ IsInj₄ : ∀ {a b c d e} {A : Set a} {B : Set b} {C : Set c}
 IsInj₄ f = ∀ {x₁ x₂ y₁ y₂ z₁ z₂ q₁ q₂} → f x₁ y₁ z₁ q₁ ≡ f x₂ y₂ z₂ q₂ → x₁ ≡ x₂ × y₁ ≡ y₂ × z₁ ≡ z₂ × q₁ ≡ q₂
 
 IsInverse : ∀ {a b} {A : Set a} {B : Set b}
-              (f : A → B) → (g : B → A) → Set a
-IsInverse f g = ∀ x → g (f x) ≡ x
+              (f : A → B) → (g : B → ¿ A) → Set a
+IsInverse f g = ∀ x → g (f x) ≡ Just x
 
 Inverse : ∀ {a b} {A : Set a} {B : Set b} →
             (f : A → B) → Set (a ⊔ b)
@@ -35,13 +36,13 @@ Inverse→Inj : ∀ {a b} {A : Set a} {B : Set b}
                 {f : A → B} →
                 Inverse f →
                 IsInj f
-Inverse→Inj {f = f} (g , eq₁) {x₁} {x₂} eq₂ =
+Inverse→Inj {f = f} (g , eq₁) {x₁} {x₂} eq₂ = Just-injective (
   begin
-    x₁
+    Just x₁
   ⟨ eq₁ x₁ ⟩≡
     g (f x₁)
   ≡⟨ eq₂ ∥ g ⟩
     g (f x₂)
   ≡⟨ eq₁ x₂ ⟩
-    x₂
-  ∎
+    Just x₂
+  ∎)
