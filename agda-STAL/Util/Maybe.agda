@@ -10,7 +10,7 @@ data ¿_ {a} (A : Set a) : Set a where
 Just-injective : ∀ {a} {A : Set a} {x y : A} → Just x ≡ Just y → x ≡ y
 Just-injective refl = refl
 
-infixl 5 _<$>_ _<*>_ _<$=>_ _<*=>_
+infixl 20 _<$>_ _<*>_ _<$=>_ _<*=>_
 _<$>_ : ∀ {a b} {A : Set a} {B : Set b} →
           (f : A → B) →
           ¿ A → ¿ B

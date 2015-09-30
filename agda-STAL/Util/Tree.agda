@@ -5,7 +5,7 @@ open import Util.Eq
 open import Util.Function
 open import Util.Maybe
 
-open import Data.Product using (_,_)
+open import Data.Product using (_,_ ; proj₁ ; proj₂)
 open import Data.Nat as N using (ℕ)
 open import Data.List using (List ; [] ; _∷_)
 import Data.List.Properties as LP
@@ -13,7 +13,7 @@ import Data.List.Properties as LP
 data Tree : Set where
   node : ℕ → List Tree → Tree
 
-node-injective : IsInj₂ node
+node-injective : IsInjective₂ node
 node-injective refl = refl , refl
 
 record ToTree {a} (A : Set a) : Set a where
@@ -23,13 +23,20 @@ record ToTree {a} (A : Set a) : Set a where
     fromTree : Tree → ¿ A
     invTree : IsInverse toTree fromTree
 
+tree⋆ : ∀ {a} {A : Set a} →
+          (fromTree : Tree → ¿ A) →
+          IsSurjective fromTree →
+          ToTree A
+tree⋆ fromTree isSur = tree (proj₁ ∘ isSur) fromTree (proj₂ ∘ isSur)
+
 toTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → A → Tree
 toTree {{t}} = ToTree.toTree t
 
 fromTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → Tree → ¿ A
 fromTree {{t}} = ToTree.fromTree t
 
-invTree : ∀ {a} {A : Set a} {{t : ToTree A}} → IsInverse (toTree {{t}}) (fromTree {{t}})
+invTree : ∀ {a} {A : Set a} {{t : ToTree A}} →
+            IsInverse toTree fromTree
 invTree {{t}} = ToTree.invTree t
 
 T₀ : ℕ → Tree
@@ -59,14 +66,16 @@ private
     where
       mutual
         _==_ : DecEqFun Tree
-        node i₁ nodes₁ == node i₂ nodes₂ = dec-cong₂ node-injective (i₁ N.≟ i₂) (nodes₁ ==Just nodes₂)
+        node i₁ nodes₁ == node i₂ nodes₂ =
+          dec-cong₂ node-injective (i₁ N.≟ i₂) (nodes₁ ==Just nodes₂)
 
         -- This is just to make the termination checker happy
         _==Just_ : DecEqFun (List Tree)
         [] ==Just [] = yes refl
         [] ==Just (node₂ ∷ nodes₂) = no (λ ())
         (node₁ ∷ nodes₁) ==Just [] = no (λ ())
-        (node₁ ∷ nodes₁) ==Just (node₂ ∷ nodes₂) = dec-cong₂ LP.∷-injective (node₁ == node₂) (nodes₁ ==Just nodes₂)
+        (node₁ ∷ nodes₁) ==Just (node₂ ∷ nodes₂) =
+          dec-cong₂ LP.∷-injective (node₁ == node₂) (nodes₁ ==Just nodes₂)
 
 instance
   Tree-Tree : ToTree Tree
@@ -75,9 +84,12 @@ instance
   ToTree-dec-eq : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → DecEq A
   ToTree-dec-eq {{t}} = decEq (to-eqfun t)
     where to-eqfun : ∀ {a} {A : Set a} → ToTree A → DecEqFun A
-          to-eqfun t = Inverse-eqFun {{Tree-eq-dec}} (ToTree.fromTree t , ToTree.invTree t)
+          to-eqfun t = HasInverse-eqFun {{Tree-eq-dec}}
+                         (ToTree.fromTree t , ToTree.invTree t)
 
   ¿-Tree : ∀ {a} {A : Set a} {{_ : ToTree A}} → ToTree (¿ A)
-  ¿-Tree = tree (λ {Nothing → T₀ 0 ; (Just v) → T₁ 1 v })
-                (λ {(node 0 _) → Just Nothing ; (node 1 (v ∷ _)) → Just (fromTree v) ; _ → Nothing })
-                (λ {Nothing → refl ; (Just v) → cong Just (invTree v) })
+  ¿-Tree = tree⋆ (λ {(node 0 _)      → Just Nothing
+                  ; (node 1 (v ∷ _)) → Just <$> fromTree v
+                  ; _                → Nothing })
+                 (λ {Nothing         → T₀ 0   , refl
+                  ; (Just v)         → T₁ 1 v , Just <$=> invTree v })

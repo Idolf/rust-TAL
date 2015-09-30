@@ -66,7 +66,8 @@ mutual
       ⊢ Δ TypeAssignment
 
   infix 4 _⊢_RegisterAssignment
-  record _⊢_RegisterAssignment (Δ : TypeAssignment) (Γ : RegisterAssignment) : Set where
+  record _⊢_RegisterAssignment
+         (Δ : TypeAssignment) (Γ : RegisterAssignment) : Set where
     inductive
     field
       valid-regs : All (λ τ → Δ ⊢ τ Type) (toList (reg-types Γ))
@@ -88,7 +89,8 @@ data _⊢_≤τ_ (Δ : TypeAssignment) : Type → Type → Set where
     Δ ⊢ τ₁ ≤τ τ₃
 
 infix 4 _⊢_≤Γ_
-data _⊢_≤Γ_ (Δ : TypeAssignment) : RegisterAssignment → RegisterAssignment → Set where
+data _⊢_≤Γ_ (Δ : TypeAssignment) :
+     RegisterAssignment → RegisterAssignment → Set where
   refl :
              ∀ {Γ} →
     Δ ⊢ Γ RegisterAssignment →

@@ -96,7 +96,8 @@ mutual
   -- Global values, g
   infix 7 ∀ᵢ[_]_∙_
   data GlobalValue : Set where
-    ∀ᵢ[_]_∙_ : TypeAssignment → RegisterAssignment → InstructionSequence → GlobalValue
+    ∀ᵢ[_]_∙_ :
+      TypeAssignment → RegisterAssignment → InstructionSequence → GlobalValue
 
   -- Global constants, G
   Globals : Set
@@ -152,7 +153,8 @@ _++_ : TypeAssignment → TypeAssignment → TypeAssignment
 a , Δ ++ Δ' = a , (Δ ++ Δ')
 
 infix 4 _↓_⇒_
-data _↓_⇒_ : TypeAssignment → AssignmentIndex → TypeAssignmentValue → Set where
+data _↓_⇒_ :
+    TypeAssignment → AssignmentIndex → TypeAssignmentValue → Set where
   here :
         ∀ {Δ a} →
     ----------------
