@@ -7,22 +7,19 @@ open import Data.Fin using (Fin ; zero ; suc ; toℕ ; fromℕ≤ ; #_) public
 open import Util.Maybe
 open import Util.Eq
 open import Util.Function
-open import Util.Dec
 open import Util.Tree
-open import Data.Nat using (_≤?_ ; suc)
-open import Data.Fin.Properties using (fromℕ≤-toℕ ; bounded)
+open import Data.List using ([])
+open import Data.Nat using (ℕ ; zero ; suc)
+open import Data.Product using (_,_ ; proj₁ ; proj₂)
 
 instance
   Fin-ToTree : ∀ {n} → ToTree (Fin n)
-  Fin-ToTree = tree to from eq
-    where to : ∀ {n} → Fin n → Tree
-          to v = T₀ (toℕ v)
-          from : ∀ {n} → Tree → ¿ Fin n
-          from {n} (node v _) with suc v ≤? n
-          from (node v _) | yes v<n = Just (fromℕ≤ v<n)
-          from (node v x) | no ¬v≮n = Nothing
-          eq : ∀ {n} → IsInverse (to {n}) from
-          eq {n} v with suc (toℕ v) ≤? n
-          eq v | yes v<n rewrite fromℕ≤-toℕ v v<n = refl
-          eq v | no v≮n with v≮n (bounded v)
-          eq v | no v≮n | ()
+  Fin-ToTree = tree⋆ (λ { (node n _) → from n })
+                     (λ v → node (proj₁ (sur v)) [] , proj₂ (sur v))
+    where from : ∀ {n} → ℕ → ¿ Fin n
+          from {zero} _ = Nothing
+          from {suc n} zero = Just zero
+          from {suc n} (suc i) = suc <$> from i
+          sur : ∀ {n} → IsSurjective (from {n})
+          sur zero = zero , refl
+          sur (suc v) = suc (proj₁ (sur v)) , suc <$=> proj₂ (sur v)

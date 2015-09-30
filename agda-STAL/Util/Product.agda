@@ -1,28 +1,16 @@
 module Util.Product where
 
+-- Re-exports
 open import Data.Product
   using (_×_ ; _,_ ; Σ ; Σ-syntax ; proj₁ ; proj₂ ; ∃)
   renaming (map to ×-map) public
-open import Util.Eq
-open import Util.Dec
-open import Util.Tree
+
+-- Local imports
 open import Util.Maybe
+open import Util.Eq
 open import Util.Function
-
+open import Util.Tree
 open import Data.List using (_∷_)
-
-×-,-injective : ∀ {a b} {A : Set a} {B : Set b} →
-                        {x₁ x₂ : A} {y₁ y₂ : B} →
-                        x₁ , y₁ ≡ x₂ , y₂ → x₁ ≡ x₂ × y₁ ≡ y₂
-×-,-injective refl = refl , refl
-
-×-assoc→ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
-             (A × B) × C → A × B × C
-×-assoc→ ((a , b) , c) = a , b , c
-
-×-assoc← : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
-             A × B × C → (A × B) × C
-×-assoc← (a , b , c) = (a , b) , c
 
 instance
   Product-Tree : ∀ {a b} {A : Set a} {B : A → Set b} →
