@@ -1,5 +1,6 @@
 module Util.Eq where
 
+-- Re-exports
 open import Relation.Binary.PropositionalEquality
   using (_≡_ ; refl ; cong ; cong₂ ; subst ; sym) public
 

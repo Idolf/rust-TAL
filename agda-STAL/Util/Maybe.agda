@@ -1,7 +1,9 @@
 module Util.Maybe where
 
+-- Local imports
 open import Relation.Binary.PropositionalEquality using (_≡_ ; refl)
 
+-- This is the "Maybe" datatype from Haskell
 infix 2 ¿_
 data ¿_ {a} (A : Set a) : Set a where
   Nothing : ¿ A
@@ -10,6 +12,7 @@ data ¿_ {a} (A : Set a) : Set a where
 Just-injective : ∀ {a} {A : Set a} {x y : A} → Just x ≡ Just y → x ≡ y
 Just-injective refl = refl
 
+-- fmap and applicative specialised to the Maybe functor
 infixl 20 _<$>_ _<*>_ _<$=>_ _<*=>_
 _<$>_ : ∀ {a b} {A : Set a} {B : Set b} →
           (f : A → B) →

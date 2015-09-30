@@ -1,10 +1,12 @@
 module Util.Function where
 
+-- Re-exports
 open import Function using (_∘_ ; id) public
 
-open import Util.Eq
+-- Local imports
 open import Util.Maybe
-open import Data.Product using (_×_ ; ∃ ; _,_ ; Σ-syntax ; proj₁ ; proj₂)
+open import Util.Eq
+open import Data.Product using (_×_ ; ∃ ; _,_)
 open import Level
 
 -- Some predicates on functions
@@ -23,11 +25,11 @@ HasInverse : ∀ {a b} {A : Set a} {B : Set b} →
             (f : A → B) → Set (a ⊔ b)
 HasInverse f = ∃ λ g → IsInverse f g
 
-HasInverse→Injective : ∀ {a b} {A : Set a} {B : Set b}
-                         {f : A → B} →
-                         HasInverse f →
-                         IsInjective f
-HasInverse→Injective {f = f} (g , eq₁) {x₁} {x₂} eq₂ =
+HasInverse→IsInjective : ∀ {a b} {A : Set a} {B : Set b}
+                           {f : A → B} →
+                           HasInverse f →
+                           IsInjective f
+HasInverse→IsInjective {f = f} (g , eq₁) {x₁} {x₂} eq₂ =
   Just-injective (
     begin
       Just x₁

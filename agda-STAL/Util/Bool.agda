@@ -1,11 +1,13 @@
 module Util.Bool where
 
+-- Re-exports
 open import Data.Bool using (Bool ; true ; false) public
 
-open import Data.Product using (_,_)
+-- Local imports
+open import Util.Maybe
 open import Util.Eq
 open import Util.Tree
-open import Util.Maybe
+open import Data.Product using (_,_)
 
 instance
   Bool-ToTree : ToTree Bool

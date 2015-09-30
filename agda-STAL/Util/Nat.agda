@@ -1,11 +1,12 @@
 module Util.Nat where
 
+-- Re-exports
 open import Data.Nat using (ℕ ; zero ; suc) public
-import Data.Nat as N
 
+-- Local imports
+open import Util.Maybe
 open import Util.Eq
 open import Util.Tree
-open import Util.Maybe
 
 instance
   ℕ-Tree : ToTree ℕ

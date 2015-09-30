@@ -1,14 +1,23 @@
 module Util.Tree where
 
-open import Util.Dec
-open import Util.Eq
-open import Util.Function
+-- Local imports
 open import Util.Maybe
-
+open import Util.Eq
+open import Util.Dec
+open import Util.Function
 open import Data.Product using (_,_ ; proj₁ ; proj₂)
 open import Data.Nat as N using (ℕ)
 open import Data.List using (List ; [] ; _∷_)
-import Data.List.Properties as LP
+open import Data.List.Properties using (∷-injective)
+
+
+-- The goal of this module is to establish an easy way to
+-- get decidable equality for any type A. This is done by
+-- creating a function (f : A → Tree) with an inverse
+-- (g : Tree → ¿ A). Here "Tree" is a type containing
+-- arbitrarily branching tree with a number at every nodes.
+-- Sine f has an inverse, it must be injective. Since we can
+-- decide equality on Tree, we can decide equality on A.
 
 data Tree : Set where
   node : ℕ → List Tree → Tree
@@ -75,17 +84,16 @@ private
         [] ==Just (node₂ ∷ nodes₂) = no (λ ())
         (node₁ ∷ nodes₁) ==Just [] = no (λ ())
         (node₁ ∷ nodes₁) ==Just (node₂ ∷ nodes₂) =
-          dec-cong₂ LP.∷-injective (node₁ == node₂) (nodes₁ ==Just nodes₂)
+          dec-cong₂ ∷-injective (node₁ == node₂) (nodes₁ ==Just nodes₂)
 
 instance
   Tree-Tree : ToTree Tree
   Tree-Tree = tree id Just (λ x → refl)
 
   ToTree-dec-eq : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → DecEq A
-  ToTree-dec-eq {{t}} = decEq (to-eqfun t)
-    where to-eqfun : ∀ {a} {A : Set a} → ToTree A → DecEqFun A
-          to-eqfun t = HasInverse-eqFun {{Tree-eq-dec}}
-                         (ToTree.fromTree t , ToTree.invTree t)
+  ToTree-dec-eq {{t}} = decEq (
+    HasInverse→DecEqFun {{Tree-eq-dec}}
+      (ToTree.fromTree t , ToTree.invTree t))
 
   ¿-Tree : ∀ {a} {A : Set a} {{_ : ToTree A}} → ToTree (¿ A)
   ¿-Tree = tree⋆ (λ {(node 0 _)      → Just Nothing

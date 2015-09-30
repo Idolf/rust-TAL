@@ -1,14 +1,15 @@
 module Util.Dec where
 
+-- Re-exports
 open import Relation.Nullary using (Dec ; yes ; no ; ¬_) public
 
-open import Util.Function
+-- Local imports
 open import Util.Eq
-open import Data.Product using (_,_ ; _×_ ; proj₁ ; proj₂)
-open import Function using (_∘_)
-open import Level
+open import Util.Function
+open import Data.Product using (proj₁ ; proj₂)
 
--- Some "typeclasses"
+-- A "typeclass" for decidable equality
+-- I know there is one in the standard library, but this one is simpler
 DecEqFun : ∀ {ℓ} (A : Set ℓ) → Set ℓ
 DecEqFun A = (x y : A) → Dec (x ≡ y)
 
@@ -40,17 +41,17 @@ dec-cong₂ isInj (yes refl) (yes refl) = yes refl
 dec-cong₂ isInj (no ¬eq) _ = no (¬eq ∘ proj₁ ∘ isInj)
 dec-cong₂ isInj _ (no ¬eq) = no (¬eq ∘ proj₂ ∘ isInj)
 
-dec-inj : ∀ {a b} {A : Set a} {B : Set b}
-            {{_ : DecEq B}} →
-            {f : A → B} → IsInjective f →
-            DecEqFun A
-dec-inj {f = f} isInj x₁ x₂ with f x₁ ≟ f x₂
-dec-inj {f = f} isInj x₁ x₂ | yes eq = yes (isInj eq)
-dec-inj {f = f} isInj x₁ x₂ | no ¬eq = no (¬eq ∘ cong f)
+IsInjective→DecEqFun : ∀ {a b} {A : Set a} {B : Set b}
+                         {{_ : DecEq B}} →
+                         {f : A → B} → IsInjective f →
+                         DecEqFun A
+IsInjective→DecEqFun {f = f} isInj x₁ x₂ with f x₁ ≟ f x₂
+IsInjective→DecEqFun {f = f} isInj x₁ x₂ | yes eq = yes (isInj eq)
+IsInjective→DecEqFun {f = f} isInj x₁ x₂ | no ¬eq = no (¬eq ∘ cong f)
 
-HasInverse-eqFun : ∀ {a b} {A : Set a} {B : Set b}
-                     {{_ : DecEq B}} →
-                     {f : A → B} →
-                     HasInverse f →
-                     DecEqFun A
-HasInverse-eqFun i = dec-inj (HasInverse→Injective i)
+HasInverse→DecEqFun : ∀ {a b} {A : Set a} {B : Set b}
+                        {{_ : DecEq B}} →
+                        {f : A → B} →
+                        HasInverse f →
+                        DecEqFun A
+HasInverse→DecEqFun = IsInjective→DecEqFun ∘ HasInverse→IsInjective

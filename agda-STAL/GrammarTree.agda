@@ -8,7 +8,7 @@ private
     τ-from (node 1 _) = Just int
     τ-from (node 2 _) = Just ns
     τ-from (node 3 (Δ ∷ Γ ∷ _)) = ∀[_]_ <$> Δ-from Δ <*> Γ-from Γ
-    τ-from (node 4 (τs ∷ _)) = tuple <$> τs-from τs
+    τ-from (node 4 τs) = tuple <$> τs-from τs
     τ-from _ = Nothing
 
     τ-sur : IsSurjective τ-from
@@ -17,20 +17,20 @@ private
     τ-sur ns = T₀ 2 , refl
     τ-sur (∀[ Δ ] Γ) = T₂ 3 (proj₁ (Δ-sur Δ)) (proj₁ (Γ-sur Γ)) ,
       ∀[_]_ <$=> proj₂ (Δ-sur Δ) <*=> proj₂ (Γ-sur Γ)
-    τ-sur (tuple τs) = T₁ 4 (proj₁ (τs-sur τs)) ,
+    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
       tuple <$=> proj₂ (τs-sur τs)
 
-    τs-from : Tree → ¿ List (Type × InitializationFlag)
-    τs-from (node 0 _) = Just []
-    τs-from (node 1 (τ ∷ φ ∷ τs ∷ _)) =
+    τs-from : List Tree → ¿ List (Type × InitializationFlag)
+    τs-from [] = Just []
+    τs-from (node _ (τ ∷ φ ∷ _) ∷ τs) =
       (λ τ φ τs → (τ , φ) ∷ τs) <$> τ-from τ <*> fromTree φ <*> τs-from τs
     τs-from _ = Nothing
 
     τs-sur : IsSurjective τs-from
-    τs-sur [] = T₀ 0 , refl
-    τs-sur ((τ , φ) ∷ τs) = T₃ 1 (proj₁ (τ-sur τ)) φ (proj₁ (τs-sur τs)) ,
-      (λ τ φ τs → (τ , φ) ∷ τs) <$=>
-        proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur τs)
+    τs-sur [] = [] , refl
+    τs-sur ((τ , φ) ∷ τs) = (T₂ 0 (proj₁ (τ-sur τ)) φ ∷ proj₁ (τs-sur τs)) ,
+      (λ τ φ τs → (τ , φ) ∷ τs)
+        <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur τs)
 
     σ-from : Tree → ¿ StackType
     σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
@@ -64,24 +64,24 @@ private
     a-sur ρ = T₀ 1 , refl
 
     Γ-from : Tree → ¿ RegisterAssignment
-    Γ-from (node _ (regs ∷ sp ∷ _)) =
+    Γ-from (node _ (sp ∷ regs)) =
       registerₐ <$> regs-from regs <*> σ-from sp
     Γ-from _ = Nothing
 
     Γ-sur : IsSurjective Γ-from
     Γ-sur (registerₐ regs sp) =
-      T₂ 0 (proj₁ (regs-sur regs)) (proj₁ (σ-sur sp)) ,
+      node 0 (proj₁ (σ-sur sp) ∷ proj₁ (regs-sur regs)) ,
       registerₐ <$=> proj₂ (regs-sur regs) <*=> proj₂ (σ-sur sp)
 
-    regs-from : ∀ {m} → Tree → ¿ Vec Type m
-    regs-from {zero} (node 0 _) = Just []
-    regs-from {suc i} (node 1 (τ ∷ τs ∷ _)) =
-      _∷_ <$> τ-from τ <*> regs-from τs
-    regs-from _ = Nothing
+    regs-from : ∀ {m} → List Tree → ¿ Vec Type m
+    regs-from {zero}  []       = Just []
+    regs-from {zero}  (τ ∷ τs) = Nothing
+    regs-from {suc m} []       = Nothing
+    regs-from {suc m} (τ ∷ τs) = _∷_ <$> τ-from τ <*> regs-from τs
 
     regs-sur : ∀ {m} → IsSurjective (regs-from {m})
-    regs-sur [] = T₀ 0 , refl
-    regs-sur (τ ∷ τs) = T₂ 1 (proj₁ (τ-sur τ)) (proj₁ (regs-sur τs)) ,
+    regs-sur [] = [] , refl
+    regs-sur (τ ∷ τs) = (proj₁ (τ-sur τ) ∷ proj₁ (regs-sur τs)) ,
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (regs-sur τs)
 
 instance
