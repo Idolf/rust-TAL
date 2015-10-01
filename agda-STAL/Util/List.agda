@@ -1,8 +1,10 @@
 module Util.List where
 
 -- Re-exports
-open import Data.List using (List ; [] ; _∷_ ; [_] ; map ; length) public
-open import Data.List.All using (All) public
+open import Data.List
+  using (List ; [] ; _∷_ ; [_] ; map ; length ; zip ; _++_) public
+open import Data.List.All
+  using (All ; [] ; _∷_) renaming (map to All-map) public
 open import Data.List.Properties using ()
   renaming (∷-injective to List-∷-injective) public
 
@@ -12,15 +14,28 @@ open import Util.Eq
 open import Util.Function
 open import Util.Tree
 open import Data.Nat using (ℕ ; zero ; suc)
-open import Data.Product using (_,_ ; proj₁ ; proj₂)
+open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_)
 
-infix 4 _↓ₗ_⇒_
-data _↓ₗ_⇒_ {ℓ} {A : Set ℓ} : (xs : List A) → ℕ → A → Set ℓ where
+infix 4 _↓_⇒_
+data _↓_⇒_ {ℓ} {A : Set ℓ} : (xs : List A) → ℕ → A → Set ℓ where
   here  : ∀ {x xs} →
-            x ∷ xs ↓ₗ zero ⇒ x
+            x ∷ xs ↓ zero ⇒ x
   there : ∀ {x r xs i} →
-            xs ↓ₗ i ⇒ r →
-            x ∷ xs ↓ₗ suc i ⇒ r
+            xs ↓ i ⇒ r →
+            x ∷ xs ↓ suc i ⇒ r
+
+
+All-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
+            All (λ x → P (x , x)) L →
+            All P (zip L L)
+All-zip [] = []
+All-zip (p ∷ ps) = p ∷ All-zip ps
+
+All-unzip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
+              All P (zip L L) →
+              All (λ x → P (x , x)) L
+All-unzip {L = []} [] = []
+All-unzip {L = x ∷ L} (p ∷ ps) = p ∷ All-unzip ps
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)

@@ -8,7 +8,7 @@ private
     τ-from (node 1 _) = Just int
     τ-from (node 2 _) = Just ns
     τ-from (node 3 (Δ ∷ Γ ∷ _)) = ∀[_]_ <$> Δ-from Δ <*> Γ-from Γ
-    τ-from (node 4 τs) = tuple <$> τs-from τs
+    τ-from (node 4 τs) = (tuple ∘ proj₂) <$> τs-from τs
     τ-from _ = Nothing
 
     τ-sur : IsSurjective τ-from
@@ -17,20 +17,22 @@ private
     τ-sur ns = T₀ 2 , refl
     τ-sur (∀[ Δ ] Γ) = T₂ 3 (proj₁ (Δ-sur Δ)) (proj₁ (Γ-sur Γ)) ,
       ∀[_]_ <$=> proj₂ (Δ-sur Δ) <*=> proj₂ (Γ-sur Γ)
-    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
-      tuple <$=> proj₂ (τs-sur τs)
+    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur (_ , τs))) ,
+      (tuple ∘ proj₂) <$=> proj₂ (τs-sur (_ , τs))
 
-    τs-from : List Tree → ¿ List (Type × InitializationFlag)
-    τs-from [] = Just []
+    τs-from : List Tree → ¿ (∃ λ m → Vec InitType m)
+    τs-from [] = Just (0 , [])
     τs-from (node _ (τ ∷ φ ∷ _) ∷ τs) =
-      (λ τ φ τs → (τ , φ) ∷ τs) <$> τ-from τ <*> fromTree φ <*> τs-from τs
+      (λ τ φ → λ { (l , τs) → suc l , (τ , φ) ∷ τs })
+        <$> τ-from τ <*> fromTree φ <*> τs-from τs
     τs-from _ = Nothing
 
     τs-sur : IsSurjective τs-from
-    τs-sur [] = [] , refl
-    τs-sur ((τ , φ) ∷ τs) = (T₂ 0 (proj₁ (τ-sur τ)) φ ∷ proj₁ (τs-sur τs)) ,
-      (λ τ φ τs → (τ , φ) ∷ τs)
-        <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur τs)
+    τs-sur (zero , []) = [] , refl
+    τs-sur (suc l , (τ , φ) ∷ τs) =
+      T₂ 0 (proj₁ (τ-sur τ)) φ ∷ proj₁ (τs-sur (l , τs)) ,
+      (λ τ φ → λ { (l , τs) → suc l , (τ , φ) ∷ τs })
+        <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur (l , τs))
 
     σ-from : Tree → ¿ StackType
     σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
@@ -45,14 +47,14 @@ private
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (σ-sur σ)
 
     Δ-from : Tree → ¿ TypeAssignment
-    Δ-from (node 0 _) = Just ∙
-    Δ-from (node 1 (a ∷ Δ ∷ _)) = _,_ <$> a-from a <*> Δ-from Δ
+    Δ-from (node 0 _) = Just []
+    Δ-from (node 1 (a ∷ Δ ∷ _)) = _∷_ <$> a-from a <*> Δ-from Δ
     Δ-from _ = Nothing
 
     Δ-sur : IsSurjective Δ-from
-    Δ-sur ∙ = T₀ 0 , refl
-    Δ-sur (a , Δ) = T₂ 1 (proj₁ (a-sur a)) (proj₁ (Δ-sur Δ)) ,
-      _,_ <$=> proj₂ (a-sur a) <*=> proj₂ (Δ-sur Δ)
+    Δ-sur [] = T₀ 0 , refl
+    Δ-sur (a ∷ Δ) = T₂ 1 (proj₁ (a-sur a)) (proj₁ (Δ-sur Δ)) ,
+      _∷_ <$=> proj₂ (a-sur a) <*=> proj₂ (Δ-sur Δ)
 
     a-from : Tree → ¿ TypeAssignmentValue
     a-from (node 0 _) = Just α
@@ -65,13 +67,13 @@ private
 
     Γ-from : Tree → ¿ RegisterAssignment
     Γ-from (node _ (sp ∷ regs)) =
-      registerₐ <$> regs-from regs <*> σ-from sp
+      registerₐ <$> σ-from sp <*> regs-from regs
     Γ-from _ = Nothing
 
     Γ-sur : IsSurjective Γ-from
-    Γ-sur (registerₐ regs sp) =
+    Γ-sur (registerₐ sp regs) =
       node 0 (proj₁ (σ-sur sp) ∷ proj₁ (regs-sur regs)) ,
-      registerₐ <$=> proj₂ (regs-sur regs) <*=> proj₂ (σ-sur sp)
+      registerₐ <$=> proj₂ (σ-sur sp) <*=> proj₂ (regs-sur regs)
 
     regs-from : ∀ {m} → List Tree → ¿ Vec Type m
     regs-from {zero}  []       = Just []
@@ -90,9 +92,6 @@ instance
 
   StackType-Tree : ToTree StackType
   StackType-Tree = tree⋆ σ-from σ-sur
-
-  TypeAssignment-Tree : ToTree TypeAssignment
-  TypeAssignment-Tree = tree⋆ Δ-from Δ-sur
 
   TypeAssignmentValue-Tree : ToTree TypeAssignmentValue
   TypeAssignmentValue-Tree = tree⋆ a-from a-sur
@@ -197,10 +196,10 @@ instance
 
   RegisterFile-Tree : ToTree RegisterFile
   RegisterFile-Tree = tree⋆
-    (λ { (node _ (regs ∷ stack ∷ [])) →
-           register <$> fromTree regs <*> fromTree stack ; _ → Nothing })
-    (λ { (register regs stack) → T₂ 0 regs stack ,
-           register <$=> invTree regs <*=> invTree stack })
+    (λ { (node _ (stack ∷ regs ∷ [])) →
+           register <$> fromTree stack <*> fromTree regs ; _ → Nothing })
+    (λ { (register stack regs) → T₂ 0 stack regs ,
+           register <$=> invTree stack <*=> invTree regs })
 
   Program-Tree : ToTree Program
   Program-Tree = tree⋆

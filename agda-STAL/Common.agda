@@ -5,5 +5,8 @@ open import Util
 open import Grammar
 open import TypeJudgments
 
+-- Rules for definig subtyping
+open import Subtyping
+
 -- Mapping the grammar to a tree structure to get equality
 open import GrammarTree

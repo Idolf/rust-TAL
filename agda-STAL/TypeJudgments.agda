@@ -26,10 +26,18 @@ mutual
             Δ ⊢ ∀[ Δ' ] Γ Type
 
     valid-tuple :
-                  ∀ {τs} →
-      All ((λ τ → Δ ⊢ τ Type) ∘ proj₁) τs →
-      -------------------------------------
-              Δ ⊢ tuple τs Type
+         ∀ {m} {τs : Vec InitType m} →
+      Allᵥ (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs →
+      ---------------------------------
+             Δ ⊢ tuple τs Type
+
+  infix 4 _⊢_InitType
+  data _⊢_InitType (Δ : TypeAssignment) : InitType → Set where
+    valid-τ⁻ :
+             ∀ {τ φ} →
+            Δ ⊢ τ Type →
+        --------------------
+        Δ ⊢ τ , φ InitType
 
   infix 4  _⊢_StackType
   data _⊢_StackType (Δ : TypeAssignment) : StackType → Set where
@@ -54,52 +62,26 @@ mutual
   data ⊢_LabelAssignment : LabelAssignment → Set where
     valid-ψ :
               ∀ {ψ} →
-      All (λ τ → ∙ ⊢ τ Type) ψ →
-      --------------------------
+      All (λ τ → [] ⊢ τ Type) ψ →
+      ---------------------------
          ⊢ ψ LabelAssignment
 
   infix 4  ⊢_TypeAssignment
   data ⊢_TypeAssignment : TypeAssignment → Set where
-    valid-Δ :
-            ∀ {Δ} →
-      ------------------
-      ⊢ Δ TypeAssignment
+    valid-[] :
+      ⊢ [] TypeAssignment
+
+    valid-∷ :
+             ∀ {a Δ} →
+       ⊢ Δ TypeAssignment →
+      ----------------------
+      ⊢ a ∷ Δ TypeAssignment
 
   infix 4 _⊢_RegisterAssignment
   record _⊢_RegisterAssignment
          (Δ : TypeAssignment) (Γ : RegisterAssignment) : Set where
     inductive
+    constructor valid-Γ
     field
-      valid-regs : All (λ τ → Δ ⊢ τ Type) (toList (reg-types Γ))
       valid-sp : Δ ⊢ stack-type Γ StackType
-
-infix 4 _⊢_≤τ_
-data _⊢_≤τ_ (Δ : TypeAssignment) : Type → Type → Set where
-  refl :
-      ∀ {τ} →
-    Δ ⊢ τ Type →
-    ------------
-     Δ ⊢ τ ≤τ τ
-
-  trans :
-    ∀ {τ₁ τ₂ τ₃} →
-    Δ ⊢ τ₁ ≤τ τ₂ →
-    Δ ⊢ τ₂ ≤τ τ₃ →
-    --------------
-    Δ ⊢ τ₁ ≤τ τ₃
-
-infix 4 _⊢_≤Γ_
-data _⊢_≤Γ_ (Δ : TypeAssignment) :
-     RegisterAssignment → RegisterAssignment → Set where
-  refl :
-             ∀ {Γ} →
-    Δ ⊢ Γ RegisterAssignment →
-    --------------------------
-           Δ ⊢ Γ ≤Γ Γ
-
-  trans :
-    ∀ {Γ₁ Γ₂ Γ₃} →
-    Δ ⊢ Γ₁ ≤Γ Γ₂ →
-    Δ ⊢ Γ₂ ≤Γ Γ₃ →
-    --------------
-    Δ ⊢ Γ₁ ≤Γ Γ₃
+      valid-regs : Allᵥ (λ τ → Δ ⊢ τ Type) (reg-types Γ)

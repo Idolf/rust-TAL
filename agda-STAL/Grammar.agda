@@ -15,7 +15,7 @@ mutual
     int   : Type
     ns    : Type
     ∀[_]_ : TypeAssignment → RegisterAssignment → Type
-    tuple : List (Type × InitializationFlag) → Type
+    tuple : ∀ {m} → Vec InitType m → Type
 
   -- Stack types, σ
   infixr 5 _∷_
@@ -28,15 +28,17 @@ mutual
   InitializationFlag : Set
   InitializationFlag = Bool
 
+  -- Possible uninitialized type, τ⁻
+  InitType : Set
+  InitType = Type × InitializationFlag
+
   -- Label assignments, ψ
   LabelAssignment : Set
   LabelAssignment = List Type
 
   -- Type assignments, Δ
-  infixr 6 _,_
-  data TypeAssignment : Set where
-    ∙ : TypeAssignment
-    _,_ : TypeAssignmentValue → TypeAssignment → TypeAssignment
+  TypeAssignment : Set
+  TypeAssignment = List TypeAssignmentValue
 
   -- Type assignment values, a
   data TypeAssignmentValue : Set where
@@ -48,8 +50,8 @@ mutual
     inductive
     constructor registerₐ
     field
-      reg-types : Vec Type ♯regs
       stack-type : StackType
+      reg-types : Vec Type ♯regs
 
   -- Registers, ♯r
   Register : Set
@@ -108,8 +110,8 @@ mutual
     inductive
     constructor register
     field
-      regs  : Vec WordValue ♯regs
       stack : Stack
+      regs  : Vec WordValue ♯regs
 
   -- Stacks, S
   Stack : Set
@@ -146,22 +148,3 @@ mutual
 open RegisterAssignment public
 open RegisterFile public
 open Program public
-
-infixr 5 _++_
-_++_ : TypeAssignment → TypeAssignment → TypeAssignment
-∙ ++ Δ = Δ
-a , Δ ++ Δ' = a , (Δ ++ Δ')
-
-infix 4 _↓_⇒_
-data _↓_⇒_ :
-    TypeAssignment → AssignmentIndex → TypeAssignmentValue → Set where
-  here :
-        ∀ {Δ a} →
-    ----------------
-    a , Δ ↓ zero ⇒ a
-
-  there :
-      ∀ {Δ a a' ι} →
-        Δ ↓ ι ⇒ a →
-    ------------------
-    a' , Δ ↓ suc ι ⇒ a

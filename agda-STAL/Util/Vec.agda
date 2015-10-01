@@ -2,7 +2,8 @@ module Util.Vec where
 
 -- Re-exports
 open import Data.Vec
-  using (Vec ; [] ; _∷_ ; toList ; fromList) renaming (map to Vec-map) public
+  using (Vec ; [] ; _∷_ ; toList ; fromList)
+  renaming (map to Vec-map ; zip to Vec-zip) public
 open import Data.Vec.Properties
   using () renaming (∷-injective to Vec-∷-injective) public
 
@@ -12,13 +13,44 @@ open import Util.Eq
 open import Util.Function
 open import Util.Dec
 open import Util.Tree
-open import Data.Product using (_,_ ; proj₁ ; proj₂)
+open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_)
 open import Data.Nat using (zero ; suc)
 open import Data.List using (List ; map ; [] ; _∷_)
+open import Level using (_⊔_)
 
 repeat : ∀ {a} {A : Set a} {m} → A → Vec A m
 repeat {m = zero}  x = []
 repeat {m = suc i} x = x ∷ repeat x
+
+infixr 5 _∷_
+data Allᵥ {a p} {A : Set a} (P : A → Set p) :
+          ∀ {m} (L : Vec A m) → Set (a ⊔ p) where
+  [] : Allᵥ P []
+  _∷_ : ∀ {m x xs} → P x → Allᵥ P {m} xs → Allᵥ P (x ∷ xs)
+
+tabulate : ∀ {a p} {A : Set a} {P : A → Set p} {m xs} →
+             (∀ x → P x) → Allᵥ P {m} xs
+tabulate {xs = []}     hyp = []
+tabulate {xs = x ∷ xs} hyp = hyp x ∷ tabulate hyp
+
+Allᵥ-map : ∀ {a p} {A : Set a} {P Q : A → Set p} {m} {L : Vec A m} →
+             (f : ∀ {x} → P x → Q x) →
+             Allᵥ P L →
+             Allᵥ Q L
+Allᵥ-map f [] = []
+Allᵥ-map f (p ∷ ps) = f p ∷ Allᵥ-map f ps
+
+Allᵥ-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {m} {L : Vec A m} →
+             Allᵥ (λ x → P (x , x)) L →
+             Allᵥ P (Vec-zip L L)
+Allᵥ-zip [] = []
+Allᵥ-zip (p ∷ ps) = p ∷ Allᵥ-zip ps
+
+Allᵥ-unzip : ∀ {a p} {A : Set a} {P : A × A → Set p} {m} {L : Vec A m} →
+               Allᵥ P (Vec-zip L L) →
+               Allᵥ (λ x → P (x , x)) L
+Allᵥ-unzip {L = []} [] = []
+Allᵥ-unzip {L = x ∷ L} (p ∷ ps) = p ∷ Allᵥ-unzip ps
 
 instance
   Vec-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} → ToTree (Vec A m)
