@@ -1,7 +1,7 @@
 module Util.Nat where
 
 -- Re-exports
-open import Data.Nat using (ℕ ; zero ; suc) public
+open import Data.Nat using (ℕ ; zero ; suc ; _≤?_) public
 
 -- Local imports
 open import Util.Maybe

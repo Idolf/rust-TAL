@@ -15,6 +15,5 @@ open import Util.List public
 open import Util.Vec public
 open import Util.Product public
 
-
 -- Re-exports
 open import Data.Unit using (⊤ ; tt) public

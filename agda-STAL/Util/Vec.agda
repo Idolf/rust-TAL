@@ -52,6 +52,16 @@ Allᵥ-unzip : ∀ {a p} {A : Set a} {P : A × A → Set p} {m} {L : Vec A m} �
 Allᵥ-unzip {L = []} [] = []
 Allᵥ-unzip {L = x ∷ L} (p ∷ ps) = p ∷ Allᵥ-unzip ps
 
+Allᵥ-dec : ∀ {a p} {A : Set a} {P : A → Set p} {m} →
+             (f : (a : A) → Dec (P a)) →
+             (L : Vec A m) →
+             Dec (Allᵥ P L)
+Allᵥ-dec f [] = yes []
+Allᵥ-dec f (x ∷ L) with f x | Allᵥ-dec f L
+Allᵥ-dec f (x ∷ L) | yes x⋆ | yes xs⋆ = yes (x⋆ ∷ xs⋆)
+Allᵥ-dec f (x ∷ L) | no ¬x⋆ | _  = no (λ { (x⋆ ∷ xs⋆) → ¬x⋆ x⋆ })
+Allᵥ-dec f (x ∷ L) | _ | no ¬xs⋆ = no (λ { (x⋆ ∷ xs⋆) → ¬xs⋆ xs⋆ })
+
 instance
   Vec-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} → ToTree (Vec A m)
   Vec-Tree = tree⋆ (λ { (node _ xs) → from xs })

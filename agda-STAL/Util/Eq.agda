@@ -2,7 +2,7 @@ module Util.Eq where
 
 -- Re-exports
 open import Relation.Binary.PropositionalEquality
-  using (_≡_ ; refl ; cong ; cong₂ ; subst ; sym ; trans) public
+  using (_≡_ ; _≢_ ; refl ; cong ; cong₂ ; subst ; sym ; trans) public
 
 infixr 3 _∎
 infixr 2 _≡⟨_⟩_ _⟨_⟩≡_ _≡⟨_∥_⟩_ _⟨_∥_⟩≡_
