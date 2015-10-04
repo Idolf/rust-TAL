@@ -12,3 +12,6 @@ open import TypeJudgments
 
 -- Rules for definig subtyping
 open import Subtyping
+
+-- Substitution rules
+open import Substitution

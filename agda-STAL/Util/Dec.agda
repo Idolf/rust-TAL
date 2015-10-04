@@ -2,6 +2,7 @@ module Util.Dec where
 
 -- Re-exports
 open import Relation.Nullary using (Dec ; yes ; no ; ¬_) public
+open import Relation.Binary using (tri< ; tri≈ ; tri> ; Trichotomous) public
 
 -- Local imports
 open import Util.Eq

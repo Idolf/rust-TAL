@@ -42,15 +42,23 @@ mutual
       ---------------------
       Δ ⊢ τ₁ , φ ≤τ⁻ τ₂ , φ
 
+  infix 4 _⊢_≤σ_
+  data _⊢_≤σ_ (Δ : TypeAssignment) : StackType → StackType → Set where
+    σ-≤ :
+          ∀ {σ} →
+      Δ ⊢ σ StackType →
+      -----------------
+         Δ ⊢ σ ≤σ σ
+
   infix 4 _⊢_≤Γ_
   data _⊢_≤Γ_ (Δ : TypeAssignment) : (Γ₁ Γ₂ : RegisterAssignment) → Set where
     Γ-≤ :
-               ∀ {sp regs₁ regs₂} →
-                Δ ⊢ sp StackType →
+               ∀ {sp₁ sp₂ regs₁ regs₂} →
+                Δ ⊢ sp₁ ≤σ sp₂ →
        Allᵥ (λ { (τ₁ , τ₂) → Δ ⊢ τ₁ ≤τ τ₂ })
               (Vec-zip regs₁ regs₂) →
-      --------------------------------------------
-      Δ ⊢ registerₐ sp regs₁ ≤Γ registerₐ sp regs₂
+      ----------------------------------------------
+      Δ ⊢ registerₐ sp₁ regs₁ ≤Γ registerₐ sp₂ regs₂
 
 private
   mutual
@@ -128,23 +136,25 @@ private
     ... | _ | no τs⁻₁≰τs⁻₂ =
       no (λ { (τ₁≤τ₂ ∷ τs⁻₁≤τs⁻₂) → τs⁻₁≰τs⁻₂ τs⁻₁≤τs⁻₂ })
 
+    infix 4 _⊢_≤σ?_
+    _⊢_≤σ?_ : ∀ Δ σ₁ σ₂ → Dec (Δ ⊢ σ₁ ≤σ σ₂)
+    Δ ⊢ σ₁ ≤σ? σ₂ with σ₁ ≟ σ₂ | Δ ⊢? σ₁ Valid
+    Δ ⊢ σ  ≤σ? .σ | yes refl | yes σ⋆ = yes (σ-≤ σ⋆)
+    Δ ⊢ σ  ≤σ? .σ | yes refl | no ¬σ⋆ = no (λ { (σ-≤ σ⋆) → ¬σ⋆ σ⋆ })
+    Δ ⊢ σ₁ ≤σ? σ₂ | no σ₁≢σ₂ | _ = no (σ₁≢σ₂ ∘ help)
+      where help : ∀ {Δ σ₁ σ₂} →
+                   Δ ⊢ σ₁ ≤σ σ₂ → σ₁ ≡ σ₂
+            help (σ-≤ σ⋆) = refl
+
     infix 4 _⊢_≤Γ?_
     _⊢_≤Γ?_ : ∀ Δ Γ₁ Γ₂ → Dec (Δ ⊢ Γ₁ ≤Γ Γ₂)
     Δ ⊢ registerₐ sp₁ regs₁ ≤Γ? registerₐ sp₂ regs₂
-      with sp₁ ≟ sp₂ | Δ ⊢? sp₁ Valid | Δ ⊢ regs₁ ≤regs? regs₂
-    Δ ⊢ registerₐ sp  regs₁ ≤Γ? registerₐ .sp regs₂
-      | yes refl | yes sp⋆ | yes regs₁≤regs₂ = yes (Γ-≤ sp⋆ regs₁≤regs₂)
-    Δ ⊢ registerₐ sp  regs₁ ≤Γ? registerₐ .sp regs₂
-      | yes refl | no ¬sp⋆ | _ = no (λ { (Γ-≤ sp⋆ regs₁≤regs₂) → ¬sp⋆ sp⋆ })
-    Δ ⊢ registerₐ sp  regs₁ ≤Γ? registerₐ .sp regs₂
-      | yes refl | _ | no regs₁≰regs₂ =
-        no (λ { (Γ-≤ sp⋆ regs₁≤regs₂) → regs₁≰regs₂ regs₁≤regs₂ })
-    Δ ⊢ registerₐ sp₁ regs₁ ≤Γ? registerₐ sp₂ regs₂
-      | no sp₁≢sp₂ | _ | _ = no (sp₁≢sp₂ ∘ help)
-      where help : ∀ {Δ sp₁ sp₂ regs₁ regs₂} →
-                   Δ ⊢ registerₐ sp₁ regs₁ ≤Γ registerₐ sp₂ regs₂ → sp₁ ≡ sp₂
-            help (Γ-≤ sp⋆ regs₁≤regs₂) = refl
-
+      with Δ ⊢ sp₁ ≤σ? sp₂ | Δ ⊢ regs₁ ≤regs? regs₂
+    ... | yes sp₁≤sp₂ | yes regs₁≤regs₂ = yes (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    ... | no sp₁≰sp₂  | _ =
+      no (λ { (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) → sp₁≰sp₂ sp₁≤sp₂ })
+    ... | _ | no regs₁≰regs₂ =
+      no (λ { (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) → regs₁≰regs₂ regs₁≤regs₂ })
 
     infix 4 _⊢_≤regs?_
     _⊢_≤regs?_ : ∀ Δ {m} (regs₁ regs₂ : Vec Type m) →
@@ -175,14 +185,56 @@ private
     τs⁻-refl [] = []
     τs⁻-refl (τ⁻⋆ ∷ ps) = τ⁻-refl τ⁻⋆ ∷ τs⁻-refl ps
 
+    σ-refl : ∀ {Δ σ} → Δ ⊢ σ StackType → Δ ⊢ σ ≤σ σ
+    σ-refl σ⋆ = σ-≤ σ⋆
+
     Γ-refl : ∀ {Δ Γ} → Δ ⊢ Γ RegisterAssignment → Δ ⊢ Γ ≤Γ Γ
-    Γ-refl (valid-registerₐ sp⋆ regs⋆) = Γ-≤ sp⋆ (Allᵥ-zip (regs-refl regs⋆))
+    Γ-refl (valid-registerₐ sp⋆ regs⋆) =
+      Γ-≤ (σ-refl sp⋆) (Allᵥ-zip (regs-refl regs⋆))
 
     regs-refl : ∀ {Δ m} {regs : Vec Type m} →
                   Allᵥ (λ τ → Δ ⊢ τ Type) regs →
                   Allᵥ (λ τ → Δ ⊢ τ ≤τ τ) regs
     regs-refl {regs = []} [] = []
     regs-refl {regs = _ ∷ _} (τ⋆ ∷ regs⋆) = τ-refl τ⋆ ∷ regs-refl regs⋆
+
+  mutual
+    τ-trans : ∀ {Δ τ₁ τ₂ τ₃} → Δ ⊢ τ₁ ≤τ τ₂ → Δ ⊢ τ₂ ≤τ τ₃ → Δ ⊢ τ₁ ≤τ τ₃
+    τ-trans (α⁼-≤ τ⋆) (α⁼-≤ _) = α⁼-≤ τ⋆
+    τ-trans int-≤ int-≤ = int-≤
+    τ-trans ns-≤ ns-≤ = ns-≤
+    τ-trans (∀-≤ Δ'⋆ Γ₁₂≤) (∀-≤ _ Γ₂₃≤) = ∀-≤ Δ'⋆ (Γ-trans Γ₁₂≤ Γ₂₃≤)
+    τ-trans (tuple-≤ τs₁₂≤) (tuple-≤ τs₂₃≤) = tuple-≤ (τs⁻-trans τs₁₂≤ τs₂₃≤)
+
+    τ⁻-trans : ∀ {Δ τ⁻₁ τ⁻₂ τ⁻₃} → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ →
+                                   Δ ⊢ τ⁻₂ ≤τ⁻ τ⁻₃ →
+                                   Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₃
+    τ⁻-trans (τ⁻-≤ τ₁₂≤) (τ⁻-≤ τ₂₃≤) = τ⁻-≤ (τ-trans τ₁₂≤ τ₂₃≤)
+
+    τs⁻-trans :
+      ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec InitType m} →
+        Allᵥ (λ { (τ⁻₁ , τ⁻₂) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ }) (Vec-zip τs₁ τs₂) →
+        Allᵥ (λ { (τ⁻₂ , τ⁻₃) → Δ ⊢ τ⁻₂ ≤τ⁻ τ⁻₃ }) (Vec-zip τs₂ τs₃) →
+        Allᵥ (λ { (τ⁻₁ , τ⁻₃) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₃ }) (Vec-zip τs₁ τs₃)
+    τs⁻-trans {τs₁ = []} {[]} {[]} [] [] = []
+    τs⁻-trans {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} {τ₃ ∷ τs₃}
+      (τ₁₂≤ ∷ τs₁₂≤) (τ₂₃≤ ∷ τs₂₃≤) =
+        τ⁻-trans τ₁₂≤ τ₂₃≤ ∷ τs⁻-trans τs₁₂≤ τs₂₃≤
+
+    σ-trans : ∀ {Δ σ₁ σ₂ σ₃} → Δ ⊢ σ₁ ≤σ σ₂ → Δ ⊢ σ₂ ≤σ σ₃ → Δ ⊢ σ₁ ≤σ σ₃
+    σ-trans (σ-≤ σ₁⋆) (σ-≤ σ₂⋆) = σ-≤ σ₁⋆
+
+    Γ-trans : ∀ {Δ Γ₁ Γ₂ Γ₃} → Δ ⊢ Γ₁ ≤Γ Γ₂ → Δ ⊢ Γ₂ ≤Γ Γ₃ → Δ ⊢ Γ₁ ≤Γ Γ₃
+    Γ-trans (Γ-≤ sp₁₂≤ regs₁₂≤) (Γ-≤ sp₂₃≤ regs₂₃≤) =
+      Γ-≤ (σ-trans sp₁₂≤ sp₂₃≤) (regs-trans regs₁₂≤ regs₂₃≤)
+
+    regs-trans : ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec Type m} →
+                   Allᵥ (λ { (τ₁ , τ₂) → Δ ⊢ τ₁ ≤τ τ₂ }) (Vec-zip τs₁ τs₂) →
+                   Allᵥ (λ { (τ₂ , τ₃) → Δ ⊢ τ₂ ≤τ τ₃ }) (Vec-zip τs₂ τs₃) →
+                   Allᵥ (λ { (τ₁ , τ₃) → Δ ⊢ τ₁ ≤τ τ₃ }) (Vec-zip τs₁ τs₃)
+    regs-trans {τs₁ = []} {[]} {[]} [] [] = []
+    regs-trans {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} {τ₃ ∷ τs₃} (τ₁₂≤ ∷ τs₁₂≤)
+      (τ₂₃≤ ∷ τs₂₃≤) = τ-trans τ₁₂≤ τ₂₃≤ ∷ regs-trans τs₁₂≤ τs₂₃≤
 
   mutual
     τ-valid : ∀ {Δ τ₁ τ₂} → Δ ⊢ τ₁ ≤τ τ₂ → Δ ⊢ τ₁ Type × Δ ⊢ τ₂ Type
@@ -209,12 +261,17 @@ private
       with τ⁻-valid τ⁻≤ | τs⁻-valid ps
     ...   | τ⁻₁⋆ , τ⁻₂⋆ | τs₁⋆ , τs₂⋆ = τ⁻₁⋆ ∷ τs₁⋆ , τ⁻₂⋆ ∷ τs₂⋆
 
+    σ-valid : ∀ {Δ σ₁ σ₂} → Δ ⊢ σ₁ ≤σ σ₂ →
+                            Δ ⊢ σ₁ StackType ×
+                            Δ ⊢ σ₂ StackType
+    σ-valid (σ-≤ σ⋆) = σ⋆ , σ⋆
+
     Γ-valid : ∀ {Δ Γ₁ Γ₂} → Δ ⊢ Γ₁ ≤Γ Γ₂ →
                             Δ ⊢ Γ₁ RegisterAssignment ×
                             Δ ⊢ Γ₂ RegisterAssignment
-    Γ-valid  (Γ-≤ σ⋆ regs≤) with regs-valid regs≤
-    ... | regs₁⋆ , regs₂⋆ =
-      valid-registerₐ σ⋆ regs₁⋆ , valid-registerₐ σ⋆ regs₂⋆
+    Γ-valid  (Γ-≤ sp≤ regs≤) with σ-valid sp≤ | regs-valid regs≤
+    ... | sp₁⋆ , sp₂⋆ | regs₁⋆ , regs₂⋆ =
+      valid-registerₐ sp₁⋆ regs₁⋆ , valid-registerₐ sp₂⋆ regs₂⋆
 
     regs-valid :
       ∀ {Δ m} {τs₁ τs₂ : Vec Type m} →
@@ -225,41 +282,6 @@ private
     regs-valid {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} (τ≤ ∷ τs≤)
       with τ-valid τ≤ | regs-valid τs≤
     ...   | τ₁⋆ , τ₂⋆ | τs₁⋆ , τs₂⋆ = τ₁⋆ ∷ τs₁⋆ , τ₂⋆ ∷ τs₂⋆
-
-  mutual
-    τ-trans : ∀ {Δ τ₁ τ₂ τ₃} → Δ ⊢ τ₁ ≤τ τ₂ → Δ ⊢ τ₂ ≤τ τ₃ → Δ ⊢ τ₁ ≤τ τ₃
-    τ-trans (α⁼-≤ τ⋆) (α⁼-≤ _) = α⁼-≤ τ⋆
-    τ-trans int-≤ int-≤ = int-≤
-    τ-trans ns-≤ ns-≤ = ns-≤
-    τ-trans (∀-≤ Δ'⋆ Γ₁₂≤) (∀-≤ _ Γ₂₃≤) = ∀-≤ Δ'⋆ (Γ-trans Γ₁₂≤ Γ₂₃≤)
-    τ-trans (tuple-≤ τs₁₂≤) (tuple-≤ τs₂₃≤) = tuple-≤ (τs⁻-trans τs₁₂≤ τs₂₃≤)
-
-    τ⁻-trans : ∀ {Δ τ⁻₁ τ⁻₂ τ⁻₃} → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ →
-                                   Δ ⊢ τ⁻₂ ≤τ⁻ τ⁻₃ →
-                                   Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₃
-    τ⁻-trans (τ⁻-≤ τ₁₂≤) (τ⁻-≤ τ₂₃≤) = τ⁻-≤ (τ-trans τ₁₂≤ τ₂₃≤)
-
-    τs⁻-trans :
-      ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec InitType m} →
-        Allᵥ (λ { (τ⁻₁ , τ⁻₂) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ }) (Vec-zip τs₁ τs₂) →
-        Allᵥ (λ { (τ⁻₂ , τ⁻₃) → Δ ⊢ τ⁻₂ ≤τ⁻ τ⁻₃ }) (Vec-zip τs₂ τs₃) →
-        Allᵥ (λ { (τ⁻₁ , τ⁻₃) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₃ }) (Vec-zip τs₁ τs₃)
-    τs⁻-trans {τs₁ = []} {[]} {[]} [] [] = []
-    τs⁻-trans {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} {τ₃ ∷ τs₃}
-      (τ₁₂≤ ∷ τs₁₂≤) (τ₂₃≤ ∷ τs₂₃≤) =
-        τ⁻-trans τ₁₂≤ τ₂₃≤ ∷ τs⁻-trans τs₁₂≤ τs₂₃≤
-
-    Γ-trans : ∀ {Δ Γ₁ Γ₂ Γ₃} → Δ ⊢ Γ₁ ≤Γ Γ₂ → Δ ⊢ Γ₂ ≤Γ Γ₃ → Δ ⊢ Γ₁ ≤Γ Γ₃
-    Γ-trans (Γ-≤ sp⋆ regs₁₂≤) (Γ-≤ _ regs₂₃≤) =
-      Γ-≤ sp⋆ (regs-trans regs₁₂≤ regs₂₃≤)
-
-    regs-trans : ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec Type m} →
-                   Allᵥ (λ { (τ₁ , τ₂) → Δ ⊢ τ₁ ≤τ τ₂ }) (Vec-zip τs₁ τs₂) →
-                   Allᵥ (λ { (τ₂ , τ₃) → Δ ⊢ τ₂ ≤τ τ₃ }) (Vec-zip τs₂ τs₃) →
-                   Allᵥ (λ { (τ₁ , τ₃) → Δ ⊢ τ₁ ≤τ τ₃ }) (Vec-zip τs₁ τs₃)
-    regs-trans {τs₁ = []} {[]} {[]} [] [] = []
-    regs-trans {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} {τ₃ ∷ τs₃} (τ₁₂≤ ∷ τs₁₂≤)
-      (τ₂₃≤ ∷ τs₂₃≤) = τ-trans τ₁₂≤ τ₂₃≤ ∷ regs-trans τs₁₂≤ τs₂₃≤
 
 record Subtype {A Ctx : Set} (T : TypeLike A Ctx) : Set1 where
   constructor subtype
@@ -301,6 +323,9 @@ instance
 
   InitType-subtype : Subtype InitType-typeLike
   InitType-subtype = subtype _⊢_≤τ⁻_ _⊢_≤τ⁻?_ τ⁻-refl τ⁻-trans τ⁻-valid
+
+  StackType-subtype : Subtype StackType-typeLike
+  StackType-subtype = subtype _⊢_≤σ_ _⊢_≤σ?_ σ-refl σ-trans σ-valid
 
   RegisterAssignment-subtype : Subtype RegisterAssignment-typeLike
   RegisterAssignment-subtype = subtype _⊢_≤Γ_ _⊢_≤Γ?_ Γ-refl Γ-trans Γ-valid

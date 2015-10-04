@@ -17,13 +17,20 @@ open import Util.Tree
 open import Data.Nat using (ℕ ; zero ; suc ; _<_ ; s≤s ; z≤n ; _≤?_)
 open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_ ; ∃)
 
-infix 4 _↓_⇒_
-data _↓_⇒_ {ℓ} {A : Set ℓ} : (xs : List A) → ℕ → A → Set ℓ where
+infix 4 _↓_⇒_ _⊸_⇒_
+data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
   here  : ∀ {x xs} →
             x ∷ xs ↓ zero ⇒ x
   there : ∀ {x r xs i} →
             xs ↓ i ⇒ r →
             x ∷ xs ↓ suc i ⇒ r
+
+data _⊸_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → List A → Set ℓ where
+  here : ∀ {x xs} →
+           x ∷ xs ⊸ zero ⇒ xs
+  there : ∀ {x xs xs' i} →
+            xs ⊸ i ⇒ xs' →
+            x ∷ xs ⊸ suc i ⇒ x ∷ xs'
 
 <-to-↓ : ∀ {ℓ} {A : Set ℓ} →
            (xs : List A) →
@@ -65,12 +72,6 @@ All-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
             All P (zip L L)
 All-zip [] = []
 All-zip (p ∷ ps) = p ∷ All-zip ps
-
-All-unzip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
-              All P (zip L L) →
-              All (λ x → P (x , x)) L
-All-unzip {L = []} [] = []
-All-unzip {L = x ∷ L} (p ∷ ps) = p ∷ All-unzip ps
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)

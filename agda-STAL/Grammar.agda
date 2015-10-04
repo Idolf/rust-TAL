@@ -136,11 +136,10 @@ mutual
     jmp : SmallValue → InstructionSequence
 
   -- P
-  record Program : Set where
+  record Program (G : Globals) : Set where
     inductive
     constructor program
     field
-      globals      : Globals
       heap         : Heap
       registers    : RegisterFile
       instructions : InstructionSequence

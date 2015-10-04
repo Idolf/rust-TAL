@@ -201,14 +201,16 @@ instance
     (λ { (register stack regs) → T₂ 0 stack regs ,
            register <$=> invTree stack <*=> invTree regs })
 
-  Program-Tree : ToTree Program
+  Program-Tree : ∀ {G} → ToTree (Program G)
   Program-Tree = tree⋆
-    (λ { (node _ (globals ∷ heap ∷ registers ∷ instructions ∷ _)) →
-           program <$> fromTree globals   <*> fromTree heap
-                   <*> fromTree registers <*> fromTree instructions
+    (λ { (node _ (heap ∷ registers ∷ instructions ∷ _)) →
+           program <$> fromTree heap
+                   <*> fromTree registers
+                   <*> fromTree instructions
        ; _ → Nothing })
-    (λ { (program globals heap registers instructions) →
-           T₄ 0 globals heap registers instructions ,
-           program <$=> invTree globals   <*=> invTree heap
-                   <*=> invTree registers <*=> invTree instructions
+    (λ { (program heap registers instructions) →
+           T₃ 0 heap registers instructions ,
+           program <$=> invTree heap
+                   <*=> invTree registers
+                   <*=> invTree instructions
     })

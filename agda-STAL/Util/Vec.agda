@@ -46,12 +46,6 @@ Allᵥ-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {m} {L : Vec A m} →
 Allᵥ-zip [] = []
 Allᵥ-zip (p ∷ ps) = p ∷ Allᵥ-zip ps
 
-Allᵥ-unzip : ∀ {a p} {A : Set a} {P : A × A → Set p} {m} {L : Vec A m} →
-               Allᵥ P (Vec-zip L L) →
-               Allᵥ (λ x → P (x , x)) L
-Allᵥ-unzip {L = []} [] = []
-Allᵥ-unzip {L = x ∷ L} (p ∷ ps) = p ∷ Allᵥ-unzip ps
-
 Allᵥ-dec : ∀ {a p} {A : Set a} {P : A → Set p} {m} →
              (f : (a : A) → Dec (P a)) →
              (L : Vec A m) →
