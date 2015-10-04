@@ -65,10 +65,15 @@ mutual
   HeapLabel : Set
   HeapLabel = ℕ
 
-  -- Instantiating values, i
+  -- Instantiating values, iᵥ
   data InstantiationValue : Set where
     inst-ρ : StackType → InstantiationValue
     inst-α : Type → InstantiationValue
+
+  infix 6 _/_
+  -- Instantiations, i
+  data Instantiation : Set where
+    _/_ : InstantiationValue → ℕ → Instantiation
 
   -- Word value, w
   infix 6 _⟦_⟧
@@ -78,14 +83,14 @@ mutual
     const   : ℕ → WordValue
     ns      : WordValue
     uninit  : Type → WordValue
-    _⟦_⟧    : WordValue → InstantiationValue → WordValue
+    _⟦_⟧    : WordValue → Instantiation → WordValue
 
   -- Small values, v
   infix 6 _⟦_⟧ᵥ
   data SmallValue : Set where
     reg  : Register → SmallValue
     word : WordValue → SmallValue
-    _⟦_⟧ᵥ : SmallValue → InstantiationValue → SmallValue
+    _⟦_⟧ᵥ : SmallValue → Instantiation → SmallValue
 
   -- Heap values, h
   HeapValue : Set

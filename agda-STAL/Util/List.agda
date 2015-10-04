@@ -17,20 +17,13 @@ open import Util.Tree
 open import Data.Nat using (ℕ ; zero ; suc ; _<_ ; s≤s ; z≤n ; _≤?_)
 open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_ ; ∃)
 
-infix 4 _↓_⇒_ _⊸_⇒_
+infix 4 _↓_⇒_
 data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
   here  : ∀ {x xs} →
             x ∷ xs ↓ zero ⇒ x
   there : ∀ {x r xs i} →
             xs ↓ i ⇒ r →
             x ∷ xs ↓ suc i ⇒ r
-
-data _⊸_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → List A → Set ℓ where
-  here : ∀ {x xs} →
-           x ∷ xs ⊸ zero ⇒ xs
-  there : ∀ {x xs xs' i} →
-            xs ⊸ i ⇒ xs' →
-            x ∷ xs ⊸ suc i ⇒ x ∷ xs'
 
 <-to-↓ : ∀ {ℓ} {A : Set ℓ} →
            (xs : List A) →
@@ -66,6 +59,11 @@ data _⊸_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → List A → Set ℓ where
 ↓-decᵥ xs i v  | yes (.v , l) | yes refl = yes l
 ↓-decᵥ xs i v₁ | yes (v₂ , l) | no v₁≢v₂ = no (λ l' → v₁≢v₂ (↓-unique l' l))
 ↓-decᵥ xs i v₁ | no ¬l = no (λ l' → ¬l (v₁ , l'))
+
+↓-drop : ∀ {ℓ} {A : Set ℓ} {x : A} {xs i} →
+           xs ↓ i ⇒ x → List A
+↓-drop {xs = x ∷ xs} here = xs
+↓-drop {xs = x ∷ xs} (there l) = x ∷ ↓-drop l
 
 All-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
             All (λ x → P (x , x)) L →

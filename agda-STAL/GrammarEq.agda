@@ -109,6 +109,14 @@ instance
           sur (inst-ρ σ) = T₁ 0 σ , inst-ρ <$=> invTree σ
           sur (inst-α τ) = T₁ 1 τ , inst-α <$=> invTree τ
 
+  Instantiation-Tree : ToTree Instantiation
+  Instantiation-Tree = tree⋆ from sur
+          where from : Tree → ¿ Instantiation
+                from (node _ (iᵥ ∷ ι ∷ _)) = _/_ <$> fromTree iᵥ <*> fromTree ι
+                from _ = Nothing
+                sur : IsSurjective from
+                sur (iᵥ / ι) = T₂ 0 iᵥ ι , _/_ <$=> invTree iᵥ <*=> invTree ι
+
   WordValue-Tree : ToTree WordValue
   WordValue-Tree = tree⋆ from sur
     where from : Tree → ¿ WordValue
