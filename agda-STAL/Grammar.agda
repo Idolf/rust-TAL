@@ -75,7 +75,7 @@ mutual
   -- CastValue cᵥ
   data CastValue : Set where
     inst : (a : TypeAssignmentValue) → InstantiationValue a → CastValue
-    weaken : TypeAssignmentValue → CastValue
+    weaken : ℕ → CastValue
 
   infix 6 _/_
   -- Casting c

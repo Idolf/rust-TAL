@@ -1,6 +1,7 @@
 open import Util
 open import Grammar
 open import GrammarEq
+open import Substitution
 
 mutual
   infix 4 _⊢_Type
@@ -87,6 +88,31 @@ mutual
       valid-sp : Δ ⊢ stack-type Γ StackType
       valid-regs : Allᵥ (λ τ → Δ ⊢ τ Type) (reg-types Γ)
 
+  infix 4 _⊢_Cast
+  data _⊢_Cast : TypeAssignment → Cast → Set where
+    valid-α-zero :
+             ∀ {Δ τ} →
+            Δ ⊢ τ Type →
+      ----------------------------
+      α ∷ Δ ⊢ inst α τ / zero Cast
+
+    valid-ρ :
+              ∀ {Δ σ} →
+           Δ ⊢ σ StackType →
+      ----------------------------
+      ρ ∷ Δ ⊢ inst ρ σ / zero Cast
+
+    valid-weaken-zero :
+            ∀ {Δ a} →
+      ------------------------
+      Δ ⊢ weaken a / zero Cast
+
+    valid-suc :
+          ∀ {Δ a cᵥ ι} →
+         Δ ⊢ cᵥ / ι Cast →
+      -----------------------
+      a ∷ Δ ⊢ cᵥ / suc ι Cast
+
 private
   mutual
     infix 4 _⊢?_Type
@@ -164,6 +190,23 @@ private
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ τs⋆) → ¬τ⋆ τ⋆ })
     ... | _ | no ¬τs⋆ = no (λ { (τ⋆ ∷ τs⋆) → ¬τs⋆ τs⋆ })
 
+    infix 4 _⊢?_Cast
+    _⊢?_Cast : ∀ Δ c → Dec (Δ ⊢ c Cast)
+    [] ⊢? inst a i / zero Cast = no (λ ())
+    [] ⊢? weaken n / zero Cast = yes valid-weaken-zero
+    α ∷ Δ ⊢? inst α τ / zero Cast with Δ ⊢? τ Type
+    α ∷ Δ ⊢? inst α τ / zero Cast | yes τ⋆ = yes (valid-α-zero τ⋆)
+    α ∷ Δ ⊢? inst α τ / zero Cast | no ¬τ⋆ = no (λ { (valid-α-zero τ⋆) → ¬τ⋆ τ⋆ })
+    α ∷ Δ ⊢? inst ρ σ / zero Cast = no (λ ())
+    ρ ∷ Δ ⊢? inst α τ / zero Cast = no (λ ())
+    ρ ∷ Δ ⊢? inst ρ σ / zero Cast with Δ ⊢? σ StackType
+    ρ ∷ Δ ⊢? inst ρ σ / zero Cast | yes σ⋆ = yes (valid-ρ σ⋆)
+    ρ ∷ Δ ⊢? inst ρ σ / zero Cast | no ¬σ⋆ = no (λ { (valid-ρ σ⋆) → ¬σ⋆ σ⋆ })
+    a ∷ Δ ⊢? weaken n / zero Cast = yes valid-weaken-zero
+    [] ⊢? cᵥ / suc ι Cast = no (λ ())
+    a ∷ Δ ⊢? cᵥ / suc ι Cast with Δ ⊢? cᵥ / ι Cast
+    a ∷ Δ ⊢? cᵥ / suc ι Cast | yes c⋆ = yes (valid-suc c⋆)
+    a ∷ Δ ⊢? cᵥ / suc ι Cast | no ¬c⋆ = no (λ { (valid-suc c⋆) → ¬c⋆ c⋆ })
 
 record TypeLike (A Ctx : Set) : Set1 where
   constructor typeLike
@@ -208,6 +251,9 @@ instance
   RegisterAssignment-typeLike : TypeLike RegisterAssignment TypeAssignment
   RegisterAssignment-typeLike =
     typeLike _⊢_RegisterAssignment _⊢?_RegisterAssignment
+
+  Cast-typeLike : TypeLike Cast TypeAssignment
+  Cast-typeLike = typeLike _⊢_Cast _⊢?_Cast
 
   Vec-typeLike : ∀ {A Ctx : Set} {{_ : TypeLike A Ctx}} {m} →
                    TypeLike (Vec A m) Ctx

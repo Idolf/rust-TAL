@@ -17,9 +17,10 @@ mutual
       α⁼ ι₁ ⟦ cᵥ / ι₂ ⟧τ≡ α⁼ ι₁
 
     subst-α-inst-≡ :
-               ∀ {ι τ} →
-      --------------------------
-      α⁼ ι  ⟦ inst α τ / ι ⟧τ≡ τ
+            ∀ {ι τ τ'} →
+       τ ⟦ weaken ι / zero ⟧τ≡ τ' →
+      ---------------------------
+      α⁼ ι  ⟦ inst α τ / ι ⟧τ≡ τ'
 
     subst-α-inst-> :
                   ∀ {ι₁ ι₂ a i} →
@@ -28,10 +29,10 @@ mutual
       α⁼ (suc ι₁) ⟦ inst a i / ι₂ ⟧τ≡ α⁼ ι₁
 
     subst-α-weaken-≥ :
-                    ∀ {ι₁ ι₂ a} →
+                    ∀ {ι₁ ι₂ n} →
                       ι₁ ≥ ι₂ →
       -------------------------------------
-      α⁼ ι₁ ⟦ weaken a / ι₂ ⟧τ≡ α⁼ (suc ι₁)
+      α⁼ ι₁ ⟦ weaken n / ι₂ ⟧τ≡ α⁼ (n + ι₁)
 
     subst-int :
           ∀ {c} →
@@ -87,9 +88,10 @@ mutual
       ρ⁼ ι₁ ⟦ cᵥ / ι₂ ⟧σ≡ ρ⁼ ι₁
 
     subst-ρ-inst-≡ :
-               ∀ {ι σ} →
-      --------------------------
-      ρ⁼ ι  ⟦ inst ρ σ / ι ⟧σ≡ σ
+               ∀ {ι σ σ'} →
+      σ ⟦ weaken ι / zero ⟧σ≡ σ' →
+      ----------------------------
+      ρ⁼ ι  ⟦ inst ρ σ / ι ⟧σ≡ σ'
 
     subst-ρ-inst-> :
                   ∀ {ι₁ ι₂ a i} →
@@ -98,10 +100,10 @@ mutual
       ρ⁼ (suc ι₁) ⟦ inst a i / ι₂ ⟧σ≡ ρ⁼ ι₁
 
     subst-ρ-weaken-≥ :
-               ∀ {ι₁ ι₂ a} →
+               ∀ {ι₁ ι₂ n} →
                  ι₁ ≥ ι₂ →
       -------------------------------------
-      ρ⁼ ι₁ ⟦ weaken a / ι₂ ⟧σ≡ ρ⁼ (suc ι₁)
+      ρ⁼ ι₁ ⟦ weaken n / ι₂ ⟧σ≡ ρ⁼ (n + ι₁)
 
     subst-[] :
          ∀ {c} →
@@ -114,37 +116,6 @@ mutual
          σ ⟦ c ⟧σ≡ σ' →
       ---------------------
       τ ∷ σ ⟦ c ⟧σ≡ τ' ∷ σ'
-
-  infix 5 _⟦_⟧Δ≡_
-  data _⟦_⟧Δ≡_ : substᵗ TypeAssignment where
-    subst-inst :
-               ∀ {a a' Δ iᵥ} →
-      -------------------------------
-      a ∷ Δ ⟦ inst a' iᵥ / zero ⟧Δ≡ Δ
-
-    subst-weaken :
-               ∀ {Δ a} →
-      ---------------------------
-      Δ ⟦ weaken a / zero ⟧Δ≡ a ∷ Δ
-
-    subst-suc :
-           ∀ {a a' Δ Δ' ι cᵥ} →
-           a ⟦ cᵥ / ι ⟧a≡ a' →
-           Δ ⟦ cᵥ / ι ⟧Δ≡ Δ' →
-      ------------------------------
-      a ∷ Δ ⟦ cᵥ / suc ι ⟧Δ≡ a' ∷ Δ'
-
-  infix 5 _⟦_⟧a≡_
-  data _⟦_⟧a≡_ : substᵗ TypeAssignmentValue where
-    subst-α :
-        ∀ {c} →
-      -----------
-      α ⟦ c ⟧a≡ α
-
-    subst-ρ :
-        ∀ {c} →
-      -----------
-      ρ ⟦ c ⟧a≡ ρ
 
   infix 5 _⟦_⟧Γ≡_
   data _⟦_⟧Γ≡_ : substᵗ RegisterAssignment where
@@ -180,7 +151,7 @@ private
 
     subst-τ-unique : substᵗ-unique _⟦_⟧τ≡_
     subst-τ-unique (subst-α-< ι₁<ι₂) (subst-α-< ι₁<ι₂') = refl
-    subst-τ-unique (subst-α-< ι<ι) subst-α-inst-≡
+    subst-τ-unique (subst-α-< ι<ι) (subst-α-inst-≡ sub-τ)
       with NP.1+n≰n ι<ι
     ... | ()
     subst-τ-unique (subst-α-< ι₁<ι₂) (subst-α-inst-> ι₁>ι₂)
@@ -189,17 +160,17 @@ private
     subst-τ-unique (subst-α-< (s≤s ι₁≤sucι₂)) (subst-α-weaken-≥ ι₁≥sucι₂)
       with NP.1+n≰n (Nat-≤-trans  ι₁≥sucι₂ ι₁≤sucι₂)
     ... | ()
-    subst-τ-unique subst-α-inst-≡ (subst-α-< ι<ι)
+    subst-τ-unique (subst-α-inst-≡ sub-τ) (subst-α-< ι<ι)
       with NP.1+n≰n ι<ι
     ... | ()
-    subst-τ-unique subst-α-inst-≡ subst-α-inst-≡ = refl
-    subst-τ-unique subst-α-inst-≡ (subst-α-inst-> ι>ι)
+    subst-τ-unique (subst-α-inst-≡ sub-τ) (subst-α-inst-≡ sub-τ') = subst-τ-unique sub-τ sub-τ'
+    subst-τ-unique (subst-α-inst-≡ sub-τ) (subst-α-inst-> ι>ι)
       with NP.1+n≰n ι>ι
     ... | ()
     subst-τ-unique (subst-α-inst-> ι₁>ι₂) (subst-α-< ι₁<ι₂)
       with NP.1+n≰n (NP.<-trans ι₁<ι₂ ι₁>ι₂)
     ... | ()
-    subst-τ-unique (subst-α-inst-> ι>ι) subst-α-inst-≡
+    subst-τ-unique (subst-α-inst-> ι>ι) (subst-α-inst-≡ sub-τ)
       with NP.1+n≰n ι>ι
     ... | ()
     subst-τ-unique (subst-α-inst-> ι₁>ι₂) (subst-α-inst-> ι₁>ι₂') = refl
@@ -226,7 +197,7 @@ private
 
     subst-σ-unique : substᵗ-unique _⟦_⟧σ≡_
     subst-σ-unique (subst-ρ-< ι₁<ι₂) (subst-ρ-< ι₁<ι₂') = refl
-    subst-σ-unique (subst-ρ-< ι<ι) subst-ρ-inst-≡
+    subst-σ-unique (subst-ρ-< ι<ι) (subst-ρ-inst-≡ sub-σ)
       with NP.1+n≰n ι<ι
     ... | ()
     subst-σ-unique (subst-ρ-< ι₁<ι₂) (subst-ρ-inst-> ι₁>ι₂)
@@ -235,17 +206,17 @@ private
     subst-σ-unique (subst-ρ-< (s≤s ι₁≤sucι₂)) (subst-ρ-weaken-≥ ι₁≥sucι₂)
       with NP.1+n≰n (Nat-≤-trans  ι₁≥sucι₂ ι₁≤sucι₂)
     ... | ()
-    subst-σ-unique subst-ρ-inst-≡ (subst-ρ-< ι<ι)
+    subst-σ-unique (subst-ρ-inst-≡ sub-σ) (subst-ρ-< ι<ι)
       with NP.1+n≰n ι<ι
     ... | ()
-    subst-σ-unique subst-ρ-inst-≡ subst-ρ-inst-≡ = refl
-    subst-σ-unique subst-ρ-inst-≡ (subst-ρ-inst-> ι>ι)
+    subst-σ-unique (subst-ρ-inst-≡ sub-σ) (subst-ρ-inst-≡ sub-σ') = subst-σ-unique sub-σ sub-σ'
+    subst-σ-unique (subst-ρ-inst-≡ sub-σ) (subst-ρ-inst-> ι>ι)
       with NP.1+n≰n ι>ι
     ... | ()
     subst-σ-unique (subst-ρ-inst-> ι₁>ι₂) (subst-ρ-< ι₁<ι₂)
       with NP.1+n≰n (NP.<-trans ι₁<ι₂ ι₁>ι₂)
     ... | ()
-    subst-σ-unique (subst-ρ-inst-> ι>ι) subst-ρ-inst-≡
+    subst-σ-unique (subst-ρ-inst-> ι>ι) (subst-ρ-inst-≡ sub-σ)
       with NP.1+n≰n ι>ι
     ... | ()
     subst-σ-unique (subst-ρ-inst-> ι₁>ι₂) (subst-ρ-inst-> ι₁>ι₂') = refl
@@ -256,16 +227,6 @@ private
     subst-σ-unique subst-[] subst-[] = refl
     subst-σ-unique (subst-∷ sub-τ₁ sub-σ₁) (subst-∷ sub-τ₂ sub-σ₂) =
       cong₂ _∷_ (subst-τ-unique sub-τ₁ sub-τ₂) (subst-σ-unique sub-σ₁ sub-σ₂)
-
-    subst-Δ-unique : substᵗ-unique _⟦_⟧Δ≡_
-    subst-Δ-unique subst-inst subst-inst = refl
-    subst-Δ-unique subst-weaken subst-weaken = refl
-    subst-Δ-unique (subst-suc sub-a₁ sub-Δ₁) (subst-suc sub-a₂ sub-Δ₂) =
-      cong₂ _∷_ (subst-a-unique sub-a₁ sub-a₂) (subst-Δ-unique sub-Δ₁ sub-Δ₂)
-
-    subst-a-unique : substᵗ-unique _⟦_⟧a≡_
-    subst-a-unique subst-α subst-α = refl
-    subst-a-unique subst-ρ subst-ρ = refl
 
     subst-Γ-unique : substᵗ-unique _⟦_⟧Γ≡_
     subst-Γ-unique (subst-registerₐ sub-sp₁ sub-regs₁)
@@ -280,21 +241,66 @@ private
                 (subst-regs-unique sub-τs₁ sub-τs₂)
 
   mutual
+    can-weaken-τ : ∀ τ n ι → ∃ λ τ' → τ ⟦ weaken n / ι ⟧τ≡ τ'
+    can-weaken-τ (α⁼ ι₁) n ι₂ with ι₂ ≤? ι₁
+    ... | yes ι₁≥ι₂ = α⁼ (n + ι₁) , subst-α-weaken-≥ ι₁≥ι₂
+    ... | no ι₁≱ι₂ = α⁼ ι₁ , subst-α-< (NP.≰⇒> ι₁≱ι₂)
+    can-weaken-τ int n ι = int , subst-int
+    can-weaken-τ ns n ι = ns , subst-ns
+    can-weaken-τ (∀[ Δ ] Γ) n ι with can-weaken-Γ Γ n (length Δ + ι)
+    ... | Γ' , sub-Γ = ∀[ Δ ] Γ' , subst-∀ sub-Γ
+    can-weaken-τ (tuple τs) n ι with can-weaken-τs⁻ τs n ι
+    ... | τs' , sub-τs = tuple τs' , subst-tuple sub-τs
+
+    can-weaken-τ⁻ : ∀ τ⁻ n ι → ∃ λ τ⁻' → τ⁻ ⟦ weaken n / ι ⟧τ⁻≡ τ⁻'
+    can-weaken-τ⁻ (τ , φ) n ι with can-weaken-τ τ n ι
+    ... | τ' , sub-τ = (τ' , φ) , subst-τ⁻ sub-τ
+
+    can-weaken-τs⁻ : ∀ {m} (τs⁻ : Vec InitType m) n ι →
+                       ∃ λ τs⁻' → τs⁻ ⟦ weaken n / ι ⟧τs⁻≡ τs⁻'
+    can-weaken-τs⁻ [] n ι = [] , subst-[]
+    can-weaken-τs⁻ (τ⁻ ∷ τs⁻) n ι
+      with can-weaken-τ⁻ τ⁻ n ι | can-weaken-τs⁻ τs⁻ n ι
+    ... | τ⁻' , sub-τ⁻ | τs⁻' , sub-τs⁻ = τ⁻' ∷ τs⁻' , subst-∷ sub-τ⁻ sub-τs⁻
+
+    can-weaken-σ : ∀ σ n ι → ∃ λ σ' → σ ⟦ weaken n / ι ⟧σ≡ σ'
+    can-weaken-σ (ρ⁼ ι₁) n ι₂ with ι₂ ≤? ι₁
+    ... | yes ι₁≥ι₂ = ρ⁼ (n + ι₁) , subst-ρ-weaken-≥ ι₁≥ι₂
+    ... | no ι₁≱ι₂ = ρ⁼ ι₁ , subst-ρ-< (NP.≰⇒> ι₁≱ι₂)
+    can-weaken-σ nil n ι = nil , subst-[]
+    can-weaken-σ (τ ∷ σ) n ι with can-weaken-τ τ n ι | can-weaken-σ σ n ι
+    ... | τ' , sub-τ | σ' , sub-σ = τ' ∷ σ' , subst-∷ sub-τ sub-σ
+
+    can-weaken-Γ : ∀ Γ n ι → ∃ λ Γ' → Γ ⟦ weaken n / ι ⟧Γ≡ Γ'
+    can-weaken-Γ (registerₐ sp regs) n ι
+      with can-weaken-σ sp n ι | can-weaken-regs regs n ι
+    ... | sp' , sub-sp | regs' , sub-regs =
+          registerₐ sp' regs' , subst-registerₐ sub-sp sub-regs
+
+    can-weaken-regs : ∀ {m} (regs : Vec Type m) n ι →
+                        ∃ λ regs' → regs ⟦ weaken n / ι ⟧regs≡ regs'
+    can-weaken-regs [] n ι = [] , subst-[]
+    can-weaken-regs (τ ∷ τs) n ι
+      with can-weaken-τ τ n ι | can-weaken-regs τs n ι
+    ... | τ' , sub-τ | τs' , sub-τs = τ' ∷ τs' , subst-∷ sub-τ sub-τs
+
+  mutual
     _⟦_⟧τ? : ∀ τ c → Dec (∃ λ τ' → τ ⟦ c ⟧τ≡ τ')
     α⁼ ι₁ ⟦ cᵥ / ι₂ ⟧τ? with Nat-cmp ι₁ ι₂
     α⁼ ι₁ ⟦ cᵥ / ι₂ ⟧τ? | tri< ι₁<ι₂ _ _ = yes (α⁼ ι₁ , subst-α-< ι₁<ι₂)
-    α⁼ ι  ⟦ inst α τ / .ι ⟧τ? | tri≈ _ refl _ = yes (τ , subst-α-inst-≡)
+    α⁼ ι  ⟦ inst α τ / .ι ⟧τ? | tri≈ _ refl _ with can-weaken-τ τ ι 0
+    ... | τ' , sub-τ = yes (τ' , subst-α-inst-≡ sub-τ)
     α⁼ ι  ⟦ inst ρ σ / .ι ⟧τ? | tri≈ _ refl _ = no help
       where help : ∀ {ι σ} → ¬ (∃ λ τ' → α⁼ ι ⟦ inst ρ σ / ι ⟧τ≡ τ')
             help (._ , subst-α-< ι<ι) = NP.1+n≰n ι<ι
             help (._ , subst-α-inst-> ι>ι) = NP.1+n≰n ι>ι
-    α⁼ ι  ⟦ weaken a / .ι ⟧τ? | tri≈ _ refl _ =
-      yes (α⁼ (suc ι) , subst-α-weaken-≥ (Nat-≤-refl ι))
+    α⁼ ι  ⟦ weaken n / .ι ⟧τ? | tri≈ _ refl _ =
+      yes (α⁼ (n + ι) , subst-α-weaken-≥ (Nat-≤-refl ι))
     α⁼ zero ⟦ inst a i / ι₂ ⟧τ? | tri> _ _ ()
     α⁼ (suc ι₁) ⟦ inst a x / ι₂ ⟧τ? | tri> _ _ sucι₁>ι₂ =
       yes (α⁼ ι₁ , subst-α-inst-> sucι₁>ι₂)
-    α⁼ ι₁ ⟦ weaken x / ι₂ ⟧τ? | tri> _ _ ι₁>ι₂ =
-      yes (α⁼ (suc ι₁) , subst-α-weaken-≥ (NP.≤⇒pred≤ _ _ ι₁>ι₂))
+    α⁼ ι₁ ⟦ weaken n / ι₂ ⟧τ? | tri> _ _ ι₁>ι₂ =
+      yes (α⁼ (n + ι₁) , subst-α-weaken-≥ (NP.≤⇒pred≤ _ _ ι₁>ι₂))
     int ⟦ c ⟧τ? = yes (int , subst-int)
     ns ⟦ c ⟧τ? = yes (ns , subst-ns)
     (∀[ Δ ] Γ) ⟦ cᵥ / ι ⟧τ? with Γ ⟦ cᵥ / length Δ + ι ⟧Γ?
@@ -329,18 +335,19 @@ private
     _⟦_⟧σ? : ∀ σ c → Dec (∃ λ σ' → σ ⟦ c ⟧σ≡ σ')
     ρ⁼ ι₁ ⟦ cᵥ / ι₂ ⟧σ? with Nat-cmp ι₁ ι₂
     ρ⁼ ι₁ ⟦ cᵥ / ι₂ ⟧σ? | tri< ι₁<ι₂ _ _ = yes (ρ⁼ ι₁ , subst-ρ-< ι₁<ι₂)
-    ρ⁼ ι  ⟦ inst ρ σ / .ι ⟧σ? | tri≈ _ refl _ = yes (σ , subst-ρ-inst-≡)
+    ρ⁼ ι  ⟦ inst ρ σ / .ι ⟧σ? | tri≈ _ refl _ with can-weaken-σ σ ι 0
+    ... | σ' , sub-σ = yes (σ' , subst-ρ-inst-≡ sub-σ)
     ρ⁼ ι  ⟦ inst α τ / .ι ⟧σ? | tri≈ _ refl _ = no help
       where help : ∀ {ι τ} → ¬ (∃ λ σ' → ρ⁼ ι ⟦ inst α τ / ι ⟧σ≡ σ')
             help (._ , subst-ρ-< ι<ι) = NP.1+n≰n ι<ι
             help (._ , subst-ρ-inst-> ι>ι) = NP.1+n≰n ι>ι
-    ρ⁼ ι  ⟦ weaken a / .ι ⟧σ? | tri≈ _ refl _ =
-      yes (ρ⁼ (suc ι) , subst-ρ-weaken-≥ (Nat-≤-refl ι))
+    ρ⁼ ι  ⟦ weaken n / .ι ⟧σ? | tri≈ _ refl _ =
+      yes (ρ⁼ (n + ι) , subst-ρ-weaken-≥ (Nat-≤-refl ι))
     ρ⁼ zero ⟦ inst a i / ι₂ ⟧σ? | tri> _ _ ()
     ρ⁼ (suc ι₁) ⟦ inst a x / ι₂ ⟧σ? | tri> _ _ sucι₁>ι₂ =
       yes (ρ⁼ ι₁ , subst-ρ-inst-> sucι₁>ι₂)
-    ρ⁼ ι₁ ⟦ weaken x / ι₂ ⟧σ? | tri> _ _ ι₁>ι₂ =
-      yes (ρ⁼ (suc ι₁) , subst-ρ-weaken-≥ (NP.≤⇒pred≤ _ _ ι₁>ι₂))
+    ρ⁼ ι₁ ⟦ weaken n / ι₂ ⟧σ? | tri> _ _ ι₁>ι₂ =
+      yes (ρ⁼ (n + ι₁) , subst-ρ-weaken-≥ (NP.≤⇒pred≤ _ _ ι₁>ι₂))
     nil ⟦ c ⟧σ? = yes (nil , subst-[])
     (τ ∷ σ) ⟦ c ⟧σ? with τ ⟦ c ⟧τ? | σ ⟦ c ⟧σ?
     ... | yes (τ' , sub-τ) | yes (σ' , sub-σ) =
@@ -349,24 +356,6 @@ private
       no (λ { (._ , subst-∷ sub-τ sub-σ) → ¬sub-τ (_ , sub-τ) })
     ... | _ | no ¬sub-σ =
       no (λ { (._ , subst-∷ sub-τ sub-σ) → ¬sub-σ (_ , sub-σ) })
-
-    _⟦_⟧Δ? : ∀ Δ c → Dec (∃ λ Δ' → Δ ⟦ c ⟧Δ≡ Δ')
-    [] ⟦ inst a i / ι ⟧Δ? = no (λ { (_ , ()) })
-    [] ⟦ weaken a / zero ⟧Δ? = yes (a ∷ [] , subst-weaken)
-    [] ⟦ weaken a / suc ι ⟧Δ? = no (λ { (_ , ()) })
-    (a ∷ Δ) ⟦ inst a' iᵥ  / zero ⟧Δ? = yes (Δ , subst-inst)
-    (a ∷ Δ) ⟦ weaken a' / zero ⟧Δ? = yes (a' ∷ a ∷ Δ , subst-weaken)
-    (a ∷ Δ) ⟦ cᵥ / suc ι ⟧Δ? with a ⟦ cᵥ / ι ⟧a? | Δ ⟦ cᵥ / ι ⟧Δ?
-    ... | yes (a' , sub-a) | yes (Δ' , sub-Δ) =
-      yes (a' ∷ Δ' , subst-suc sub-a sub-Δ)
-    ... | no ¬sub-a | _ =
-      no (λ { (._ , subst-suc sub-a sub-Δ) → ¬sub-a (_ , sub-a) })
-    ... | _ | no ¬sub-Δ =
-      no (λ { (._ , subst-suc sub-a sub-Δ) → ¬sub-Δ (_ , sub-Δ) })
-
-    _⟦_⟧a? : ∀ a c → Dec (∃ λ a' → a ⟦ c ⟧a≡ a')
-    α ⟦ c ⟧a? = yes (α , subst-α)
-    ρ ⟦ c ⟧a? = yes (ρ , subst-ρ)
 
     _⟦_⟧Γ? : ∀ Γ c → Dec (∃ λ Γ' → Γ ⟦ c ⟧Γ≡ Γ')
     registerₐ sp regs ⟦ c ⟧Γ? with sp ⟦ c ⟧σ? | regs ⟦ c ⟧regs?
@@ -388,57 +377,6 @@ private
     ... | _ | no ¬sub-τs =
       no (λ { (._ , subst-∷ sub-τ sub-τs) → ¬sub-τs (_ , sub-τs) })
 
-  mutual
-    can-weaken-τ : ∀ ι τ a → ∃ λ τ' → τ ⟦ weaken a / ι ⟧τ≡ τ'
-    can-weaken-τ ι₁ (α⁼ ι₂) a with ι₁ ≤? ι₂
-    ... | yes ι₁≤ι₂ = α⁼ (suc ι₂) , subst-α-weaken-≥ ι₁≤ι₂
-    ... | no ι₁≰ι₂ = α⁼ ι₂ , subst-α-< (NP.≰⇒> ι₁≰ι₂)
-    can-weaken-τ ι int a = int , subst-int
-    can-weaken-τ ι ns a = ns , subst-ns
-    can-weaken-τ ι (∀[ Δ ] Γ) a with can-weaken-Γ (length Δ + ι) Γ a
-    ... | Γ' , sub-Γ = ∀[ Δ ] Γ' , subst-∀ sub-Γ
-    can-weaken-τ ι (tuple τs) a with can-weaken-τs⁻ ι τs a
-    ... | τs' , sub-τs = tuple τs' , subst-tuple sub-τs
-
-    can-weaken-τ⁻ : ∀ ι τ⁻ a → ∃ λ τ⁻' → τ⁻ ⟦ weaken a / ι ⟧τ⁻≡ τ⁻'
-    can-weaken-τ⁻ ι (τ , φ) a with can-weaken-τ ι τ a
-    ... | τ' , sub-τ = (τ' , φ) , subst-τ⁻ sub-τ
-
-    can-weaken-τs⁻ : ∀ ι {m} (τs⁻ : Vec InitType m) a →
-                       ∃ λ τs⁻' → τs⁻ ⟦ weaken a / ι ⟧τs⁻≡ τs⁻'
-    can-weaken-τs⁻ ι [] a = [] , subst-[]
-    can-weaken-τs⁻ ι (τ⁻ ∷ τs⁻) a
-      with can-weaken-τ⁻ ι τ⁻ a | can-weaken-τs⁻ ι τs⁻ a
-    ... | τ⁻' , sub-τ⁻ | τs⁻' , sub-τs⁻ = τ⁻' ∷ τs⁻' , subst-∷ sub-τ⁻ sub-τs⁻
-
-    can-weaken-σ : ∀ ι σ a → ∃ λ σ' → σ ⟦ weaken a / ι ⟧σ≡ σ'
-    can-weaken-σ ι₁ (ρ⁼ ι₂) a with ι₁ ≤? ι₂
-    ... | yes ι₁≤ι₂ = ρ⁼ (suc ι₂) , subst-ρ-weaken-≥ ι₁≤ι₂
-    ... | no ι₁≰ι₂ = ρ⁼ ι₂ , subst-ρ-< (NP.≰⇒> ι₁≰ι₂)
-    can-weaken-σ ι nil a = nil , subst-[]
-    can-weaken-σ ι (τ ∷ σ) a with can-weaken-τ ι τ a | can-weaken-σ ι σ a
-    ... | τ' , sub-τ | σ' , sub-σ = τ' ∷ σ' , subst-∷ sub-τ sub-σ
-
-    can-weaken₁-Δ : ∀ Δ a → ∃ λ Δ' → Δ ⟦ weaken a / zero ⟧Δ≡ Δ'
-    can-weaken₁-Δ Δ a = a ∷ Δ , subst-weaken
-
-    can-weaken-a : ∀ ι a aᵥ → ∃ λ a' → a ⟦ weaken aᵥ / ι ⟧a≡ a'
-    can-weaken-a ι α aᵥ = α , subst-α
-    can-weaken-a ι ρ aᵥ = ρ , subst-ρ
-
-    can-weaken-Γ : ∀ ι Γ a → ∃ λ Γ' → Γ ⟦ weaken a / ι ⟧Γ≡ Γ'
-    can-weaken-Γ ι (registerₐ sp regs) a
-      with can-weaken-σ ι sp a | can-weaken-regs ι regs a
-    ... | sp' , sub-sp | regs' , sub-regs =
-          registerₐ sp' regs' , subst-registerₐ sub-sp sub-regs
-
-    can-weaken-regs : ∀ ι {m} (regs : Vec Type m) a →
-                        ∃ λ regs' → regs ⟦ weaken a / ι ⟧regs≡ regs'
-    can-weaken-regs ι [] a = [] , subst-[]
-    can-weaken-regs ι (τ ∷ τs) a
-      with can-weaken-τ ι τ a | can-weaken-regs ι τs a
-    ... | τ' , sub-τ | τs' , sub-τs = τ' ∷ τs' , subst-∷ sub-τ sub-τs
-
 record Substitution (A : Set) : Set1 where
   constructor substitution
   field
@@ -447,7 +385,7 @@ record Substitution (A : Set) : Set1 where
                                    v ⟦ c ⟧≡ v₂ →
                                    v₁ ≡ v₂
     _⟦_⟧? : ∀ v c → Dec (∃ λ v' → v ⟦ c ⟧≡ v')
-    can-weaken₁ : ∀ v a → ∃ λ v' → v ⟦ weaken a / zero ⟧≡ v'
+    can-weaken : ∀ v n ι → ∃ λ v' → v ⟦ weaken n / ι ⟧≡ v'
 
 -- These two should do the same, but they do not
 -- open Substitution {{...}} public
@@ -463,56 +401,33 @@ subst-unique {{s}} = Substitution.subst-unique s
 _⟦_⟧? : ∀ {A} {{_ : Substitution A}} →
           ∀ (v : A) c → Dec (∃ λ v' → v ⟦ c ⟧≡ v')
 _⟦_⟧? {{s}} = Substitution._⟦_⟧? s
-can-weaken₁ : ∀ {A} {{_ : Substitution A}} →
-                ∀ v a → ∃ λ v' → v ⟦ weaken a / zero ⟧≡ v'
-can-weaken₁ {{s}} = Substitution.can-weaken₁ s
-
-data weakenMany {A : Set} {{s : Substitution A}} :
-     A → List TypeAssignmentValue → A → Set where
-  weakenMany-[] : ∀ {v} → weakenMany v [] v
-  weakenMany-∷  : ∀ {v₁ v₂ v₃ : A} {a as} →
-                    weakenMany v₁ as v₂ →
-                    v₂ ⟦ weaken a / zero ⟧≡ v₃ →
-                    weakenMany v₁ (a ∷ as) v₃
-
-can-weakenMany : ∀ {A} {{s : Substitution A}} v₁ Δ →
-                   ∃ λ v₂ → weakenMany v₁ Δ v₂
-can-weakenMany v₁ [] = v₁ , weakenMany-[]
-can-weakenMany v₁ (a ∷ Δ) with can-weakenMany v₁ Δ
-... | v₂ , sub-Δ with can-weaken₁ v₂ a
-... | v₃ , sub-a = v₃ , weakenMany-∷ sub-Δ sub-a
+can-weaken : ∀ {A} {{_ : Substitution A}} →
+               ∀ v n ι → ∃ λ v' → v ⟦ weaken n / ι ⟧≡ v'
+can-weaken {{s}} = Substitution.can-weaken s
 
 instance
   Type-substitution : Substitution Type
   Type-substitution =
-    substitution _⟦_⟧τ≡_ subst-τ-unique _⟦_⟧τ? (can-weaken-τ zero)
+    substitution _⟦_⟧τ≡_ subst-τ-unique _⟦_⟧τ? can-weaken-τ
 
   InitType-substitution : Substitution InitType
   InitType-substitution =
-    substitution _⟦_⟧τ⁻≡_ subst-τ⁻-unique _⟦_⟧τ⁻? (can-weaken-τ⁻ zero)
+    substitution _⟦_⟧τ⁻≡_ subst-τ⁻-unique _⟦_⟧τ⁻? can-weaken-τ⁻
 
   StackType-substitution : Substitution StackType
   StackType-substitution =
-    substitution _⟦_⟧σ≡_ subst-σ-unique _⟦_⟧σ? (can-weaken-σ zero)
-
-  TypeAssignment-substitution : Substitution TypeAssignment
-  TypeAssignment-substitution =
-    substitution _⟦_⟧Δ≡_ subst-Δ-unique _⟦_⟧Δ? can-weaken₁-Δ
-
-  TypeAssignmentValue-substitution : Substitution TypeAssignmentValue
-  TypeAssignmentValue-substitution =
-    substitution _⟦_⟧a≡_ subst-a-unique _⟦_⟧a? (can-weaken-a zero)
+    substitution _⟦_⟧σ≡_ subst-σ-unique _⟦_⟧σ? can-weaken-σ
 
   RegisterAssignment-substitution : Substitution RegisterAssignment
   RegisterAssignment-substitution =
-    substitution _⟦_⟧Γ≡_ subst-Γ-unique _⟦_⟧Γ? (can-weaken-Γ zero)
+    substitution _⟦_⟧Γ≡_ subst-Γ-unique _⟦_⟧Γ? can-weaken-Γ
 
   Vec-substitution : ∀ {A} {m} {{s : Substitution A}} → Substitution (Vec A m)
   Vec-substitution = substitution
       _⟦_⟧xs≡_
       unique
       dec
-      weaken₁
+      weak
 
     where _⟦_⟧xs≡_ : ∀ {A} {{s : Substitution A}} {m} →
                        Vec A m → Cast → Vec A m → Set
@@ -549,10 +464,10 @@ instance
                   help ¬sub-xs (x' ∷ xs' , sub-x ∷ sub-xs) =
                     ¬sub-xs (_ , sub-xs)
 
-          weaken₁ : ∀ {A m} {{s : Substitution A}} (xs : Vec A m) a →
-                      ∃ λ xs' → xs ⟦ weaken a / zero ⟧xs≡ xs'
-          weaken₁ [] a = [] , []
-          weaken₁ (x ∷ xs) a with can-weaken₁ x a | weaken₁ xs a
+          weak : ∀ {A m} {{s : Substitution A}} (xs : Vec A m) n ι →
+                   ∃ λ xs' → xs ⟦ weaken n / ι ⟧xs≡ xs'
+          weak [] n ι = [] , []
+          weak (x ∷ xs) n ι with can-weaken x n ι | weak xs n ι
           ... | x' , sub-x | xs' , sub-xs = x' ∷ xs' , sub-x ∷ sub-xs
 
   List-substitution : ∀ {A} {{s : Substitution A}} → Substitution (List A)
@@ -560,7 +475,7 @@ instance
       _⟦_⟧xs≡_
       unique
       dec
-      weaken₁
+      weak
 
     where _⟦_⟧xs≡_ : ∀ {A} {{s : Substitution A}} →
                          List A → Cast → List A → Set
@@ -606,9 +521,9 @@ instance
                   help ¬sub-xs (x' ∷ xs' , eq , sub-x ∷ sub-xs) =
                     ¬sub-xs (xs' , (NP.cancel-+-left 1 eq) , sub-xs)
 
-          weaken₁ : ∀ {A} {{s : Substitution A}} (xs : List A) a →
-                      ∃ λ xs' → xs ⟦ weaken a / zero ⟧xs≡ xs'
-          weaken₁ [] a = [] , refl , []
-          weaken₁ (x ∷ xs) a with can-weaken₁ x a | weaken₁ xs a
+          weak : ∀ {A} {{s : Substitution A}} (xs : List A) n ι →
+                   ∃ λ xs' → xs ⟦ weaken n / ι ⟧xs≡ xs'
+          weak [] n ι = [] , refl , []
+          weak (x ∷ xs) n ι with can-weaken x n ι | weak xs n ι
           ... | x' , sub-x | xs' , eq , sub-xs =
             x' ∷ xs' , (cong suc eq) , (sub-x ∷ sub-xs)

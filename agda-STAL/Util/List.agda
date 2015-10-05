@@ -60,10 +60,11 @@ data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
 ↓-decᵥ xs i v₁ | yes (v₂ , l) | no v₁≢v₂ = no (λ l' → v₁≢v₂ (↓-unique l' l))
 ↓-decᵥ xs i v₁ | no ¬l = no (λ l' → ¬l (v₁ , l'))
 
-↓-drop : ∀ {ℓ} {A : Set ℓ} {x : A} {xs i} →
-           xs ↓ i ⇒ x → List A
-↓-drop {xs = x ∷ xs} here = xs
-↓-drop {xs = x ∷ xs} (there l) = x ∷ ↓-drop l
+↓-++ : ∀ {ℓ} {A : Set ℓ} {xs xs' i} {v : A} →
+         xs ↓ i ⇒ v →
+         xs ++ xs' ↓ i ⇒ v
+↓-++ here = here
+↓-++ (there l) = there (↓-++ l)
 
 All-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
             All (λ x → P (x , x)) L →
