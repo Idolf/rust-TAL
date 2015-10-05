@@ -65,15 +65,22 @@ mutual
   HeapLabel : Set
   HeapLabel = ℕ
 
-  -- Instantiating values, iᵥ
-  data InstantiationValue : Set where
-    inst-ρ : StackType → InstantiationValue
-    inst-α : Type → InstantiationValue
+  -- Instantion
+
+  -- Instantiating values, i
+  InstantiationValue : TypeAssignmentValue → Set
+  InstantiationValue α = Type
+  InstantiationValue ρ = StackType
+
+  -- CastValue cᵥ
+  data CastValue : Set where
+    inst : (a : TypeAssignmentValue) → InstantiationValue a → CastValue
+    weaken : TypeAssignmentValue → CastValue
 
   infix 6 _/_
-  -- Instantiations, i
-  data Instantiation : Set where
-    _/_ : InstantiationValue → ℕ → Instantiation
+  -- Casting c
+  data Cast : Set where
+    _/_ : CastValue → ℕ → Cast
 
   -- Word value, w
   infix 6 _⟦_⟧
@@ -83,14 +90,14 @@ mutual
     const   : ℕ → WordValue
     ns      : WordValue
     uninit  : Type → WordValue
-    _⟦_⟧    : WordValue → Instantiation → WordValue
+    _⟦_⟧    : WordValue → Cast → WordValue
 
   -- Small values, v
   infix 6 _⟦_⟧ᵥ
   data SmallValue : Set where
     reg  : Register → SmallValue
     word : WordValue → SmallValue
-    _⟦_⟧ᵥ : SmallValue → Instantiation → SmallValue
+    _⟦_⟧ᵥ : SmallValue → Cast → SmallValue
 
   -- Heap values, h
   HeapValue : Set

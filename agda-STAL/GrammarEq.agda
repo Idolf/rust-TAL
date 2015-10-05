@@ -99,20 +99,23 @@ instance
   RegisterAssignment-Tree : ToTree RegisterAssignment
   RegisterAssignment-Tree = tree⋆ Γ-from Γ-sur
 
-  InstantiationValue-Tree : ToTree InstantiationValue
-  InstantiationValue-Tree = tree⋆ from sur
-    where from : Tree → ¿ InstantiationValue
-          from (node 0 (σ ∷ _)) = inst-ρ <$> fromTree σ
-          from (node 1 (τ ∷ _)) = inst-α <$> fromTree τ
+  CastValue-Tree : ToTree CastValue
+  CastValue-Tree = tree⋆ from sur
+    where from : Tree → ¿ CastValue
+          from (node 0 (σ ∷ _)) = inst ρ <$> fromTree σ
+          from (node 1 (τ ∷ _)) = inst α <$> fromTree τ
+          from (node 2 (a ∷ _)) = weaken <$> fromTree a
           from _ = Nothing
           sur : IsSurjective from
-          sur (inst-ρ σ) = T₁ 0 σ , inst-ρ <$=> invTree σ
-          sur (inst-α τ) = T₁ 1 τ , inst-α <$=> invTree τ
+          sur (inst ρ σ) = T₁ 0 σ , inst ρ <$=> invTree σ
+          sur (inst α τ) = T₁ 1 τ , inst α <$=> invTree τ
+          sur (weaken a) = T₁ 2 a , weaken <$=> invTree a
 
-  Instantiation-Tree : ToTree Instantiation
+  Instantiation-Tree : ToTree Cast
   Instantiation-Tree = tree⋆ from sur
-          where from : Tree → ¿ Instantiation
-                from (node _ (iᵥ ∷ ι ∷ _)) = _/_ <$> fromTree iᵥ <*> fromTree ι
+          where from : Tree → ¿ Cast
+                from (node _ (iᵥ ∷ ι ∷ _)) =
+                  _/_ <$> fromTree iᵥ <*> fromTree ι
                 from _ = Nothing
                 sur : IsSurjective from
                 sur (iᵥ / ι) = T₂ 0 iᵥ ι , _/_ <$=> invTree iᵥ <*=> invTree ι

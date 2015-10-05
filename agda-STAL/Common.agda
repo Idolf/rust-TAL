@@ -4,6 +4,9 @@ open import Util
 -- Base datatypes and validity for them
 open import Grammar
 
+-- Substitution rules
+open import Substitution
+
 -- Mapping the grammar to a tree structure to get equality
 open import GrammarEq
 
@@ -12,6 +15,3 @@ open import TypeJudgments
 
 -- Rules for definig subtyping
 open import Subtyping
-
--- Substitution rules
-open import Substitution
