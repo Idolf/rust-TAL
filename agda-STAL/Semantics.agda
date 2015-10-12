@@ -70,8 +70,15 @@ data _⊢_⇒_ (G : Globals) : Program → Program → Set where
       G ⊢ H  , register sp regs , st ♯rd i ♯rs ~> Is ⇒
           H' , register sp regs , Is
 
+    exec-mov :
+                       ∀ {H sp regs Is ♯rd v} →
+      ------------------------------------------------------------------
+      G ⊢ H , register sp regs , mov ♯rd v ~> Is ⇒
+          H , register sp (update ♯rd (evalSmallValue regs v) regs) , Is
+
     exec-malloc :
-      ∀ {H sp regs Is ♯rd τs} →
+                    ∀ {H sp regs Is ♯rd τs} →
+      --------------------------------------------------------
       G ⊢ H , register sp regs , malloc ♯rd τs ~> Is ⇒
           H ∷ʳ map uninit τs ,
           register sp (update ♯rd (heapval (length H)) regs) ,
@@ -135,6 +142,7 @@ exec-unique (exec-st eq₁ l₁ u₁₁ u₁₂) (exec-st eq₂ l₂ u₂₁ u�
         | ←-unique u₁₁ u₂₁
         | ←-unique u₁₂ u₂₂
   = refl
+exec-unique exec-mov exec-mov = refl
 exec-unique exec-malloc exec-malloc = refl
 exec-unique (exec-jmp eq₁ l₁) (exec-jmp eq₂ l₂)
   rewrite globval-helper eq₁ eq₂

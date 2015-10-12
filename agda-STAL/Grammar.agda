@@ -145,6 +145,7 @@ mutual
     sst    : ℕ → Register → Instruction
     ld     : Register → Register → ℕ → Instruction
     st     : Register → ℕ → Register → Instruction
+    mov    : Register → SmallValue → Instruction
     malloc : Register → List Type → Instruction
 
   -- Is
