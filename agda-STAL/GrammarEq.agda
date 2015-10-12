@@ -176,6 +176,8 @@ instance
             st <$> fromTree ♯r₁ <*> fromTree i <*> fromTree ♯r₂
           from (node 8 (♯rd ∷ τs ∷ _)) =
             malloc <$> fromTree ♯rd <*> fromTree τs
+          from (node 9 (♯rd ∷ v ∷ _)) =
+            mov <$> fromTree ♯rd <*> fromTree v
           from _ = Nothing
           sur : IsSurjective from
           sur (add ♯r₁ ♯r₂ v) = T₃ 0 ♯r₁ ♯r₂ v ,
@@ -192,6 +194,8 @@ instance
             st <$=> invTree ♯r₁ <*=> invTree i <*=> invTree ♯r₂
           sur (malloc ♯rd τs) = T₂ 8 ♯rd τs ,
             malloc <$=> invTree ♯rd <*=> invTree τs
+          sur (mov ♯rd v) = T₂ 9 ♯rd v ,
+            mov <$=> invTree ♯rd <*=> invTree v
 
   InstructionSequence-Tree : ToTree InstructionSequence
   InstructionSequence-Tree = tree⋆ from sur
