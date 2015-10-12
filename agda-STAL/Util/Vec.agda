@@ -2,7 +2,7 @@ module Util.Vec where
 
 -- Re-exports
 open import Data.Vec
-  using (Vec ; [] ; _∷_ ; toList ; fromList)
+  using (Vec ; [] ; _∷_ ; toList ; fromList ; lookup)
   renaming (map to Vec-map ; zip to Vec-zip) public
 open import Data.Vec.Properties
   using () renaming (∷-injective to Vec-∷-injective) public
@@ -15,12 +15,18 @@ open import Util.Dec
 open import Util.Tree
 open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_)
 open import Data.Nat using (zero ; suc)
+open import Data.Fin using (Fin ; zero ; suc)
 open import Data.List using (List ; map ; [] ; _∷_)
 open import Level using (_⊔_)
 
 repeat : ∀ {a} {A : Set a} {m} → A → Vec A m
 repeat {m = zero}  x = []
 repeat {m = suc i} x = x ∷ repeat x
+
+update : ∀ {a} {A : Set a} {m} →
+           Fin m → A → Vec A m → Vec A m
+update zero    xᵥ (_ ∷ xs) = xᵥ ∷ xs
+update (suc i) xᵥ (x ∷ xs) = x ∷ update i xᵥ xs
 
 infixr 5 _∷_
 data Allᵥ {a p} {A : Set a} (P : A → Set p) :

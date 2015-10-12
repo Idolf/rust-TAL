@@ -166,32 +166,32 @@ instance
             add <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
           from (node 1 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) =
             sub <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
-          from (node 2 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) =
-            mul <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
-          from (node 3 (v ∷ _)) = push <$> fromTree v
-          from (node 4 _) = Just pop
-          from (node 5 (♯r ∷ i ∷ _)) = sld <$> fromTree ♯r <*> fromTree i
-          from (node 6 (i ∷ ♯r ∷ _)) = sst <$> fromTree i <*> fromTree ♯r
-          from (node 7 (♯r₁ ∷ ♯r₂ ∷ i ∷ _)) =
+          from (node 2 (v ∷ _)) = push <$> fromTree v
+          from (node 3 _) = Just pop
+          from (node 4 (♯r ∷ i ∷ _)) = sld <$> fromTree ♯r <*> fromTree i
+          from (node 5 (i ∷ ♯r ∷ _)) = sst <$> fromTree i <*> fromTree ♯r
+          from (node 6 (♯r₁ ∷ ♯r₂ ∷ i ∷ _)) =
             ld <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree i
-          from (node 8 (♯r₁ ∷ i ∷ ♯r₂ ∷ _)) =
+          from (node 7 (♯r₁ ∷ i ∷ ♯r₂ ∷ _)) =
             st <$> fromTree ♯r₁ <*> fromTree i <*> fromTree ♯r₂
+          from (node 8 (♯rd ∷ τs ∷ _)) =
+            malloc <$> fromTree ♯rd <*> fromTree τs
           from _ = Nothing
           sur : IsSurjective from
           sur (add ♯r₁ ♯r₂ v) = T₃ 0 ♯r₁ ♯r₂ v ,
             add <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
           sur (sub ♯r₁ ♯r₂ v) = T₃ 1 ♯r₁ ♯r₂ v ,
             sub <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
-          sur (mul ♯r₁ ♯r₂ v) = T₃ 2 ♯r₁ ♯r₂ v ,
-            mul <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
-          sur (push v) = T₁ 3 v , push <$=> invTree v
-          sur pop = T₀ 4 , refl
-          sur (sld ♯r i) = T₂ 5 ♯r i , sld <$=> invTree ♯r <*=> invTree i
-          sur (sst i ♯r) = T₂ 6 i ♯r , sst <$=> invTree i <*=> invTree ♯r
-          sur (ld ♯r₁ ♯r₂ i) = T₃ 7 ♯r₁ ♯r₂ i ,
+          sur (push v) = T₁ 2 v , push <$=> invTree v
+          sur pop = T₀ 3 , refl
+          sur (sld ♯r i) = T₂ 4 ♯r i , sld <$=> invTree ♯r <*=> invTree i
+          sur (sst i ♯r) = T₂ 5 i ♯r , sst <$=> invTree i <*=> invTree ♯r
+          sur (ld ♯r₁ ♯r₂ i) = T₃ 6 ♯r₁ ♯r₂ i ,
             ld <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree i
-          sur (st ♯r₁ i ♯r₂) = T₃ 8 ♯r₁ i ♯r₂ ,
+          sur (st ♯r₁ i ♯r₂) = T₃ 7 ♯r₁ i ♯r₂ ,
             st <$=> invTree ♯r₁ <*=> invTree i <*=> invTree ♯r₂
+          sur (malloc ♯rd τs) = T₂ 8 ♯rd τs ,
+            malloc <$=> invTree ♯rd <*=> invTree τs
 
   InstructionSequence-Tree : ToTree InstructionSequence
   InstructionSequence-Tree = tree⋆ from sur
@@ -207,10 +207,10 @@ instance
   GlobalValue-Tree : ToTree GlobalValue
   GlobalValue-Tree = tree⋆
     (λ { (node _ (Δ ∷ Γ ∷ Is ∷ _)) →
-           ∀ᵢ[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree Is
+           ∀[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree Is
        ; _ → Nothing })
-    (λ { (∀ᵢ[ Δ ] Γ ∙ Is) → T₃ 0 Δ Γ Is ,
-           ∀ᵢ[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree Is })
+    (λ { (∀[ Δ ] Γ ∙ Is) → T₃ 0 Δ Γ Is ,
+           ∀[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree Is })
 
   RegisterFile-Tree : ToTree RegisterFile
   RegisterFile-Tree = tree⋆
@@ -218,17 +218,3 @@ instance
            register <$> fromTree stack <*> fromTree regs ; _ → Nothing })
     (λ { (register stack regs) → T₂ 0 stack regs ,
            register <$=> invTree stack <*=> invTree regs })
-
-  Program-Tree : ∀ {G} → ToTree (Program G)
-  Program-Tree = tree⋆
-    (λ { (node _ (heap ∷ registers ∷ instructions ∷ _)) →
-           program <$> fromTree heap
-                   <*> fromTree registers
-                   <*> fromTree instructions
-       ; _ → Nothing })
-    (λ { (program heap registers instructions) →
-           T₃ 0 heap registers instructions ,
-           program <$=> invTree heap
-                   <*=> invTree registers
-                   <*=> invTree instructions
-    })

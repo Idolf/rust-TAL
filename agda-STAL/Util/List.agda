@@ -2,7 +2,7 @@ module Util.List where
 
 -- Re-exports
 open import Data.List
-  using (List ; [] ; _∷_ ; [_] ; map ; length ; zip ; _++_) public
+  using (List ; [] ; _∷_ ; _∷ʳ_ ; [_] ; map ; length ; zip ; _++_) public
 open import Data.List.All
   using (All ; [] ; _∷_) renaming (map to All-map ; all to All-dec) public
 open import Data.List.Properties using ()
@@ -152,6 +152,22 @@ All-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {L : List A} →
             All P (zip L L)
 All-zip [] = []
 All-zip (p ∷ ps) = p ∷ All-zip ps
+
+infix 4 _⟦_⟧←_⇒_
+data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → Set ℓ where
+  here : ∀ {x xᵥ xs} →
+           x ∷ xs ⟦ 0 ⟧← xᵥ ⇒ xᵥ ∷ xs
+  there : ∀ {x xᵥ xs xs' i} →
+          xs ⟦ i ⟧← xᵥ ⇒ xs' →
+          x ∷ xs ⟦ suc i ⟧← xᵥ ⇒ x ∷ xs'
+
+←-unique : ∀ {ℓ} {A : Set ℓ} {xs xs₁ xs₂ i} {v : A} →
+             xs ⟦ i ⟧← v ⇒ xs₁ →
+             xs ⟦ i ⟧← v ⇒ xs₂ →
+             xs₁ ≡ xs₂
+←-unique here here = refl
+←-unique {xs = v ∷ xs} (there up₁) (there up₂) =
+  cong (_∷_ v) (←-unique up₁ up₂)
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)

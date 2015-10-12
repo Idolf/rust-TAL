@@ -114,9 +114,9 @@ mutual
   Heap = List HeapValue
 
   -- Global values, g
-  infix 7 ∀ᵢ[_]_∙_
+  infix 7 ∀[_]_∙_
   data GlobalValue : Set where
-    ∀ᵢ[_]_∙_ :
+    ∀[_]_∙_ :
       TypeAssignment → RegisterAssignment → InstructionSequence → GlobalValue
 
   -- Global constants, G
@@ -137,15 +137,15 @@ mutual
 
   -- I
   data Instruction : Set where
-    add  : Register → Register → SmallValue → Instruction
-    sub  : Register → Register → SmallValue → Instruction
-    mul  : Register → Register → SmallValue → Instruction
-    push : SmallValue → Instruction
-    pop  : Instruction
-    sld  : Register → ℕ → Instruction
-    sst  : ℕ → Register → Instruction
-    ld   : Register → Register → ℕ → Instruction
-    st   : Register → ℕ → Register → Instruction
+    add    : Register → Register → SmallValue → Instruction
+    sub    : Register → Register → SmallValue → Instruction
+    push   : SmallValue → Instruction
+    pop    : Instruction
+    sld    : Register → ℕ → Instruction
+    sst    : ℕ → Register → Instruction
+    ld     : Register → Register → ℕ → Instruction
+    st     : Register → ℕ → Register → Instruction
+    malloc : Register → List Type → Instruction
 
   -- Is
   infixr 6 _~>_
@@ -154,14 +154,8 @@ mutual
     jmp : SmallValue → InstructionSequence
 
   -- P
-  record Program (G : Globals) : Set where
-    inductive
-    constructor program
-    field
-      heap         : Heap
-      registers    : RegisterFile
-      instructions : InstructionSequence
+  Program : Set
+  Program = Heap × RegisterFile × InstructionSequence
 
 open RegisterAssignment public
 open RegisterFile public
-open Program public
