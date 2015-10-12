@@ -23,8 +23,8 @@ mutual
 
     ∀-≤ :
             ∀ {Δ' Γ₁ Γ₂} →
-         ⊢ Δ' TypeAssignment →
-         Δ' ++ Δ ⊢ Γ₁ ≤Γ Γ₂ →
+        Δ ⊢ Δ' TypeAssignment →
+          Δ' ++ Δ ⊢ Γ₁ ≤Γ Γ₂ →
       ----------------------------
       Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ ∀[ Δ' ] Γ₂
 
@@ -89,7 +89,7 @@ private
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? int = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? ns = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂)
-      with Δ₁ ≟ Δ₂ | ∙⊢? Δ₁ Valid | Δ₁ ++ Δ ⊢ Γ₁ ≤Γ? Γ₂
+      with Δ₁ ≟ Δ₂ | Δ ⊢? Δ₁ Valid | Δ₁ ++ Δ ⊢ Γ₁ ≤Γ? Γ₂
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
       | yes refl | yes Δ'⋆ | yes Γ₁≤Γ₂ = yes (∀-≤ Δ'⋆ Γ₁≤Γ₂)
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
@@ -291,118 +291,105 @@ record Subtype {A Ctx : Set} (T : TypeLike A Ctx) : Set1 where
     ≤-refl : ∀ {C v} → C ⊢ v Valid → C ⊢ v ≤ v
     ≤-trans : ∀ {C v₁ v₂ v₃} → C ⊢ v₁ ≤ v₂ → C ⊢ v₂ ≤ v₃ → C ⊢ v₁ ≤ v₃
     ≤-valid : ∀ {C v₁ v₂} → C ⊢ v₁ ≤ v₂ → C ⊢ v₁ Valid × C ⊢ v₂ Valid
+open Subtype {{...}} public
 
--- These two should do the same, but they do not
--- open Subtype {{...}} public
-infix 4 _⊢_≤_ ∙⊢_≤_ _⊢_≤?_ ∙⊢_≤?_
-_⊢_≤_ : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-          Ctx → A → A → Set
-_⊢_≤_ {{t}} = Subtype._⊢_≤_ t
-∙⊢_≤_ : ∀ {A t} {{_ : Subtype {A} {⊤} t}} →
-          A → A → Set
-∙⊢_≤_ {{t}} = Subtype._⊢_≤_ t tt
-_⊢_≤?_ : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-           ∀ C v₁ v₂ → Dec (C ⊢ v₁ ≤ v₂)
-_⊢_≤?_ {{t}} = Subtype._⊢_≤?_ t
-∙⊢_≤?_ : ∀ {A t} {{_ : Subtype {A} {⊤} t}} →
-           ∀ v₁ v₂ → Dec (tt ⊢ v₁ ≤ v₂)
-∙⊢_≤?_ {{t}} = Subtype._⊢_≤?_ t tt
-≤-refl : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-           ∀ {C v} → C ⊢ v Valid → C ⊢ v ≤ v
-≤-refl {{t}} = Subtype.≤-refl t
-≤-trans : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-            ∀ {C v₁ v₂ v₃} → C ⊢ v₁ ≤ v₂ → C ⊢ v₂ ≤ v₃ → C ⊢ v₁ ≤ v₃
-≤-trans {{t}} = Subtype.≤-trans t
-≤-valid : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-            ∀ {C v₁ v₂} → C ⊢ v₁ ≤ v₂ → C ⊢ v₁ Valid × C ⊢ v₂ Valid
-≤-valid {{t}} = Subtype.≤-valid t
+Vec-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} {m} →
+                Subtype (Vec-typeLike {{t}} {m})
+Vec-subtype {{t}} = subtype
+    (λ C xs₁ xs₂ → Allᵥ (λ {(x₁ , x₂) → C ⊢ x₁ ≤ x₂ })
+                        (Vec-zip xs₁ xs₂))
+    (λ C xs₁ xs₂ → Allᵥ-dec (λ { (x₁ , x₂) → C ⊢ x₁ ≤? x₂ })
+                            (Vec-zip xs₁ xs₂))
+    (λ ps → Allᵥ-zip (Allᵥ-map (≤-refl {{t}}) ps))
+    trans'
+    valid
+  where trans' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
+                   {C : Ctx} {xs₁ xs₂ xs₃ : Vec A m} →
+                   Allᵥ (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (Vec-zip xs₁ xs₂) →
+                   Allᵥ (λ { (x₂ , x₃) → C ⊢ x₂ ≤ x₃ }) (Vec-zip xs₂ xs₃) →
+                   Allᵥ (λ { (x₁ , x₃) → C ⊢ x₁ ≤ x₃ }) (Vec-zip xs₁ xs₃)
+        trans' {xs₁ = []} {[]} {[]} [] [] = []
+        trans' {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} {x₃ ∷ xs₃} (x₁₂≤ ∷ xs₁₂≤)
+          (x₂₃≤ ∷ xs₂₃≤) = (≤-trans {{t}} x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
+        valid : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
+                  {C : Ctx} {xs₁ xs₂ : Vec A m} →
+                  Allᵥ (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (Vec-zip xs₁ xs₂) →
+                  Allᵥ (λ { x₁ → C ⊢ x₁ Valid }) xs₁ ×
+                  Allᵥ (λ { x₁ → C ⊢ x₁ Valid }) xs₂
+        valid {xs₁ = []} {[]} [] = [] , []
+        valid {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} (x≤ ∷ xs≤)
+          with ≤-valid {{t}} x≤ | valid xs≤
+        ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
+
+List-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
+                 Subtype (List-typeLike {{t}})
+List-subtype {{t}} = subtype
+    (λ C xs₁ xs₂ → length xs₁ ≡ length xs₂ ×
+                   All (λ {(x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂))
+    (λ C xs₁ xs₂ → dec-inj₂ _,_ id
+                            (length xs₁ ≟ length xs₂)
+                            (All-dec (λ { (x₁ , x₂) → C ⊢ x₁ ≤? x₂ })
+                                     (zip xs₁ xs₂)))
+    (λ ps → refl , All-zip (All-map (≤-refl {{t}}) ps))
+    trans'
+    valid
+  where trans' : ∀ {A Ctx t} {{_ : Subtype t}} →
+                   {C : Ctx} {xs₁ xs₂ xs₃ : List A} →
+                   length xs₁ ≡ length xs₂ ×
+                     All (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂) →
+                   length xs₂ ≡ length xs₃ ×
+                     All (λ { (x₂ , x₃) → C ⊢ x₂ ≤ x₃ }) (zip xs₂ xs₃) →
+                   length xs₁ ≡ length xs₃ ×
+                     All (λ { (x₁ , x₃) → C ⊢ x₁ ≤ x₃ }) (zip xs₁ xs₃)
+        trans' {xs₁ = []} {[]} {[]} (refl , []) (refl , []) = refl , []
+        trans' {xs₁ = []} {_ ∷ _} {_} (() , _) _
+        trans' {xs₁ = []} {_} {_ ∷ _} (eq₁₂ , _) (eq₂₃ , _)
+          with trans eq₁₂ eq₂₃
+        ... | ()
+        trans' {xs₁ = _ ∷ _} {[]} {_} (() , _) _
+        trans' {xs₁ = _ ∷ _} {_} {[]} (eq₁₂ , _) (eq₂₃ , _)
+          with trans eq₁₂ eq₂₃
+        ... | ()
+        trans' {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} {x₃ ∷ xs₃}
+          (eq₁₂ , x₁₂≤ ∷ xs₁₂≤) (eq₂₃ , x₂₃≤ ∷ xs₂₃≤) =
+            (trans eq₁₂ eq₂₃) ,
+            (≤-trans {{t}} x₁₂≤ x₂₃≤) ∷
+              proj₂ (trans' (cancel-+-left 1 eq₁₂ , xs₁₂≤)
+                            (cancel-+-left 1 eq₂₃ , xs₂₃≤))
+        valid : ∀ {A Ctx t} {{_ : Subtype t}} →
+                  {C : Ctx} {xs₁ xs₂ : List A} →
+                  length xs₁ ≡ length xs₂ ×
+                  All (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂) →
+                  All (λ { x₁ → C ⊢ x₁ Valid }) xs₁ ×
+                  All (λ { x₁ → C ⊢ x₁ Valid }) xs₂
+        valid {xs₁ = []} {[]} (refl , []) = [] , []
+        valid {xs₁ = []} {x₁ ∷ xs₂} (() , _)
+        valid {xs₁ = x₁ ∷ xs₁} {[]} (() , _)
+        valid {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} (eq , x≤ ∷ xs≤)
+          with ≤-valid {{t}} x≤ | valid (cancel-+-left 1 eq , xs≤)
+        ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
 
 instance
   Type-subtype : Subtype Type-typeLike
   Type-subtype = subtype _⊢_≤τ_ _⊢_≤τ?_ τ-refl τ-trans τ-valid
 
+  Typevec-subType : ∀ {m} → Subtype (Typevec-typeLike {m})
+  Typevec-subType = Vec-subtype
+
+  Typelist-subType : Subtype Typelist-typeLike
+  Typelist-subType = List-subtype
+
   InitType-subtype : Subtype InitType-typeLike
   InitType-subtype = subtype _⊢_≤τ⁻_ _⊢_≤τ⁻?_ τ⁻-refl τ⁻-trans τ⁻-valid
+
+  InitTypevec-subType : ∀ {m} → Subtype (InitTypevec-typeLike {m})
+  InitTypevec-subType = Vec-subtype
+
+  InitTypelist-subType : Subtype InitTypelist-typeLike
+  InitTypelist-subType = List-subtype
 
   StackType-subtype : Subtype StackType-typeLike
   StackType-subtype = subtype _⊢_≤σ_ _⊢_≤σ?_ σ-refl σ-trans σ-valid
 
   RegisterAssignment-subtype : Subtype RegisterAssignment-typeLike
   RegisterAssignment-subtype = subtype _⊢_≤Γ_ _⊢_≤Γ?_ Γ-refl Γ-trans Γ-valid
-
-  Vec-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} {m} →
-                  Subtype (Vec-typeLike {{t}} {m})
-  Vec-subtype {{t}} = subtype
-      (λ C xs₁ xs₂ → Allᵥ (λ {(x₁ , x₂) → C ⊢ x₁ ≤ x₂ })
-                          (Vec-zip xs₁ xs₂))
-      (λ C xs₁ xs₂ → Allᵥ-dec (λ { (x₁ , x₂) → C ⊢ x₁ ≤? x₂ })
-                              (Vec-zip xs₁ xs₂))
-      (λ ps → Allᵥ-zip (Allᵥ-map (≤-refl {{t}}) ps))
-      trans'
-      valid
-    where trans' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                     {C : Ctx} {xs₁ xs₂ xs₃ : Vec A m} →
-                     Allᵥ (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (Vec-zip xs₁ xs₂) →
-                     Allᵥ (λ { (x₂ , x₃) → C ⊢ x₂ ≤ x₃ }) (Vec-zip xs₂ xs₃) →
-                     Allᵥ (λ { (x₁ , x₃) → C ⊢ x₁ ≤ x₃ }) (Vec-zip xs₁ xs₃)
-          trans' {xs₁ = []} {[]} {[]} [] [] = []
-          trans' {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} {x₃ ∷ xs₃} (x₁₂≤ ∷ xs₁₂≤)
-            (x₂₃≤ ∷ xs₂₃≤) = (≤-trans {{t}} x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
-          valid : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                    {C : Ctx} {xs₁ xs₂ : Vec A m} →
-                    Allᵥ (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (Vec-zip xs₁ xs₂) →
-                    Allᵥ (λ { x₁ → C ⊢ x₁ Valid }) xs₁ ×
-                    Allᵥ (λ { x₁ → C ⊢ x₁ Valid }) xs₂
-          valid {xs₁ = []} {[]} [] = [] , []
-          valid {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} (x≤ ∷ xs≤)
-            with ≤-valid {{t}} x≤ | valid xs≤
-          ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
-
-
-  List-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-                   Subtype (List-typeLike {{t}})
-  List-subtype {{t}} = subtype
-      (λ C xs₁ xs₂ → length xs₁ ≡ length xs₂ ×
-                     All (λ {(x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂))
-      (λ C xs₁ xs₂ → dec-inj₂ _,_ id
-                              (length xs₁ ≟ length xs₂)
-                              (All-dec (λ { (x₁ , x₂) → C ⊢ x₁ ≤? x₂ })
-                                       (zip xs₁ xs₂)))
-      (λ ps → refl , All-zip (All-map (≤-refl {{t}}) ps))
-      trans'
-      valid
-    where trans' : ∀ {A Ctx t} {{_ : Subtype t}} →
-                     {C : Ctx} {xs₁ xs₂ xs₃ : List A} →
-                     length xs₁ ≡ length xs₂ ×
-                       All (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂) →
-                     length xs₂ ≡ length xs₃ ×
-                       All (λ { (x₂ , x₃) → C ⊢ x₂ ≤ x₃ }) (zip xs₂ xs₃) →
-                     length xs₁ ≡ length xs₃ ×
-                       All (λ { (x₁ , x₃) → C ⊢ x₁ ≤ x₃ }) (zip xs₁ xs₃)
-          trans' {xs₁ = []} {[]} {[]} (refl , []) (refl , []) = refl , []
-          trans' {xs₁ = []} {_ ∷ _} {_} (() , _) _
-          trans' {xs₁ = []} {_} {_ ∷ _} (eq₁₂ , _) (eq₂₃ , _)
-            with trans eq₁₂ eq₂₃
-          ... | ()
-          trans' {xs₁ = _ ∷ _} {[]} {_} (() , _) _
-          trans' {xs₁ = _ ∷ _} {_} {[]} (eq₁₂ , _) (eq₂₃ , _)
-            with trans eq₁₂ eq₂₃
-          ... | ()
-          trans' {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} {x₃ ∷ xs₃}
-            (eq₁₂ , x₁₂≤ ∷ xs₁₂≤) (eq₂₃ , x₂₃≤ ∷ xs₂₃≤) =
-              (trans eq₁₂ eq₂₃) ,
-              (≤-trans {{t}} x₁₂≤ x₂₃≤) ∷
-                proj₂ (trans' (cancel-+-left 1 eq₁₂ , xs₁₂≤)
-                              (cancel-+-left 1 eq₂₃ , xs₂₃≤))
-          valid : ∀ {A Ctx t} {{_ : Subtype t}} →
-                    {C : Ctx} {xs₁ xs₂ : List A} →
-                    length xs₁ ≡ length xs₂ ×
-                    All (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂) →
-                    All (λ { x₁ → C ⊢ x₁ Valid }) xs₁ ×
-                    All (λ { x₁ → C ⊢ x₁ Valid }) xs₂
-          valid {xs₁ = []} {[]} (refl , []) = [] , []
-          valid {xs₁ = []} {x₁ ∷ xs₂} (() , _)
-          valid {xs₁ = x₁ ∷ xs₁} {[]} (() , _)
-          valid {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} (eq , x≤ ∷ xs≤)
-            with ≤-valid {{t}} x≤ | valid (cancel-+-left 1 eq , xs≤)
-          ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆

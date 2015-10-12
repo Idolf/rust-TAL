@@ -41,6 +41,7 @@ HasInverse→IsInjective {f = f} (g , eq₁) {x₁} {x₂} eq₂ =
       Just x₂
     ∎
   )
+  where open Eq-Reasoning
 
 IsSurjective : ∀ {a b} {A : Set a} {B : Set b}
                  (f : A → ¿ B) → Set (a ⊔ b)

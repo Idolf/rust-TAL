@@ -15,3 +15,5 @@ open import TypeJudgments
 
 -- Rules for definig subtyping
 open import Subtyping
+
+open import SubstitutionLemmas

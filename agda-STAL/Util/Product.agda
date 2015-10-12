@@ -2,7 +2,7 @@ module Util.Product where
 
 -- Re-exports
 open import Data.Product
-  using (_×_ ; _,_ ; Σ ; Σ-syntax ; proj₁ ; proj₂ ; ∃)
+  using (_×_ ; _,_ ; Σ ; Σ-syntax ; proj₁ ; proj₂ ; ∃ ; ∃₂)
   renaming (map to ×-map) public
 
 -- Local imports

@@ -99,26 +99,33 @@ instance
   RegisterAssignment-Tree : ToTree RegisterAssignment
   RegisterAssignment-Tree = tree⋆ Γ-from Γ-sur
 
-  CastValue-Tree : ToTree CastValue
-  CastValue-Tree = tree⋆ from sur
-    where from : Tree → ¿ CastValue
-          from (node 0 (σ ∷ _)) = inst ρ <$> fromTree σ
-          from (node 1 (τ ∷ _)) = inst α <$> fromTree τ
-          from (node 2 (a ∷ _)) = weaken <$> fromTree a
+  Instantiation-Tree : ToTree Instantiation
+  Instantiation-Tree = tree⋆ from sur
+    where from : Tree → ¿ Instantiation
+          from (node 0 (τ ∷ _)) = α <$> fromTree τ
+          from (node 1 (σ ∷ _)) = ρ <$> fromTree σ
           from _ = Nothing
           sur : IsSurjective from
-          sur (inst ρ σ) = T₁ 0 σ , inst ρ <$=> invTree σ
-          sur (inst α τ) = T₁ 1 τ , inst α <$=> invTree τ
-          sur (weaken a) = T₁ 2 a , weaken <$=> invTree a
+          sur (α τ) = T₁ 0 τ , α <$=> invTree τ
+          sur (ρ σ) = T₁ 1 σ , ρ <$=> invTree σ
 
-  Instantiation-Tree : ToTree Cast
-  Instantiation-Tree = tree⋆ from sur
-          where from : Tree → ¿ Cast
-                from (node _ (iᵥ ∷ ι ∷ _)) =
-                  _/_ <$> fromTree iᵥ <*> fromTree ι
-                from _ = Nothing
-                sur : IsSurjective from
-                sur (iᵥ / ι) = T₂ 0 iᵥ ι , _/_ <$=> invTree iᵥ <*=> invTree ι
+  CastValue-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (CastValue A)
+  CastValue-Tree = tree⋆ from sur
+    where from : ∀ {A} {{_ : ToTree A}} → Tree → ¿ (CastValue A)
+          from (node 0 (i ∷ _)) = inst <$> fromTree i
+          from (node 1 (n ∷ _)) = weaken <$> fromTree n
+          from _ = Nothing
+          sur : IsSurjective from
+          sur (inst i) = T₁ 0 i , inst <$=> invTree i
+          sur (weaken n) = T₁ 1 n , weaken <$=> invTree n
+
+  Cast-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (Cast A)
+  Cast-Tree = tree⋆ from sur
+    where from : ∀ {A} {{_ : ToTree A}} → Tree → ¿ (Cast A)
+          from (node _ (cᵥ ∷ ι ∷ _)) = _/_ <$> fromTree cᵥ <*> fromTree ι
+          from _ = Nothing
+          sur : IsSurjective from
+          sur (cᵥ / ι) = T₂ 0 cᵥ ι , _/_ <$=> invTree cᵥ <*=> invTree ι
 
   WordValue-Tree : ToTree WordValue
   WordValue-Tree = tree⋆ from sur
