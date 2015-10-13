@@ -78,7 +78,8 @@ mutual
 
   infix 4 ⊢_LabelAssignment
   ⊢_LabelAssignment : LabelAssignment → Set
-  ⊢ ψ₁ , ψ₂ LabelAssignment = (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
+  ⊢ ψ₁ , ψ₂ LabelAssignment =
+    (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
 
   infix 4  _⊢_TypeAssignment
   data _⊢_TypeAssignment : TypeAssignment → TypeAssignment → Set where
@@ -202,16 +203,21 @@ private
 
     infix 4 ⊢?_GlobalLabelAssignment
     ⊢?_GlobalLabelAssignment : ∀ ψ₁ → Dec (⊢ ψ₁ GlobalLabelAssignment)
-    ⊢? ψ₁ GlobalLabelAssignment = dec-inj valid-G (λ { (valid-G τs⋆) → τs⋆ }) ([] ⊢? ψ₁ Types)
+    ⊢? ψ₁ GlobalLabelAssignment =
+      dec-inj valid-G (λ { (valid-G τs⋆) → τs⋆ }) ([] ⊢? ψ₁ Types)
 
     infix 4 ⊢?_HeapLabelAssignment
     ⊢?_HeapLabelAssignment : ∀ ψ₂ → Dec (⊢ ψ₂ HeapLabelAssignment)
-    ⊢? ψ₂ HeapLabelAssignment = dec-inj valid-H (λ { (valid-H τs⋆) → τs⋆ }) ([] ⊢? ψ₂ Types)
+    ⊢? ψ₂ HeapLabelAssignment =
+      dec-inj valid-H (λ { (valid-H τs⋆) → τs⋆ }) ([] ⊢? ψ₂ Types)
 
     infix 4 ⊢?_LabelAssignment
     ⊢?_LabelAssignment : ∀ ψ → Dec (⊢ ψ LabelAssignment)
     ⊢? ψ₁ , ψ₂ LabelAssignment =
-      dec-inj₂ _,_ id (⊢? ψ₁ GlobalLabelAssignment) (⊢? ψ₂ HeapLabelAssignment)
+      dec-inj₂ _,_
+               id
+               (⊢? ψ₁ GlobalLabelAssignment)
+               (⊢? ψ₂ HeapLabelAssignment)
 
     infix 4  _⊢?_TypeAssignment
     _⊢?_TypeAssignment : ∀ Δ₁ Δ₂  → Dec (Δ₁ ⊢ Δ₂ TypeAssignment)
