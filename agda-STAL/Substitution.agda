@@ -140,6 +140,176 @@ mutual
     subst-α : ∀ {c} → α ⟦ c ⟧a≡ α
     subst-ρ : ∀ {c} → ρ ⟦ c ⟧a≡ ρ
 
+  infix 5 _⟦_⟧i≡_
+  data _⟦_⟧i≡_ : substᵗ Instantiation where
+    subst-α :
+        ∀ {τ τ' c} →
+       τ ⟦ c ⟧τ≡ τ' →
+      ----------------
+      α τ ⟦ c ⟧i≡ α τ'
+
+    subst-ρ :
+        ∀ {σ σ' c} →
+       σ ⟦ c ⟧σ≡ σ' →
+      ----------------
+      ρ σ ⟦ c ⟧i≡ ρ σ'
+
+  infix 5 _⟦_⟧cᵥ≡_
+  data _⟦_⟧cᵥ≡_ : substᵗ StrongCastValue where
+    subst-inst :
+           ∀ {i i' c} →
+          i ⟦ c ⟧i≡ i' →
+      -----------------------
+      inst i ⟦ c ⟧cᵥ≡ inst i'
+
+    subst-weaken :
+             ∀ {Δ⁺ Δ⁺' c} →
+            Δ⁺ ⟦ c ⟧Δ≡ Δ⁺' →
+      -----------------------------
+      weaken Δ⁺ ⟦ c ⟧cᵥ≡ weaken Δ⁺'
+
+  infix 5 _⟦_⟧c≡_
+  data _⟦_⟧c≡_ : substᵗ StrongCast where
+    subst-/ :
+         ∀ {cᵥ cᵥ' ι c} →
+        cᵥ ⟦ c ⟧cᵥ≡ cᵥ' →
+      ----------------------
+      cᵥ / ι ⟦ c ⟧c≡ cᵥ' / ι
+
+  infix 5 _⟦_⟧w≡_
+  data _⟦_⟧w≡_ : substᵗ WordValue where
+    subst-globval :
+               ∀ {l c} →
+      ---------------------------
+      globval l ⟦ c ⟧w≡ globval l
+
+    subst-heapval :
+               ∀ {lₕ c} →
+      -----------------------------
+      heapval lₕ ⟦ c ⟧w≡ heapval lₕ
+
+    subst-const :
+            ∀ {n c} →
+      -----------------------
+      const n ⟦ c ⟧w≡ const n
+
+    subst-ns :
+        ∀ {c} →
+      -------------
+      ns ⟦ c ⟧w≡ ns
+
+    subst-uninit :
+             ∀ {τ τ' c} →
+            τ ⟦ c ⟧τ≡ τ' →
+      --------------------------
+      uninit τ ⟦ c ⟧w≡ uninit τ'
+
+    subst-inst :
+             ∀ {w₁ w₂ c₁ c₂ c} →
+               w₁ ⟦ c ⟧w≡ w₂ →
+               c₁ ⟦ c ⟧c≡ c₂ →
+      -------------------------------
+      (w₁ ⟦ c₁ ⟧) ⟦ c ⟧w≡ (w₂ ⟦ c₂ ⟧)
+
+  infix 5 _⟦_⟧v≡_
+  data _⟦_⟧v≡_ : substᵗ SmallValue where
+    subst-reg :
+           ∀ {♯r c} →
+      ---------------------
+      reg ♯r ⟦ c ⟧v≡ reg ♯r
+
+    subst-word :
+           ∀ {w w' c} →
+          w ⟦ c ⟧w≡ w' →
+      ----------------------
+      word w ⟦ c ⟧v≡ word w'
+
+    subst-inst :
+             ∀ {v₁ v₂ c₁ c₂ c} →
+               v₁ ⟦ c ⟧v≡ v₂ →
+               c₁ ⟦ c ⟧c≡ c₂ →
+      -------------------------------
+      (v₁ ⟦ c₁ ⟧ᵥ) ⟦ c ⟧v≡ (v₂ ⟦ c₂ ⟧ᵥ)
+
+  infix 5 _⟦_⟧ι≡_
+  data _⟦_⟧ι≡_ : substᵗ Instruction where
+    subst-add :
+              ∀ {♯rd ♯rs v v' c} →
+                v ⟦ c ⟧v≡ v' →
+      ------------------------------------
+      add ♯rd ♯rs v ⟦ c ⟧ι≡ add ♯rd ♯rs v'
+
+    subst-sub :
+              ∀ {♯rd ♯rs v v' c} →
+                v ⟦ c ⟧v≡ v' →
+      ------------------------------------
+      sub ♯rd ♯rs v ⟦ c ⟧ι≡ sub ♯rd ♯rs v'
+
+    subst-push :
+           ∀ {v v' c} →
+          v ⟦ c ⟧v≡ v' →
+      ----------------------
+      push v ⟦ c ⟧ι≡ push v'
+
+    subst-pop :
+         ∀ {c} →
+      ---------------
+      pop ⟦ c ⟧ι≡ pop
+
+    subst-sld :
+            ∀ {♯rd i c} →
+      ---------------------------
+      sld ♯rd i ⟦ c ⟧ι≡ sld ♯rd i
+
+    subst-sst :
+             ∀ {i ♯rs c} →
+      ---------------------------
+      sst i ♯rs ⟦ c ⟧ι≡ sst i ♯rs
+
+    subst-ld :
+              ∀ {♯rd ♯rs i c} →
+      ---------------------------------
+      ld ♯rd ♯rs i ⟦ c ⟧ι≡ ld ♯rd ♯rs i
+
+    subst-st :
+              ∀ {♯rd ♯rs i c} →
+      ---------------------------------
+      st ♯rd i ♯rs ⟦ c ⟧ι≡ st ♯rd i ♯rs
+
+    subst-malloc :
+                  ∀ {♯rd τs τs' c} →
+                length τs ≡ length τs' →
+      All (λ {(τ , τ') → τ ⟦ c ⟧τ≡ τ' }) (zip τs τs') →
+      -------------------------------------------------
+           malloc ♯rd τs ⟦ c ⟧ι≡ malloc ♯rd τs'
+
+    subst-mov :
+           ∀ {♯rd v v' c} →
+            v ⟦ c ⟧v≡ v' →
+      ----------------------------
+      mov ♯rd v ⟦ c ⟧ι≡ mov ♯rd v'
+
+    subst-beq :
+           ∀ {♯r v v' c} →
+           v ⟦ c ⟧v≡ v' →
+      --------------------------
+      beq ♯r v ⟦ c ⟧ι≡ beq ♯r v'
+
+  infix 5 _⟦_⟧I≡_
+  data _⟦_⟧I≡_ : substᵗ InstructionSequence where
+    subst-~> :
+         ∀ {ι ι' I I' c} →
+           ι ⟦ c ⟧ι≡ ι' →
+           I ⟦ c ⟧I≡ I' →
+      -----------------------
+      ι ~> I ⟦ c ⟧I≡ ι' ~> I'
+
+    subst-jmp :
+         ∀ {v v' c} →
+         v ⟦ c ⟧v≡ v' →
+      --------------------
+      jmp v ⟦ c ⟧I≡ jmp v'
+
 private
   mutual
     substᵗ-unique : ∀ {A} → substᵗ A → Set
@@ -637,6 +807,276 @@ instance
   TypeAssignmentValue-Substitution : Substitution TypeAssignmentValue ℕ
   TypeAssignmentValue-Substitution =
     substitution 0 _⟦_⟧a≡_ subst-a-unique can-weaken-a _⟦_⟧a? a-weaken-0
+
+  Instantiation-Substitution : Substitution Instantiation ℕ
+  Instantiation-Substitution = substitution 0 _⟦_⟧i≡_ unique can-weak dec weak0
+    where unique : ∀ {i i₁ i₂ c} →
+                     i ⟦ c ⟧i≡ i₁ →
+                     i ⟦ c ⟧i≡ i₂ →
+                     i₁ ≡ i₂
+          unique (subst-α sub-τ₁) (subst-α sub-τ₂) = cong α (subst-unique sub-τ₁ sub-τ₂)
+          unique (subst-ρ sub-σ₁) (subst-ρ sub-σ₂) = cong ρ (subst-unique sub-σ₁ sub-σ₂)
+
+          can-weak : ∀ i w ι →
+                       ∃ λ i' → i ⟦ weaken w / ι ⟧i≡ i'
+          can-weak (α τ) w ι with can-weaken τ w ι
+          ... | τ' , sub-τ = α τ' , subst-α sub-τ
+          can-weak (ρ σ) w ι with can-weaken σ w ι
+          ... | σ' , sub-σ = ρ σ' , subst-ρ sub-σ
+
+          dec : ∀ i c → Dec (∃ λ i' → i ⟦ c ⟧i≡ i')
+          dec (α τ) c with τ ⟦ c ⟧?
+          ... | yes (τ' , sub-τ) = yes (α τ' , subst-α sub-τ)
+          ... | no ¬sub-τ = no (λ { (α τ' , subst-α sub-τ) → ¬sub-τ (τ' , sub-τ) })
+          dec (ρ σ) c with σ ⟦ c ⟧?
+          ... | yes (σ' , sub-σ) = yes (ρ σ' , subst-ρ sub-σ)
+          ... | no ¬sub-σ = no (λ { (ρ σ' , subst-ρ sub-σ) → ¬sub-σ (σ' , sub-σ) })
+
+          weak0 : ∀ i {ι} → i ⟦ weaken 0 / ι ⟧i≡ i
+          weak0 (α τ) = subst-α (weaken-0 τ)
+          weak0 (ρ σ) = subst-ρ (weaken-0 σ)
+
+  StrongCastValue-Substitution : Substitution StrongCastValue ℕ
+  StrongCastValue-Substitution = substitution 0 _⟦_⟧cᵥ≡_ unique can-weak dec weak0
+    where unique : ∀ {cᵥ cᵥ₁ cᵥ₂ c} →
+                     cᵥ ⟦ c ⟧cᵥ≡ cᵥ₁ →
+                     cᵥ ⟦ c ⟧cᵥ≡ cᵥ₂ →
+                     cᵥ₁ ≡ cᵥ₂
+          unique (subst-inst sub-i₁) (subst-inst sub-i₂) = cong inst (subst-unique sub-i₁ sub-i₂)
+          unique (subst-weaken sub-Δ⁺₁) (subst-weaken sub-Δ⁺₂) = cong weaken (subst-unique sub-Δ⁺₁ sub-Δ⁺₂)
+
+          can-weak : ∀ cᵥ w ι →
+                       ∃ λ cᵥ' → cᵥ ⟦ weaken w / ι ⟧cᵥ≡ cᵥ'
+          can-weak (inst i) w ι with can-weaken i w ι
+          ... | i' , sub-i = inst i' , subst-inst sub-i
+          can-weak (weaken Δ⁺) w ι with can-weaken Δ⁺ w ι
+          ... | Δ⁺' , sub-Δ⁺ = weaken Δ⁺' , subst-weaken sub-Δ⁺
+
+          dec : ∀ cᵥ c → Dec (∃ λ cᵥ' → cᵥ ⟦ c ⟧cᵥ≡ cᵥ')
+          dec (inst i) c with i ⟦ c ⟧?
+          ... | yes (i' , sub-i) = yes (inst i' , subst-inst sub-i)
+          ... | no ¬sub-i = no (λ { (inst i' , subst-inst sub-i) → ¬sub-i (i' , sub-i) })
+          dec (weaken Δ⁺) c with Δ⁺ ⟦ c ⟧?
+          ... | yes (Δ⁺' , sub-Δ⁺) = yes (weaken Δ⁺' , subst-weaken sub-Δ⁺)
+          ... | no ¬sub-Δ⁺ = no (λ { (weaken Δ⁺' , subst-weaken sub-Δ⁺) → ¬sub-Δ⁺ (Δ⁺' , sub-Δ⁺) })
+
+          weak0 : ∀ cᵥ {ι} → cᵥ ⟦ weaken 0 / ι ⟧cᵥ≡ cᵥ
+          weak0 (inst i) = subst-inst (weaken-0 i)
+          weak0 (weaken Δ⁺) = subst-weaken (weaken-0 Δ⁺)
+
+  StrongCast-Substitution : Substitution StrongCast ℕ
+  StrongCast-Substitution = substitution 0 _⟦_⟧c≡_ unique can-weak dec weak0
+    where unique : ∀ {c c₁ c₂ c⋆} →
+                     c ⟦ c⋆ ⟧c≡ c₁ →
+                     c ⟦ c⋆ ⟧c≡ c₂ →
+                     c₁ ≡ c₂
+          unique (subst-/ sub-cᵥ₁) (subst-/ sub-cᵥ₂) = cong₂ _/_ (subst-unique sub-cᵥ₁ sub-cᵥ₂) refl
+
+          can-weak : ∀ c w ι →
+                       ∃ λ c' → c ⟦ weaken w / ι ⟧c≡ c'
+          can-weak (cᵥ / ι₁) w ι₂ with can-weaken cᵥ w ι₂
+          ... | cᵥ' , sub-cᵥ = cᵥ' / ι₁ , subst-/ sub-cᵥ
+
+          dec : ∀ c c⋆ → Dec (∃ λ c' → c ⟦ c⋆ ⟧c≡ c')
+          dec (cᵥ / ι) c⋆ with cᵥ ⟦ c⋆ ⟧?
+          ... | yes (cᵥ' , sub-cᵥ) = yes (cᵥ' / ι , subst-/ sub-cᵥ)
+          ... | no ¬sub-cᵥ = no (λ { (cᵥ' / .ι , subst-/ sub-cᵥ) → ¬sub-cᵥ (cᵥ' , sub-cᵥ) })
+
+          weak0 : ∀ c {ι} → c ⟦ weaken 0 / ι ⟧c≡ c
+          weak0 (cᵥ / ι) = subst-/ (weaken-0 cᵥ)
+
+  WordValue-Substitution : Substitution WordValue ℕ
+  WordValue-Substitution = substitution 0 _⟦_⟧w≡_ unique can-weak dec weak0
+    where unique : ∀ {w w₁ w₂ c} →
+                     w ⟦ c ⟧w≡ w₁ →
+                     w ⟦ c ⟧w≡ w₂ →
+                     w₁ ≡ w₂
+          unique subst-globval subst-globval = refl
+          unique subst-heapval subst-heapval = refl
+          unique subst-const subst-const = refl
+          unique subst-ns subst-ns = refl
+          unique (subst-uninit sub-τ₁) (subst-uninit sub-τ₂) = cong uninit (subst-unique sub-τ₁ sub-τ₂)
+          unique (subst-inst sub-w₁ sub-i₁) (subst-inst sub-w₂ sub-i₂) = cong₂ _⟦_⟧ (unique sub-w₁ sub-w₂) (subst-unique sub-i₁ sub-i₂)
+          can-weak : ∀ w n ι →
+                       ∃ λ w' → w ⟦ weaken n / ι ⟧w≡ w'
+          can-weak (globval l) n ι = globval l , subst-globval
+          can-weak (heapval lₕ) n ι = heapval lₕ , subst-heapval
+          can-weak (const n₁) n₂ ι = const n₁ , subst-const
+          can-weak ns n ι = ns , subst-ns
+          can-weak (uninit τ) n ι with can-weaken τ n ι
+          ... | τ' , sub-τ = uninit τ' , subst-uninit sub-τ
+          can-weak (w ⟦ i ⟧) n ι with can-weak w n ι | can-weaken i n ι
+          ... | w' , sub-w | i' , sub-i = w' ⟦ i' ⟧ , subst-inst sub-w sub-i
+          dec : ∀ w c → Dec (∃ λ w' → w ⟦ c ⟧w≡ w')
+          dec (globval l) c = yes (globval l , subst-globval)
+          dec (heapval lₕ) c = yes (heapval lₕ , subst-heapval)
+          dec (const n) c = yes (const n , subst-const)
+          dec ns c = yes (ns , subst-ns)
+          dec (uninit τ) c with τ ⟦ c ⟧?
+          ... | yes (τ' , sub-τ) = yes (uninit τ' , subst-uninit sub-τ)
+          ... | no ¬sub-τ = no (λ { (uninit τ' , subst-uninit sub-τ) → ¬sub-τ (τ' , sub-τ) })
+          dec (w ⟦ i ⟧) c with dec w c | i ⟦ c ⟧?
+          ... | yes (w' , sub-w) | yes (i' , sub-i) = yes (w' ⟦ i' ⟧ , subst-inst sub-w sub-i)
+          ... | no ¬sub-w | _ = no (λ { (w' ⟦ i' ⟧ , subst-inst sub-w sub-i) → ¬sub-w (w' , sub-w) })
+          ... | _ | no ¬sub-i = no (λ { (w' ⟦ i' ⟧ , subst-inst sub-w sub-i) → ¬sub-i (i' , sub-i) })
+          weak0 : ∀ w {ι} → w ⟦ weaken 0 / ι ⟧w≡ w
+          weak0 (globval l) = subst-globval
+          weak0 (heapval lₕ) = subst-heapval
+          weak0 (const n) = subst-const
+          weak0 ns = subst-ns
+          weak0 (uninit τ) = subst-uninit (weaken-0 τ)
+          weak0 (w ⟦ i ⟧) = subst-inst (weak0 w) (weaken-0 i)
+
+  SmallValue-Substitution : Substitution SmallValue ℕ
+  SmallValue-Substitution = substitution 0 _⟦_⟧v≡_ unique can-weak dec weak0
+    where unique : ∀ {v v₁ v₂ c} →
+                     v ⟦ c ⟧v≡ v₁ →
+                     v ⟦ c ⟧v≡ v₂ →
+                     v₁ ≡ v₂
+          unique subst-reg subst-reg = refl
+          unique (subst-word sub-w₁) (subst-word sub-w₂) = cong word (subst-unique sub-w₁ sub-w₂)
+          unique (subst-inst sub-v₁ sub-i₁) (subst-inst sub-v₂ sub-i₂) = cong₂ _⟦_⟧ᵥ (unique sub-v₁ sub-v₂) (subst-unique sub-i₁ sub-i₂)
+          can-weak : ∀ v n ι →
+                       ∃ λ v' → v ⟦ weaken n / ι ⟧v≡ v'
+          can-weak (reg ♯r) n ι = reg ♯r , subst-reg
+          can-weak (word w) n ι with can-weaken w n ι
+          ... | w' , sub-w = word w' , subst-word sub-w
+          can-weak (v ⟦ i ⟧ᵥ) n ι with can-weak v n ι | can-weaken i n ι
+          ... | v' , sub-v | i' , sub-i = v' ⟦ i' ⟧ᵥ , subst-inst sub-v sub-i
+          dec : ∀ v c → Dec (∃ λ v' → v ⟦ c ⟧v≡ v')
+          dec (reg ♯r) c = yes (reg ♯r , subst-reg)
+          dec (word w) c with w ⟦ c ⟧?
+          ... | yes (w' , sub-w) = yes (word w' , subst-word sub-w)
+          ... | no ¬sub-w = no (λ {(word w' , subst-word sub-w) → ¬sub-w (w' , sub-w)})
+          dec (v ⟦ i ⟧ᵥ) c with dec v c | i ⟦ c ⟧?
+          ... | yes (v' , sub-v) | yes (i' , sub-i) = yes (v' ⟦ i' ⟧ᵥ , subst-inst sub-v sub-i)
+          ... | no ¬sub-v | _ = no (λ {(v' ⟦ i' ⟧ᵥ , subst-inst sub-v sub-i) → ¬sub-v (v' , sub-v) })
+          ... | _ | no ¬sub-i = no (λ {(v' ⟦ i' ⟧ᵥ , subst-inst sub-v sub-i) → ¬sub-i (i' , sub-i) })
+          weak0 : ∀ v {ι} → v ⟦ weaken 0 / ι ⟧v≡ v
+          weak0 (reg ♯r) = subst-reg
+          weak0 (word w) = subst-word (weaken-0 w)
+          weak0 (v ⟦ i ⟧ᵥ) = subst-inst (weak0 v) (weaken-0 i)
+
+  Instruction-Substitution : Substitution Instruction ℕ
+  Instruction-Substitution = substitution 0 _⟦_⟧ι≡_ unique can-weak dec weak0
+    where unique : ∀ {ι ι₁ ι₂ c} →
+                     ι ⟦ c ⟧ι≡ ι₁ →
+                     ι ⟦ c ⟧ι≡ ι₂ →
+                     ι₁ ≡ ι₂
+          unique (subst-add sub-v₁) (subst-add sub-v₂)
+            rewrite subst-unique sub-v₁ sub-v₂ = refl
+          unique (subst-sub sub-v₁) (subst-sub sub-v₂)
+            rewrite subst-unique sub-v₁ sub-v₂ = refl
+          unique (subst-push sub-v₁) (subst-push sub-v₂)
+            rewrite subst-unique sub-v₁ sub-v₂ = refl
+          unique subst-pop subst-pop = refl
+          unique subst-sld subst-sld = refl
+          unique subst-sst subst-sst = refl
+          unique subst-ld subst-ld = refl
+          unique subst-st subst-st = refl
+          unique (subst-malloc eq₁ sub-τs₁) (subst-malloc eq₂ sub-τs₂) =
+            cong₂ malloc refl (subst-unique (eq₁ , sub-τs₁) (eq₂ , sub-τs₂))
+          unique (subst-mov sub-v₁) (subst-mov sub-v₂)
+            rewrite subst-unique sub-v₁ sub-v₂ = refl
+          unique (subst-beq sub-v₁) (subst-beq sub-v₂)
+            rewrite subst-unique sub-v₁ sub-v₂ = refl
+
+          can-weak : ∀ ι n ι⋆ →
+                       ∃ λ ι' → ι ⟦ weaken n / ι⋆ ⟧ι≡ ι'
+          can-weak (add ♯rd ♯rs v) n ι⋆
+            with can-weaken v n ι⋆
+          ... | v' , sub-v = add ♯rd ♯rs v' , subst-add sub-v
+          can-weak (sub ♯rd ♯rs v) n ι⋆
+            with can-weaken v n ι⋆
+          ... | v' , sub-v = sub ♯rd ♯rs v' , subst-sub sub-v
+          can-weak (push v) n ι⋆
+            with can-weaken v n ι⋆
+          ... | v' , sub-v = push v' , subst-push sub-v
+          can-weak pop n ι⋆ = pop , subst-pop
+          can-weak (sld ♯rd i) n ι⋆ = sld ♯rd i , subst-sld
+          can-weak (sst i ♯rs) n ι⋆ = sst i ♯rs , subst-sst
+          can-weak (ld ♯rd ♯rs i) n ι⋆ = ld ♯rd ♯rs i , subst-ld
+          can-weak (st ♯rd i ♯rs) n ι⋆ = st ♯rd i ♯rs , subst-st
+          can-weak (malloc ♯rd τs) n ι⋆
+            with can-weaken τs n ι⋆
+          ... | τs' , eq , sub-τs = malloc ♯rd τs' , subst-malloc eq sub-τs
+          can-weak (mov ♯rd v) n ι⋆
+            with can-weaken v n ι⋆
+          ... | v' , sub-v = mov ♯rd v' , subst-mov sub-v
+          can-weak (beq ♯r v) n ι⋆
+            with can-weaken v n ι⋆
+          ... | v' , sub-v = beq ♯r v' , subst-beq sub-v
+
+          dec : ∀ ι c → Dec (∃ λ ι' → ι ⟦ c ⟧ι≡ ι')
+          dec (add ♯rd ♯rs v) c
+            with v ⟦ c ⟧?
+          ... | yes (v' , sub-v) = yes (add ♯rd ♯rs v' , subst-add sub-v)
+          ... | no ¬sub-v = no (λ {(._ , subst-add sub-v) → ¬sub-v (_ , sub-v) })
+          dec (sub ♯rd ♯rs v) c
+            with v ⟦ c ⟧?
+          ... | yes (v' , sub-v) = yes (sub ♯rd ♯rs v' , subst-sub sub-v)
+          ... | no ¬sub-v = no (λ {(._ , subst-sub sub-v) → ¬sub-v (_ , sub-v) })
+          dec (push v) c
+            with v ⟦ c ⟧?
+          ... | yes (v' , sub-v) = yes (push v' , subst-push sub-v)
+          ... | no ¬sub-v = no (λ {(._ , subst-push sub-v) → ¬sub-v (_ , sub-v) })
+          dec pop c = yes (pop , subst-pop)
+          dec (sld ♯rd i) c = yes (sld ♯rd i , subst-sld)
+          dec (sst i ♯rs) c = yes (sst i ♯rs , subst-sst)
+          dec (ld ♯rd ♯rs i) c = yes (ld ♯rd ♯rs i , subst-ld)
+          dec (st ♯rd i ♯rs) c = yes (st ♯rd i ♯rs , subst-st)
+          dec (malloc ♯rd τs) c
+            with τs ⟦ c ⟧?
+          ... | yes (τs' , eq , sub-τs) = yes (malloc ♯rd τs' , subst-malloc eq sub-τs)
+          ... | no ¬sub-τs = no (λ {(._ , subst-malloc eq sub-τs) → ¬sub-τs (_ , eq , sub-τs) })
+          dec (mov ♯rd v) c
+            with v ⟦ c ⟧?
+          ... | yes (v' , sub-v) = yes (mov ♯rd v' , subst-mov sub-v)
+          ... | no ¬sub-v = no (λ {(._ , subst-mov sub-v) → ¬sub-v (_ , sub-v) })
+          dec (beq ♯r v) c
+            with v ⟦ c ⟧?
+          ... | yes (v' , sub-v) = yes (beq ♯r v' , subst-beq sub-v)
+          ... | no ¬sub-v = no (λ {(._ , subst-beq sub-v) → ¬sub-v (_ , sub-v) })
+
+          weak0 : ∀ ι {ι⋆} → ι ⟦ weaken 0 / ι⋆ ⟧ι≡ ι
+          weak0 (add ♯rd ♯rs v) = subst-add (weaken-0 v)
+          weak0 (sub ♯rd ♯rs v) = subst-sub (weaken-0 v)
+          weak0 (push v) = subst-push (weaken-0 v)
+          weak0 pop = subst-pop
+          weak0 (sld ♯rd i) = subst-sld
+          weak0 (sst i ♯rs) = subst-sst
+          weak0 (ld ♯rd ♯rs i) = subst-ld
+          weak0 (st ♯rd i ♯rs) = subst-st
+          weak0 (malloc ♯rd τs) {ι⋆} with weaken-0 τs {ι⋆}
+          ... | eq , sub-τs = subst-malloc eq sub-τs
+          weak0 (mov ♯rd v) = subst-mov (weaken-0 v)
+          weak0 (beq ♯r v) = subst-beq (weaken-0 v)
+
+  InstructionSequence-Substitution : Substitution InstructionSequence ℕ
+  InstructionSequence-Substitution = substitution 0 _⟦_⟧I≡_ unique can-weak dec weak0
+    where unique : ∀ {I I₁ I₂ c} →
+                     I ⟦ c ⟧I≡ I₁ →
+                     I ⟦ c ⟧I≡ I₂ →
+                     I₁ ≡ I₂
+          unique (subst-~> sub-ι₁ sub-I₁) (subst-~> sub-ι₂ sub-I₂) = cong₂ _~>_ (subst-unique sub-ι₁ sub-ι₂) (unique sub-I₁ sub-I₂)
+          unique (subst-jmp sub-v₁) (subst-jmp sub-v₂) = cong jmp (subst-unique sub-v₁ sub-v₂)
+          can-weak : ∀ I n ι →
+                       ∃ λ I' → I ⟦ weaken n / ι ⟧I≡ I'
+          can-weak (ι ~> I) n ι⋆ with can-weaken ι n ι⋆ | can-weak I n ι⋆
+          ... | ι' , sub-ι | I' , sub-I = ι' ~> I' , subst-~> sub-ι sub-I
+          can-weak (jmp v) n ι with can-weaken v n ι
+          ... | v' , sub-v = jmp v' , subst-jmp sub-v
+          dec : ∀ I c → Dec (∃ λ I' → I ⟦ c ⟧I≡ I')
+          dec (ι ~> I) c with ι ⟦ c ⟧? | dec I c
+          ... | yes (ι' , sub-ι) | yes (I' , sub-I) = yes (ι' ~> I' , subst-~> sub-ι sub-I)
+          ... | no ¬sub-ι | _ = no (λ { (ι' ~> I' , subst-~> sub-ι sub-I) → ¬sub-ι (ι' , sub-ι) })
+          ... | _ | no ¬sub-I = no (λ { (ι' ~> I' , subst-~> sub-ι sub-I) → ¬sub-I (I' , sub-I) })
+          dec (jmp v) c with v ⟦ c ⟧?
+          ... | yes (v' , sub-v) = yes (jmp v' , subst-jmp sub-v)
+          ... | no ¬sub-v = no (λ { (jmp v' , subst-jmp sub-v) → ¬sub-v (v' , sub-v) })
+          weak0 : ∀ I {ι} → I ⟦ weaken 0 / ι ⟧I≡ I
+          weak0 (ι ~> I) = subst-~> (weaken-0 ι) (weak0 I)
+          weak0 (jmp v) = subst-jmp (weaken-0 v)
 
 Strong→WeakCastValue : StrongCastValue → WeakCastValue
 Strong→WeakCastValue (inst i) = inst i

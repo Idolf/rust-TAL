@@ -178,6 +178,8 @@ instance
             malloc <$> fromTree ♯rd <*> fromTree τs
           from (node 9 (♯rd ∷ v ∷ _)) =
             mov <$> fromTree ♯rd <*> fromTree v
+          from (node 10 (♯r ∷ v ∷ _)) =
+            beq <$> fromTree ♯r <*> fromTree v
           from _ = Nothing
           sur : IsSurjective from
           sur (add ♯r₁ ♯r₂ v) = T₃ 0 ♯r₁ ♯r₂ v ,
@@ -196,25 +198,27 @@ instance
             malloc <$=> invTree ♯rd <*=> invTree τs
           sur (mov ♯rd v) = T₂ 9 ♯rd v ,
             mov <$=> invTree ♯rd <*=> invTree v
+          sur (beq ♯r v) = T₂ 10 ♯r v ,
+            beq <$=> invTree ♯r <*=> invTree v
 
   InstructionSequence-Tree : ToTree InstructionSequence
   InstructionSequence-Tree = tree⋆ from sur
     where from : Tree → ¿ InstructionSequence
-          from (node 0 (I ∷ Is ∷ _)) = _~>_ <$> fromTree I <*> from Is
+          from (node 0 (ι ∷ I ∷ _)) = _~>_ <$> fromTree ι <*> from I
           from (node 1 (v ∷ _)) = jmp <$> fromTree v
           from _ = Nothing
           sur : IsSurjective from
-          sur (I ~> Is) = T₂ 0 I (proj₁ (sur Is)) ,
-            _~>_ <$=> invTree I <*=> proj₂ (sur Is)
+          sur (ι ~> I) = T₂ 0 ι (proj₁ (sur I)) ,
+            _~>_ <$=> invTree ι <*=> proj₂ (sur I)
           sur (jmp v) = T₁ 1 v , jmp <$=> invTree v
 
   GlobalValue-Tree : ToTree GlobalValue
   GlobalValue-Tree = tree⋆
-    (λ { (node _ (Δ ∷ Γ ∷ Is ∷ _)) →
-           ∀[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree Is
+    (λ { (node _ (Δ ∷ Γ ∷ I ∷ _)) →
+           ∀[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree I
        ; _ → Nothing })
-    (λ { (∀[ Δ ] Γ ∙ Is) → T₃ 0 Δ Γ Is ,
-           ∀[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree Is })
+    (λ { (∀[ Δ ] Γ ∙ I) → T₃ 0 Δ Γ I ,
+           ∀[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree I })
 
   RegisterFile-Tree : ToTree RegisterFile
   RegisterFile-Tree = tree⋆

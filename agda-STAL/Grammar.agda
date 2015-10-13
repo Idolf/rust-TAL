@@ -32,9 +32,17 @@ mutual
   InitType : Set
   InitType = Type × InitializationFlag
 
+  -- Global label assignments, ψ₁
+  GlobalLabelAssignment : Set
+  GlobalLabelAssignment = List Type
+
+  -- Heap label assignments, ψ₂
+  HeapLabelAssignment : Set
+  HeapLabelAssignment = List Type
+
   -- Label assignments, ψ
   LabelAssignment : Set
-  LabelAssignment = List Type
+  LabelAssignment = GlobalLabelAssignment × HeapLabelAssignment
 
   -- Type assignments, Δ
   TypeAssignment : Set
@@ -135,7 +143,7 @@ mutual
   Stack : Set
   Stack = List WordValue
 
-  -- I
+  -- ι
   data Instruction : Set where
     add    : Register → Register → SmallValue → Instruction
     sub    : Register → Register → SmallValue → Instruction
@@ -145,10 +153,11 @@ mutual
     sst    : ℕ → Register → Instruction
     ld     : Register → Register → ℕ → Instruction
     st     : Register → ℕ → Register → Instruction
-    mov    : Register → SmallValue → Instruction
     malloc : Register → List Type → Instruction
+    mov    : Register → SmallValue → Instruction
+    beq    : Register → SmallValue → Instruction
 
-  -- Is
+  -- I
   infixr 6 _~>_
   data InstructionSequence : Set where
     _~>_ : Instruction → InstructionSequence → InstructionSequence
