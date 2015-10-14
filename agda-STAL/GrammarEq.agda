@@ -8,7 +8,7 @@ private
     τ-from (node 1 _) = Just int
     τ-from (node 2 _) = Just ns
     τ-from (node 3 (Δ ∷ Γ ∷ _)) = ∀[_]_ <$> Δ-from Δ <*> Γ-from Γ
-    τ-from (node 4 τs) = (tuple ∘ proj₂) <$> τs-from τs
+    τ-from (node 4 τs) = tuple <$> τs-from τs
     τ-from _ = Nothing
 
     τ-sur : IsSurjective τ-from
@@ -17,22 +17,22 @@ private
     τ-sur ns = T₀ 2 , refl
     τ-sur (∀[ Δ ] Γ) = T₂ 3 (proj₁ (Δ-sur Δ)) (proj₁ (Γ-sur Γ)) ,
       ∀[_]_ <$=> proj₂ (Δ-sur Δ) <*=> proj₂ (Γ-sur Γ)
-    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur (_ , τs))) ,
-      (tuple ∘ proj₂) <$=> proj₂ (τs-sur (_ , τs))
+    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
+      tuple <$=> proj₂ (τs-sur τs)
 
-    τs-from : List Tree → ¿ (∃ λ m → Vec InitType m)
-    τs-from [] = Just (0 , [])
+    τs-from : List Tree → ¿ (List InitType)
+    τs-from [] = Just []
     τs-from (node _ (τ ∷ φ ∷ _) ∷ τs) =
-      (λ τ φ → λ { (l , τs) → suc l , (τ , φ) ∷ τs })
+      (λ τ φ τs → (τ , φ) ∷ τs)
         <$> τ-from τ <*> fromTree φ <*> τs-from τs
     τs-from _ = Nothing
 
     τs-sur : IsSurjective τs-from
-    τs-sur (zero , []) = [] , refl
-    τs-sur (suc l , (τ , φ) ∷ τs) =
-      T₂ 0 (proj₁ (τ-sur τ)) φ ∷ proj₁ (τs-sur (l , τs)) ,
-      (λ τ φ → λ { (l , τs) → suc l , (τ , φ) ∷ τs })
-        <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur (l , τs))
+    τs-sur [] = [] , refl
+    τs-sur ((τ , φ) ∷ τs) =
+      T₂ 0 (proj₁ (τ-sur τ)) φ ∷ proj₁ (τs-sur τs) ,
+      (λ τ φ τs → (τ , φ) ∷ τs)
+        <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur τs)
 
     σ-from : Tree → ¿ StackType
     σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
@@ -211,6 +211,22 @@ instance
           sur (ι ~> I) = T₂ 0 ι (proj₁ (sur I)) ,
             _~>_ <$=> invTree ι <*=> proj₂ (sur I)
           sur (jmp v) = T₁ 1 v , jmp <$=> invTree v
+
+  HeapValue-Tree : ToTree HeapValue
+  HeapValue-Tree = tree⋆ from sur
+    where from' : List Tree → ¿ (List WordValue)
+          from' [] = Just []
+          from' (t ∷ ts) = _∷_ <$> fromTree t <*> from' ts
+          sur' : IsSurjective from'
+          sur' [] = [] , refl
+          sur' (w ∷ ws) = toTree w ∷ proj₁ (sur' ws) ,
+            _∷_ <$=> invTree w <*=> proj₂ (sur' ws)
+          from : Tree → ¿ HeapValue
+          from (node _ ws) = tuple <$> from' ws
+          sur : IsSurjective from
+          sur (tuple ws) =
+            node 0 (proj₁ (sur' ws)) ,
+            tuple <$=> proj₂ (sur' ws)
 
   GlobalValue-Tree : ToTree GlobalValue
   GlobalValue-Tree = tree⋆

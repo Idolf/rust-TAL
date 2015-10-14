@@ -52,10 +52,10 @@ mutual
       ∀[ Δ ] Γ ⟦ cᵥ / ι ⟧τ≡ ∀[ Δ' ] Γ'
 
     subst-tuple :
-             ∀ {c m τs τs'} →
-            τs ⟦ c ⟧τs⁻≡ τs' →
-      ------------------------------
-      tuple {m} τs ⟦ c ⟧τ≡ tuple τs'
+           ∀ {c τs τs'} →
+          τs ⟦ c ⟧τs⁻≡ τs' →
+      --------------------------
+      tuple τs ⟦ c ⟧τ≡ tuple τs'
 
   infix 5 _⟦_⟧τ⁻≡_
   data _⟦_⟧τ⁻≡_ : substᵗ InitType where
@@ -66,9 +66,9 @@ mutual
       (τ , φ) ⟦ c ⟧τ⁻≡ (τ' , φ)
 
   infix 5 _⟦_⟧τs⁻≡_
-  _⟦_⟧τs⁻≡_ : ∀ {m} → substᵗ (Vec InitType m)
+  _⟦_⟧τs⁻≡_ : substᵗ (List InitType)
   τs⁻ ⟦ c ⟧τs⁻≡ τs⁻' =
-    Allᵥ (λ { (τ⁻ , τ⁻') → τ⁻ ⟦ c ⟧τ⁻≡ τ⁻' }) (Vec-zip τs⁻ τs⁻')
+    AllZip (λ τ⁻ τ⁻' → τ⁻ ⟦ c ⟧τ⁻≡ τ⁻') τs⁻ τs⁻'
 
   infix 5 _⟦_⟧σ≡_
   data _⟦_⟧σ≡_ : substᵗ StackType where
@@ -119,16 +119,17 @@ mutual
 
   infix 5 _⟦_⟧regs≡_
   _⟦_⟧regs≡_ : ∀ {m} → substᵗ (Vec Type m)
-  τs ⟦ c ⟧regs≡ τs' = Allᵥ (λ { (τ , τ') → τ ⟦ c ⟧τ≡ τ' }) (Vec-zip τs τs')
+  τs ⟦ c ⟧regs≡ τs' = AllZipᵥ (λ τ τ' → τ ⟦ c ⟧τ≡ τ') τs τs'
 
   infix 5 _⟦_⟧Δ≡_
+  infixr 5 _∷_
   data _⟦_⟧Δ≡_ : substᵗ TypeAssignment where
-    subst-[] :
+    [] :
           ∀ {c} →
       -------------
       [] ⟦ c ⟧Δ≡ []
 
-    subst-∷ :
+    _∷_ :
             ∀ {a a' Δ Δ' cᵥ ι} →
       a ⟦ cᵥ / length Δ + ι ⟧a≡ a' →
             Δ ⟦ cᵥ / ι ⟧Δ≡ Δ' →
@@ -278,10 +279,9 @@ mutual
 
     subst-malloc :
                   ∀ {♯rd τs τs' c} →
-                length τs ≡ length τs' →
-      All (λ {(τ , τ') → τ ⟦ c ⟧τ≡ τ' }) (zip τs τs') →
-      -------------------------------------------------
-           malloc ♯rd τs ⟦ c ⟧ι≡ malloc ♯rd τs'
+      AllZip (λ τ τ' → τ ⟦ c ⟧τ≡ τ') τs τs' →
+      -----------------------------------------
+        malloc ♯rd τs ⟦ c ⟧ι≡ malloc ♯rd τs'
 
     subst-mov :
            ∀ {♯rd v v' c} →
@@ -360,10 +360,9 @@ private
     subst-τ⁻-unique (subst-τ⁻ {φ = φ} sub-τ₁) (subst-τ⁻ sub-τ₂) =
       cong₂ _,_ (subst-τ-unique sub-τ₁ sub-τ₂) refl
 
-    subst-τs⁻-unique : ∀ {m} → substᵗ-unique (_⟦_⟧τs⁻≡_ {m})
-    subst-τs⁻-unique {v = []} {[]} {[]} [] [] = refl
-    subst-τs⁻-unique {v = τ⁻ ∷ τs⁻} {τ⁻₁ ∷ τs⁻₁} {τ⁻₂ ∷ τs⁻₂}
-      (sub-τ⁻₁ ∷ sub-τs⁻₁) (sub-τ⁻₂ ∷ sub-τs⁻₂) =
+    subst-τs⁻-unique : substᵗ-unique _⟦_⟧τs⁻≡_
+    subst-τs⁻-unique [] [] = refl
+    subst-τs⁻-unique (sub-τ⁻₁ ∷ sub-τs⁻₁) (sub-τ⁻₂ ∷ sub-τs⁻₂) =
         cong₂ _∷_ (subst-τ⁻-unique sub-τ⁻₁ sub-τ⁻₂)
                   (subst-τs⁻-unique sub-τs⁻₁ sub-τs⁻₂)
 
@@ -415,8 +414,8 @@ private
                   (subst-regs-unique sub-τs₁ sub-τs₂)
 
     subst-Δ-unique : substᵗ-unique _⟦_⟧Δ≡_
-    subst-Δ-unique subst-[] subst-[] = refl
-    subst-Δ-unique (subst-∷ sub-a₁ sub-Δ₁) (subst-∷ sub-a₂ sub-Δ₂) =
+    subst-Δ-unique [] [] = refl
+    subst-Δ-unique (sub-a₁ ∷ sub-Δ₁) (sub-a₂ ∷ sub-Δ₂) =
       cong₂ _∷_ (subst-a-unique sub-a₁ sub-a₂)
                 (subst-Δ-unique sub-Δ₁ sub-Δ₂)
 
@@ -441,8 +440,7 @@ private
     can-weaken-τ⁻ (τ , φ) n ι with can-weaken-τ τ n ι
     ... | τ' , sub-τ = (τ' , φ) , subst-τ⁻ sub-τ
 
-    can-weaken-τs⁻ : ∀ {m} (τs⁻ : Vec InitType m) n ι →
-                       ∃ λ τs⁻' → τs⁻ ⟦ weaken n / ι ⟧τs⁻≡ τs⁻'
+    can-weaken-τs⁻ : ∀ τs⁻ n ι → ∃ λ τs⁻' → τs⁻ ⟦ weaken n / ι ⟧τs⁻≡ τs⁻'
     can-weaken-τs⁻ [] n ι = [] , []
     can-weaken-τs⁻ (τ⁻ ∷ τs⁻) n ι
       with can-weaken-τ⁻ τ⁻ n ι | can-weaken-τs⁻ τs⁻ n ι
@@ -470,10 +468,10 @@ private
     ... | τ' , sub-τ | τs' , sub-τs = τ' ∷ τs' , sub-τ ∷ sub-τs
 
     can-weaken-Δ : ∀ Δ n ι → ∃ λ Δ' → Δ ⟦ weaken n / ι ⟧Δ≡ Δ'
-    can-weaken-Δ [] n ι = [] , subst-[]
+    can-weaken-Δ [] n ι = [] , []
     can-weaken-Δ (a ∷ Δ) n ι with can-weaken-a a n (length Δ + ι)
                                 | can-weaken-Δ Δ n ι
-    ... | a' , sub-a | Δ' , sub-Δ = a' ∷ Δ' , subst-∷ sub-a sub-Δ
+    ... | a' , sub-a | Δ' , sub-Δ = a' ∷ Δ' , sub-a ∷ sub-Δ
 
     can-weaken-a : ∀ a n ι → ∃ λ a' → a ⟦ weaken n / ι ⟧a≡ a'
     can-weaken-a α n ι = α , subst-α
@@ -518,8 +516,7 @@ private
     (τ , φ) ⟦ c ⟧τ⁻? | no ¬sub-τ =
       no (λ { (._ , subst-τ⁻ sub-τ) → ¬sub-τ (_ , sub-τ) })
 
-    _⟦_⟧τs⁻? : ∀ {m} (τs⁻ : Vec InitType m) c →
-                     Dec (∃ λ τs⁻' → τs⁻ ⟦ c ⟧τs⁻≡ τs⁻')
+    _⟦_⟧τs⁻? : ∀ τs⁻ c → Dec (∃ λ τs⁻' → τs⁻ ⟦ c ⟧τs⁻≡ τs⁻')
     [] ⟦ c ⟧τs⁻? = yes ([] , [])
     (τ⁻ ∷ τs⁻) ⟦ c ⟧τs⁻? with τ⁻ ⟦ c ⟧τ⁻? | τs⁻ ⟦ c ⟧τs⁻?
     ... | yes (τ⁻' , sub-τ⁻) | yes (τs⁻' , sub-τs⁻) =
@@ -575,14 +572,14 @@ private
       no (λ { (τ' ∷ τs' , sub-τ ∷ sub-τs) → ¬sub-τs (τs' , sub-τs) })
 
     _⟦_⟧Δ? : ∀ Δ c → Dec (∃ λ Δ' → Δ ⟦ c ⟧Δ≡ Δ')
-    [] ⟦ c ⟧Δ? = yes ([] , subst-[])
+    [] ⟦ c ⟧Δ? = yes ([] , [])
     (a ∷ Δ) ⟦ cᵥ / ι ⟧Δ? with a ⟦ cᵥ / length Δ + ι ⟧a? | Δ ⟦ cᵥ / ι ⟧Δ?
     ... | yes (a' , sub-a) | yes (Δ' , sub-Δ) =
-      yes (a' ∷ Δ' , subst-∷ sub-a sub-Δ)
+      yes (a' ∷ Δ' , sub-a ∷ sub-Δ)
     ... | no ¬sub-a | _ =
-      no (λ { (a' ∷ Δ' , subst-∷ sub-a sub-Δ) → ¬sub-a (a' , sub-a) })
+      no (λ { (a' ∷ Δ' , sub-a ∷ sub-Δ) → ¬sub-a (a' , sub-a) })
     ... | _ | no ¬sub-Δ =
-      no (λ { (a' ∷ Δ' , subst-∷ sub-a sub-Δ) → ¬sub-Δ (Δ' , sub-Δ) })
+      no (λ { (a' ∷ Δ' , sub-a ∷ sub-Δ) → ¬sub-Δ (Δ' , sub-Δ) })
 
     _⟦_⟧a? : ∀ a c → Dec (∃ λ a' → a ⟦ c ⟧a≡ a')
     α ⟦ c ⟧a? = yes (α , subst-α)
@@ -602,8 +599,7 @@ private
     τ⁻-weaken-0 : ∀ τ⁻ {ι} → τ⁻ ⟦ weaken 0 / ι ⟧τ⁻≡ τ⁻
     τ⁻-weaken-0 (τ , φ) = subst-τ⁻ (τ-weaken-0 τ)
 
-    τs⁻-weaken-0 : ∀ {m} (τs⁻ : Vec InitType m) {ι} →
-                         τs⁻ ⟦ weaken 0 / ι ⟧τs⁻≡ τs⁻
+    τs⁻-weaken-0 : ∀ τs⁻ {ι} → τs⁻ ⟦ weaken 0 / ι ⟧τs⁻≡ τs⁻
     τs⁻-weaken-0 [] = []
     τs⁻-weaken-0 (τ⁻ ∷ τs⁻) = τ⁻-weaken-0 τ⁻ ∷ τs⁻-weaken-0 τs⁻
 
@@ -624,8 +620,8 @@ private
     regs-weaken-0 (τ ∷ τs) = τ-weaken-0 τ ∷ regs-weaken-0 τs
 
     Δ-weaken-0 : ∀ Δ {ι} → Δ ⟦ weaken 0 / ι ⟧Δ≡ Δ
-    Δ-weaken-0 [] = subst-[]
-    Δ-weaken-0 (a ∷ Δ) = subst-∷ (a-weaken-0 a) (Δ-weaken-0 Δ)
+    Δ-weaken-0 [] = []
+    Δ-weaken-0 (a ∷ Δ) = a-weaken-0 a ∷ Δ-weaken-0 Δ
 
     a-weaken-0 : ∀ a {ι} → a ⟦ weaken 0 / ι ⟧a≡ a
     a-weaken-0 α = subst-α
@@ -663,7 +659,7 @@ Vec-Substitution = substitution
   where _⟦_⟧xs≡_ : ∀ {A W} {{s : Substitution A W}} {m} →
                      Vec A m → Cast W → Vec A m → Set
         xs ⟦ c ⟧xs≡ xs' =
-          Allᵥ (λ { (x , x') → x ⟦ c ⟧≡ x' }) (Vec-zip xs xs')
+          AllZipᵥ (λ x x' → x ⟦ c ⟧≡ x') xs xs'
 
         unique : ∀ {A W m c} {xs xs₁ xs₂ : Vec A m}
                    {{s : Substitution A W}} →
@@ -687,19 +683,11 @@ Vec-Substitution = substitution
         dec (x ∷ xs) c with x ⟦ c ⟧? | dec xs c
         dec (x ∷ xs) c | yes (x' , sub-x) | yes (xs' , sub-xs) =
           yes ((x' ∷ xs') , sub-x ∷ sub-xs)
-        dec (x ∷ xs) c | no ¬sub-x | _ = no (help ¬sub-x)
-          where help : ∀ {A W} {{s : Substitution A W}}
-                         {c m x} {xs : Vec A m} →
-                         ¬ (∃ λ x' → x ⟦ c ⟧≡ x') →
-                         ¬ (∃ λ xs' → (x ∷ xs) ⟦ c ⟧xs≡ xs')
-                help ¬sub-x (x' ∷ xs' , sub-x ∷ sub-xs) = ¬sub-x (_ , sub-x)
-        dec (x ∷ xs) c | _ | no ¬sub-xs = no (help ¬sub-xs)
-          where help : ∀ {A W} {{s : Substitution A W}}
-                         {c m x} {xs : Vec A m} →
-                         ¬ (∃ λ xs' → xs ⟦ c ⟧xs≡ xs') →
-                         ¬ (∃ λ xs' → (x ∷ xs) ⟦ c ⟧xs≡ xs')
-                help ¬sub-xs (x' ∷ xs' , sub-x ∷ sub-xs) =
-                  ¬sub-xs (_ , sub-xs)
+        dec (x ∷ xs) c | no ¬sub-x | _ =
+          no (λ { (x' ∷ xs' , sub-x ∷ sub-xs) → ¬sub-x (x' , sub-x)})
+        dec (x ∷ xs) c | _ | no ¬sub-xs =
+          no (λ { (x' ∷ xs' , sub-x ∷ sub-xs) → ¬sub-xs (xs' , sub-xs)})
+
         xs-weaken-0 : ∀ {A W m} {{_ : Substitution A W}}
                         (xs : Vec A m) {ι} → xs ⟦ weaken W₀ / ι ⟧xs≡ xs
         xs-weaken-0 [] = []
@@ -716,60 +704,40 @@ List-Substitution = substitution
 
   where _⟦_⟧xs≡_ : ∀ {A W} {{s : Substitution A W}} →
                        List A → Cast W → List A → Set
-        xs ⟦ c ⟧xs≡ xs' = length xs ≡ length xs' ×
-                          All (λ { (x , x') → x ⟦ c ⟧≡ x' }) (zip xs xs')
+        xs ⟦ c ⟧xs≡ xs' = AllZip (λ x x' → x ⟦ c ⟧≡ x') xs xs'
 
         unique : ∀ {A W c} {xs xs₁ xs₂ : List A}
                    {{s : Substitution A W}} →
                    xs ⟦ c ⟧xs≡ xs₁ →
                    xs ⟦ c ⟧xs≡ xs₂ →
                    xs₁ ≡ xs₂
-        unique {xs = []} {[]} {[]} (refl , []) (refl , []) = refl
-        unique {xs = []} {_} {_ ∷ _} _ (() , _)
-        unique {xs = []} {_ ∷ _} {_} (() , _) _
-        unique {xs = x ∷ xs} {[]} {_} (() , _) _
-        unique {xs = x ∷ xs} {_} {[]} _ (() , _)
-        unique {xs = x ∷ xs} {x₁ ∷ xs₁} {x₂ ∷ xs₂}
-               (eq₁ , sub-x₁ ∷ sub-xs₁) (eq₂ , sub-x₂ ∷ sub-xs₂)
+        unique [] [] = refl
+        unique (sub-x₁ ∷ sub-xs₁) (sub-x₂ ∷ sub-xs₂)
           = cong₂ _∷_ (subst-unique sub-x₁ sub-x₂)
-                      (unique (NP.cancel-+-left 1 eq₁ , sub-xs₁)
-                              (NP.cancel-+-left 1 eq₂ , sub-xs₂))
+                      (unique sub-xs₁ sub-xs₂)
 
         weak : ∀ {A W} {{s : Substitution A W}}
                  (xs : List A) w ι → ∃ λ xs' → xs ⟦ weaken w / ι ⟧xs≡ xs'
-        weak [] w ι = [] , refl , []
+        weak [] w ι = [] , []
         weak (x ∷ xs) w ι with can-weaken x w ι | weak xs w ι
-        ... | x' , sub-x | xs' , eq , sub-xs =
-          x' ∷ xs' , cong suc eq , sub-x ∷ sub-xs
+        ... | x' , sub-x | xs' , sub-xs =
+          x' ∷ xs' , sub-x ∷ sub-xs
 
         dec : ∀ {A W} {{s : Substitution A W}} (xs : List A) c →
                 Dec (∃ λ xs' → xs ⟦ c ⟧xs≡ xs')
-        dec [] c = yes ([] , (refl , []))
+        dec [] c = yes ([] , [])
         dec (x ∷ xs) c with x ⟦ c ⟧? | dec xs c
-        dec (x ∷ xs) c | yes (x' , sub-x) | yes (xs' , (eq , sub-xs)) =
-          yes (x' ∷ xs' , (cong suc eq) , sub-x ∷ sub-xs)
-        dec (x ∷ xs) c | no ¬sub-x | _ = no (help ¬sub-x)
-          where help : ∀ {A W} {{s : Substitution A W}}
-                         {c x} {xs : List A} →
-                         ¬ (∃ λ x' → x ⟦ c ⟧≡ x') →
-                         ¬ (∃ λ xs' → (x ∷ xs) ⟦ c ⟧xs≡ xs')
-                help ¬sub-x ([] , () , _)
-                help ¬sub-x (x' ∷ xs' , (eq , sub-x ∷ sub-xs)) =
-                  ¬sub-x (x' , sub-x)
-        dec (x ∷ xs) c | _ | no ¬sub-xs = no (help ¬sub-xs)
-          where help : ∀ {A W} {{s : Substitution A W}}
-                         {c x} {xs : List A} →
-                         ¬ (∃ λ xs' → xs ⟦ c ⟧xs≡ xs') →
-                         ¬ (∃ λ xs' → (x ∷ xs) ⟦ c ⟧xs≡ xs')
-                help ¬sub-xs ([] , () , _)
-                help ¬sub-xs (x' ∷ xs' , eq , sub-x ∷ sub-xs) =
-                  ¬sub-xs (xs' , (NP.cancel-+-left 1 eq) , sub-xs)
+        dec (x ∷ xs) c | yes (x' , sub-x) | yes (xs' , sub-xs) =
+          yes (x' ∷ xs' , sub-x ∷ sub-xs)
+        dec (x ∷ xs) c | no ¬sub-x | _ =
+          no (λ { (x' ∷ xs' , sub-x ∷ sub-xs) → ¬sub-x (x' , sub-x)})
+        dec (x ∷ xs) c | _ | no ¬sub-xs =
+          no (λ { (x' ∷ xs' , sub-x ∷ sub-xs) → ¬sub-xs (xs' , sub-xs)})
 
         xs-weaken-0 : ∀ {A W} {{_ : Substitution A W}}
                         (xs : List A) {ι} → xs ⟦ weaken W₀ / ι ⟧xs≡ xs
-        xs-weaken-0 [] = refl , []
-        xs-weaken-0 (x ∷ xs) {ι} with xs-weaken-0 xs {ι}
-        ... | eq , sub-xs = cong suc eq , weaken-0 x ∷ sub-xs
+        xs-weaken-0 [] = []
+        xs-weaken-0 (x ∷ xs) = weaken-0 x ∷ xs-weaken-0 xs
 
 instance
   Type-Substitution : Substitution Type ℕ
@@ -1008,8 +976,8 @@ instance
           unique subst-sst subst-sst = refl
           unique subst-ld subst-ld = refl
           unique subst-st subst-st = refl
-          unique (subst-malloc eq₁ sub-τs₁) (subst-malloc eq₂ sub-τs₂) =
-            cong₂ malloc refl (subst-unique (eq₁ , sub-τs₁) (eq₂ , sub-τs₂))
+          unique (subst-malloc sub-τs₁) (subst-malloc sub-τs₂) =
+            cong₂ malloc refl (subst-unique sub-τs₁ sub-τs₂)
           unique (subst-mov sub-v₁) (subst-mov sub-v₂)
             rewrite subst-unique sub-v₁ sub-v₂ = refl
           unique (subst-beq sub-v₁) (subst-beq sub-v₂)
@@ -1033,7 +1001,7 @@ instance
           can-weak (st ♯rd i ♯rs) n ι⋆ = st ♯rd i ♯rs , subst-st
           can-weak (malloc ♯rd τs) n ι⋆
             with can-weaken τs n ι⋆
-          ... | τs' , eq , sub-τs = malloc ♯rd τs' , subst-malloc eq sub-τs
+          ... | τs' , sub-τs = malloc ♯rd τs' , subst-malloc sub-τs
           can-weak (mov ♯rd v) n ι⋆
             with can-weaken v n ι⋆
           ... | v' , sub-v = mov ♯rd v' , subst-mov sub-v
@@ -1064,11 +1032,11 @@ instance
           dec (st ♯rd i ♯rs) c = yes (st ♯rd i ♯rs , subst-st)
           dec (malloc ♯rd τs) c
             with τs ⟦ c ⟧?
-          ... | yes (τs' , eq , sub-τs) =
-            yes (malloc ♯rd τs' , subst-malloc eq sub-τs)
+          ... | yes (τs' , sub-τs) =
+            yes (malloc ♯rd τs' , subst-malloc sub-τs)
           ... | no ¬sub-τs =
             no (λ {
-              (._ , subst-malloc eq sub-τs) → ¬sub-τs (_ , eq , sub-τs)
+              (._ , subst-malloc sub-τs) → ¬sub-τs (_ , sub-τs)
             })
           dec (mov ♯rd v) c
             with v ⟦ c ⟧?
@@ -1090,8 +1058,7 @@ instance
           weak0 (sst i ♯rs) = subst-sst
           weak0 (ld ♯rd ♯rs i) = subst-ld
           weak0 (st ♯rd i ♯rs) = subst-st
-          weak0 (malloc ♯rd τs) {ι⋆} with weaken-0 τs {ι⋆}
-          ... | eq , sub-τs = subst-malloc eq sub-τs
+          weak0 (malloc ♯rd τs) = subst-malloc (weaken-0 τs)
           weak0 (mov ♯rd v) = subst-mov (weaken-0 v)
           weak0 (beq ♯r v) = subst-beq (weaken-0 v)
 

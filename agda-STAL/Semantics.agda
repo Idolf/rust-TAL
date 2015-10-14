@@ -54,18 +54,18 @@ data _⊢_⇒_ (G : Globals) : Program → Program → Set where
     exec-ld :
           ∀ {H sp regs I ♯rd ♯rs i lₕ h w} →
              lookup ♯rs regs ≡ heapval lₕ →
-                     H ↓ lₕ ⇒ h →
+                     H ↓ lₕ ⇒ tuple h →
                      h ↓ i ⇒ w →
       -----------------------------------------------
       G ⊢ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒
           H , register sp (update ♯rd w regs) , I
 
     exec-st :
-          ∀ {H H' sp regs I ♯rd ♯rs i lₕ h h'} →
+          ∀ {H H' sp regs I ♯rd ♯rs i lₕ} {h h'} →
              lookup ♯rd regs ≡ heapval lₕ →
-                       H ↓ lₕ ⇒ h →
+                       H ↓ lₕ ⇒ tuple h →
               h ⟦ i ⟧← lookup ♯rs regs ⇒ h' →
-                    H ⟦ lₕ ⟧← h' ⇒ H' →
+                    H ⟦ lₕ ⟧← tuple h' ⇒ H' →
       -----------------------------------------------
       G ⊢ H  , register sp regs , st ♯rd i ♯rs ~> I ⇒
           H' , register sp regs , I
@@ -74,7 +74,7 @@ data _⊢_⇒_ (G : Globals) : Program → Program → Set where
                     ∀ {H sp regs I ♯rd τs} →
       --------------------------------------------------------
       G ⊢ H , register sp regs , malloc ♯rd τs ~> I ⇒
-          H ∷ʳ map uninit τs ,
+          H ∷ʳ tuple (map uninit τs) ,
           register sp (update ♯rd (heapval (length H)) regs) ,
           I
 
@@ -133,6 +133,13 @@ private
                    I₁ ≡ I₂
   ∀-injective₃ refl = refl
 
+  ↓-unique-heap : ∀ {H : Heap} {lₕ ws₁ ws₂} →
+                    H ↓ lₕ ⇒ tuple ws₁ →
+                    H ↓ lₕ ⇒ tuple ws₂ →
+                    ws₁ ≡ ws₂
+  ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
+  ... | refl = refl
+
 exec-unique : ∀ {H sp regs I G P₁ P₂} →
                 G ⊢ H , register sp regs , I ⇒ P₁ →
                 G ⊢ H , register sp regs , I ⇒ P₂ →
@@ -150,12 +157,12 @@ exec-unique {I = sld ♯rd i ~> I} (exec-sld l₁) (exec-sld l₂)
 exec-unique (exec-sst u₁) (exec-sst u₂)
   rewrite ←-unique u₁ u₂ = refl
 exec-unique (exec-ld eq₁ l₁₁ l₁₂) (exec-ld eq₂ l₂₁ l₂₂)
-  rewrite heapval-helper eq₁ eq₂ |
-          ↓-unique l₁₁ l₂₁ |
-          ↓-unique l₁₂ l₂₂ = refl
+  rewrite heapval-helper eq₁ eq₂
+        | ↓-unique-heap l₁₁ l₂₁
+        | ↓-unique l₁₂ l₂₂ = refl
 exec-unique (exec-st eq₁ l₁ u₁₁ u₁₂) (exec-st eq₂ l₂ u₂₁ u₂₂)
   rewrite heapval-helper eq₁ eq₂
-        | ↓-unique l₁ l₂
+        | ↓-unique-heap l₁ l₂
         | ←-unique u₁₁ u₂₁
         | ←-unique u₁₂ u₂₂
   = refl

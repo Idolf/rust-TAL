@@ -15,7 +15,7 @@ mutual
     int   : Type
     ns    : Type
     ∀[_]_ : TypeAssignment → RegisterAssignment → Type
-    tuple : ∀ {m} → Vec InitType m → Type
+    tuple : List InitType → Type
 
   -- Stack types, σ
   infixr 5 _∷_
@@ -114,8 +114,8 @@ mutual
     _⟦_⟧ᵥ : SmallValue → StrongCast → SmallValue
 
   -- Heap values, h
-  HeapValue : Set
-  HeapValue = List WordValue
+  data HeapValue : Set where
+    tuple : List WordValue → HeapValue
 
   -- Heaps, H
   Heap : Set

@@ -28,8 +28,8 @@ mutual
             Δ ⊢ ∀[ Δ' ] Γ Type
 
     valid-tuple :
-         ∀ {m} {τs : Vec InitType m} →
-      Allᵥ (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs →
+         ∀ {τs : List InitType} →
+      All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs →
       ---------------------------------
              Δ ⊢ tuple τs Type
 
@@ -82,13 +82,14 @@ mutual
     (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
 
   infix 4  _⊢_TypeAssignment
+  infixr 5 _∷_
   data _⊢_TypeAssignment : TypeAssignment → TypeAssignment → Set where
-    valid-[] :
+    [] :
              ∀ {Δ} →
       ---------------------
       Δ ⊢ [] TypeAssignment
 
-    valid-∷ :
+    _∷_ :
               ∀ {a Δ₁ Δ₂} →
        Δ₂ ++ Δ₁ ⊢ a TypeAssignmentValue →
          Δ₁ ⊢ Δ₂ TypeAssignment →
@@ -175,8 +176,7 @@ private
       dec-inj valid-τ⁻ (λ { (valid-τ⁻ τ⋆) → τ⋆ }) (Δ ⊢? τ Type)
 
     infix 4 _⊢?_InitTypes
-    _⊢?_InitTypes : ∀ Δ {m} (τs : Vec InitType m) →
-                      Dec (Allᵥ (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs)
+    _⊢?_InitTypes : ∀ Δ τs⁻ → Dec (All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs⁻)
     Δ ⊢? [] InitTypes = yes []
     Δ ⊢? τ ∷ τs InitTypes with Δ ⊢? τ InitType | Δ ⊢? τs InitTypes
     ... | yes τ⋆ | yes τs⋆ = yes (τ⋆ ∷ τs⋆)
@@ -221,12 +221,12 @@ private
 
     infix 4  _⊢?_TypeAssignment
     _⊢?_TypeAssignment : ∀ Δ₁ Δ₂  → Dec (Δ₁ ⊢ Δ₂ TypeAssignment)
-    Δ₁ ⊢? [] TypeAssignment = yes valid-[]
+    Δ₁ ⊢? [] TypeAssignment = yes []
     Δ₁ ⊢? a ∷ Δ₂ TypeAssignment with Δ₂ ++ Δ₁ ⊢? a TypeAssignmentValue
                                    | Δ₁ ⊢? Δ₂ TypeAssignment
-    ... | yes a⋆ | yes Δ₂⋆ = yes (valid-∷ a⋆ Δ₂⋆)
-    ... | no ¬a⋆ | _  = no (λ { (valid-∷ a⋆ Δ₂⋆) → ¬a⋆ a⋆ })
-    ... | _ | no ¬Δ₂⋆ = no (λ { (valid-∷ a⋆ Δ₂⋆) → ¬Δ₂⋆ Δ₂⋆ })
+    ... | yes a⋆ | yes Δ₂⋆ = yes (a⋆ ∷ Δ₂⋆)
+    ... | no ¬a⋆ | _  = no (λ { (a⋆ ∷ Δ₂⋆) → ¬a⋆ a⋆ })
+    ... | _ | no ¬Δ₂⋆ = no (λ { (a⋆ ∷ Δ₂⋆) → ¬Δ₂⋆ Δ₂⋆ })
 
     infix 4  _⊢?_TypeAssignmentValue
     _⊢?_TypeAssignmentValue : ∀ Δ₁ a  → Dec (Δ₁ ⊢ a TypeAssignmentValue)

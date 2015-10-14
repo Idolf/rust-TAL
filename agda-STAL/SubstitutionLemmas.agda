@@ -43,8 +43,8 @@ run-combine : ∀ {Δ₁ Δ₁' Δ₂ Δ₂' cᵥ} →
                 Δ₁ ⟦ Strong→WeakCastValue cᵥ / 0 ⟧≡ Δ₁' →
                 Run Δ₂ ⟦ cᵥ / 0 ⟧≡ Δ₂' →
                 Run Δ₁ ++ Δ₂ ⟦ cᵥ / length Δ₁ ⟧≡ Δ₁' ++ Δ₂'
-run-combine {[]} subst-[] run-Δ₂ = run-Δ₂
-run-combine {a ∷ Δ₁} (subst-∷ sub-a sub-Δ₁) run-Δ₂ =
+run-combine {[]} [] run-Δ₂ = run-Δ₂
+run-combine {a ∷ Δ₁} (sub-a ∷ sub-Δ₁) run-Δ₂ =
   run-suc (ι-subst (+-comm (length Δ₁) 0) sub-a) (run-combine sub-Δ₁ run-Δ₂)
 
 run-split : ∀ {Δ Δ' cᵥ ι} →
@@ -56,13 +56,13 @@ run-split : ∀ {Δ Δ' cᵥ ι} →
                 Δ' ≡ Δ₁' ++ Δ₂' ×
                 ι ≡ length Δ₁
 run-split {a ∷ Δ} .{Δ} run-inst =
-  [] , [] , a ∷ Δ , Δ , subst-[] , run-inst , refl , refl , refl
+  [] , [] , a ∷ Δ , Δ , [] , run-inst , refl , refl , refl
 run-split {Δ} .{Δ⁺ ++ Δ} (run-weaken {Δ⁺ = Δ⁺}) =
-  [] , [] , Δ , Δ⁺ ++ Δ , subst-[] , run-weaken , refl , refl , refl
+  [] , [] , Δ , Δ⁺ ++ Δ , [] , run-weaken , refl , refl , refl
 run-split {a ∷ Δ} {a' ∷ Δ'} (run-suc sub-a run-Δ) with run-split run-Δ
 ... | Δ₁ , Δ₁' , Δ₂ , Δ₂' , sub-Δ₁ , run-Δ₂ , eq₁ , eq₂ , eq₃ =
   a ∷ Δ₁ , a' ∷ Δ₁' , Δ₂ , Δ₂' ,
-  subst-∷ (ι-subst (trans eq₃ (+-comm 0 (length Δ₁))) sub-a) sub-Δ₁ ,
+  (ι-subst (trans eq₃ (+-comm 0 (length Δ₁))) sub-a) ∷ sub-Δ₁ ,
   run-Δ₂ ,
   cong (_∷_ a) eq₁ ,
   cong (_∷_ a') eq₂ ,
@@ -84,25 +84,25 @@ subst-↓ : ∀ {Δ Δ' : TypeAssignment} {ι₁ ι₂ a} {cᵥ : WeakCastValue}
             ∃ λ a' →
               Δ' ↓ ι₁ ⇒ a' ×
               a ⟦ cᵥ / (length Δ ∸ suc ι₁) + ι₂ ⟧≡ a'
-subst-↓ here (subst-∷ sub-a sub-Δ) = _ , here , sub-a
-subst-↓ (there l) (subst-∷ sub-a sub-Δ) with subst-↓ l sub-Δ
+subst-↓ here (sub-a ∷ sub-Δ) = _ , here , sub-a
+subst-↓ (there l) (sub-a ∷ sub-Δ) with subst-↓ l sub-Δ
 ... | a' , l' , sub-a' = a' , there l' , sub-a'
 
 subst-length : ∀ {Δ Δ' : TypeAssignment} {c : WeakCast} →
                   Δ ⟦ c ⟧≡ Δ' →
                   length Δ ≡ length Δ'
-subst-length subst-[] = refl
-subst-length (subst-∷ sub-a sub-Δ) = cong suc (subst-length sub-Δ)
+subst-length [] = refl
+subst-length (sub-a ∷ sub-Δ) = cong suc (subst-length sub-Δ)
 
 subst-combine : ∀ {Δ₁ Δ₁' Δ₂ Δ₂' : TypeAssignment} {cᵥ : WeakCastValue} →
                   Δ₁ ⟦ cᵥ / length Δ₂ ⟧≡ Δ₁' →
                   Δ₂ ⟦ cᵥ / zero ⟧≡ Δ₂' →
                   Δ₁ ++ Δ₂ ⟦ cᵥ / zero ⟧≡ Δ₁' ++ Δ₂'
-subst-combine subst-[] sub-Δ₂ = sub-Δ₂
-subst-combine {a ∷ Δ₁} {a' ∷ Δ₁'} {Δ₂} (subst-∷ sub-a sub-Δ₁) sub-Δ₂
-  = subst-∷ (ι-subst (trans (sym (List-length-++ Δ₁))
-                            (+-comm 0 (length (Δ₁ ++ Δ₂)))) sub-a)
-            (subst-combine sub-Δ₁ sub-Δ₂)
+subst-combine [] sub-Δ₂ = sub-Δ₂
+subst-combine {a ∷ Δ₁} {a' ∷ Δ₁'} {Δ₂} (sub-a ∷ sub-Δ₁) sub-Δ₂
+  = (ι-subst (trans (sym (List-length-++ Δ₁))
+                         (+-comm 0 (length (Δ₁ ++ Δ₂)))) sub-a)
+    ∷ subst-combine sub-Δ₁ sub-Δ₂
 
 subst-↓-replace : ∀ {Δ₁ Δ₁' Δ₂ : TypeAssignment} {ι a} {c : WeakCast} →
                     Δ₁ ⟦ c ⟧≡ Δ₁' →
@@ -137,7 +137,7 @@ private
                     Δ ++ Δ' ⊢ τ⁻ Valid
     τ⁻-valid-++ (valid-τ⁻ τ⋆) = valid-τ⁻ (τ-valid-++ τ⋆)
 
-    τs⁻-valid-++ : ∀ {Δ Δ'} {m} {τs⁻ : Vec InitType m} →
+    τs⁻-valid-++ : ∀ {Δ Δ'} {τs⁻ : List InitType} →
                      Δ ⊢ τs⁻ Valid →
                      Δ ++ Δ' ⊢ τs⁻ Valid
     τs⁻-valid-++ [] = []
@@ -153,11 +153,11 @@ private
     Δ-valid-++ : ∀ {Δ Δ'} {Δᵥ : TypeAssignment} →
                    Δ ⊢ Δᵥ Valid →
                    Δ ++ Δ' ⊢ Δᵥ Valid
-    Δ-valid-++ valid-[] = valid-[]
-    Δ-valid-++ {Δ} {Δ'} {a ∷ Δᵥ} (valid-∷ a⋆ Δᵥ⋆) =
-      valid-∷ (subst (λ Δ → Δ ⊢ a TypeAssignmentValue)
-              (List-++-assoc Δᵥ Δ Δ') (a-valid-++ a⋆))
-              (Δ-valid-++ Δᵥ⋆)
+    Δ-valid-++ [] = []
+    Δ-valid-++ {Δ} {Δ'} {a ∷ Δᵥ} (a⋆ ∷ Δᵥ⋆) =
+      subst (λ Δ → Δ ⊢ a TypeAssignmentValue)
+            (List-++-assoc Δᵥ Δ Δ') (a-valid-++ a⋆)
+      ∷ Δ-valid-++ Δᵥ⋆
 
     a-valid-++ : ∀ {Δ Δ'} {a : TypeAssignmentValue} →
                    Δ ⊢ a Valid →
@@ -189,14 +189,15 @@ private
                           Δ₁' ++ Δ⁺ ++ Δ₂ ⊢ v' Valid
 
     τ-valid-weaken : valid-weakenᵗ Type
-    τ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} sub-Δ (valid-α⁼ {ι} l) with length Δ₁ ≤? ι
+    τ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-α⁼ {ι} l)
+      with length Δ₁ ≤? ι
     ... | yes ι≥len = α⁼ (length Δ⁺ + ι) , subst-α-weaken-≥ ι≥len , valid-α⁼
                          (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
                                                 (↓-add-middle Δ₁ Δ⁺ ι≥len l))
     ... | no ι≱len with NP.≰⇒> ι≱len
-    ... | ι<len with subst-↓ (↓-remove-right Δ₁ ι<len l) sub-Δ
+    ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
     ... | α , l' , subst-α = α⁼ ι , subst-α-< ι<len ,
-                                    valid-α⁼ (↓-add-right Δ₁' l')
+                                    valid-α⁼ (↓-add-right (Δ⁺ ++ Δ₂) l')
     τ-valid-weaken Δ⁺ sub-Δ valid-int = int , subst-int , valid-int
     τ-valid-weaken Δ⁺ sub-Δ valid-ns = ns , subst-ns , valid-ns
     τ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-∀ {Δ} {Γ} Δ⋆ Γ⋆)
@@ -218,7 +219,7 @@ private
       with τ-valid-weaken Δ⁺ sub-Δ τ⋆
     ... | τ' , sub-τ , τ'⋆ = _ , subst-τ⁻ sub-τ , valid-τ⁻ τ'⋆
 
-    τs⁻-valid-weaken : ∀ {m} → valid-weakenᵗ (Vec InitType m)
+    τs⁻-valid-weaken : valid-weakenᵗ (List InitType)
     τs⁻-valid-weaken Δ⁺ sub-Δ [] = [] , [] , []
     τs⁻-valid-weaken Δ⁺ sub-Δ (τ⁻⋆ ∷ τs⁻⋆)
       with τ⁻-valid-weaken Δ⁺ sub-Δ τ⁻⋆
@@ -227,14 +228,15 @@ private
       = τ⁻' ∷ τs⁻' , sub-τ⁻ ∷ sub-τs⁻ , τ⁻'⋆ ∷ τs⁻'⋆
 
     σ-valid-weaken : valid-weakenᵗ StackType
-    σ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} sub-Δ (valid-ρ⁼ {ι} l) with length Δ₁ ≤? ι
+    σ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-ρ⁼ {ι} l)
+      with length Δ₁ ≤? ι
     ... | yes ι≥len = ρ⁼ (length Δ⁺ + ι) , subst-ρ-weaken-≥ ι≥len , valid-ρ⁼
                          (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
                                                 (↓-add-middle Δ₁ Δ⁺ ι≥len l))
     ... | no ι≱len with NP.≰⇒> ι≱len
-    ... | ι<len with subst-↓ (↓-remove-right Δ₁ ι<len l) sub-Δ
+    ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
     ... | ρ , l' , subst-ρ = ρ⁼ ι , subst-ρ-< ι<len ,
-                                    valid-ρ⁼ (↓-add-right Δ₁' l')
+                                    valid-ρ⁼ (↓-add-right (Δ⁺ ++ Δ₂) l')
     σ-valid-weaken Δ⁺ sub-Δ valid-nil = nil , subst-nil , valid-nil
     σ-valid-weaken Δ⁺ sub-Δ (valid-∷ τ⋆ σ⋆)
       with τ-valid-weaken Δ⁺ sub-Δ τ⋆
@@ -243,8 +245,8 @@ private
       = τ' ∷ σ' , subst-∷ sub-τ sub-σ , valid-∷ τ'⋆ σ'⋆
 
     Δ-valid-weaken : valid-weakenᵗ TypeAssignment
-    Δ-valid-weaken Δ⁺ sub-Δ valid-[] = [] , subst-[] , valid-[]
-    Δ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-∷ {a} {Δ₂ = Δ} a⋆ Δ⋆)
+    Δ-valid-weaken Δ⁺ sub-Δ [] = [] , [] , []
+    Δ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ {a ∷ Δ} (a⋆ ∷ Δ⋆)
       with Δ-valid-weaken Δ⁺ sub-Δ Δ⋆
     ... | Δ' , sub-Δ' , Δ'⋆
       rewrite sym (List-++-assoc Δ Δ₁ Δ₂)
@@ -252,7 +254,7 @@ private
     ... | a' , sub-a , a'⋆
       rewrite List-length-++ Δ {Δ₁}
             | List-++-assoc Δ' Δ₁' (Δ⁺ ++ Δ₂)
-      = a' ∷ Δ' , subst-∷ sub-a sub-Δ' , valid-∷ a'⋆ Δ'⋆
+      = a' ∷ Δ' , sub-a ∷ sub-Δ' , a'⋆ ∷ Δ'⋆
 
     a-valid-weaken : valid-weakenᵗ TypeAssignmentValue
     a-valid-weaken Δ⁺ sub-Δ valid-α = α , subst-α , valid-α
@@ -288,20 +290,20 @@ private
                          Δ₁' ++ Δ₂ ⊢ v' Valid
 
     τ-valid-inst : valid-instᵗ Type
-    τ-valid-inst {Δ₁} {Δ₁'} i⋆ sub-Δ {α⁼ ι} (valid-α⁼ l)
+    τ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {α⁼ ι} (valid-α⁼ l)
       with Nat-cmp ι (length Δ₁)
     ... | tri< ι<len _ _
-      with subst-↓ (↓-remove-right Δ₁ ι<len l) sub-Δ
+      with subst-↓ (↓-remove-right (a ∷ Δ₂) ι<len l) sub-Δ
     ... | α , l' , subst-α =
-      α⁼ ι , subst-α-< ι<len , valid-α⁼ (↓-add-right Δ₁' l')
+      α⁼ ι , subst-α-< ι<len , valid-α⁼ (↓-add-right Δ₂ l')
     τ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {α⁼ ._} (valid-α⁼ l)
         | tri≈ _ refl _
       with subst (λ i → a ∷ Δ₂ ↓ i ⇒ α)
                  (NP.n∸n≡0 (length Δ₁))
                  (↓-remove-left Δ₁ (NP.n≤m+n 0 (length Δ₁)) l)
     τ-valid-inst {Δ₁} {Δ₁'} (valid-α {τ = τ} τ⋆) sub-Δ {α⁼ ._} (valid-α⁼ l)
-        | tri≈ ¬a refl ¬c | here
-      with τ-valid-weaken Δ₁' subst-[] τ⋆
+        | tri≈ _ refl _ | here
+      with τ-valid-weaken Δ₁' [] τ⋆
     ... | τ' , sub-τ , τ'⋆ rewrite subst-length sub-Δ
       = τ' , subst-α-inst-≡ sub-τ , τ'⋆
     τ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {α⁼ .(suc ι)} (valid-α⁼ l)
@@ -344,7 +346,7 @@ private
       with τ-valid-inst i⋆ sub-Δ τ⋆
     ... | τ' , sub-τ , τ'⋆ = _ , subst-τ⁻ sub-τ , valid-τ⁻ τ'⋆
 
-    τs⁻-valid-inst : ∀ {m} → valid-instᵗ (Vec InitType m)
+    τs⁻-valid-inst : valid-instᵗ (List InitType)
     τs⁻-valid-inst i⋆ sub-Δ [] = [] , [] , []
     τs⁻-valid-inst i⋆ sub-Δ (τ⁻⋆ ∷ τs⁻⋆)
       with τ⁻-valid-inst i⋆ sub-Δ τ⁻⋆
@@ -354,21 +356,21 @@ private
             τ⁻' ∷ τs⁻' , sub-τ⁻ ∷ sub-τs⁻ , τ⁻'⋆ ∷ τs⁻'⋆
 
     σ-valid-inst : valid-instᵗ StackType
-    σ-valid-inst {Δ₁} {Δ₁'} i⋆ sub-Δ {ρ⁼ ι} (valid-ρ⁼ l)
+    σ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {ρ⁼ ι} (valid-ρ⁼ l)
       with Nat-cmp ι (length Δ₁)
     ... | tri< ι<len _ _
-      with subst-↓ (↓-remove-right Δ₁ ι<len l) sub-Δ
+      with subst-↓ (↓-remove-right (a ∷ Δ₂) ι<len l) sub-Δ
     ... | ρ , l' , subst-ρ = ρ⁼ ι ,
                              subst-ρ-< ι<len ,
-                             valid-ρ⁼ (↓-add-right Δ₁' l')
+                             valid-ρ⁼ (↓-add-right Δ₂ l')
     σ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {ρ⁼ ._} (valid-ρ⁼ l)
         | tri≈ _ refl _
       with subst (λ i → a ∷ Δ₂ ↓ i ⇒ ρ)
                  (NP.n∸n≡0 (length Δ₁))
                  (↓-remove-left Δ₁ (NP.n≤m+n 0 (length Δ₁)) l)
     σ-valid-inst {Δ₁} {Δ₁'} (valid-ρ {σ = σ} σ⋆) sub-Δ {ρ⁼ ._} (valid-ρ⁼ l)
-        | tri≈ ¬a refl ¬c | here
-      with σ-valid-weaken Δ₁' subst-[] σ⋆
+        | tri≈ _ refl _ | here
+      with σ-valid-weaken Δ₁' [] σ⋆
     ... | σ' , sub-σ , σ'⋆ rewrite subst-length sub-Δ
       = σ' , subst-ρ-inst-≡ sub-σ , σ'⋆
     σ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {ρ⁼ .(suc ι)} (valid-ρ⁼ l)
@@ -396,8 +398,8 @@ private
         | σ' , sub-σ , σ'⋆ = τ' ∷ σ' , subst-∷ sub-τ sub-σ , valid-∷ τ'⋆ σ'⋆
 
     Δ-valid-inst : valid-instᵗ TypeAssignment
-    Δ-valid-inst i⋆ sub-Δ valid-[] = [] , subst-[] , valid-[]
-    Δ-valid-inst {Δ₁} {Δ₁'} {Δ₂} i⋆ sub-Δ (valid-∷ {Δ₂ = Δ} a⋆ Δ⋆)
+    Δ-valid-inst i⋆ sub-Δ [] = [] , [] , []
+    Δ-valid-inst {Δ₁} {Δ₁'} {Δ₂} i⋆ sub-Δ {a ∷ Δ} (a⋆ ∷ Δ⋆)
       with Δ-valid-inst i⋆ sub-Δ Δ⋆
     ... | Δ' , sub-Δ' , Δ'⋆
       with a-valid-inst i⋆ (subst-combine sub-Δ' sub-Δ)
@@ -405,7 +407,7 @@ private
     ... | a' , sub-a , a'⋆
       rewrite List-length-++ Δ {Δ₁} |
               List-++-assoc Δ' Δ₁' Δ₂
-        = a' ∷ Δ' , subst-∷ sub-a sub-Δ' , valid-∷ a'⋆ Δ'⋆
+        = a' ∷ Δ' , sub-a ∷ sub-Δ' , a'⋆ ∷ Δ'⋆
 
     a-valid-inst : valid-instᵗ TypeAssignmentValue
     a-valid-inst i⋆ sub-Δ valid-α = α , subst-α , valid-α
@@ -432,13 +434,13 @@ can-run : ∀ {Δ} → [] ⊢ Δ Valid →
           ∀ {c} → Δ  ⊢ c Valid →
             ∃ λ Δ' →
               Run Δ ⟦ c ⟧≡ Δ'
-can-run valid-[] {inst i / zero} (valid-zero (valid-inst ()))
-can-run {a ∷ Δ} (valid-∷ a⋆ Δ⋆) {inst i / zero} (valid-zero (valid-inst i⋆)) =
+can-run [] {inst i / zero} (valid-zero (valid-inst ()))
+can-run {a ∷ Δ} (a⋆ ∷ Δ⋆) {inst i / zero} (valid-zero (valid-inst i⋆)) =
   Δ , run-inst
 can-run {Δ} Δ⋆ {weaken Δ⁺ / zero} (valid-zero valid-weaken) =
   Δ⁺ ++ Δ , run-weaken
-can-run valid-[] {cᵥ / suc ι} ()
-can-run {a₁ ∷ Δ} (valid-∷ a₁⋆ Δ⋆) {inst i / suc ι} (valid-suc c⋆)
+can-run [] {cᵥ / suc ι} ()
+can-run {a₁ ∷ Δ} (a₁⋆ ∷ Δ⋆) {inst i / suc ι} (valid-suc c⋆)
   with can-run Δ⋆ c⋆
 ... | Δ' , run-Δ with run-split run-Δ
 ... | Δ₁ , Δ₁' , (a₂ ∷ Δ₂) , .Δ₂ , sub-Δ₁ , run-inst , eq₁ , eq₂ , eq₃
@@ -450,9 +452,9 @@ can-run {a₁ ∷ Δ} (valid-∷ a₁⋆ Δ⋆) {inst i / suc ι} (valid-suc c�
                                    a₁⋆)
 ... | a₁' , sub-a₁ , a₁'⋆ =
       a₁' ∷ Δ₁' ++ Δ₂ ,
-      run-combine (subst-∷ (ι-subst (+-comm 0 (length Δ₁)) sub-a₁) sub-Δ₁)
+      run-combine (ι-subst (+-comm 0 (length Δ₁)) sub-a₁ ∷ sub-Δ₁)
                   (run-inst {a₂} {Δ₂} {i})
-can-run {a₁ ∷ Δ} (valid-∷ a⋆ Δ⋆) {weaken Δ⁺ / suc ι} (valid-suc c⋆)
+can-run {a₁ ∷ Δ} (a⋆ ∷ Δ⋆) {weaken Δ⁺ / suc ι} (valid-suc c⋆)
   with can-run Δ⋆ {weaken Δ⁺ / ι} c⋆
 ... | Δ' , run-Δ with run-split run-Δ
 ... | Δ₁ , Δ₁' , Δ₂ , .(Δ⁺ ++ Δ₂) , sub-Δ₁ , run-weaken , eq₁ , eq₂ , eq₃
@@ -463,7 +465,7 @@ can-run {a₁ ∷ Δ} (valid-∷ a⋆ Δ⋆) {weaken Δ⁺ / suc ι} (valid-suc 
                                          a⋆)
 ... | a₁' , sub-a₁ , a₁'⋆ =
       a₁' ∷ Δ₁' ++ Δ⁺ ++ Δ₂ ,
-      run-combine (subst-∷ (ι-subst (+-comm 0 (length Δ₁)) sub-a₁) sub-Δ₁)
+      run-combine (ι-subst (+-comm 0 (length Δ₁)) sub-a₁ ∷ sub-Δ₁)
                   (run-weaken {Δ₂} {Δ⁺})
 
 record Substitution⁺ (A : Set) (_ : Substitution A TypeAssignment)
@@ -570,11 +572,11 @@ List-Substitution⁺ = substitution⁺ xs-valid-++ xs-valid-inst xs-valid-weaken
                             _⟦_⟧≡_ {{List-Substitution}}
                               v (inst {W = TypeAssignment} i / length Δ₁) v' ×
                             _⊢_Valid {{List-typeLike}} (Δ₁' ++ Δ₂) v'
-        xs-valid-inst i⋆ sub-Δ [] = [] , (refl , []) , []
+        xs-valid-inst i⋆ sub-Δ [] = [] , [] , []
         xs-valid-inst i⋆ sub-Δ (x⋆ ∷ xs⋆)
           with subst-valid-inst i⋆ sub-Δ x⋆ | xs-valid-inst i⋆ sub-Δ xs⋆
-        ... | x' , sub-x , x'⋆ | xs' , (eq , sub-xs) , xs'⋆ =
-          x' ∷ xs' , (cong suc eq , sub-x ∷ sub-xs) , x'⋆ ∷ xs'⋆
+        ... | x' , sub-x , x'⋆ | xs' , sub-xs , xs'⋆ =
+          x' ∷ xs' , sub-x ∷ sub-xs , x'⋆ ∷ xs'⋆
 
         xs-valid-weaken : ∀ {A S T} {{_ : Substitution⁺ A S T}}
                             Δ⁺ {Δ₁ Δ₁' Δ₂} →
@@ -585,11 +587,11 @@ List-Substitution⁺ = substitution⁺ xs-valid-++ xs-valid-inst xs-valid-weaken
                               _⟦_⟧≡_ {{List-Substitution}}
                                 xs (weaken Δ⁺ / length Δ₁) xs' ×
                               _⊢_Valid {{List-typeLike}} (Δ₁' ++ Δ⁺ ++ Δ₂) xs'
-        xs-valid-weaken Δ⁺ sub-Δ [] = [] , (refl , []) , []
+        xs-valid-weaken Δ⁺ sub-Δ [] = [] , [] , []
         xs-valid-weaken Δ⁺ sub-Δ (x⋆ ∷ xs⋆)
           with subst-valid-weaken Δ⁺ sub-Δ x⋆ | xs-valid-weaken Δ⁺ sub-Δ xs⋆
-        ... | x' , sub-x , x'⋆ | xs' , (eq , sub-xs) , xs'⋆ =
-          x' ∷ xs' , (cong suc eq , sub-x ∷ sub-xs) , x'⋆ ∷ xs'⋆
+        ... | x' , sub-x , x'⋆ | xs' , sub-xs , xs'⋆ =
+          x' ∷ xs' , sub-x ∷ sub-xs , x'⋆ ∷ xs'⋆
 
 instance
   Type-Substitution⁺ : Substitution⁺ Type Weak→StrongSubstitution

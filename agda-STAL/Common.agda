@@ -14,7 +14,7 @@ open import GrammarEq
 open import TypeJudgments
 
 -- Term Judgments
-open import TermJudgments
+-- open import TermJudgments
 
 -- Rules for definig subtyping
 open import Subtyping

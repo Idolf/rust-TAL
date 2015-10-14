@@ -29,10 +29,10 @@ mutual
       Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ ∀[ Δ' ] Γ₂
 
     tuple-≤ :
-                    ∀ {m} {τs₁ τs₂ : Vec InitType m} →
-      Allᵥ (λ {(τ⁻₁ , τ⁻₂) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ }) (Vec-zip τs₁ τs₂) →
-      -------------------------------------------------------------
-                       Δ ⊢ tuple τs₁ ≤τ tuple τs₂
+                     ∀ {τs₁ τs₂} →
+      AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs₁ τs₂ →
+      ----------------------------------------------
+               Δ ⊢ tuple τs₁ ≤τ tuple τs₂
 
   infix 4 _⊢_≤τ⁻_
   data _⊢_≤τ⁻_ (Δ : TypeAssignment) : InitType → InitType → Set where
@@ -53,10 +53,9 @@ mutual
   infix 4 _⊢_≤Γ_
   data _⊢_≤Γ_ (Δ : TypeAssignment) : (Γ₁ Γ₂ : RegisterAssignment) → Set where
     Γ-≤ :
-               ∀ {sp₁ sp₂ regs₁ regs₂} →
-                Δ ⊢ sp₁ ≤σ sp₂ →
-       Allᵥ (λ { (τ₁ , τ₂) → Δ ⊢ τ₁ ≤τ τ₂ })
-              (Vec-zip regs₁ regs₂) →
+                ∀ {sp₁ sp₂ regs₁ regs₂} →
+                    Δ ⊢ sp₁ ≤σ sp₂ →
+      AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) regs₁ regs₂ →
       ----------------------------------------------
       Δ ⊢ registerₐ sp₁ regs₁ ≤Γ registerₐ sp₂ regs₂
 
@@ -104,13 +103,9 @@ private
     Δ ⊢ tuple τs₁ ≤τ? int = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? ns = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? ∀[ Δ₂ ] Γ₂ = no (λ ())
-    Δ ⊢ tuple {m₁} τs₁ ≤τ? tuple {m₂} τs₂ with m₁ ≟ m₂
-    Δ ⊢ tuple τs₁ ≤τ? tuple τs₂ | yes refl =
-      dec-inj tuple-≤ (λ { (tuple-≤ τs≤) → τs≤ }) (Δ ⊢ τs₁ ≤τs⁻? τs₂)
-    Δ ⊢ tuple τs₁ ≤τ? tuple τs₂ | no m₁≢m₂ = no (m₁≢m₂ ∘ help)
-      where help : ∀ {Δ m₁ m₂ τs₁ τs₂} →
-                   Δ ⊢ tuple {m₁} τs₁ ≤τ tuple {m₂} τs₂ → m₁ ≡ m₂
-            help (tuple-≤ τs₁≤τs₂) = refl
+    Δ ⊢ tuple τs₁ ≤τ? tuple τs₂ with Δ ⊢ τs₁ ≤τs⁻? τs₂
+    ... | yes τs₁≤τs₂ = yes (tuple-≤ τs₁≤τs₂)
+    ... | no τs₁≰τs₂ = no (λ { (tuple-≤ τs₁≤τs₂) → τs₁≰τs₂ τs₁≤τs₂ })
 
     infix 4 _⊢_≤τ⁻?_
     _⊢_≤τ⁻?_ : ∀ Δ τ⁻₁ τ⁻₂ → Dec (Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂)
@@ -126,15 +121,17 @@ private
             help (τ⁻-≤ τ₁≤τ₂) = refl
 
     infix 4 _⊢_≤τs⁻?_
-    _⊢_≤τs⁻?_ : ∀ Δ {m} (τs⁻₁ τs⁻₂ : Vec InitType m) →
-                  Dec (Allᵥ (λ { (τ⁻₁ , τ⁻₂) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ })
-                      (Vec-zip τs⁻₁ τs⁻₂))
+    _⊢_≤τs⁻?_ : ∀ Δ τs⁻₁ τs⁻₂ →
+                    Dec (AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs⁻₁ τs⁻₂)
     Δ ⊢ [] ≤τs⁻? [] = yes []
-    Δ ⊢ τ₁ ∷ τs⁻₁ ≤τs⁻? τ₂ ∷ τs⁻₂ with Δ ⊢ τ₁ ≤τ⁻? τ₂ | Δ ⊢ τs⁻₁ ≤τs⁻? τs⁻₂
-    ... | yes τ₁≤τ₂ | yes τs⁻₁≤τs⁻₂ = yes (τ₁≤τ₂ ∷ τs⁻₁≤τs⁻₂)
-    ... | no τ₁≰τ₂ | _ = no (λ { (τ₁≤τ₂ ∷ τs⁻₁≤τs⁻₂) → τ₁≰τ₂ τ₁≤τ₂ })
+    Δ ⊢ [] ≤τs⁻? τ⁻₂ ∷ τs⁻₂ = no (λ ())
+    Δ ⊢ τ₁⁻ ∷ τs⁻₁ ≤τs⁻? [] = no (λ ())
+    Δ ⊢ τ⁻₁ ∷ τs⁻₁ ≤τs⁻? τ⁻₂ ∷ τs⁻₂
+      with Δ ⊢ τ⁻₁ ≤τ⁻? τ⁻₂ | Δ ⊢ τs⁻₁ ≤τs⁻? τs⁻₂
+    ... | yes τ⁻₁≤τ⁻₂ | yes τs⁻₁≤τs⁻₂ = yes (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂)
+    ... | no τ⁻₁≰τ⁻₂ | _ = no (λ { (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) → τ⁻₁≰τ⁻₂ τ⁻₁≤τ⁻₂ })
     ... | _ | no τs⁻₁≰τs⁻₂ =
-      no (λ { (τ₁≤τ₂ ∷ τs⁻₁≤τs⁻₂) → τs⁻₁≰τs⁻₂ τs⁻₁≤τs⁻₂ })
+      no (λ { (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) → τs⁻₁≰τs⁻₂ τs⁻₁≤τs⁻₂ })
 
     infix 4 _⊢_≤σ?_
     _⊢_≤σ?_ : ∀ Δ σ₁ σ₂ → Dec (Δ ⊢ σ₁ ≤σ σ₂)
@@ -158,8 +155,7 @@ private
 
     infix 4 _⊢_≤regs?_
     _⊢_≤regs?_ : ∀ Δ {m} (regs₁ regs₂ : Vec Type m) →
-                   Dec (Allᵥ (λ { (τ₁ , τ₂) → Δ ⊢ τ₁ ≤τ τ₂ })
-                       (Vec-zip regs₁ regs₂))
+                   Dec (AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) regs₁ regs₂)
     Δ ⊢ [] ≤regs? [] = yes []
     Δ ⊢ τ₁ ∷ regs₁ ≤regs? τ₂ ∷ regs₂ with
       Δ ⊢ τ₁ ≤τ? τ₂ | Δ ⊢ regs₁ ≤regs? regs₂
@@ -174,29 +170,29 @@ private
     τ-refl valid-int = int-≤
     τ-refl valid-ns = ns-≤
     τ-refl (valid-∀ Δ⋆ Γ⋆) = ∀-≤ Δ⋆ (Γ-refl Γ⋆)
-    τ-refl (valid-tuple τs⋆) = tuple-≤ (Allᵥ-zip (τs⁻-refl τs⋆))
+    τ-refl (valid-tuple τs⋆) = tuple-≤ (τs⁻-refl τs⋆)
 
     τ⁻-refl : ∀ {Δ τ⁻} → Δ ⊢ τ⁻ InitType → Δ ⊢ τ⁻ ≤τ⁻ τ⁻
     τ⁻-refl (valid-τ⁻ τ⋆) = τ⁻-≤ (τ-refl τ⋆)
 
-    τs⁻-refl : ∀ {Δ m} {τs : Vec InitType m} →
-                 Allᵥ (λ τ⁻ → Δ  ⊢ τ⁻ InitType) τs →
-                 Allᵥ (λ τ⁻ → Δ  ⊢ τ⁻ ≤τ⁻ τ⁻) τs
+    τs⁻-refl : ∀ {Δ τs} →
+                 All (λ τ⁻ → Δ  ⊢ τ⁻ InitType) τs →
+                 AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs τs
     τs⁻-refl [] = []
-    τs⁻-refl (τ⁻⋆ ∷ ps) = τ⁻-refl τ⁻⋆ ∷ τs⁻-refl ps
+    τs⁻-refl (τ⁻⋆ ∷ τs⁻⋆) = τ⁻-refl τ⁻⋆ ∷ τs⁻-refl τs⁻⋆
 
     σ-refl : ∀ {Δ σ} → Δ ⊢ σ StackType → Δ ⊢ σ ≤σ σ
     σ-refl σ⋆ = σ-≤ σ⋆
 
     Γ-refl : ∀ {Δ Γ} → Δ ⊢ Γ RegisterAssignment → Δ ⊢ Γ ≤Γ Γ
     Γ-refl (valid-registerₐ sp⋆ regs⋆) =
-      Γ-≤ (σ-refl sp⋆) (Allᵥ-zip (regs-refl regs⋆))
+      Γ-≤ (σ-refl sp⋆) (regs-refl regs⋆)
 
     regs-refl : ∀ {Δ m} {regs : Vec Type m} →
                   Allᵥ (λ τ → Δ ⊢ τ Type) regs →
-                  Allᵥ (λ τ → Δ ⊢ τ ≤τ τ) regs
-    regs-refl {regs = []} [] = []
-    regs-refl {regs = _ ∷ _} (τ⋆ ∷ regs⋆) = τ-refl τ⋆ ∷ regs-refl regs⋆
+                  AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) regs regs
+    regs-refl [] = []
+    regs-refl (τ⋆ ∷ regs⋆) = τ-refl τ⋆ ∷ regs-refl regs⋆
 
   mutual
     τ-trans : ∀ {Δ τ₁ τ₂ τ₃} → Δ ⊢ τ₁ ≤τ τ₂ → Δ ⊢ τ₂ ≤τ τ₃ → Δ ⊢ τ₁ ≤τ τ₃
@@ -212,14 +208,13 @@ private
     τ⁻-trans (τ⁻-≤ τ₁₂≤) (τ⁻-≤ τ₂₃≤) = τ⁻-≤ (τ-trans τ₁₂≤ τ₂₃≤)
 
     τs⁻-trans :
-      ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec InitType m} →
-        Allᵥ (λ { (τ⁻₁ , τ⁻₂) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ }) (Vec-zip τs₁ τs₂) →
-        Allᵥ (λ { (τ⁻₂ , τ⁻₃) → Δ ⊢ τ⁻₂ ≤τ⁻ τ⁻₃ }) (Vec-zip τs₂ τs₃) →
-        Allᵥ (λ { (τ⁻₁ , τ⁻₃) → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₃ }) (Vec-zip τs₁ τs₃)
-    τs⁻-trans {τs₁ = []} {[]} {[]} [] [] = []
-    τs⁻-trans {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} {τ₃ ∷ τs₃}
-      (τ₁₂≤ ∷ τs₁₂≤) (τ₂₃≤ ∷ τs₂₃≤) =
-        τ⁻-trans τ₁₂≤ τ₂₃≤ ∷ τs⁻-trans τs₁₂≤ τs₂₃≤
+      ∀ {Δ τs₁ τs₂ τs₃} →
+        AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs₁ τs₂ →
+        AllZip (λ τ⁻₂ τ⁻₃ → Δ ⊢ τ⁻₂ ≤τ⁻ τ⁻₃) τs₂ τs₃ →
+        AllZip (λ τ⁻₁ τ⁻₃ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₃) τs₁ τs₃
+    τs⁻-trans [] [] = []
+    τs⁻-trans (τ₁₂≤ ∷ τs₁₂≤) (τ₂₃≤ ∷ τs₂₃≤) =
+      τ⁻-trans τ₁₂≤ τ₂₃≤ ∷ τs⁻-trans τs₁₂≤ τs₂₃≤
 
     σ-trans : ∀ {Δ σ₁ σ₂ σ₃} → Δ ⊢ σ₁ ≤σ σ₂ → Δ ⊢ σ₂ ≤σ σ₃ → Δ ⊢ σ₁ ≤σ σ₃
     σ-trans (σ-≤ σ₁⋆) (σ-≤ σ₂⋆) = σ-≤ σ₁⋆
@@ -229,12 +224,12 @@ private
       Γ-≤ (σ-trans sp₁₂≤ sp₂₃≤) (regs-trans regs₁₂≤ regs₂₃≤)
 
     regs-trans : ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec Type m} →
-                   Allᵥ (λ { (τ₁ , τ₂) → Δ ⊢ τ₁ ≤τ τ₂ }) (Vec-zip τs₁ τs₂) →
-                   Allᵥ (λ { (τ₂ , τ₃) → Δ ⊢ τ₂ ≤τ τ₃ }) (Vec-zip τs₂ τs₃) →
-                   Allᵥ (λ { (τ₁ , τ₃) → Δ ⊢ τ₁ ≤τ τ₃ }) (Vec-zip τs₁ τs₃)
-    regs-trans {τs₁ = []} {[]} {[]} [] [] = []
-    regs-trans {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} {τ₃ ∷ τs₃} (τ₁₂≤ ∷ τs₁₂≤)
-      (τ₂₃≤ ∷ τs₂₃≤) = τ-trans τ₁₂≤ τ₂₃≤ ∷ regs-trans τs₁₂≤ τs₂₃≤
+                   AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) τs₁ τs₂ →
+                   AllZipᵥ (λ τ₂ τ₃ → Δ ⊢ τ₂ ≤τ τ₃) τs₂ τs₃ →
+                   AllZipᵥ (λ τ₁ τ₃ → Δ ⊢ τ₁ ≤τ τ₃) τs₁ τs₃
+    regs-trans [] [] = []
+    regs-trans (τ₁₂≤ ∷ τs₁₂≤) (τ₂₃≤ ∷ τs₂₃≤) =
+      τ-trans τ₁₂≤ τ₂₃≤ ∷ regs-trans τs₁₂≤ τs₂₃≤
 
   mutual
     τ-valid : ∀ {Δ τ₁ τ₂} → Δ ⊢ τ₁ ≤τ τ₂ → Δ ⊢ τ₁ Type × Δ ⊢ τ₂ Type
@@ -243,7 +238,7 @@ private
     τ-valid ns-≤ = valid-ns , valid-ns
     τ-valid (∀-≤ Δ⋆ Γ≤) with Γ-valid Γ≤
     ... | Γ₁⋆ , Γ₂⋆ = valid-∀ Δ⋆ Γ₁⋆ , valid-∀ Δ⋆ Γ₂⋆
-    τ-valid (tuple-≤ τs) with τs⁻-valid τs
+    τ-valid (tuple-≤ τs⋆) with τs⁻-valid τs⋆
     ... | τs₁⋆ , τs₂⋆ = (valid-tuple τs₁⋆) , valid-tuple τs₂⋆
 
     τ⁻-valid : ∀ {Δ τ⁻₁ τ⁻₂} → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ →
@@ -252,13 +247,13 @@ private
     ... | τ⁻₁⋆ , τ⁻₂⋆ = valid-τ⁻ τ⁻₁⋆ , valid-τ⁻ τ⁻₂⋆
 
     τs⁻-valid :
-      ∀ {Δ m} {τs₁ τs₂ : Vec InitType m} →
-        Allᵥ (λ { (τ⁻₁ , τ⁻₂)  → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ }) (Vec-zip τs₁ τs₂) →
-        Allᵥ (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs₁ ×
-        Allᵥ (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs₂
-    τs⁻-valid {τs₁ = []} {[]} [] = [] , []
-    τs⁻-valid {τs₁ = τ⁻₁ ∷ τs₁} {τ⁻₂ ∷ τs₂} (τ⁻≤ ∷ ps)
-      with τ⁻-valid τ⁻≤ | τs⁻-valid ps
+      ∀ {Δ τs₁ τs₂} →
+        AllZip (λ τ⁻₁ τ⁻₂  → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs₁ τs₂ →
+        All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs₁ ×
+        All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs₂
+    τs⁻-valid [] = [] , []
+    τs⁻-valid (τ⁻≤ ∷ τs⁻≤)
+      with τ⁻-valid τ⁻≤ | τs⁻-valid τs⁻≤
     ...   | τ⁻₁⋆ , τ⁻₂⋆ | τs₁⋆ , τs₂⋆ = τ⁻₁⋆ ∷ τs₁⋆ , τ⁻₂⋆ ∷ τs₂⋆
 
     σ-valid : ∀ {Δ σ₁ σ₂} → Δ ⊢ σ₁ ≤σ σ₂ →
@@ -275,11 +270,11 @@ private
 
     regs-valid :
       ∀ {Δ m} {τs₁ τs₂ : Vec Type m} →
-        Allᵥ (λ { (τ₁ , τ₂)  → Δ ⊢ τ₁ ≤τ τ₂ }) (Vec-zip τs₁ τs₂) →
+        AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) τs₁ τs₂ →
         Allᵥ (λ τ → Δ ⊢ τ Type) τs₁ ×
         Allᵥ (λ τ → Δ ⊢ τ Type) τs₂
-    regs-valid {τs₁ = []} {[]} [] = [] , []
-    regs-valid {τs₁ = τ₁ ∷ τs₁} {τ₂ ∷ τs₂} (τ≤ ∷ τs≤)
+    regs-valid [] = [] , []
+    regs-valid (τ≤ ∷ τs≤)
       with τ-valid τ≤ | regs-valid τs≤
     ...   | τ₁⋆ , τ₂⋆ | τs₁⋆ , τs₂⋆ = τ₁⋆ ∷ τs₁⋆ , τ₂⋆ ∷ τs₂⋆
 
@@ -294,79 +289,99 @@ record Subtype {A Ctx : Set} (T : TypeLike A Ctx) : Set1 where
 open Subtype {{...}} public
 
 Vec-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} {m} →
-                Subtype (Vec-typeLike {{t}} {m})
+                Subtype (Vec-typeLike {m = m})
 Vec-subtype {{t}} = subtype
-    (λ C xs₁ xs₂ → Allᵥ (λ {(x₁ , x₂) → C ⊢ x₁ ≤ x₂ })
-                        (Vec-zip xs₁ xs₂))
-    (λ C xs₁ xs₂ → Allᵥ-dec (λ { (x₁ , x₂) → C ⊢ x₁ ≤? x₂ })
-                            (Vec-zip xs₁ xs₂))
-    (λ ps → Allᵥ-zip (Allᵥ-map (≤-refl {{t}}) ps))
+    _⊢_≤xs_
+    dec'
+    refl'
     trans'
     valid
-  where trans' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
+  where _⊢_≤xs_ : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
+                    Ctx → Vec A m → Vec A m → Set
+        C ⊢ xs₁ ≤xs xs₂ = AllZipᵥ (λ x₁ x₂ → C ⊢ x₁ ≤ x₂) xs₁ xs₂
+
+        dec' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
+                 (C : Ctx) (xs₁ xs₂ : Vec A m) →
+                 Dec (C ⊢ xs₁ ≤xs xs₂)
+        dec' C [] [] = yes []
+        dec' C (x₁ ∷ xs₁) (x₂ ∷ xs₂)
+          with C ⊢ x₁ ≤? x₂ | dec' C xs₁ xs₂
+        ... | yes x₁≤x₂ | yes xs₁≤xs₂ = yes (x₁≤x₂ ∷ xs₁≤xs₂)
+        ... | no x₁≰x₂ | _ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → x₁≰x₂ x₁≤x₂ })
+        ... | _ | no xs₁≰xs₂ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → xs₁≰xs₂ xs₁≤xs₂ })
+
+        refl' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
+                  {C : Ctx} {xs : Vec A m} →
+                  _⊢_Valid {{Vec-typeLike}} C xs →
+                  C ⊢ xs ≤xs xs
+        refl' [] = []
+        refl' (x⋆ ∷ xs⋆) = ≤-refl x⋆ ∷ refl' xs⋆
+
+        trans' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
                    {C : Ctx} {xs₁ xs₂ xs₃ : Vec A m} →
-                   Allᵥ (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (Vec-zip xs₁ xs₂) →
-                   Allᵥ (λ { (x₂ , x₃) → C ⊢ x₂ ≤ x₃ }) (Vec-zip xs₂ xs₃) →
-                   Allᵥ (λ { (x₁ , x₃) → C ⊢ x₁ ≤ x₃ }) (Vec-zip xs₁ xs₃)
-        trans' {xs₁ = []} {[]} {[]} [] [] = []
-        trans' {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} {x₃ ∷ xs₃} (x₁₂≤ ∷ xs₁₂≤)
-          (x₂₃≤ ∷ xs₂₃≤) = (≤-trans {{t}} x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
+                   C ⊢ xs₁ ≤xs xs₂ →
+                   C ⊢ xs₂ ≤xs xs₃ →
+                   C ⊢ xs₁ ≤xs xs₃
+        trans' [] [] = []
+        trans' (x₁₂≤ ∷ xs₁₂≤) (x₂₃≤ ∷ xs₂₃≤) =
+          (≤-trans x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
         valid : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
                   {C : Ctx} {xs₁ xs₂ : Vec A m} →
-                  Allᵥ (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (Vec-zip xs₁ xs₂) →
-                  Allᵥ (λ { x₁ → C ⊢ x₁ Valid }) xs₁ ×
-                  Allᵥ (λ { x₁ → C ⊢ x₁ Valid }) xs₂
-        valid {xs₁ = []} {[]} [] = [] , []
-        valid {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} (x≤ ∷ xs≤)
-          with ≤-valid {{t}} x≤ | valid xs≤
+                  C ⊢ xs₁ ≤xs xs₂ →
+                  _⊢_Valid {{Vec-typeLike}} C xs₁ ×
+                  _⊢_Valid {{Vec-typeLike}} C xs₂
+        valid [] = [] , []
+        valid (x≤ ∷ xs≤)
+          with ≤-valid x≤ | valid xs≤
         ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
 
 List-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
-                 Subtype (List-typeLike {{t}})
+                 Subtype List-typeLike
 List-subtype {{t}} = subtype
-    (λ C xs₁ xs₂ → length xs₁ ≡ length xs₂ ×
-                   All (λ {(x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂))
-    (λ C xs₁ xs₂ → dec-inj₂ _,_ id
-                            (length xs₁ ≟ length xs₂)
-                            (All-dec (λ { (x₁ , x₂) → C ⊢ x₁ ≤? x₂ })
-                                     (zip xs₁ xs₂)))
-    (λ ps → refl , All-zip (All-map (≤-refl {{t}}) ps))
+    _⊢_≤xs_
+    dec'
+    refl'
     trans'
     valid
-  where trans' : ∀ {A Ctx t} {{_ : Subtype t}} →
+  where _⊢_≤xs_ : ∀ {A Ctx t} {{_ : Subtype t}} →
+                    Ctx → List A → List A → Set
+        C ⊢ xs₁ ≤xs xs₂ = AllZip (λ x₁ x₂ → C ⊢ x₁ ≤ x₂) xs₁ xs₂
+
+        dec' : ∀ {A Ctx t} {{_ : Subtype t}} →
+                 (C : Ctx) (xs₁ xs₂ : List A) →
+                 Dec (C ⊢ xs₁ ≤xs xs₂)
+        dec' C [] [] = yes []
+        dec' C (x₁ ∷ xs₁) [] = no (λ ())
+        dec' C [] (x₂ ∷ xs₂) = no (λ ())
+        dec' C (x₁ ∷ xs₁) (x₂ ∷ xs₂)
+          with C ⊢ x₁ ≤? x₂ | dec' C xs₁ xs₂
+        ... | yes x₁≤x₂ | yes xs₁≤xs₂ = yes (x₁≤x₂ ∷ xs₁≤xs₂)
+        ... | no x₁≰x₂ | _ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → x₁≰x₂ x₁≤x₂ })
+        ... | _ | no xs₁≰xs₂ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → xs₁≰xs₂ xs₁≤xs₂ })
+
+        refl' : ∀ {A Ctx t} {{_ : Subtype t}} →
+                  {C : Ctx} {xs : List A} →
+                  _⊢_Valid {{List-typeLike}} C xs →
+                  C ⊢ xs ≤xs xs
+        refl' [] = []
+        refl' (x⋆ ∷ xs⋆) = ≤-refl x⋆ ∷ refl' xs⋆
+
+        trans' : ∀ {A Ctx t} {{_ : Subtype t}} →
                    {C : Ctx} {xs₁ xs₂ xs₃ : List A} →
-                   length xs₁ ≡ length xs₂ ×
-                     All (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂) →
-                   length xs₂ ≡ length xs₃ ×
-                     All (λ { (x₂ , x₃) → C ⊢ x₂ ≤ x₃ }) (zip xs₂ xs₃) →
-                   length xs₁ ≡ length xs₃ ×
-                     All (λ { (x₁ , x₃) → C ⊢ x₁ ≤ x₃ }) (zip xs₁ xs₃)
-        trans' {xs₁ = []} {[]} {[]} (refl , []) (refl , []) = refl , []
-        trans' {xs₁ = []} {_ ∷ _} {_} (() , _) _
-        trans' {xs₁ = []} {_} {_ ∷ _} (eq₁₂ , _) (eq₂₃ , _)
-          with trans eq₁₂ eq₂₃
-        ... | ()
-        trans' {xs₁ = _ ∷ _} {[]} {_} (() , _) _
-        trans' {xs₁ = _ ∷ _} {_} {[]} (eq₁₂ , _) (eq₂₃ , _)
-          with trans eq₁₂ eq₂₃
-        ... | ()
-        trans' {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} {x₃ ∷ xs₃}
-          (eq₁₂ , x₁₂≤ ∷ xs₁₂≤) (eq₂₃ , x₂₃≤ ∷ xs₂₃≤) =
-            (trans eq₁₂ eq₂₃) ,
-            (≤-trans {{t}} x₁₂≤ x₂₃≤) ∷
-              proj₂ (trans' (cancel-+-left 1 eq₁₂ , xs₁₂≤)
-                            (cancel-+-left 1 eq₂₃ , xs₂₃≤))
+                   C ⊢ xs₁ ≤xs xs₂ →
+                   C ⊢ xs₂ ≤xs xs₃ →
+                   C ⊢ xs₁ ≤xs xs₃
+        trans' [] [] = []
+        trans' (x₁₂≤ ∷ xs₁₂≤) (x₂₃≤ ∷ xs₂₃≤) =
+          (≤-trans x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
         valid : ∀ {A Ctx t} {{_ : Subtype t}} →
                   {C : Ctx} {xs₁ xs₂ : List A} →
-                  length xs₁ ≡ length xs₂ ×
-                  All (λ { (x₁ , x₂) → C ⊢ x₁ ≤ x₂ }) (zip xs₁ xs₂) →
-                  All (λ { x₁ → C ⊢ x₁ Valid }) xs₁ ×
-                  All (λ { x₁ → C ⊢ x₁ Valid }) xs₂
-        valid {xs₁ = []} {[]} (refl , []) = [] , []
-        valid {xs₁ = []} {x₁ ∷ xs₂} (() , _)
-        valid {xs₁ = x₁ ∷ xs₁} {[]} (() , _)
-        valid {{t}} {xs₁ = x₁ ∷ xs₁} {x₂ ∷ xs₂} (eq , x≤ ∷ xs≤)
-          with ≤-valid {{t}} x≤ | valid (cancel-+-left 1 eq , xs≤)
+                  C ⊢ xs₁ ≤xs xs₂ →
+                  _⊢_Valid {{List-typeLike}} C xs₁ ×
+                  _⊢_Valid {{List-typeLike}} C xs₂
+        valid [] = [] , []
+        valid (x≤ ∷ xs≤)
+          with ≤-valid x≤ | valid xs≤
         ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
 
 instance

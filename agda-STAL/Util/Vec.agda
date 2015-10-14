@@ -29,6 +29,13 @@ update zero    xᵥ (_ ∷ xs) = xᵥ ∷ xs
 update (suc i) xᵥ (x ∷ xs) = x ∷ update i xᵥ xs
 
 infixr 5 _∷_
+data AllZipᵥ {a b p} {A : Set a} {B : Set b} (P : A → B → Set p) :
+             ∀ {m} → Vec A m → Vec B m → Set (p ⊔ a ⊔ b) where
+  [] : AllZipᵥ P [] []
+  _∷_ : ∀ {x y m xs ys} → P x y →
+                          AllZipᵥ P {m} xs ys →
+                          AllZipᵥ P (x ∷ xs) (y ∷ ys)
+
 data Allᵥ {a p} {A : Set a} (P : A → Set p) :
           ∀ {m} (L : Vec A m) → Set (a ⊔ p) where
   [] : Allᵥ P []
