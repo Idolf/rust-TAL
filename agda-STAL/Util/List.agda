@@ -149,8 +149,8 @@ instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)
   List-Tree = tree⋆ (λ { (node _ xs) → from xs })
                     (λ x → node 0 (proj₁ (sur x)) , proj₂ (sur x))
-    where from : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → List Tree → ¿ List A
-          from [] = Just []
+    where from : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → List Tree → Maybe (List A)
+          from [] = just []
           from (x ∷ xs) = _∷_ <$> fromTree x <*> from xs
           sur : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → IsSurjective (from {{t}})
           sur [] = [] , refl

@@ -23,11 +23,11 @@ instance
           to (x , y) = T₂ 0 (toTree x) (toTree y)
           from : ∀ {a b} {A : Set a} {B : A → Set b}
                    {{ta : ToTree A}} {{tb : ∀ {x} → ToTree (B x)}} →
-                   Tree → ¿ Σ A B
+                   Tree → Maybe (Σ A B)
           from (node _ (x ∷ y ∷ _)) with fromTree x
-          from (node _ (x ∷ y ∷ _)) | Nothing = Nothing
-          from (node _ (x ∷ y ∷ _)) | Just x' = _,_ x' <$> fromTree y
-          from _ = Nothing
+          from (node _ (x ∷ y ∷ _)) | nothing = nothing
+          from (node _ (x ∷ y ∷ _)) | just x' = _,_ x' <$> fromTree y
+          from _ = nothing
           eq : ∀ {a b} {A : Set a} {B : A → Set b} {{ta : ToTree A}}
                  {{tb : ∀ {x} → ToTree (B x)}} →
                  IsInverse (to {B = B}) from

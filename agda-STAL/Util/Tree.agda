@@ -14,7 +14,7 @@ open import Data.List.Properties using (∷-injective)
 -- The goal of this module is to establish an easy way to
 -- get decidable equality for any type A. This is done by
 -- creating a function (f : A → Tree) with an inverse
--- (g : Tree → ¿ A). Here "Tree" is a type containing
+-- (g : Tree → Maybe A). Here "Tree" is a type containing
 -- arbitrarily branching tree with a number at every nodes.
 -- Sine f has an inverse, it must be injective. Since we can
 -- decide equality on Tree, we can decide equality on A.
@@ -29,11 +29,11 @@ record ToTree {a} (A : Set a) : Set a where
   constructor tree
   field
     toTree : A → Tree
-    fromTree : Tree → ¿ A
+    fromTree : Tree → Maybe A
     invTree : IsInverse toTree fromTree
 
 tree⋆ : ∀ {a} {A : Set a} →
-          (fromTree : Tree → ¿ A) →
+          (fromTree : Tree → Maybe A) →
           IsSurjective fromTree →
           ToTree A
 tree⋆ fromTree isSur = tree (proj₁ ∘ isSur) fromTree (proj₂ ∘ isSur)
@@ -41,7 +41,7 @@ tree⋆ fromTree isSur = tree (proj₁ ∘ isSur) fromTree (proj₂ ∘ isSur)
 toTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → A → Tree
 toTree {{t}} = ToTree.toTree t
 
-fromTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → Tree → ¿ A
+fromTree : ∀ {a} {A : Set a} {{_ : ToTree A}} → Tree → Maybe A
 fromTree {{t}} = ToTree.fromTree t
 
 invTree : ∀ {a} {A : Set a} {{t : ToTree A}} →
@@ -76,28 +76,28 @@ private
       mutual
         _==_ : DecEqFun Tree
         node i₁ nodes₁ == node i₂ nodes₂ =
-          dec-cong₂ node-injective (i₁ N.≟ i₂) (nodes₁ ==Just nodes₂)
+          dec-cong₂ node-injective (i₁ N.≟ i₂) (nodes₁ ==just nodes₂)
 
         -- This is just to make the termination checker happy
-        _==Just_ : DecEqFun (List Tree)
-        [] ==Just [] = yes refl
-        [] ==Just (node₂ ∷ nodes₂) = no (λ ())
-        (node₁ ∷ nodes₁) ==Just [] = no (λ ())
-        (node₁ ∷ nodes₁) ==Just (node₂ ∷ nodes₂) =
-          dec-cong₂ ∷-injective (node₁ == node₂) (nodes₁ ==Just nodes₂)
+        _==just_ : DecEqFun (List Tree)
+        [] ==just [] = yes refl
+        [] ==just (node₂ ∷ nodes₂) = no (λ ())
+        (node₁ ∷ nodes₁) ==just [] = no (λ ())
+        (node₁ ∷ nodes₁) ==just (node₂ ∷ nodes₂) =
+          dec-cong₂ ∷-injective (node₁ == node₂) (nodes₁ ==just nodes₂)
 
 instance
   Tree-Tree : ToTree Tree
-  Tree-Tree = tree id Just (λ x → refl)
+  Tree-Tree = tree id just (λ x → refl)
 
   ToTree-dec-eq : ∀ {ℓ} {A : Set ℓ} {{_ : ToTree A}} → DecEq A
   ToTree-dec-eq {{t}} = decEq (
     HasInverse→DecEqFun {{Tree-eq-dec}}
       (ToTree.fromTree t , ToTree.invTree t))
 
-  ¿-Tree : ∀ {a} {A : Set a} {{_ : ToTree A}} → ToTree (¿ A)
-  ¿-Tree = tree⋆ (λ {(node 0 _)      → Just Nothing
-                  ; (node 1 (v ∷ _)) → Just <$> fromTree v
-                  ; _                → Nothing })
-                 (λ {Nothing         → T₀ 0   , refl
-                  ; (Just v)         → T₁ 1 v , Just <$=> invTree v })
+  Maybe-Tree : ∀ {a} {A : Set a} {{_ : ToTree A}} → ToTree (Maybe A)
+  Maybe-Tree = tree⋆ (λ { (node 0 _)       → just nothing
+                        ; (node 1 (v ∷ _)) → just <$> fromTree v
+                        ; _                → nothing })
+                     (λ { nothing          → T₀ 0   , refl
+                        ; (just v)         → T₁ 1 v , just <$=> invTree v })

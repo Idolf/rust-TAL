@@ -74,10 +74,10 @@ instance
   Vec-Tree = tree⋆ (λ { (node _ xs) → from xs })
                    (λ x → node 0 (proj₁ (sur x)) , proj₂ (sur x))
     where from : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} →
-                   List Tree → ¿ Vec A m
-          from {m = zero} [] = Just []
-          from {m = zero} (x ∷ xs) = Nothing
-          from {m = suc m} [] = Nothing
+                   List Tree → Maybe (Vec A m)
+          from {m = zero} [] = just []
+          from {m = zero} (x ∷ xs) = nothing
+          from {m = suc m} [] = nothing
           from {m = suc m} (x ∷ xs) = _∷_ <$> fromTree x <*> from {m = m} xs
           sur : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} →
                   IsSurjective (from {{t}} {m})

@@ -1,42 +1,40 @@
 module Util.Maybe where
 
+-- Re-exports
+open import Data.Maybe.Base using (Maybe ; just ; nothing) public
+
 -- Local imports
 open import Relation.Binary.PropositionalEquality using (_≡_ ; refl)
 
--- This is the "Maybe" datatype from Haskell
-infix 2 ¿_
-data ¿_ {a} (A : Set a) : Set a where
-  Nothing : ¿ A
-  Just : A → ¿ A
-
-Just-injective : ∀ {a} {A : Set a} {x y : A} → Just x ≡ Just y → x ≡ y
-Just-injective refl = refl
+just-injective : ∀ {a} {A : Set a} {x y : A} → just x ≡ just {A = A} y → x ≡ y
+just-injective refl = refl
 
 -- fmap and applicative specialised to the Maybe functor
-infixl 20 _<$>_ _<*>_ _<$=>_ _<*=>_
+infixl 4 _<$>_ _<*>_
+infixl 20 _<$=>_ _<*=>_
 _<$>_ : ∀ {a b} {A : Set a} {B : Set b} →
           (f : A → B) →
-          ¿ A → ¿ B
-f <$> Nothing = Nothing
-f <$> Just x  = Just (f x)
+          Maybe A → Maybe B
+f <$> nothing = nothing
+f <$> just x  = just (f x)
 
 _<*>_ : ∀ {a b} {A : Set a} {B : Set b} →
-        (f : ¿ (A → B)) → ¿ A → ¿ B
-_       <*> Nothing = Nothing
-Nothing <*> _       = Nothing
-Just f  <*> Just x  = Just (f x)
+        (f : Maybe (A → B)) → Maybe A → Maybe B
+_       <*> nothing = nothing
+nothing <*> _       = nothing
+just f  <*> just x  = just (f x)
 
 _<$=>_ : ∀ {a b} {A : Set a} {B : Set b} →
           (f : A → B) →
-          {x : A} {y : ¿ A} →
-          y ≡ Just x →
-          f <$> y ≡ Just (f x)
+          {x : A} {y : Maybe A} →
+          y ≡ just x →
+          f <$> y ≡ just (f x)
 f <$=> refl = refl
 
 _<*=>_ : ∀ {a b} {A : Set a} {B : Set b} →
-          {f : A → B} {g : ¿ (A → B)} →
-          {x : A} {y : ¿ A} →
-          g ≡ Just f →
-          y ≡ Just x →
-          g <*> y ≡ Just (f x)
+          {f : A → B} {g : Maybe (A → B)} →
+          {x : A} {y : Maybe A} →
+          g ≡ just f →
+          y ≡ just x →
+          g <*> y ≡ just (f x)
 refl <*=> refl = refl

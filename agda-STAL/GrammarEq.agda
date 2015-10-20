@@ -3,13 +3,13 @@ open import Util
 
 private
   mutual
-    τ-from : Tree → ¿ Type
+    τ-from : Tree → Maybe Type
     τ-from (node 0 (ι ∷ _)) = α⁼ <$> fromTree ι
-    τ-from (node 1 _) = Just int
-    τ-from (node 2 _) = Just ns
+    τ-from (node 1 _) = just int
+    τ-from (node 2 _) = just ns
     τ-from (node 3 (Δ ∷ Γ ∷ _)) = ∀[_]_ <$> Δ-from Δ <*> Γ-from Γ
     τ-from (node 4 τs) = tuple <$> τs-from τs
-    τ-from _ = Nothing
+    τ-from _ = nothing
 
     τ-sur : IsSurjective τ-from
     τ-sur (α⁼ ι) = T₁ 0 ι , refl
@@ -20,12 +20,12 @@ private
     τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
       tuple <$=> proj₂ (τs-sur τs)
 
-    τs-from : List Tree → ¿ (List InitType)
-    τs-from [] = Just []
+    τs-from : List Tree → Maybe (List InitType)
+    τs-from [] = just []
     τs-from (node _ (τ ∷ φ ∷ _) ∷ τs) =
       (λ τ φ τs → (τ , φ) ∷ τs)
         <$> τ-from τ <*> fromTree φ <*> τs-from τs
-    τs-from _ = Nothing
+    τs-from _ = nothing
 
     τs-sur : IsSurjective τs-from
     τs-sur [] = [] , refl
@@ -34,11 +34,11 @@ private
       (λ τ φ τs → (τ , φ) ∷ τs)
         <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur τs)
 
-    σ-from : Tree → ¿ StackType
+    σ-from : Tree → Maybe StackType
     σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
-    σ-from (node 1 _) = Just nil
+    σ-from (node 1 _) = just nil
     σ-from (node 2 (τ ∷ σ ∷ _)) = _∷_ <$> τ-from τ <*> σ-from σ
-    σ-from _ = Nothing
+    σ-from _ = nothing
 
     σ-sur : IsSurjective σ-from
     σ-sur (ρ⁼ ι) = T₁ 0 ι , refl
@@ -46,39 +46,39 @@ private
     σ-sur (τ ∷ σ) = T₂ 2 (proj₁ (τ-sur τ)) (proj₁ (σ-sur σ)) ,
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (σ-sur σ)
 
-    Δ-from : Tree → ¿ TypeAssignment
-    Δ-from (node 0 _) = Just []
+    Δ-from : Tree → Maybe TypeAssignment
+    Δ-from (node 0 _) = just []
     Δ-from (node 1 (a ∷ Δ ∷ _)) = _∷_ <$> a-from a <*> Δ-from Δ
-    Δ-from _ = Nothing
+    Δ-from _ = nothing
 
     Δ-sur : IsSurjective Δ-from
     Δ-sur [] = T₀ 0 , refl
     Δ-sur (a ∷ Δ) = T₂ 1 (proj₁ (a-sur a)) (proj₁ (Δ-sur Δ)) ,
       _∷_ <$=> proj₂ (a-sur a) <*=> proj₂ (Δ-sur Δ)
 
-    a-from : Tree → ¿ TypeAssignmentValue
-    a-from (node 0 _) = Just α
-    a-from (node 1 _) = Just ρ
-    a-from _ = Nothing
+    a-from : Tree → Maybe TypeAssignmentValue
+    a-from (node 0 _) = just α
+    a-from (node 1 _) = just ρ
+    a-from _ = nothing
 
     a-sur : IsSurjective a-from
     a-sur α = T₀ 0 , refl
     a-sur ρ = T₀ 1 , refl
 
-    Γ-from : Tree → ¿ RegisterAssignment
+    Γ-from : Tree → Maybe RegisterAssignment
     Γ-from (node _ (sp ∷ regs)) =
       registerₐ <$> σ-from sp <*> regs-from regs
-    Γ-from _ = Nothing
+    Γ-from _ = nothing
 
     Γ-sur : IsSurjective Γ-from
     Γ-sur (registerₐ sp regs) =
       node 0 (proj₁ (σ-sur sp) ∷ proj₁ (regs-sur regs)) ,
       registerₐ <$=> proj₂ (σ-sur sp) <*=> proj₂ (regs-sur regs)
 
-    regs-from : ∀ {m} → List Tree → ¿ Vec Type m
-    regs-from {zero}  []       = Just []
-    regs-from {zero}  (τ ∷ τs) = Nothing
-    regs-from {suc m} []       = Nothing
+    regs-from : ∀ {m} → List Tree → Maybe (Vec Type m)
+    regs-from {zero}  []       = just []
+    regs-from {zero}  (τ ∷ τs) = nothing
+    regs-from {suc m} []       = nothing
     regs-from {suc m} (τ ∷ τs) = _∷_ <$> τ-from τ <*> regs-from τs
 
     regs-sur : ∀ {m} → IsSurjective (regs-from {m})
@@ -101,42 +101,42 @@ instance
 
   Instantiation-Tree : ToTree Instantiation
   Instantiation-Tree = tree⋆ from sur
-    where from : Tree → ¿ Instantiation
+    where from : Tree → Maybe Instantiation
           from (node 0 (τ ∷ _)) = α <$> fromTree τ
           from (node 1 (σ ∷ _)) = ρ <$> fromTree σ
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (α τ) = T₁ 0 τ , α <$=> invTree τ
           sur (ρ σ) = T₁ 1 σ , ρ <$=> invTree σ
 
   CastValue-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (CastValue A)
   CastValue-Tree = tree⋆ from sur
-    where from : ∀ {A} {{_ : ToTree A}} → Tree → ¿ (CastValue A)
+    where from : ∀ {A} {{_ : ToTree A}} → Tree → Maybe (CastValue A)
           from (node 0 (i ∷ _)) = inst <$> fromTree i
           from (node 1 (n ∷ _)) = weaken <$> fromTree n
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (inst i) = T₁ 0 i , inst <$=> invTree i
           sur (weaken n) = T₁ 1 n , weaken <$=> invTree n
 
   Cast-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (Cast A)
   Cast-Tree = tree⋆ from sur
-    where from : ∀ {A} {{_ : ToTree A}} → Tree → ¿ (Cast A)
+    where from : ∀ {A} {{_ : ToTree A}} → Tree → Maybe (Cast A)
           from (node _ (cᵥ ∷ ι ∷ _)) = _/_ <$> fromTree cᵥ <*> fromTree ι
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (cᵥ / ι) = T₂ 0 cᵥ ι , _/_ <$=> invTree cᵥ <*=> invTree ι
 
   WordValue-Tree : ToTree WordValue
   WordValue-Tree = tree⋆ from sur
-    where from : Tree → ¿ WordValue
+    where from : Tree → Maybe WordValue
           from (node 0 (l ∷ _)) = globval <$> fromTree l
           from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
           from (node 2 (n ∷ _)) = const <$> fromTree n
-          from (node 3 _) = Just ns
+          from (node 3 _) = just ns
           from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
           from (node 5 (w ∷ i ∷ _)) = _⟦_⟧ <$> from w <*> fromTree i
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (globval l) = T₁ 0 l , globval <$=> invTree l
           sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
@@ -148,11 +148,11 @@ instance
 
   SmallValue-Tree : ToTree SmallValue
   SmallValue-Tree = tree⋆ from sur
-    where from : Tree → ¿ SmallValue
+    where from : Tree → Maybe SmallValue
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
           from (node 1 (w ∷ _)) = word <$> fromTree w
           from (node 2 (v ∷ i ∷ _)) = _⟦_⟧ᵥ <$> from v <*> fromTree i
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
           sur (word w) = T₁ 1 w , word <$=> invTree w
@@ -161,13 +161,13 @@ instance
 
   Instruction-Tree : ToTree Instruction
   Instruction-Tree = tree⋆ from sur
-    where from : Tree → ¿ Instruction
+    where from : Tree → Maybe Instruction
           from (node 0 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) =
             add <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
           from (node 1 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) =
             sub <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
           from (node 2 (v ∷ _)) = push <$> fromTree v
-          from (node 3 _) = Just pop
+          from (node 3 _) = just pop
           from (node 4 (♯r ∷ i ∷ _)) = sld <$> fromTree ♯r <*> fromTree i
           from (node 5 (i ∷ ♯r ∷ _)) = sst <$> fromTree i <*> fromTree ♯r
           from (node 6 (♯r₁ ∷ ♯r₂ ∷ i ∷ _)) =
@@ -180,7 +180,7 @@ instance
             mov <$> fromTree ♯rd <*> fromTree v
           from (node 10 (♯r ∷ v ∷ _)) =
             beq <$> fromTree ♯r <*> fromTree v
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (add ♯r₁ ♯r₂ v) = T₃ 0 ♯r₁ ♯r₂ v ,
             add <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
@@ -203,10 +203,10 @@ instance
 
   InstructionSequence-Tree : ToTree InstructionSequence
   InstructionSequence-Tree = tree⋆ from sur
-    where from : Tree → ¿ InstructionSequence
+    where from : Tree → Maybe InstructionSequence
           from (node 0 (ι ∷ I ∷ _)) = _~>_ <$> fromTree ι <*> from I
           from (node 1 (v ∷ _)) = jmp <$> fromTree v
-          from _ = Nothing
+          from _ = nothing
           sur : IsSurjective from
           sur (ι ~> I) = T₂ 0 ι (proj₁ (sur I)) ,
             _~>_ <$=> invTree ι <*=> proj₂ (sur I)
@@ -214,14 +214,14 @@ instance
 
   HeapValue-Tree : ToTree HeapValue
   HeapValue-Tree = tree⋆ from sur
-    where from' : List Tree → ¿ (List WordValue)
-          from' [] = Just []
+    where from' : List Tree → Maybe (List WordValue)
+          from' [] = just []
           from' (t ∷ ts) = _∷_ <$> fromTree t <*> from' ts
           sur' : IsSurjective from'
           sur' [] = [] , refl
           sur' (w ∷ ws) = toTree w ∷ proj₁ (sur' ws) ,
             _∷_ <$=> invTree w <*=> proj₂ (sur' ws)
-          from : Tree → ¿ HeapValue
+          from : Tree → Maybe HeapValue
           from (node _ ws) = tuple <$> from' ws
           sur : IsSurjective from
           sur (tuple ws) =
@@ -232,13 +232,13 @@ instance
   GlobalValue-Tree = tree⋆
     (λ { (node _ (Δ ∷ Γ ∷ I ∷ _)) →
            ∀[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree I
-       ; _ → Nothing })
+       ; _ → nothing })
     (λ { (∀[ Δ ] Γ ∙ I) → T₃ 0 Δ Γ I ,
            ∀[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree I })
 
   RegisterFile-Tree : ToTree RegisterFile
   RegisterFile-Tree = tree⋆
     (λ { (node _ (stack ∷ regs ∷ [])) →
-           register <$> fromTree stack <*> fromTree regs ; _ → Nothing })
+           register <$> fromTree stack <*> fromTree regs ; _ → nothing })
     (λ { (register stack regs) → T₂ 0 stack regs ,
            register <$=> invTree stack <*=> invTree regs })

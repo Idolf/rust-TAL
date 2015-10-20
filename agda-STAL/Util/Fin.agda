@@ -16,9 +16,9 @@ instance
   Fin-ToTree : ∀ {n} → ToTree (Fin n)
   Fin-ToTree = tree⋆ (λ { (node n _) → from n })
                      (λ v → node (proj₁ (sur v)) [] , proj₂ (sur v))
-    where from : ∀ {n} → ℕ → ¿ Fin n
-          from {zero} _ = Nothing
-          from {suc n} zero = Just zero
+    where from : ∀ {n} → ℕ → Maybe (Fin n)
+          from {zero} _ = nothing
+          from {suc n} zero = just zero
           from {suc n} (suc i) = suc <$> from i
           sur : ∀ {n} → IsSurjective (from {n})
           sur zero = zero , refl

@@ -18,8 +18,8 @@ IsInjective₂ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
 IsInjective₂ f = ∀ {x₁ x₂ y₁ y₂} → f x₁ y₁ ≡ f x₂ y₂ → x₁ ≡ x₂ × y₁ ≡ y₂
 
 IsInverse : ∀ {a b} {A : Set a} {B : Set b}
-              (f : A → B) → (g : B → ¿ A) → Set a
-IsInverse f g = ∀ x → g (f x) ≡ Just x
+              (f : A → B) → (g : B → Maybe A) → Set a
+IsInverse f g = ∀ x → g (f x) ≡ just x
 
 HasInverse : ∀ {a b} {A : Set a} {B : Set b} →
             (f : A → B) → Set (a ⊔ b)
@@ -30,19 +30,19 @@ HasInverse→IsInjective : ∀ {a b} {A : Set a} {B : Set b}
                            HasInverse f →
                            IsInjective f
 HasInverse→IsInjective {f = f} (g , eq₁) {x₁} {x₂} eq₂ =
-  Just-injective (
+  just-injective (
     begin
-      Just x₁
+      just x₁
     ⟨ eq₁ x₁ ⟩≡
       g (f x₁)
     ≡⟨ eq₂ ∥ g ⟩
       g (f x₂)
     ≡⟨ eq₁ x₂ ⟩
-      Just x₂
+      just x₂
     ∎
   )
   where open Eq-Reasoning
 
 IsSurjective : ∀ {a b} {A : Set a} {B : Set b}
-                 (f : A → ¿ B) → Set (a ⊔ b)
-IsSurjective {A = A} {B} f = ∀ x → ∃ λ y → f y ≡ Just x
+                 (f : A → Maybe B) → Set (a ⊔ b)
+IsSurjective {A = A} {B} f = ∀ x → ∃ λ y → f y ≡ just x

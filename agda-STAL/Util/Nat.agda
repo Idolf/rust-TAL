@@ -32,4 +32,4 @@ Nat-≤-refl n = B.DecTotalOrder.reflexive N.decTotalOrder refl
 
 instance
   ℕ-Tree : ToTree ℕ
-  ℕ-Tree = tree⋆ (λ { (node n _) → Just n }) (λ x → T₀ x , refl)
+  ℕ-Tree = tree⋆ (λ { (node n _) → just n }) (λ x → T₀ x , refl)
