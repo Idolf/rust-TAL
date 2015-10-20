@@ -53,7 +53,7 @@ mutual
       -----------------
       Δ ⊢ nil StackType
 
-    valid-∷ :
+    _∷_ :
           ∀ {τ σ} →
          Δ ⊢ τ Type →
        Δ ⊢ σ StackType →
@@ -189,9 +189,9 @@ private
       dec-inj valid-ρ⁼ (λ { (valid-ρ⁼ l) → l }) (↓-decᵥ Δ ι ρ)
     Δ ⊢? nil StackType = yes valid-nil
     Δ ⊢? τ ∷ σ StackType with Δ ⊢? τ Type | Δ ⊢? σ StackType
-    ... | yes τ⋆ | yes σ⋆ = yes (valid-∷ τ⋆ σ⋆)
-    ... | no ¬τ⋆ | _  = no (λ { (valid-∷ τ⋆ σ⋆) → ¬τ⋆ τ⋆ })
-    ... | _ | no ¬σ⋆ = no (λ { (valid-∷ τ⋆ σ⋆) → ¬σ⋆ σ⋆ })
+    ... | yes τ⋆ | yes σ⋆ = yes (τ⋆ ∷ σ⋆)
+    ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ σ⋆) → ¬τ⋆ τ⋆ })
+    ... | _ | no ¬σ⋆ = no (λ { (τ⋆ ∷ σ⋆) → ¬σ⋆ σ⋆ })
 
     infix 4 _⊢?_Types
     _⊢?_Types : ∀ Δ (τs : List Type) → Dec (All (λ τ → Δ ⊢ τ Type) τs)

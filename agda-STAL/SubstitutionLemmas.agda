@@ -148,7 +148,7 @@ private
                      Δ ++ Δ' ⊢ σ Valid
     σ-valid-++ (valid-ρ⁼ l) = valid-ρ⁼ (↓-add-right _ l)
     σ-valid-++ valid-nil = valid-nil
-    σ-valid-++ (valid-∷ τ⋆ σ⋆) = valid-∷ (τ-valid-++ τ⋆) (σ-valid-++ σ⋆)
+    σ-valid-++ (τ⋆ ∷ σ⋆) = τ-valid-++ τ⋆ ∷ σ-valid-++ σ⋆
 
     Δ-valid-++ : ∀ {Δ Δ'} {Δᵥ : TypeAssignment} →
                    Δ ⊢ Δᵥ Valid →
@@ -191,12 +191,12 @@ private
     τ-valid-weaken : valid-weakenᵗ Type
     τ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-α⁼ {ι} l)
       with length Δ₁ ≤? ι
-    ... | yes ι≥len = α⁼ (length Δ⁺ + ι) , subst-α-weaken-≥ ι≥len , valid-α⁼
+    ... | yes ι≥len = α⁼ (length Δ⁺ + ι) , subst-α-¬inst (subst-weaken-≥ ι≥len) , valid-α⁼
                          (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
                                                 (↓-add-middle Δ₁ Δ⁺ ι≥len l))
     ... | no ι≱len with NP.≰⇒> ι≱len
     ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
-    ... | α , l' , subst-α = α⁼ ι , subst-α-< ι<len ,
+    ... | α , l' , subst-α = α⁼ ι , subst-α-¬inst (subst-< ι<len) ,
                                     valid-α⁼ (↓-add-right (Δ⁺ ++ Δ₂) l')
     τ-valid-weaken Δ⁺ sub-Δ valid-int = int , subst-int , valid-int
     τ-valid-weaken Δ⁺ sub-Δ valid-ns = ns , subst-ns , valid-ns
@@ -230,19 +230,19 @@ private
     σ-valid-weaken : valid-weakenᵗ StackType
     σ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-ρ⁼ {ι} l)
       with length Δ₁ ≤? ι
-    ... | yes ι≥len = ρ⁼ (length Δ⁺ + ι) , subst-ρ-weaken-≥ ι≥len , valid-ρ⁼
+    ... | yes ι≥len = ρ⁼ (length Δ⁺ + ι) , subst-ρ-¬inst (subst-weaken-≥ ι≥len) , valid-ρ⁼
                          (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
                                                 (↓-add-middle Δ₁ Δ⁺ ι≥len l))
     ... | no ι≱len with NP.≰⇒> ι≱len
     ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
-    ... | ρ , l' , subst-ρ = ρ⁼ ι , subst-ρ-< ι<len ,
+    ... | ρ , l' , subst-ρ = ρ⁼ ι , subst-ρ-¬inst (subst-< ι<len) ,
                                     valid-ρ⁼ (↓-add-right (Δ⁺ ++ Δ₂) l')
     σ-valid-weaken Δ⁺ sub-Δ valid-nil = nil , subst-nil , valid-nil
-    σ-valid-weaken Δ⁺ sub-Δ (valid-∷ τ⋆ σ⋆)
+    σ-valid-weaken Δ⁺ sub-Δ (τ⋆ ∷ σ⋆)
       with τ-valid-weaken Δ⁺ sub-Δ τ⋆
          | σ-valid-weaken Δ⁺ sub-Δ σ⋆
     ...  | τ' , sub-τ , τ'⋆ | σ' , sub-σ , σ'⋆
-      = τ' ∷ σ' , subst-∷ sub-τ sub-σ , valid-∷ τ'⋆ σ'⋆
+      = τ' ∷ σ' , sub-τ ∷ sub-σ , τ'⋆ ∷ σ'⋆
 
     Δ-valid-weaken : valid-weakenᵗ TypeAssignment
     Δ-valid-weaken Δ⁺ sub-Δ [] = [] , [] , []
@@ -295,7 +295,7 @@ private
     ... | tri< ι<len _ _
       with subst-↓ (↓-remove-right (a ∷ Δ₂) ι<len l) sub-Δ
     ... | α , l' , subst-α =
-      α⁼ ι , subst-α-< ι<len , valid-α⁼ (↓-add-right Δ₂ l')
+      α⁼ ι , subst-α-¬inst (subst-< ι<len) , valid-α⁼ (↓-add-right Δ₂ l')
     τ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {α⁼ ._} (valid-α⁼ l)
         | tri≈ _ refl _
       with subst (λ i → a ∷ Δ₂ ↓ i ⇒ α)
@@ -305,7 +305,7 @@ private
         | tri≈ _ refl _ | here
       with τ-valid-weaken Δ₁' [] τ⋆
     ... | τ' , sub-τ , τ'⋆ rewrite subst-length sub-Δ
-      = τ' , subst-α-inst-≡ sub-τ , τ'⋆
+      = τ' , subst-α-inst sub-τ , τ'⋆
     τ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {α⁼ .(suc ι)} (valid-α⁼ l)
         | tri> _ _ (s≤s {n = ι} ι≥len)
       with begin
@@ -322,7 +322,7 @@ private
                             (subst (_≥_ (suc ι)) (sym eq) (s≤s ι≥len))
                             l)
     ... | l' rewrite eq | sym (subst-length sub-Δ) | NP.m+n∸m≡n ι≥len
-      = α⁼ ι , subst-α-inst-> (s≤s ι≥len) , valid-α⁼ l'
+      = α⁼ ι , subst-α-¬inst (subst-inst-> (s≤s ι≥len)) , valid-α⁼ l'
     τ-valid-inst i⋆ sub-Δ valid-int = int , subst-int , valid-int
     τ-valid-inst i⋆ sub-Δ valid-ns = ns , subst-ns , valid-ns
     τ-valid-inst {Δ₁} {Δ₁'} {i = i} i⋆ sub-Δ {∀[ Δ ] Γ} (valid-∀ Δ⋆ Γ⋆)
@@ -361,7 +361,7 @@ private
     ... | tri< ι<len _ _
       with subst-↓ (↓-remove-right (a ∷ Δ₂) ι<len l) sub-Δ
     ... | ρ , l' , subst-ρ = ρ⁼ ι ,
-                             subst-ρ-< ι<len ,
+                             subst-ρ-¬inst (subst-< ι<len) ,
                              valid-ρ⁼ (↓-add-right Δ₂ l')
     σ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {ρ⁼ ._} (valid-ρ⁼ l)
         | tri≈ _ refl _
@@ -372,7 +372,7 @@ private
         | tri≈ _ refl _ | here
       with σ-valid-weaken Δ₁' [] σ⋆
     ... | σ' , sub-σ , σ'⋆ rewrite subst-length sub-Δ
-      = σ' , subst-ρ-inst-≡ sub-σ , σ'⋆
+      = σ' , subst-ρ-inst sub-σ , σ'⋆
     σ-valid-inst {Δ₁} {Δ₁'} {Δ₂} {a} i⋆ sub-Δ {ρ⁼ .(suc ι)} (valid-ρ⁼ l)
         | tri> _ _ (s≤s {n = ι} ι≥len)
       with begin
@@ -389,13 +389,13 @@ private
                             (subst (_≥_ (suc ι)) (sym eq) (s≤s ι≥len))
                             l)
     ... | l' rewrite eq | sym (subst-length sub-Δ) | NP.m+n∸m≡n ι≥len
-      = ρ⁼ ι , subst-ρ-inst-> (s≤s ι≥len) , valid-ρ⁼ l'
+      = ρ⁼ ι , subst-ρ-¬inst (subst-inst-> (s≤s ι≥len)) , valid-ρ⁼ l'
     σ-valid-inst i⋆ sub-Δ valid-nil = nil , subst-nil , valid-nil
-    σ-valid-inst i⋆ sub-Δ (valid-∷ τ⋆ σ⋆)
+    σ-valid-inst i⋆ sub-Δ (τ⋆ ∷ σ⋆)
       with τ-valid-inst i⋆ sub-Δ τ⋆
          | σ-valid-inst i⋆ sub-Δ σ⋆
     ... | τ' , sub-τ , τ'⋆
-        | σ' , sub-σ , σ'⋆ = τ' ∷ σ' , subst-∷ sub-τ sub-σ , valid-∷ τ'⋆ σ'⋆
+        | σ' , sub-σ , σ'⋆ = τ' ∷ σ' , sub-τ ∷ sub-σ , τ'⋆ ∷ σ'⋆
 
     Δ-valid-inst : valid-instᵗ TypeAssignment
     Δ-valid-inst i⋆ sub-Δ [] = [] , [] , []
