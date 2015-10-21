@@ -1,12 +1,19 @@
 module Util.Maybe where
 
--- Re-exports
-open import Data.Maybe.Base using (Maybe ; just ; nothing) public
-
 -- Local imports
 open import Relation.Binary.PropositionalEquality using (_≡_ ; refl)
 
-just-injective : ∀ {a} {A : Set a} {x y : A} → just x ≡ just {A = A} y → x ≡ y
+-- I would really like to use the definition from Data.Maybe.
+-- However it is not possible to import *only* the constructors
+-- from the Maybe type, without importing those from Any and All
+data Maybe {a} (A : Set a) : Set a where
+  just    : (x : A) → Maybe A
+  nothing : Maybe A
+
+{-# IMPORT Data.FFI #-}
+{-# COMPILED_DATA Maybe Data.FFI.AgdaMaybe Just Nothing #-}
+
+just-injective : ∀ {a} {A : Set a} {x y : A} → just x ≡ just y → x ≡ y
 just-injective refl = refl
 
 -- fmap and applicative specialised to the Maybe functor
