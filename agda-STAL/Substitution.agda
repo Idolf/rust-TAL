@@ -4,17 +4,17 @@ import Data.Nat as N
 import Data.Nat.Properties as NP
 import Relation.Binary as B
 
-wctx-size : WordValue → ℕ
-wctx-size (globval l ♯a) = ♯a
-wctx-size (w ⟦ inst i / ι ⟧) = pred (wctx-size w)
-wctx-size (w ⟦ weaken Δ⁺ / ι ⟧) = length Δ⁺ + wctx-size w
-wctx-size _ = 0
+wctx-length : WordValue → ℕ
+wctx-length (globval l ♯a) = ♯a
+wctx-length (w ⟦ inst i / ι ⟧) = pred (wctx-length w)
+wctx-length (w ⟦ weaken Δ⁺ / ι ⟧) = length Δ⁺ + wctx-length w
+wctx-length _ = 0
 
-vctx-size : SmallValue → ℕ
-vctx-size (word w) = wctx-size w
-vctx-size (v ⟦ inst i / ι ⟧ᵥ) = pred (vctx-size v)
-vctx-size (v ⟦ weaken Δ⁺ / ι ⟧ᵥ) = length Δ⁺ + vctx-size v
-vctx-size _ = 0
+vctx-length : SmallValue → ℕ
+vctx-length (word w) = wctx-length w
+vctx-length (v ⟦ inst i / ι ⟧ᵥ) = pred (vctx-length v)
+vctx-length (v ⟦ weaken Δ⁺ / ι ⟧ᵥ) = length Δ⁺ + vctx-length v
+vctx-length _ = 0
 
 mutual
   private
@@ -220,9 +220,9 @@ mutual
     subst-⟦⟧ :
               ∀ {w₁ w₂ c₁ c₂ cᵥ ι} →
                w₁ ⟦ cᵥ / ι ⟧w≡ w₂ →
-      c₁ ⟦ cᵥ / (wctx-size w₁ + ι) ⟧c≡ c₂ →
-      -------------------------------------
-       (w₁ ⟦ c₁ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ c₂ ⟧)
+      c₁ ⟦ cᵥ / (wctx-length w₁ + ι) ⟧c≡ c₂ →
+      ---------------------------------------
+        (w₁ ⟦ c₁ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ c₂ ⟧)
 
   infix 5 _⟦_⟧v≡_
   data _⟦_⟧v≡_ : substᵗ SmallValue where
@@ -240,9 +240,9 @@ mutual
     subst-⟦⟧ :
              ∀ {v₁ v₂ c₁ c₂ cᵥ ι} →
               v₁ ⟦ cᵥ / ι ⟧v≡ v₂ →
-       c₁ ⟦ cᵥ / (vctx-size v₁ + ι) ⟧c≡ c₂ →
-      --------------------------------------
-      (v₁ ⟦ c₁ ⟧ᵥ) ⟦ cᵥ / ι ⟧v≡ (v₂ ⟦ c₂ ⟧ᵥ)
+       c₁ ⟦ cᵥ / (vctx-length v₁ + ι) ⟧c≡ c₂ →
+      ----------------------------------------
+       (v₁ ⟦ c₁ ⟧ᵥ) ⟦ cᵥ / ι ⟧v≡ (v₂ ⟦ c₂ ⟧ᵥ)
 
   infix 5 _⟦_⟧ι≡_
   data _⟦_⟧ι≡_ : substᵗ Instruction where
@@ -861,7 +861,7 @@ instance
           weak (const n) w⋆ ι = const n , subst-const
           weak ns w⋆ ι = ns , subst-ns
           weak (uninit τ) w⋆ ι = Σ-map uninit subst-uninit (can-weaken τ w⋆ ι)
-          weak (w ⟦ c ⟧) w⋆ ι = Σ-zip _⟦_⟧ subst-⟦⟧ (weak w w⋆ ι) (can-weaken c w⋆ (wctx-size w + ι))
+          weak (w ⟦ c ⟧) w⋆ ι = Σ-zip _⟦_⟧ subst-⟦⟧ (weak w w⋆ ι) (can-weaken c w⋆ (wctx-length w + ι))
 
           dec : ∀ w c → Dec (∃ λ w' → w ⟦ c ⟧w≡ w')
           dec (globval l ♯a) c = yes (globval l ♯a , subst-globval)
@@ -871,7 +871,7 @@ instance
           dec (uninit τ) c with τ ⟦ c ⟧?
           ... | yes (τ' , sub-τ) = yes (uninit τ' , subst-uninit sub-τ)
           ... | no ¬sub-τ = no (λ { (uninit τ' , subst-uninit sub-τ) → ¬sub-τ (τ' , sub-τ) })
-          dec (w ⟦ c ⟧) (cᵥ / ι) with dec w (cᵥ / ι) | c ⟦ cᵥ / (wctx-size w + ι) ⟧?
+          dec (w ⟦ c ⟧) (cᵥ / ι) with dec w (cᵥ / ι) | c ⟦ cᵥ / (wctx-length w + ι) ⟧?
           ... | yes (w' , sub-w) | yes (c' , sub-c) = yes (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c)
           ... | no ¬sub-w | _ = no (λ { (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c ) → ¬sub-w (w' , sub-w)})
           ... | _ | no ¬sub-c = no (λ { (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c ) → ¬sub-c (c' , sub-c)})
@@ -898,14 +898,14 @@ instance
           weak : ∀ v w ι → ∃ λ v' → v ⟦ weaken w / ι ⟧v≡ v'
           weak (reg ♯r) w ι = reg ♯r , subst-reg
           weak (word w) w⋆ ι = Σ-map word subst-word (can-weaken w w⋆ ι)
-          weak (v ⟦ c ⟧ᵥ) w ι = Σ-zip _⟦_⟧ᵥ subst-⟦⟧ (weak v w ι) (can-weaken c w (vctx-size v + ι))
+          weak (v ⟦ c ⟧ᵥ) w ι = Σ-zip _⟦_⟧ᵥ subst-⟦⟧ (weak v w ι) (can-weaken c w (vctx-length v + ι))
 
           dec : ∀ v c → Dec (∃ λ v' → v ⟦ c ⟧v≡ v')
           dec (reg ♯r) c = yes (reg ♯r , subst-reg)
           dec (word w) c with w ⟦ c ⟧?
           ... | yes (w' , sub-w) = yes (word w' , subst-word sub-w)
           ... | no ¬sub-w = no (λ { (word w' , subst-word sub-w) → ¬sub-w (w' , sub-w)})
-          dec (v ⟦ c ⟧ᵥ) (cᵥ / ι) with dec v (cᵥ / ι) | c ⟦ cᵥ / vctx-size v + ι ⟧?
+          dec (v ⟦ c ⟧ᵥ) (cᵥ / ι) with dec v (cᵥ / ι) | c ⟦ cᵥ / vctx-length v + ι ⟧?
           ... | yes (v' , sub-v) | yes (c' , sub-c) = yes (v' ⟦ c' ⟧ᵥ , subst-⟦⟧ sub-v sub-c)
           ... | no ¬sub-v | _ = no (λ { (v' ⟦ c' ⟧ᵥ , subst-⟦⟧ sub-v sub-c) → ¬sub-v (v' , sub-v)})
           ... | _ | no ¬sub-c = no (λ { (v' ⟦ c' ⟧ᵥ , subst-⟦⟧ sub-v sub-c) → ¬sub-c (c' , sub-c)})
