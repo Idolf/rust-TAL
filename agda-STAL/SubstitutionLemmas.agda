@@ -11,27 +11,6 @@ open NP.SemiringSolver
   using (prove; solve; _:=_; con; var; _:+_; _:*_; :-_; _:-_)
 
 
-infix 4 Run_⟦_⟧≡_
-data Run_⟦_⟧≡_ : TypeAssignment → StrongCast → TypeAssignment → Set where
-  run-inst :
-               ∀ {a Δ i} →
-    -------------------------------
-    Run a ∷ Δ ⟦ inst i / zero ⟧≡ Δ
-
-  run-weaken :
-               ∀ {Δ Δ⁺} →
-    -----------------------------------
-    Run Δ ⟦ weaken Δ⁺ / zero ⟧≡ Δ⁺ ++ Δ
-
-  run-suc :
-        ∀ {a a' : TypeAssignmentValue}
-          {Δ Δ' : TypeAssignment}
-          {cᵥ : StrongCastValue} {ι} →
-         a ⟦ cᵥ / ι ⟧≡ a' →
-         Run Δ ⟦ cᵥ / ι ⟧≡ Δ' →
-    ---------------------------------
-    Run a ∷ Δ ⟦ cᵥ / suc ι ⟧≡ a' ∷ Δ'
-
 ι-subst : ∀ {A} {{_ : Substitution A ℕ}}
             {x x' : A} {cᵥ : WeakCastValue} {ι₁ ι₂} →
             ι₁ ≡ ι₂ →
@@ -67,16 +46,6 @@ run-split {a ∷ Δ} {a' ∷ Δ'} (run-suc sub-a run-Δ) with run-split run-Δ
   cong (_∷_ a) eq₁ ,
   cong (_∷_ a') eq₂ ,
   cong suc eq₃
-
-run-unique : ∀ {Δ Δ₁ Δ₂ c} →
-               Run Δ ⟦ c ⟧≡ Δ₁ →
-               Run Δ ⟦ c ⟧≡ Δ₂ →
-               Δ₁ ≡ Δ₂
-run-unique run-inst run-inst = refl
-run-unique run-weaken run-weaken = refl
-run-unique (run-suc sub-a₁ run-Δ₁) (run-suc sub-a₂ run-Δ₂) =
-  cong₂ _∷_ (subst-unique {W = TypeAssignment} sub-a₁ sub-a₂)
-            (run-unique run-Δ₁ run-Δ₂)
 
 subst-↓ : ∀ {Δ Δ' : TypeAssignment} {ι₁ ι₂ a} {cᵥ : WeakCastValue} →
             Δ ↓ ι₁ ⇒ a →
