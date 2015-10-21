@@ -147,12 +147,12 @@ data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → 
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)
-  List-Tree = tree⋆ (λ { (node _ xs) → from xs })
-                    (λ x → node 0 (proj₁ (sur x)) , proj₂ (sur x))
-    where from : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → List Tree → Maybe (List A)
+  List-Tree {A = A} = tree⋆ (λ { (node _ xs) → from xs })
+                            (λ x → node 0 (proj₁ (sur x)) , proj₂ (sur x))
+    where from : List Tree → Maybe (List A)
           from [] = just []
           from (x ∷ xs) = _∷_ <$> fromTree x <*> from xs
-          sur : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → IsSurjective (from {{t}})
+          sur : IsSurjective from
           sur [] = [] , refl
           sur (x ∷ xs) = toTree x ∷ proj₁ (sur xs) ,
             _∷_ <$=> invTree x <*=> proj₂ (sur xs)

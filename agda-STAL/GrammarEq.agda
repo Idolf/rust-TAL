@@ -110,8 +110,8 @@ instance
           sur (ρ σ) = T₁ 1 σ , ρ <$=> invTree σ
 
   CastValue-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (CastValue A)
-  CastValue-Tree = tree⋆ from sur
-    where from : ∀ {A} {{_ : ToTree A}} → Tree → Maybe (CastValue A)
+  CastValue-Tree {A} = tree⋆ from sur
+    where from : Tree → Maybe (CastValue A)
           from (node 0 (i ∷ _)) = inst <$> fromTree i
           from (node 1 (n ∷ _)) = weaken <$> fromTree n
           from _ = nothing
@@ -120,8 +120,8 @@ instance
           sur (weaken n) = T₁ 1 n , weaken <$=> invTree n
 
   Cast-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (Cast A)
-  Cast-Tree = tree⋆ from sur
-    where from : ∀ {A} {{_ : ToTree A}} → Tree → Maybe (Cast A)
+  Cast-Tree {A} = tree⋆ from sur
+    where from : Tree → Maybe (Cast A)
           from (node _ (cᵥ ∷ ι ∷ _)) = _/_ <$> fromTree cᵥ <*> fromTree ι
           from _ = nothing
           sur : IsSurjective from
@@ -130,7 +130,7 @@ instance
   WordValue-Tree : ToTree WordValue
   WordValue-Tree = tree⋆ from sur
     where from : Tree → Maybe WordValue
-          from (node 0 (l ∷ _)) = globval <$> fromTree l
+          from (node 0 (l ∷ ♯a ∷ _)) = globval <$> fromTree l <*> fromTree ♯a
           from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
           from (node 2 (n ∷ _)) = const <$> fromTree n
           from (node 3 _) = just ns
@@ -138,7 +138,8 @@ instance
           from (node 5 (w ∷ i ∷ _)) = _⟦_⟧ <$> from w <*> fromTree i
           from _ = nothing
           sur : IsSurjective from
-          sur (globval l) = T₁ 0 l , globval <$=> invTree l
+          sur (globval l ♯a) = T₂ 0 l ♯a ,
+            globval <$=> invTree l <*=> invTree ♯a
           sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
           sur (const n) = T₁ 2 n , const <$=> invTree n
           sur ns = T₀ 3 , refl

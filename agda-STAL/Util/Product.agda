@@ -16,19 +16,13 @@ instance
   Product-Tree : ∀ {a b} {A : Set a} {B : A → Set b} →
                    {{_ : ToTree A}} {{_ : ∀ {x} → ToTree (B x)}} →
                    ToTree (Σ A B)
-  Product-Tree = tree to from eq
-    where to : ∀ {a b} {A : Set a} {B : A → Set b}
-                 {{ta : ToTree A}} {{tb : ∀ {x} → ToTree (B x)}} →
-                 Σ A B → Tree
+  Product-Tree {A = A} {B} = tree to from eq
+    where to : Σ A B → Tree
           to (x , y) = T₂ 0 (toTree x) (toTree y)
-          from : ∀ {a b} {A : Set a} {B : A → Set b}
-                   {{ta : ToTree A}} {{tb : ∀ {x} → ToTree (B x)}} →
-                   Tree → Maybe (Σ A B)
+          from : Tree → Maybe (Σ A B)
           from (node _ (x ∷ y ∷ _)) with fromTree x
           from (node _ (x ∷ y ∷ _)) | nothing = nothing
           from (node _ (x ∷ y ∷ _)) | just x' = _,_ x' <$> fromTree y
           from _ = nothing
-          eq : ∀ {a b} {A : Set a} {B : A → Set b} {{ta : ToTree A}}
-                 {{tb : ∀ {x} → ToTree (B x)}} →
-                 IsInverse (to {B = B}) from
+          eq : IsInverse to from
           eq (x , y) rewrite invTree x | invTree y = refl

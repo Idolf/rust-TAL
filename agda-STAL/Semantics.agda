@@ -85,9 +85,10 @@ data _⊢_⇒_ (G : Globals) : Program → Program → Set where
           H , register sp (update ♯rd (evalSmallValue regs v) regs) , I
 
     exec-beq₀ :
-                ∀ {H sp regs I₁ I₂ ♯r v l Δ Γ} →
+                ∀ {H sp regs ♯a I₁ I₂ ♯r v l Δ Γ} →
                lookup ♯r regs ≡ const 0 →
-          evalSmallValue regs v ≡ globval l →
+          evalSmallValue regs v ≡ globval l ♯a →
+                     length Δ ≡ ♯a →
                 G ↓ l ⇒ ∀[ Δ ] Γ ∙ I₁ →
       ------------------------------------------
       G ⊢ H , register sp regs , beq ♯r v ~> I₂ ⇒
@@ -102,8 +103,9 @@ data _⊢_⇒_ (G : Globals) : Program → Program → Set where
           H , register sp regs , I
 
     exec-jmp :
-         ∀ {H sp regs v l Δ Γ I} →
-      evalSmallValue regs v ≡ globval l →
+         ∀ {H sp regs v l ♯a Δ Γ I} →
+      evalSmallValue regs v ≡ globval l ♯a →
+               length Δ ≡ ♯a →
           G ↓ l ⇒ ∀[ Δ ] Γ ∙ I →
       ----------------------------------
       G ⊢ H , register sp regs , jmp v ⇒
@@ -122,9 +124,9 @@ private
                    lₕ₁ ≡ lₕ₂
   heapval-helper refl refl = refl
 
-  globval-helper : ∀ {lₕ₁ lₕ₂ w} →
-                   w ≡ globval lₕ₁ →
-                   w ≡ globval lₕ₂ →
+  globval-helper : ∀ {lₕ₁ lₕ₂ ♯a₁ ♯a₂ w} →
+                   w ≡ globval lₕ₁ ♯a₁ →
+                   w ≡ globval lₕ₂ ♯a₂ →
                    lₕ₁ ≡ lₕ₂
   globval-helper refl refl = refl
 
@@ -168,18 +170,18 @@ exec-unique (exec-st eq₁ l₁ u₁₁ u₁₂) (exec-st eq₂ l₂ u₂₁ u�
   = refl
 exec-unique exec-mov exec-mov = refl
 exec-unique exec-malloc exec-malloc = refl
-exec-unique (exec-beq₀ eq₁₁ eq₁₂ l₁) (exec-beq₀ eq₂₁ eq₂₂ l₂)
+exec-unique (exec-beq₀ eq₁₁ eq₁₂ eq₁₃ l₁) (exec-beq₀ eq₂₁ eq₂₂ eq₂₃ l₂)
   rewrite const-helper eq₁₁ eq₂₁
         | globval-helper eq₁₂ eq₂₂
         | ∀-injective₃ (↓-unique l₁ l₂) = refl
-exec-unique (exec-beq₀ eq₁₁ eq₁₂ l₁) (exec-beq₁ eq₂ neq₂)
+exec-unique (exec-beq₀ eq₁₁ eq₁₂ eq₁₃ l₁) (exec-beq₁ eq₂ neq₂)
   rewrite const-helper eq₁₁ eq₂ with neq₂ refl
 ... | ()
-exec-unique (exec-beq₁ eq₁ neq₁) (exec-beq₀ eq₂₁ eq₂₂ l₂)
+exec-unique (exec-beq₁ eq₁ neq₁) (exec-beq₀ eq₂₁ eq₂₂ eq₁₃ l₂)
   rewrite const-helper eq₁ eq₂₁ with neq₁ refl
 ... | ()
 exec-unique (exec-beq₁ eq₁ neq₁) (exec-beq₁ eq₂ neq₂) = refl
-exec-unique (exec-jmp eq₁ l₁) (exec-jmp eq₂ l₂)
-  rewrite globval-helper eq₁ eq₂
+exec-unique (exec-jmp eq₁₁ eq₁₂ l₁) (exec-jmp eq₂₁ eq₂₂ l₂)
+  rewrite globval-helper eq₁₁ eq₂₁
         | ∀-injective₃ (↓-unique l₁ l₂)
   = refl

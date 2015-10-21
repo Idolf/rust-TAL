@@ -191,9 +191,11 @@ private
     τ-valid-weaken : valid-weakenᵗ Type
     τ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-α⁼ {ι} l)
       with length Δ₁ ≤? ι
-    ... | yes ι≥len = α⁼ (length Δ⁺ + ι) , subst-α-¬inst (subst-weaken-≥ ι≥len) , valid-α⁼
-                         (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
-                                                (↓-add-middle Δ₁ Δ⁺ ι≥len l))
+    ... | yes ι≥len = α⁼ (length Δ⁺ + ι) ,
+                      subst-α-¬inst (subst-weaken-≥ ι≥len) ,
+                      valid-α⁼
+                      (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
+                                             (↓-add-middle Δ₁ Δ⁺ ι≥len l))
     ... | no ι≱len with NP.≰⇒> ι≱len
     ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
     ... | α , l' , subst-α = α⁼ ι , subst-α-¬inst (subst-< ι<len) ,
@@ -230,9 +232,11 @@ private
     σ-valid-weaken : valid-weakenᵗ StackType
     σ-valid-weaken Δ⁺ {Δ₁} {Δ₁'} {Δ₂} sub-Δ (valid-ρ⁼ {ι} l)
       with length Δ₁ ≤? ι
-    ... | yes ι≥len = ρ⁼ (length Δ⁺ + ι) , subst-ρ-¬inst (subst-weaken-≥ ι≥len) , valid-ρ⁼
-                         (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
-                                                (↓-add-middle Δ₁ Δ⁺ ι≥len l))
+    ... | yes ι≥len = ρ⁼ (length Δ⁺ + ι) ,
+                      subst-ρ-¬inst (subst-weaken-≥ ι≥len) ,
+                      valid-ρ⁼
+                      (subst-↓-replace sub-Δ (NP.≤-steps (length Δ⁺) ι≥len)
+                                             (↓-add-middle Δ₁ Δ⁺ ι≥len l))
     ... | no ι≱len with NP.≰⇒> ι≱len
     ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
     ... | ρ , l' , subst-ρ = ρ⁼ ι , subst-ρ-¬inst (subst-< ι<len) ,
@@ -513,16 +517,15 @@ open Substitution⁺ {{...}} public
 
 Vec-Substitution⁺ : ∀ {A S T m} {{_ : Substitution⁺ A S T}} →
                       Substitution⁺ (Vec A m) Vec-Substitution Vec-typeLike
-Vec-Substitution⁺ = substitution⁺ xs-valid-++  xs-valid-inst xs-valid-weaken
-  where xs-valid-++ : ∀ {A S T m} {{_ : Substitution⁺ A S T}}
-                        {Δ₁ Δ₂} {xs : Vec A m} →
+Vec-Substitution⁺ {A} =
+    substitution⁺ xs-valid-++  xs-valid-inst xs-valid-weaken
+  where xs-valid-++ : ∀ {m Δ₁ Δ₂} {xs : Vec A m} →
                         _⊢_Valid {{Vec-typeLike}} Δ₁ xs →
                         _⊢_Valid {{Vec-typeLike}} (Δ₁ ++ Δ₂) xs
         xs-valid-++ [] = []
         xs-valid-++ (x⋆ ∷ xs⋆) = subst-valid-++ x⋆ ∷ xs-valid-++ xs⋆
 
-        xs-valid-inst : ∀ {A S T m} {{_ : Substitution⁺ A S T}}
-                          {Δ₁ Δ₁' Δ₂ a i} →
+        xs-valid-inst : ∀ {m Δ₁ Δ₁' Δ₂ a i} →
                           a ∷ Δ₂ ⊢ i Valid →
                           Δ₁ ⟦ inst {W = ℕ} i / zero ⟧≡ Δ₁' →
                           {v : Vec A m} →
@@ -537,8 +540,7 @@ Vec-Substitution⁺ = substitution⁺ xs-valid-++  xs-valid-inst xs-valid-weaken
         ... | x' , sub-x , x'⋆ | xs' , sub-xs , xs'⋆ =
           x' ∷ xs' , sub-x ∷ sub-xs , x'⋆ ∷ xs'⋆
 
-        xs-valid-weaken : ∀ {A S T m} {{_ : Substitution⁺ A S T}}
-                            Δ⁺ {Δ₁ Δ₁' Δ₂} →
+        xs-valid-weaken : ∀ {m} Δ⁺ {Δ₁ Δ₁' Δ₂} →
                             Δ₁ ⟦ weaken Δ⁺ / zero ⟧≡ Δ₁' →
                             {xs : Vec A m} →
                             _⊢_Valid {{Vec-typeLike}} (Δ₁ ++ Δ₂) xs →
@@ -554,16 +556,15 @@ Vec-Substitution⁺ = substitution⁺ xs-valid-++  xs-valid-inst xs-valid-weaken
 
 List-Substitution⁺ : ∀ {A S T} {{_ : Substitution⁺ A S T}} →
                        Substitution⁺ (List A) List-Substitution List-typeLike
-List-Substitution⁺ = substitution⁺ xs-valid-++ xs-valid-inst xs-valid-weaken
-  where xs-valid-++ : ∀ {A S T} {{_ : Substitution⁺ A S T}}
-                        {Δ₁ Δ₂} {xs : List A} →
+List-Substitution⁺ {A} =
+    substitution⁺ xs-valid-++ xs-valid-inst xs-valid-weaken
+  where xs-valid-++ : ∀ {Δ₁ Δ₂} {xs : List A} →
                         _⊢_Valid {{List-typeLike}} Δ₁ xs →
                         _⊢_Valid {{List-typeLike}} (Δ₁ ++ Δ₂) xs
         xs-valid-++ [] = []
         xs-valid-++ (x⋆ ∷ xs⋆) = subst-valid-++ x⋆ ∷ xs-valid-++ xs⋆
 
-        xs-valid-inst : ∀ {A S T} {{_ : Substitution⁺ A S T}}
-                          {Δ₁ Δ₁' Δ₂ a i} →
+        xs-valid-inst : ∀ {Δ₁ Δ₁' Δ₂ a i} →
                           a ∷ Δ₂ ⊢ i Valid →
                           Δ₁ ⟦ inst {W = ℕ} i / zero ⟧≡ Δ₁' →
                           {v : List A} →
@@ -578,8 +579,7 @@ List-Substitution⁺ = substitution⁺ xs-valid-++ xs-valid-inst xs-valid-weaken
         ... | x' , sub-x , x'⋆ | xs' , sub-xs , xs'⋆ =
           x' ∷ xs' , sub-x ∷ sub-xs , x'⋆ ∷ xs'⋆
 
-        xs-valid-weaken : ∀ {A S T} {{_ : Substitution⁺ A S T}}
-                            Δ⁺ {Δ₁ Δ₁' Δ₂} →
+        xs-valid-weaken : ∀ Δ⁺ {Δ₁ Δ₁' Δ₂} →
                             Δ₁ ⟦ weaken Δ⁺ / zero ⟧≡ Δ₁' →
                             {xs : List A} →
                             _⊢_Valid {{List-typeLike}} (Δ₁ ++ Δ₂) xs →

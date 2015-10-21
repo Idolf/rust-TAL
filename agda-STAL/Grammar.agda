@@ -99,7 +99,7 @@ mutual
   -- Word value, w
   infix 6 _⟦_⟧
   data WordValue : Set where
-    globval : GlobLabel → WordValue
+    globval : GlobLabel → ℕ → WordValue
     heapval : HeapLabel → WordValue
     const   : ℕ → WordValue
     ns      : WordValue

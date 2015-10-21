@@ -290,18 +290,16 @@ open Subtype {{...}} public
 
 Vec-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} {m} →
                 Subtype (Vec-typeLike {m = m})
-Vec-subtype {{t}} = subtype
+Vec-subtype {A} {Ctx} = subtype
     _⊢_≤xs_
     dec'
     refl'
     trans'
     valid
-  where _⊢_≤xs_ : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                    Ctx → Vec A m → Vec A m → Set
+  where _⊢_≤xs_ : ∀ {m} → Ctx → Vec A m → Vec A m → Set
         C ⊢ xs₁ ≤xs xs₂ = AllZipᵥ (λ x₁ x₂ → C ⊢ x₁ ≤ x₂) xs₁ xs₂
 
-        dec' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                 (C : Ctx) (xs₁ xs₂ : Vec A m) →
+        dec' : ∀ {m} (C : Ctx) (xs₁ xs₂ : Vec A m) →
                  Dec (C ⊢ xs₁ ≤xs xs₂)
         dec' C [] [] = yes []
         dec' C (x₁ ∷ xs₁) (x₂ ∷ xs₂)
@@ -310,23 +308,20 @@ Vec-subtype {{t}} = subtype
         ... | no x₁≰x₂ | _ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → x₁≰x₂ x₁≤x₂ })
         ... | _ | no xs₁≰xs₂ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → xs₁≰xs₂ xs₁≤xs₂ })
 
-        refl' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                  {C : Ctx} {xs : Vec A m} →
+        refl' : ∀ {m} {C : Ctx} {xs : Vec A m} →
                   _⊢_Valid {{Vec-typeLike}} C xs →
                   C ⊢ xs ≤xs xs
         refl' [] = []
         refl' (x⋆ ∷ xs⋆) = ≤-refl x⋆ ∷ refl' xs⋆
 
-        trans' : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                   {C : Ctx} {xs₁ xs₂ xs₃ : Vec A m} →
+        trans' : ∀ {m} {C : Ctx} {xs₁ xs₂ xs₃ : Vec A m} →
                    C ⊢ xs₁ ≤xs xs₂ →
                    C ⊢ xs₂ ≤xs xs₃ →
                    C ⊢ xs₁ ≤xs xs₃
         trans' [] [] = []
         trans' (x₁₂≤ ∷ xs₁₂≤) (x₂₃≤ ∷ xs₂₃≤) =
           (≤-trans x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
-        valid : ∀ {A Ctx t} {{_ : Subtype t}} {m} →
-                  {C : Ctx} {xs₁ xs₂ : Vec A m} →
+        valid : ∀ {m} {C : Ctx} {xs₁ xs₂ : Vec A m} →
                   C ⊢ xs₁ ≤xs xs₂ →
                   _⊢_Valid {{Vec-typeLike}} C xs₁ ×
                   _⊢_Valid {{Vec-typeLike}} C xs₂
@@ -337,18 +332,16 @@ Vec-subtype {{t}} = subtype
 
 List-subtype : ∀ {A Ctx t} {{_ : Subtype {A} {Ctx} t}} →
                  Subtype List-typeLike
-List-subtype {{t}} = subtype
+List-subtype {A} {Ctx} = subtype
     _⊢_≤xs_
     dec'
     refl'
     trans'
     valid
-  where _⊢_≤xs_ : ∀ {A Ctx t} {{_ : Subtype t}} →
-                    Ctx → List A → List A → Set
+  where _⊢_≤xs_ : ∀ Ctx → List A → List A → Set
         C ⊢ xs₁ ≤xs xs₂ = AllZip (λ x₁ x₂ → C ⊢ x₁ ≤ x₂) xs₁ xs₂
 
-        dec' : ∀ {A Ctx t} {{_ : Subtype t}} →
-                 (C : Ctx) (xs₁ xs₂ : List A) →
+        dec' : ∀ (C : Ctx) (xs₁ xs₂ : List A) →
                  Dec (C ⊢ xs₁ ≤xs xs₂)
         dec' C [] [] = yes []
         dec' C (x₁ ∷ xs₁) [] = no (λ ())
@@ -359,23 +352,20 @@ List-subtype {{t}} = subtype
         ... | no x₁≰x₂ | _ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → x₁≰x₂ x₁≤x₂ })
         ... | _ | no xs₁≰xs₂ = no (λ { (x₁≤x₂ ∷ xs₁≤xs₂) → xs₁≰xs₂ xs₁≤xs₂ })
 
-        refl' : ∀ {A Ctx t} {{_ : Subtype t}} →
-                  {C : Ctx} {xs : List A} →
+        refl' : ∀ {C : Ctx} {xs : List A} →
                   _⊢_Valid {{List-typeLike}} C xs →
                   C ⊢ xs ≤xs xs
         refl' [] = []
         refl' (x⋆ ∷ xs⋆) = ≤-refl x⋆ ∷ refl' xs⋆
 
-        trans' : ∀ {A Ctx t} {{_ : Subtype t}} →
-                   {C : Ctx} {xs₁ xs₂ xs₃ : List A} →
+        trans' : ∀ {C : Ctx} {xs₁ xs₂ xs₃ : List A} →
                    C ⊢ xs₁ ≤xs xs₂ →
                    C ⊢ xs₂ ≤xs xs₃ →
                    C ⊢ xs₁ ≤xs xs₃
         trans' [] [] = []
         trans' (x₁₂≤ ∷ xs₁₂≤) (x₂₃≤ ∷ xs₂₃≤) =
           (≤-trans x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
-        valid : ∀ {A Ctx t} {{_ : Subtype t}} →
-                  {C : Ctx} {xs₁ xs₂ : List A} →
+        valid : ∀ {C : Ctx} {xs₁ xs₂ : List A} →
                   C ⊢ xs₁ ≤xs xs₂ →
                   _⊢_Valid {{List-typeLike}} C xs₁ ×
                   _⊢_Valid {{List-typeLike}} C xs₂

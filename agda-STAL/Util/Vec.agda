@@ -71,16 +71,14 @@ Allᵥ-dec f (x ∷ L) | _ | no ¬xs⋆ = no (λ { (x⋆ ∷ xs⋆) → ¬xs⋆ 
 
 instance
   Vec-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} → ToTree (Vec A m)
-  Vec-Tree = tree⋆ (λ { (node _ xs) → from xs })
-                   (λ x → node 0 (proj₁ (sur x)) , proj₂ (sur x))
-    where from : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} →
-                   List Tree → Maybe (Vec A m)
+  Vec-Tree {A = A} = tree⋆ (λ { (node _ xs) → from xs })
+                           (λ x → node 0 (proj₁ (sur x)) , proj₂ (sur x))
+    where from : ∀ {m} → List Tree → Maybe (Vec A m)
           from {m = zero} [] = just []
           from {m = zero} (x ∷ xs) = nothing
           from {m = suc m} [] = nothing
           from {m = suc m} (x ∷ xs) = _∷_ <$> fromTree x <*> from {m = m} xs
-          sur : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} →
-                  IsSurjective (from {{t}} {m})
+          sur : ∀ {m} → IsSurjective (from {m})
           sur [] = [] , refl
           sur (x ∷ xs) = toTree x ∷ proj₁ (sur xs) ,
             _∷_ <$=> invTree x <*=> proj₂ (sur xs)

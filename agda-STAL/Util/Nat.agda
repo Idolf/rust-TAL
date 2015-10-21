@@ -2,7 +2,7 @@ module Util.Nat where
 
 -- Re-exports
 open import Data.Nat
-  using ( ℕ ; zero ; suc ; _<_ ; _>_ ; _≤_
+  using ( ℕ ; zero ; suc ; pred ; _<_ ; _>_ ; _≤_
         ; _≥_ ; _+_ ; _∸_ ; _≤?_ ; s≤s ; z≤n)
   public
 
