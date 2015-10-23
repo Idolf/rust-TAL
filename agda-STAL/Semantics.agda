@@ -24,8 +24,8 @@ data EvalGlobal (G : Globals) : WordValue → GlobalValue → Set where
     -----------------------------------------
     EvalGlobal G (w ⟦ c ⟧) (∀[ Δ' ] Γ' ∙ I')
 
-infix 4 _⊢_⇒_
-data _⊢_⇒_ (G : Globals) : Program → Program → Set where
+infix 3 _⊢_⇒_
+data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
     exec-add :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
           evalSmallValue regs v ≡ const n₁ →

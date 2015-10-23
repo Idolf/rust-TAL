@@ -23,7 +23,7 @@ mutual
     substᵗ A = A → WeakCast → A → Set
 
 
-  infix 5 _⟦_⟧n≡_
+  infix 3 _⟦_⟧n≡_
   data _⟦_⟧n≡_ : substᵗ ℕ where
     subst-< :
          ∀ {n ι cᵥ} →
@@ -43,7 +43,7 @@ mutual
       ----------------------------
       n ⟦ weaken n⁺ / ι ⟧n≡ n⁺ + n
 
-  infix 5 _⟦_⟧τ≡_
+  infix 3 _⟦_⟧τ≡_
   data _⟦_⟧τ≡_ : substᵗ Type where
     subst-α-¬inst :
           ∀ {ι₁ ι₁' ι₂ cᵥ} →
@@ -80,7 +80,7 @@ mutual
       --------------------------
       tuple τs ⟦ c ⟧τ≡ tuple τs'
 
-  infix 5 _⟦_⟧τ⁻≡_
+  infix 3 _⟦_⟧τ⁻≡_
   data _⟦_⟧τ⁻≡_ : substᵗ InitType where
     subst-τ⁻ :
             ∀ {φ τ τ' c} →
@@ -88,12 +88,12 @@ mutual
       -------------------------
       (τ , φ) ⟦ c ⟧τ⁻≡ (τ' , φ)
 
-  infix 5 _⟦_⟧τs⁻≡_
+  infix 3 _⟦_⟧τs⁻≡_
   _⟦_⟧τs⁻≡_ : substᵗ (List InitType)
   τs⁻ ⟦ c ⟧τs⁻≡ τs⁻' =
     AllZip (λ τ⁻ τ⁻' → τ⁻ ⟦ c ⟧τ⁻≡ τ⁻') τs⁻ τs⁻'
 
-  infix 5 _⟦_⟧σ≡_
+  infix 3 _⟦_⟧σ≡_
   data _⟦_⟧σ≡_ : substᵗ StackType where
     subst-ρ-¬inst :
           ∀ {ι₁ ι₁' ι₂ cᵥ} →
@@ -119,7 +119,7 @@ mutual
       ---------------------
       τ ∷ σ ⟦ c ⟧σ≡ τ' ∷ σ'
 
-  infix 5 _⟦_⟧Γ≡_
+  infix 3 _⟦_⟧Γ≡_
   data _⟦_⟧Γ≡_ : substᵗ RegisterAssignment where
     subst-registerₐ :
               ∀ {regs regs' sp sp' c} →
@@ -128,11 +128,11 @@ mutual
       ---------------------------------------------
       registerₐ sp regs ⟦ c ⟧Γ≡ registerₐ sp' regs'
 
-  infix 5 _⟦_⟧regs≡_
+  infix 3 _⟦_⟧regs≡_
   _⟦_⟧regs≡_ : ∀ {m} → substᵗ (Vec Type m)
   τs ⟦ c ⟧regs≡ τs' = AllZipᵥ (λ τ τ' → τ ⟦ c ⟧τ≡ τ') τs τs'
 
-  infix 5 _⟦_⟧Δ≡_
+  infix 3 _⟦_⟧Δ≡_
   infixr 5 _∷_
   data _⟦_⟧Δ≡_ : substᵗ TypeAssignment where
     [] :
@@ -147,12 +147,12 @@ mutual
       ------------------------------
         a ∷ Δ ⟦ cᵥ / ι ⟧Δ≡ a' ∷ Δ'
 
-  infix 5 _⟦_⟧a≡_
+  infix 3 _⟦_⟧a≡_
   data _⟦_⟧a≡_ : substᵗ TypeAssignmentValue where
     subst-α : ∀ {c} → α ⟦ c ⟧a≡ α
     subst-ρ : ∀ {c} → ρ ⟦ c ⟧a≡ ρ
 
-  infix 5 _⟦_⟧i≡_
+  infix 3 _⟦_⟧i≡_
   data _⟦_⟧i≡_ : substᵗ Instantiation where
     subst-α :
         ∀ {τ τ' c} →
@@ -166,7 +166,7 @@ mutual
       ----------------
       ρ σ ⟦ c ⟧i≡ ρ σ'
 
-  infix 5 _⟦_⟧cᵥ≡_
+  infix 3 _⟦_⟧cᵥ≡_
   data _⟦_⟧cᵥ≡_ : substᵗ StrongCastValue where
     subst-inst :
             ∀ {i i' c} →
@@ -180,7 +180,7 @@ mutual
       -----------------------------
       weaken Δ⁺ ⟦ c ⟧cᵥ≡ weaken Δ⁺'
 
-  infix 5 _⟦_⟧c≡_
+  infix 3 _⟦_⟧c≡_
   data _⟦_⟧c≡_ : substᵗ StrongCast where
     subst-/ :
            ∀ {cᵥ₁ cᵥ₂ cᵥ ι₁ ι₁' ι₂} →
@@ -189,7 +189,7 @@ mutual
       -------------------------------
       cᵥ₁ / ι₂ ⟦ cᵥ / ι₁ ⟧c≡ cᵥ₂ / ι₂
 
-  infix 5 _⟦_⟧w≡_
+  infix 3 _⟦_⟧w≡_
   data _⟦_⟧w≡_ : substᵗ WordValue where
     subst-globval :
                ∀ {l ♯a c} →
@@ -224,7 +224,7 @@ mutual
       ---------------------------------------
         (w₁ ⟦ c₁ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ c₂ ⟧)
 
-  infix 5 _⟦_⟧v≡_
+  infix 3 _⟦_⟧v≡_
   data _⟦_⟧v≡_ : substᵗ SmallValue where
     subst-reg :
           ∀ {♯r c} →
@@ -244,7 +244,7 @@ mutual
       ----------------------------------------
        (v₁ ⟦ c₁ ⟧ᵥ) ⟦ cᵥ / ι ⟧v≡ (v₂ ⟦ c₂ ⟧ᵥ)
 
-  infix 5 _⟦_⟧ι≡_
+  infix 3 _⟦_⟧ι≡_
   data _⟦_⟧ι≡_ : substᵗ Instruction where
     subst-add :
              ∀ {♯rd ♯rs v v' c} →
@@ -307,7 +307,7 @@ mutual
       --------------------------
       beq ♯r v ⟦ c ⟧ι≡ beq ♯r v'
 
-  infix 5 _⟦_⟧I≡_
+  infix 3 _⟦_⟧I≡_
   data _⟦_⟧I≡_ : substᵗ InstructionSequence where
     subst-~> :
           ∀ {ι ι' I I' c} →
@@ -323,7 +323,7 @@ mutual
       jmp v ⟦ c ⟧I≡ jmp v'
 
 private
-  subst-n-≢-inst : ∀ {i ι₁ ι₂} → ¬ ι₁ ⟦ inst i / ι₁ ⟧n≡ ι₂
+  subst-n-≢-inst : ∀ {i ι₁ ι₂} → ¬ (ι₁ ⟦ inst i / ι₁ ⟧n≡ ι₂)
   subst-n-≢-inst (subst-< ι₁<ι₁) = NP.1+n≰n ι₁<ι₁
   subst-n-≢-inst (subst-inst-> ι₁>ι₁) = NP.1+n≰n ι₁>ι₁
 
@@ -644,7 +644,7 @@ record Substitution (A W : Set) : Set1 where
     can-weaken : ∀ v w ι → ∃ λ v' → v ⟦ weaken w / ι ⟧≡ v'
     _⟦_⟧? : ∀ v c → Dec (∃ λ v' → v ⟦ c ⟧≡ v')
     weaken-0 : ∀ v {ι} → v ⟦ weaken W₀ / ι ⟧≡ v
-  infix 5 _⟦_⟧≡_ _⟦_⟧?
+  infix 3 _⟦_⟧≡_ _⟦_⟧?
 
   weaken-0-unique : ∀ {v₁ v₂ ι} → v₁ ⟦ weaken W₀ / ι ⟧≡ v₂ →
                                   v₁ ≡ v₂
@@ -1046,7 +1046,7 @@ instance
     weaken-0
 
 
-infix 4 Run_⟦_⟧≡_
+infix 3 Run_⟦_⟧≡_
 data Run_⟦_⟧≡_ : TypeAssignment → StrongCast → TypeAssignment → Set where
   run-inst :
                ∀ {a Δ i} →
@@ -1077,7 +1077,7 @@ run-unique (run-suc sub-a₁ run-Δ₁) (run-suc sub-a₂ run-Δ₂) =
   cong₂ _∷_ (subst-unique {W = TypeAssignment} sub-a₁ sub-a₂)
             (run-unique run-Δ₁ run-Δ₂)
 
-infix 4 Run_⟦_⟧?
+infix 3 Run_⟦_⟧?
 Run_⟦_⟧? : ∀ Δ c → Dec (∃ λ Δ' → Run Δ ⟦ c ⟧≡ Δ')
 Run [] ⟦ inst i / ι ⟧? = no (λ { (_ , ()) })
 Run [] ⟦ weaken Δ⁺ / zero ⟧? = yes (Δ⁺ ++ [] , run-weaken)

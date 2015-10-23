@@ -4,7 +4,7 @@ open import GrammarEq
 open import Substitution
 
 mutual
-  infix 4 _⊢_Type
+  infix 3 _⊢_Type
   data _⊢_Type (Δ : TypeAssignment) : Type → Set where
     valid-α⁼ :
          ∀ {ι} →
@@ -33,7 +33,7 @@ mutual
       ---------------------------------
              Δ ⊢ tuple τs Type
 
-  infix 4 _⊢_InitType
+  infix 3 _⊢_InitType
   data _⊢_InitType (Δ : TypeAssignment) : InitType → Set where
     valid-τ⁻ :
              ∀ {τ φ} →
@@ -41,7 +41,7 @@ mutual
         --------------------
         Δ ⊢ τ , φ InitType
 
-  infix 4  _⊢_StackType
+  infix 3  _⊢_StackType
   data _⊢_StackType (Δ : TypeAssignment) : StackType → Set where
     valid-ρ⁼ :
          ∀ {ι} →
@@ -60,7 +60,7 @@ mutual
       -------------------
       Δ ⊢ τ ∷ σ StackType
 
-  infix 4 ⊢_GlobalLabelAssignment
+  infix 3 ⊢_GlobalLabelAssignment
   data ⊢_GlobalLabelAssignment : GlobalLabelAssignment → Set where
     valid-G :
                 ∀ {G} →
@@ -68,7 +68,7 @@ mutual
       ---------------------------
        ⊢ G GlobalLabelAssignment
 
-  infix 4 ⊢_HeapLabelAssignment
+  infix 3 ⊢_HeapLabelAssignment
   data ⊢_HeapLabelAssignment : HeapLabelAssignment → Set where
     valid-H :
                 ∀ {H} →
@@ -76,12 +76,12 @@ mutual
       ---------------------------
         ⊢ H HeapLabelAssignment
 
-  infix 4 ⊢_LabelAssignment
+  infix 3 ⊢_LabelAssignment
   ⊢_LabelAssignment : LabelAssignment → Set
   ⊢ ψ₁ , ψ₂ LabelAssignment =
     (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
 
-  infix 4  _⊢_TypeAssignment
+  infix 3  _⊢_TypeAssignment
   infixr 5 _∷_
   data _⊢_TypeAssignment : TypeAssignment → TypeAssignment → Set where
     [] :
@@ -96,7 +96,7 @@ mutual
       -----------------------------------
            Δ₁ ⊢ a ∷ Δ₂ TypeAssignment
 
-  infix 4  _⊢_TypeAssignmentValue
+  infix 3  _⊢_TypeAssignmentValue
   data _⊢_TypeAssignmentValue : TypeAssignment →
                                 TypeAssignmentValue → Set where
     valid-α :
@@ -109,7 +109,7 @@ mutual
       -------------------------
       Δ ⊢ ρ TypeAssignmentValue
 
-  infix 4 _⊢_RegisterAssignment
+  infix 3 _⊢_RegisterAssignment
   record _⊢_RegisterAssignment
          (Δ : TypeAssignment) (Γ : RegisterAssignment) : Set where
     inductive
@@ -118,7 +118,7 @@ mutual
       valid-sp : Δ ⊢ stack-type Γ StackType
       valid-regs : Allᵥ (λ τ → Δ ⊢ τ Type) (reg-types Γ)
 
-  infix 4 _⊢_Instantiation
+  infix 3 _⊢_Instantiation
   data _⊢_Instantiation : TypeAssignment → Instantiation → Set where
     valid-α :
       ∀ {Δ τ} →
@@ -130,7 +130,7 @@ mutual
       Δ ⊢ σ StackType →
       ρ ∷ Δ ⊢ ρ σ Instantiation
 
-  infix 4 _⊢_WeakCastValue
+  infix 3 _⊢_WeakCastValue
   data _⊢_WeakCastValue : TypeAssignment → WeakCastValue → Set where
     valid-weaken :
                ∀ {Δ n} →
@@ -143,7 +143,7 @@ mutual
       ------------------------
       Δ ⊢ inst i WeakCastValue
 
-  infix 4 _⊢_WeakCast
+  infix 3 _⊢_WeakCast
   data _⊢_WeakCast : TypeAssignment → WeakCast → Set where
     valid-zero :
             ∀ {Δ cᵥ} →
@@ -159,7 +159,7 @@ mutual
 
 private
   mutual
-    infix 4 _⊢?_Type
+    infix 3 _⊢?_Type
     _⊢?_Type : ∀ Δ τ → Dec (Δ ⊢ τ Type)
     Δ ⊢? α⁼ ι Type = dec-inj valid-α⁼ (λ { (valid-α⁼ l) → l }) (↓-decᵥ Δ ι α)
     Δ ⊢? int Type = yes valid-int
@@ -170,12 +170,12 @@ private
     Δ ⊢? tuple τs Type =
       dec-inj valid-tuple (λ { (valid-tuple τs⋆) → τs⋆ }) (Δ ⊢? τs InitTypes)
 
-    infix 4 _⊢?_InitType
+    infix 3 _⊢?_InitType
     _⊢?_InitType : ∀ Δ τ⁻ → Dec (Δ ⊢ τ⁻ InitType)
     Δ ⊢? τ , φ InitType =
       dec-inj valid-τ⁻ (λ { (valid-τ⁻ τ⋆) → τ⋆ }) (Δ ⊢? τ Type)
 
-    infix 4 _⊢?_InitTypes
+    infix 3 _⊢?_InitTypes
     _⊢?_InitTypes : ∀ Δ τs⁻ → Dec (All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs⁻)
     Δ ⊢? [] InitTypes = yes []
     Δ ⊢? τ ∷ τs InitTypes with Δ ⊢? τ InitType | Δ ⊢? τs InitTypes
@@ -183,7 +183,7 @@ private
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ τs⋆) → ¬τ⋆ τ⋆ })
     ... | _ | no ¬τs⋆ = no (λ { (τ⋆ ∷ τs⋆) → ¬τs⋆ τs⋆ })
 
-    infix 4  _⊢?_StackType
+    infix 3  _⊢?_StackType
     _⊢?_StackType : ∀ Δ σ → Dec (Δ ⊢ σ StackType)
     Δ ⊢? ρ⁼ ι StackType =
       dec-inj valid-ρ⁼ (λ { (valid-ρ⁼ l) → l }) (↓-decᵥ Δ ι ρ)
@@ -193,7 +193,7 @@ private
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ σ⋆) → ¬τ⋆ τ⋆ })
     ... | _ | no ¬σ⋆ = no (λ { (τ⋆ ∷ σ⋆) → ¬σ⋆ σ⋆ })
 
-    infix 4 _⊢?_Types
+    infix 3 _⊢?_Types
     _⊢?_Types : ∀ Δ (τs : List Type) → Dec (All (λ τ → Δ ⊢ τ Type) τs)
     Δ ⊢? [] Types = yes []
     Δ ⊢? τ ∷ τs Types with Δ ⊢? τ Type | Δ ⊢? τs Types
@@ -201,17 +201,17 @@ private
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ τs⋆) → ¬τ⋆ τ⋆ })
     ... | _ | no ¬τs⋆ = no (λ { (τ⋆ ∷ τs⋆) → ¬τs⋆ τs⋆ })
 
-    infix 4 ⊢?_GlobalLabelAssignment
+    infix 3 ⊢?_GlobalLabelAssignment
     ⊢?_GlobalLabelAssignment : ∀ ψ₁ → Dec (⊢ ψ₁ GlobalLabelAssignment)
     ⊢? ψ₁ GlobalLabelAssignment =
       dec-inj valid-G (λ { (valid-G τs⋆) → τs⋆ }) ([] ⊢? ψ₁ Types)
 
-    infix 4 ⊢?_HeapLabelAssignment
+    infix 3 ⊢?_HeapLabelAssignment
     ⊢?_HeapLabelAssignment : ∀ ψ₂ → Dec (⊢ ψ₂ HeapLabelAssignment)
     ⊢? ψ₂ HeapLabelAssignment =
       dec-inj valid-H (λ { (valid-H τs⋆) → τs⋆ }) ([] ⊢? ψ₂ Types)
 
-    infix 4 ⊢?_LabelAssignment
+    infix 3 ⊢?_LabelAssignment
     ⊢?_LabelAssignment : ∀ ψ → Dec (⊢ ψ LabelAssignment)
     ⊢? ψ₁ , ψ₂ LabelAssignment =
       dec-inj₂ _,_
@@ -219,7 +219,7 @@ private
                (⊢? ψ₁ GlobalLabelAssignment)
                (⊢? ψ₂ HeapLabelAssignment)
 
-    infix 4  _⊢?_TypeAssignment
+    infix 3  _⊢?_TypeAssignment
     _⊢?_TypeAssignment : ∀ Δ₁ Δ₂  → Dec (Δ₁ ⊢ Δ₂ TypeAssignment)
     Δ₁ ⊢? [] TypeAssignment = yes []
     Δ₁ ⊢? a ∷ Δ₂ TypeAssignment with Δ₂ ++ Δ₁ ⊢? a TypeAssignmentValue
@@ -228,12 +228,12 @@ private
     ... | no ¬a⋆ | _  = no (λ { (a⋆ ∷ Δ₂⋆) → ¬a⋆ a⋆ })
     ... | _ | no ¬Δ₂⋆ = no (λ { (a⋆ ∷ Δ₂⋆) → ¬Δ₂⋆ Δ₂⋆ })
 
-    infix 4  _⊢?_TypeAssignmentValue
+    infix 3  _⊢?_TypeAssignmentValue
     _⊢?_TypeAssignmentValue : ∀ Δ₁ a  → Dec (Δ₁ ⊢ a TypeAssignmentValue)
     Δ₁ ⊢? α TypeAssignmentValue = yes valid-α
     Δ₁ ⊢? ρ TypeAssignmentValue = yes valid-ρ
 
-    infix 4 _⊢?_RegisterAssignment
+    infix 3 _⊢?_RegisterAssignment
     _⊢?_RegisterAssignment : ∀ Δ Γ → Dec (Δ ⊢ Γ RegisterAssignment)
     Δ ⊢? registerₐ sp regs RegisterAssignment =
       dec-inj₂ valid-registerₐ
@@ -241,7 +241,7 @@ private
                (Δ ⊢? sp StackType)
                (Δ ⊢? regs RegTypes)
 
-    infix 4 _⊢?_RegTypes
+    infix 3 _⊢?_RegTypes
     _⊢?_RegTypes : ∀ Δ {m} (τs : Vec Type m) →
                      Dec (Allᵥ (λ τ → Δ ⊢ τ Type) τs)
     Δ ⊢? [] RegTypes = yes []
@@ -250,7 +250,7 @@ private
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ τs⋆) → ¬τ⋆ τ⋆ })
     ... | _ | no ¬τs⋆ = no (λ { (τ⋆ ∷ τs⋆) → ¬τs⋆ τs⋆ })
 
-    infix 4 _⊢?_Instantiation
+    infix 3 _⊢?_Instantiation
     _⊢?_Instantiation : ∀ Δ i → Dec (Δ ⊢ i Instantiation)
     [] ⊢? i Instantiation = no (λ ())
     α ∷ Δ ⊢? α τ Instantiation with Δ ⊢? τ Type
@@ -262,13 +262,13 @@ private
     ... | yes σ⋆ = yes (valid-ρ σ⋆)
     ... | no ¬σ⋆ = no (λ { (valid-ρ σ⋆) → ¬σ⋆ σ⋆ })
 
-    infix 4 _⊢?_WeakCastValue
+    infix 3 _⊢?_WeakCastValue
     _⊢?_WeakCastValue : ∀ Δ cᵥ → Dec (Δ ⊢ cᵥ WeakCastValue)
     Δ ⊢? inst i WeakCastValue =
       dec-inj valid-inst (λ { (valid-inst i⋆) → i⋆ }) (Δ ⊢? i Instantiation)
     Δ ⊢? weaken x WeakCastValue = yes valid-weaken
 
-    infix 4 _⊢?_WeakCast
+    infix 3 _⊢?_WeakCast
     _⊢?_WeakCast : ∀ Δ c → Dec (Δ ⊢ c WeakCast)
     Δ ⊢? cᵥ / zero WeakCast = dec-inj (valid-zero {Δ})
                                       (λ { (valid-zero cᵥ⋆) → cᵥ⋆ })
@@ -283,7 +283,7 @@ record TypeLike (A Ctx : Set) : Set1 where
   field
     _⊢_Valid : Ctx → A → Set
     _⊢?_Valid : ∀ C v → Dec (C ⊢ v Valid)
-  infix 4 _⊢_Valid _⊢?_Valid
+  infix 3 _⊢_Valid _⊢?_Valid
 open TypeLike {{...}} public
 
 Vec-typeLike : ∀ {A Ctx : Set} {{_ : TypeLike A Ctx}} {m} →

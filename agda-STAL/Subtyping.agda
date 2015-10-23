@@ -5,7 +5,7 @@ open import Util
 open import Data.Nat.Properties using (cancel-+-left)
 
 mutual
-  infix 4 _⊢_≤τ_
+  infix 3 _⊢_≤τ_
   data _⊢_≤τ_ (Δ : TypeAssignment) : Type → Type → Set where
     α⁼-≤ :
           ∀ {ι} →
@@ -34,7 +34,7 @@ mutual
       ----------------------------------------------
                Δ ⊢ tuple τs₁ ≤τ tuple τs₂
 
-  infix 4 _⊢_≤τ⁻_
+  infix 3 _⊢_≤τ⁻_
   data _⊢_≤τ⁻_ (Δ : TypeAssignment) : InitType → InitType → Set where
     τ⁻-≤ :
           ∀ {τ₁ τ₂ φ} →
@@ -42,7 +42,7 @@ mutual
       ---------------------
       Δ ⊢ τ₁ , φ ≤τ⁻ τ₂ , φ
 
-  infix 4 _⊢_≤σ_
+  infix 3 _⊢_≤σ_
   data _⊢_≤σ_ (Δ : TypeAssignment) : StackType → StackType → Set where
     σ-≤ :
           ∀ {σ} →
@@ -50,7 +50,7 @@ mutual
       -----------------
          Δ ⊢ σ ≤σ σ
 
-  infix 4 _⊢_≤Γ_
+  infix 3 _⊢_≤Γ_
   data _⊢_≤Γ_ (Δ : TypeAssignment) : (Γ₁ Γ₂ : RegisterAssignment) → Set where
     Γ-≤ :
                 ∀ {sp₁ sp₂ regs₁ regs₂} →
@@ -61,7 +61,7 @@ mutual
 
 private
   mutual
-    infix 4 _⊢_≤τ?_
+    infix 3 _⊢_≤τ?_
     _⊢_≤τ?_ : ∀ Δ τ₁ τ₂ → Dec (Δ ⊢ τ₁ ≤τ τ₂)
     Δ ⊢ α⁼ ι₁ ≤τ? α⁼ ι₂ with ι₁ ≟ ι₂ | ↓-decᵥ Δ ι₁ α
     Δ ⊢ α⁼ ι ≤τ? α⁼ .ι | yes refl | yes l = yes (α⁼-≤ (valid-α⁼ l))
@@ -107,7 +107,7 @@ private
     ... | yes τs₁≤τs₂ = yes (tuple-≤ τs₁≤τs₂)
     ... | no τs₁≰τs₂ = no (λ { (tuple-≤ τs₁≤τs₂) → τs₁≰τs₂ τs₁≤τs₂ })
 
-    infix 4 _⊢_≤τ⁻?_
+    infix 3 _⊢_≤τ⁻?_
     _⊢_≤τ⁻?_ : ∀ Δ τ⁻₁ τ⁻₂ → Dec (Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂)
     Δ ⊢ τ₁ , φ₁ ≤τ⁻? τ₂ , φ₂ with φ₁ ≟ φ₂ | Δ ⊢ τ₁ ≤τ? τ₂
     Δ ⊢ τ₁ , φ  ≤τ⁻? (τ₂ , .φ)
@@ -120,7 +120,7 @@ private
                    Δ ⊢ τ₁ , φ₁ ≤τ⁻ τ₂ , φ₂ → φ₁ ≡ φ₂
             help (τ⁻-≤ τ₁≤τ₂) = refl
 
-    infix 4 _⊢_≤τs⁻?_
+    infix 3 _⊢_≤τs⁻?_
     _⊢_≤τs⁻?_ : ∀ Δ τs⁻₁ τs⁻₂ →
                     Dec (AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs⁻₁ τs⁻₂)
     Δ ⊢ [] ≤τs⁻? [] = yes []
@@ -133,7 +133,7 @@ private
     ... | _ | no τs⁻₁≰τs⁻₂ =
       no (λ { (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) → τs⁻₁≰τs⁻₂ τs⁻₁≤τs⁻₂ })
 
-    infix 4 _⊢_≤σ?_
+    infix 3 _⊢_≤σ?_
     _⊢_≤σ?_ : ∀ Δ σ₁ σ₂ → Dec (Δ ⊢ σ₁ ≤σ σ₂)
     Δ ⊢ σ₁ ≤σ? σ₂ with σ₁ ≟ σ₂ | Δ ⊢? σ₁ Valid
     Δ ⊢ σ  ≤σ? .σ | yes refl | yes σ⋆ = yes (σ-≤ σ⋆)
@@ -143,7 +143,7 @@ private
                    Δ ⊢ σ₁ ≤σ σ₂ → σ₁ ≡ σ₂
             help (σ-≤ σ⋆) = refl
 
-    infix 4 _⊢_≤Γ?_
+    infix 3 _⊢_≤Γ?_
     _⊢_≤Γ?_ : ∀ Δ Γ₁ Γ₂ → Dec (Δ ⊢ Γ₁ ≤Γ Γ₂)
     Δ ⊢ registerₐ sp₁ regs₁ ≤Γ? registerₐ sp₂ regs₂
       with Δ ⊢ sp₁ ≤σ? sp₂ | Δ ⊢ regs₁ ≤regs? regs₂
@@ -153,7 +153,7 @@ private
     ... | _ | no regs₁≰regs₂ =
       no (λ { (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) → regs₁≰regs₂ regs₁≤regs₂ })
 
-    infix 4 _⊢_≤regs?_
+    infix 3 _⊢_≤regs?_
     _⊢_≤regs?_ : ∀ Δ {m} (regs₁ regs₂ : Vec Type m) →
                    Dec (AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) regs₁ regs₂)
     Δ ⊢ [] ≤regs? [] = yes []

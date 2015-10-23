@@ -97,7 +97,7 @@ mutual
   StrongCast = Cast TypeAssignment
 
   -- Word value, w
-  infix 6 _⟦_⟧
+  infixl 6 _⟦_⟧
   data WordValue : Set where
     globval : GlobLabel → ℕ → WordValue
     heapval : HeapLabel → WordValue
@@ -106,12 +106,24 @@ mutual
     uninit  : Type → WordValue
     _⟦_⟧    : WordValue → StrongCast → WordValue
 
+  -- Some sugar
+  infixl 6 _⟦⟦_⟧⟧
+  _⟦⟦_⟧⟧ : WordValue → List Instantiation → WordValue
+  w ⟦⟦ [] ⟧⟧ = w
+  w ⟦⟦ i ∷ is ⟧⟧ = w ⟦ inst i / 0 ⟧ ⟦⟦ is ⟧⟧
+
   -- Small values, v
-  infix 6 _⟦_⟧ᵥ
+  infixl 6 _⟦_⟧ᵥ
   data SmallValue : Set where
     reg  : Register → SmallValue
     word : WordValue → SmallValue
     _⟦_⟧ᵥ : SmallValue → StrongCast → SmallValue
+
+  -- Some sugar
+  infixl 6 _⟦⟦_⟧⟧ᵥ
+  _⟦⟦_⟧⟧ᵥ : SmallValue → List Instantiation → SmallValue
+  v ⟦⟦ [] ⟧⟧ᵥ = v
+  v ⟦⟦ i ∷ is ⟧⟧ᵥ = v ⟦ inst i / 0 ⟧ᵥ ⟦⟦ is ⟧⟧ᵥ
 
   -- Heap values, h
   data HeapValue : Set where
@@ -163,9 +175,14 @@ mutual
     _~>_ : Instruction → InstructionSequence → InstructionSequence
     jmp : SmallValue → InstructionSequence
 
+  -- Pₛ
+  ProgramState : Set
+  ProgramState = Heap × RegisterFile × InstructionSequence
+
   -- P
   Program : Set
-  Program = Heap × RegisterFile × InstructionSequence
+  Program = Globals × ProgramState
+
 
 open RegisterAssignment public
 open RegisterFile public
