@@ -8,6 +8,7 @@ import Relation.Binary as B
 
 wctx-length : WordValue → ℕ
 wctx-length (globval l ♯a) = ♯a
+
 wctx-length (w ⟦ inst i / ι ⟧) = pred (wctx-length w)
 wctx-length (w ⟦ weaken Δ⁺ / ι ⟧) = length Δ⁺ + wctx-length w
 wctx-length _ = 0
@@ -109,10 +110,10 @@ mutual
       ----------------------------
       ρ⁼ ι  ⟦ inst (ρ σ) / ι ⟧σ≡ σ'
 
-    subst-nil :
+    subst-[] :
          ∀ {c} →
-     ---------------
-     nil ⟦ c ⟧σ≡ nil
+     -------------
+     [] ⟦ c ⟧σ≡ []
 
     _∷_ :
         ∀ {τ τ' σ σ' c} →
@@ -185,9 +186,8 @@ mutual
   infix 3 _⟦_⟧c≡_
   data _⟦_⟧c≡_ : substᵗ StrongCast where
     subst-/ :
-           ∀ {cᵥ₁ cᵥ₂ cᵥ ι₁ ι₁' ι₂} →
-         cᵥ₁ ⟦ cᵥ / ι₁' ⟧cᵥ≡ cᵥ₂ →
-              ι₁' ≡ ι₂ + ι₁ →
+           ∀ {cᵥ₁ cᵥ₂ cᵥ ι₁ ι₂} →
+         cᵥ₁ ⟦ cᵥ / ι₁ ∸ ι₂ ⟧cᵥ≡ cᵥ₂ →
       -------------------------------
       cᵥ₁ / ι₂ ⟦ cᵥ / ι₁ ⟧c≡ cᵥ₂ / ι₂
 
@@ -222,7 +222,7 @@ mutual
     subst-⟦⟧ :
               ∀ {w₁ w₂ c₁ c₂ cᵥ ι} →
                w₁ ⟦ cᵥ / ι ⟧w≡ w₂ →
-      c₁ ⟦ cᵥ / (wctx-length w₁ + ι) ⟧c≡ c₂ →
+      c₁ ⟦ cᵥ / pred (wctx-length w₁ + ι) ⟧c≡ c₂ →
       ---------------------------------------
         (w₁ ⟦ c₁ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ c₂ ⟧)
 
@@ -393,7 +393,7 @@ private
     ... | ()
     subst-σ-unique (subst-ρ-inst sub-σ₁) (subst-ρ-inst sub-σ₂) =
       subst-σ-unique sub-σ₁ sub-σ₂
-    subst-σ-unique subst-nil subst-nil = refl
+    subst-σ-unique subst-[] subst-[] = refl
     subst-σ-unique (sub-τ₁ ∷ sub-σ₁) (sub-τ₂ ∷ sub-σ₂) =
       cong₂ _∷_ (subst-τ-unique sub-τ₁ sub-τ₂) (subst-σ-unique sub-σ₁ sub-σ₂)
 
@@ -447,7 +447,7 @@ private
 
     can-weaken-σ : ∀ σ n ι → ∃ λ σ' → σ ⟦ weaken n / ι ⟧σ≡ σ'
     can-weaken-σ (ρ⁼ ι₁) n ι₂ = Σ-map ρ⁼ subst-ρ-¬inst (can-weaken-n ι₁ n ι₂)
-    can-weaken-σ nil n ι = nil , subst-nil
+    can-weaken-σ [] n ι = [] , subst-[]
     can-weaken-σ (τ ∷ σ) n ι
       = Σ-zip _∷_ _∷_ (can-weaken-τ τ n ι) (can-weaken-σ σ n ι)
 
@@ -551,7 +551,7 @@ private
                      ¬ (∃ λ σ'  → ρ⁼ ι₁ ⟦ inst i / ι₂ ⟧σ≡ σ')
             help ι₁≢ι₂ ¬sub-n (._ , subst-ρ-¬inst sub-n) = ¬sub-n (_ , sub-n)
             help ι₁≢ι₂ ¬sub-n (_ , subst-ρ-inst sub-σ) = ι₁≢ι₂ refl
-    nil ⟦ c ⟧σ? = yes (nil , subst-nil)
+    [] ⟦ c ⟧σ? = yes ([] , subst-[])
     (τ ∷ σ) ⟦ c ⟧σ? with τ ⟦ c ⟧τ? | σ ⟦ c ⟧σ?
     ... | yes (τ' , sub-τ) | yes (σ' , sub-σ) =
       yes (τ' ∷ σ' , sub-τ ∷ sub-σ)
@@ -617,7 +617,7 @@ private
 
     σ-weaken-0 : ∀ σ {ι} → σ ⟦ weaken 0 / ι ⟧σ≡ σ
     σ-weaken-0 (ρ⁼ ι) = subst-ρ-¬inst (n-weaken-0 ι)
-    σ-weaken-0 nil = subst-nil
+    σ-weaken-0 [] = subst-[]
     σ-weaken-0 (τ ∷ σ) = τ-weaken-0 τ ∷ σ-weaken-0 σ
 
     Γ-weaken-0 : ∀ Γ {ι} → Γ ⟦ weaken 0 / ι ⟧Γ≡ Γ
@@ -839,22 +839,21 @@ instance
                      c ⟦ c⋆ ⟧c≡ c₁ →
                      c ⟦ c⋆ ⟧c≡ c₂ →
                      c₁ ≡ c₂
-          unique (subst-/ sub-cᵥ₁ refl) (subst-/ sub-cᵥ₂ refl) =
+          unique (subst-/ sub-cᵥ₁) (subst-/ sub-cᵥ₂) =
             cong₂ _/_ (subst-unique sub-cᵥ₁ sub-cᵥ₂) refl
 
           weak : ∀ c w ι → ∃ λ c' → c ⟦ weaken w / ι ⟧c≡ c'
-          weak (cᵥ / ι) w ι⋆ with can-weaken cᵥ w (ι + ι⋆)
-          ... | cᵥ' , sub-cᵥ = cᵥ' / ι , subst-/ sub-cᵥ refl
+          weak (cᵥ / ι) w ι⋆ with can-weaken cᵥ w (ι⋆ ∸ ι)
+          ... | cᵥ' , sub-cᵥ = cᵥ' / ι , subst-/ sub-cᵥ
 
           dec : ∀ c c⋆ → Dec (∃ λ c' → c ⟦ c⋆ ⟧c≡ c')
-          dec (cᵥ / ι) (cᵥ⋆ / ι⋆) with cᵥ ⟦ cᵥ⋆ / ι + ι⋆ ⟧?
-          ... | yes (cᵥ' , sub-cᵥ) = yes (cᵥ' / ι , subst-/ sub-cᵥ refl)
+          dec (cᵥ / ι) (cᵥ⋆ / ι⋆) with cᵥ ⟦ cᵥ⋆ / ι⋆ ∸ ι ⟧?
+          ... | yes (cᵥ' , sub-cᵥ) = yes (cᵥ' / ι , subst-/ sub-cᵥ)
           ... | no ¬sub-cᵥ =
-            no (λ { (cᵥ' / .ι , subst-/ sub-cᵥ refl) →
-              ¬sub-cᵥ (cᵥ' , sub-cᵥ) })
+            no (λ { (cᵥ' / .ι , subst-/ sub-cᵥ) → ¬sub-cᵥ (cᵥ' , sub-cᵥ) })
 
           c-weaken-0 : ∀ c {ι} → c ⟦ weaken 0 / ι ⟧c≡ c
-          c-weaken-0 (cᵥ / ι) = subst-/ (weaken-0 cᵥ) refl
+          c-weaken-0 (cᵥ / ι) = subst-/ (weaken-0 cᵥ)
 
   WordValue-Substitution : Substitution WordValue ℕ
   WordValue-Substitution = substitution 0 _⟦_⟧w≡_ unique weak dec w-weaken-0
@@ -880,7 +879,7 @@ instance
           weak (w ⟦ c ⟧) w⋆ ι =
             Σ-zip _⟦_⟧ subst-⟦⟧
                   (weak w w⋆ ι)
-                  (can-weaken c w⋆ (wctx-length w + ι))
+                  (can-weaken c w⋆ (pred (wctx-length w + ι)))
 
           dec : ∀ w c → Dec (∃ λ w' → w ⟦ c ⟧w≡ w')
           dec (globval l ♯a) c = yes (globval l ♯a , subst-globval)
@@ -892,7 +891,7 @@ instance
           ... | no ¬sub-τ =
             no (λ { (uninit τ' , subst-uninit sub-τ) → ¬sub-τ (τ' , sub-τ) })
           dec (w ⟦ c ⟧) (cᵥ / ι)
-            with dec w (cᵥ / ι) | c ⟦ cᵥ / (wctx-length w + ι) ⟧?
+            with dec w (cᵥ / ι) | c ⟦ cᵥ / pred (wctx-length w + ι) ⟧?
           ... | yes (w' , sub-w) | yes (c' , sub-c) =
             yes (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c)
           ... | no ¬sub-w | _ =

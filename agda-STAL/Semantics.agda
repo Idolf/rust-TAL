@@ -127,7 +127,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                    H , register sp regs , I
 
 infix 3 _⊢_⇒ₙ_/_
-infix 5 _∷_
+infixr 5 _∷_
 data _⊢_⇒ₙ_/_ (G : Globals) : ProgramState → ℕ → ProgramState → Set where
   []  :
         ∀ {P} →

@@ -38,13 +38,13 @@ private
 
     σ-from : Tree → Maybe StackType
     σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
-    σ-from (node 1 _) = just nil
+    σ-from (node 1 _) = just []
     σ-from (node 2 (τ ∷ σ ∷ _)) = _∷_ <$> τ-from τ <*> σ-from σ
     σ-from _ = nothing
 
     σ-sur : IsSurjective σ-from
     σ-sur (ρ⁼ ι) = T₁ 0 ι , refl
-    σ-sur nil = T₀ 1 , refl
+    σ-sur [] = T₀ 1 , refl
     σ-sur (τ ∷ σ) = T₂ 2 (proj₁ (τ-sur τ)) (proj₁ (σ-sur σ)) ,
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (σ-sur σ)
 

@@ -51,9 +51,9 @@ mutual
       -------------
       Δ ⊢ ρ⁼ ι StackType
 
-    valid-nil :
-      -----------------
-      Δ ⊢ nil StackType
+    valid-[] :
+      ----------------
+      Δ ⊢ [] StackType
 
     _∷_ :
           ∀ {τ σ} →
@@ -189,7 +189,7 @@ private
     _⊢?_StackType : ∀ Δ σ → Dec (Δ ⊢ σ StackType)
     Δ ⊢? ρ⁼ ι StackType =
       dec-inj valid-ρ⁼ (λ { (valid-ρ⁼ l) → l }) (↓-decᵥ Δ ι ρ)
-    Δ ⊢? nil StackType = yes valid-nil
+    Δ ⊢? [] StackType = yes valid-[]
     Δ ⊢? τ ∷ σ StackType with Δ ⊢? τ Type | Δ ⊢? σ StackType
     ... | yes τ⋆ | yes σ⋆ = yes (τ⋆ ∷ σ⋆)
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ σ⋆) → ¬τ⋆ τ⋆ })

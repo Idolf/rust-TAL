@@ -118,7 +118,7 @@ private
                      Δ ⊢ σ Valid →
                      Δ ++ Δ' ⊢ σ Valid
     σ-valid-++ (valid-ρ⁼ l) = valid-ρ⁼ (↓-add-right _ l)
-    σ-valid-++ valid-nil = valid-nil
+    σ-valid-++ valid-[] = valid-[]
     σ-valid-++ (τ⋆ ∷ σ⋆) = τ-valid-++ τ⋆ ∷ σ-valid-++ σ⋆
 
     Δ-valid-++ : ∀ {Δ Δ'} {Δᵥ : TypeAssignment} →
@@ -212,7 +212,7 @@ private
     ... | ι<len with subst-↓ (↓-remove-right Δ₂ ι<len l) sub-Δ
     ... | ρ , l' , subst-ρ = ρ⁼ ι , subst-ρ-¬inst (subst-< ι<len) ,
                                     valid-ρ⁼ (↓-add-right (Δ⁺ ++ Δ₂) l')
-    σ-valid-weaken Δ⁺ sub-Δ valid-nil = nil , subst-nil , valid-nil
+    σ-valid-weaken Δ⁺ sub-Δ valid-[] = [] , subst-[] , valid-[]
     σ-valid-weaken Δ⁺ sub-Δ (τ⋆ ∷ σ⋆)
       with τ-valid-weaken Δ⁺ sub-Δ τ⋆
          | σ-valid-weaken Δ⁺ sub-Δ σ⋆
@@ -365,7 +365,7 @@ private
                             l)
     ... | l' rewrite eq | sym (subst-length sub-Δ) | NP.m+n∸m≡n ι≥len
       = ρ⁼ ι , subst-ρ-¬inst (subst-inst-> (s≤s ι≥len)) , valid-ρ⁼ l'
-    σ-valid-inst i⋆ sub-Δ valid-nil = nil , subst-nil , valid-nil
+    σ-valid-inst i⋆ sub-Δ valid-[] = [] , subst-[] , valid-[]
     σ-valid-inst i⋆ sub-Δ (τ⋆ ∷ σ⋆)
       with τ-valid-inst i⋆ sub-Δ τ⋆
          | σ-valid-inst i⋆ sub-Δ σ⋆

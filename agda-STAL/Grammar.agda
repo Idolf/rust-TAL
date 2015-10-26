@@ -23,7 +23,7 @@ mutual
   infixr 5 _∷_
   data StackType : Set where
     ρ⁼  : AssignmentIndex → StackType
-    nil : StackType
+    []  : StackType
     _∷_ : Type → StackType → StackType
 
   -- Initialization flags, φ
@@ -177,14 +177,9 @@ mutual
     _~>_ : Instruction → InstructionSequence → InstructionSequence
     jmp : SmallValue → InstructionSequence
 
-  -- Pₛ
+  -- P
   ProgramState : Set
   ProgramState = Heap × RegisterFile × InstructionSequence
-
-  -- P
-  Program : Set
-  Program = Globals × ProgramState
-
 
 open RegisterAssignment public
 open RegisterFile public

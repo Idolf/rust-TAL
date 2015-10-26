@@ -53,7 +53,7 @@ register-stack-update n τ (registerₐ sp regs) (registerₐ sp' regs')
 
 stack-lookup-dec : ∀ i σ → Dec (∃ λ τ → stack-lookup i σ τ)
 stack-lookup-dec i (ρ⁼ ι) = no (λ { (_ , ()) })
-stack-lookup-dec i nil = no (λ { (_ , ()) })
+stack-lookup-dec i [] = no (λ { (_ , ()) })
 stack-lookup-dec zero (τ ∷ σ) = yes (τ , here)
 stack-lookup-dec (suc i) (τ ∷ σ) with stack-lookup-dec i σ
 ... | yes (τ' , l) = yes (τ' , there l)
@@ -68,7 +68,7 @@ stack-lookup-unique (there l₁) (there l₂) = stack-lookup-unique l₁ l₂
 
 stack-update-dec : ∀ i τ σ → Dec (∃ λ σ' → stack-update i τ σ σ')
 stack-update-dec i τ (ρ⁼ ι) = no (λ { (_ , ()) })
-stack-update-dec i τ nil = no (λ { (_ , ()) })
+stack-update-dec i τ [] = no (λ { (_ , ()) })
 stack-update-dec zero τ (τ' ∷ σ) = yes (τ ∷ σ , here)
 stack-update-dec (suc i) τ (τ' ∷ σ) with stack-update-dec i τ σ
 ... | yes (σ' , up) = yes (τ' ∷ σ' , there up)
@@ -104,7 +104,7 @@ mutual
     of-[] :
               ∀ {ψ₁ ψ₂} →
       -------------------------
-      ψ₁ , ψ₂ ⊢ [] of nil stack
+      ψ₁ , ψ₂ ⊢ [] of [] stack
 
     of-∷ :
            ∀ {ψ₁ ψ₂ w S τ σ} →
@@ -219,43 +219,43 @@ mutual
       ---------------------------------------
       ψ₁ , ψ₂ , Δ , Γ ⊢ v ⟦ c ⟧ᵥ of ∀[ Δ₂ ] Γ₂ vval
 
-  infix 3 _⊢_⇒_
-  data _⊢_⇒_ : GlobalLabelAssignment × TypeAssignment ×
-               RegisterAssignment →
-               Instruction → RegisterAssignment → Set where
+  infix 3 _⊢_⇒_instruction
+  data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssignment ×
+                          RegisterAssignment →
+                          Instruction → RegisterAssignment → Set where
     of-add :
                     ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
                   lookup-regs ♯rs Γ  ≡ int →
              ψ₁ , [] , Δ , Γ ⊢ v of int vval →
       --------------------------------------------------
-      ψ₁ , Δ , Γ ⊢ add ♯rd ♯rs v ⇒ update-regs ♯rd int Γ
+      ψ₁ , Δ , Γ ⊢ add ♯rd ♯rs v ⇒ update-regs ♯rd int Γ instruction
 
     of-sub :
                       ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
                     lookup-regs ♯rs Γ  ≡ int →
                ψ₁ , [] , Δ , Γ ⊢ v of int vval →
       --------------------------------------------------
-      ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v ⇒ update-regs ♯rd int Γ
+      ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v ⇒ update-regs ♯rd int Γ instruction
 
     of-sld :
                  ∀ {ψ₁ Δ Γ ♯rd i τ} →
              register-stack-lookup i Γ τ →
       --------------------------------------------
-      ψ₁ , Δ , Γ ⊢ sld ♯rd i ⇒ update-regs ♯rd τ Γ
+      ψ₁ , Δ , Γ ⊢ sld ♯rd i ⇒ update-regs ♯rd τ Γ instruction
 
     of-sst :
            ∀ {ψ₁ Δ Γ i ♯rs τ Γ'} →
          lookup-regs ♯rs Γ ≡ τ →
       register-stack-update i τ Γ Γ' →
       --------------------------------
-        ψ₁ , Δ , Γ ⊢ sst i ♯rs ⇒ Γ'
+        ψ₁ , Δ , Γ ⊢ sst i ♯rs ⇒ Γ' instruction
 
     of-ld :
                ∀ {ψ₁ Δ Γ ♯rd ♯rs i τs⁻ τ} →
               lookup-regs ♯rs Γ ≡ tuple τs⁻ →
                     τs⁻ ↓ i ⇒ τ , true →
       -----------------------------------------------
-      ψ₁ , Δ , Γ ⊢ ld ♯rd ♯rs i ⇒ update-regs ♯rd τ Γ
+      ψ₁ , Δ , Γ ⊢ ld ♯rd ♯rs i ⇒ update-regs ♯rd τ Γ instruction
 
     of-st :
                  ∀ {ψ₁ Δ Γ ♯rd i ♯rs τ τs⁻ τs⁻'} →
@@ -263,19 +263,19 @@ mutual
                   lookup-regs ♯rd Γ ≡ tuple τs⁻ →
                     τs⁻ ⟦ i ⟧← τ , true ⇒ τs⁻' →
       ----------------------------------------------------------
-      ψ₁ , Δ , Γ ⊢ st ♯rd i ♯rs ⇒ update-regs ♯rd (tuple τs⁻') Γ
+      ψ₁ , Δ , Γ ⊢ st ♯rd i ♯rs ⇒ update-regs ♯rd (tuple τs⁻') Γ instruction
 
     of-malloc :
                       ∀ {ψ₁ Δ Γ ♯rd τs} →
       ------------------------------------------------------
       ψ₁ , Δ , Γ ⊢ malloc ♯rd τs ⇒
-        update-regs ♯rd (tuple (map (λ τ → τ , false) τs)) Γ
+        update-regs ♯rd (tuple (map (λ τ → τ , false) τs)) Γ instruction
 
     of-mov :
                ∀ {ψ₁ Δ Γ ♯rd v τ} →
           ψ₁ , [] , Δ , Γ ⊢ v of τ vval →
       --------------------------------------------
-      ψ₁ , Δ , Γ ⊢ mov ♯rd v ⇒ update-regs ♯rd τ Γ
+      ψ₁ , Δ , Γ ⊢ mov ♯rd v ⇒ update-regs ♯rd τ Γ instruction
 
     of-beq :
                  ∀ {ψ₁ Δ Γ ♯r v Γ'} →
@@ -283,7 +283,7 @@ mutual
                      Δ ⊢ Γ ≤ Γ' →
         ψ₁ , [] , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
         ------------------------------------------
-              ψ₁ , Δ , Γ ⊢ beq ♯r v ⇒ Γ
+              ψ₁ , Δ , Γ ⊢ beq ♯r v ⇒ Γ instruction
 
   infix 3 _⊢_instructionsequence
   data _⊢_instructionsequence : GlobalLabelAssignment ×
@@ -292,7 +292,7 @@ mutual
                                 InstructionSequence → Set where
     of-~> :
                ∀ {ψ₁ Δ Γ Γ' ι I} →
-             ψ₁ , Δ , Γ ⊢ ι ⇒ Γ' →
+             ψ₁ , Δ , Γ ⊢ ι ⇒ Γ' instruction →
       ψ₁ , Δ , Γ' ⊢ I instructionsequence →
       ---------------------------------------
       ψ₁ , Δ , Γ ⊢ ι ~> I instructionsequence
