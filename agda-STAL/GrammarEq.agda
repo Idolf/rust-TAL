@@ -1,3 +1,5 @@
+module GrammarEq where
+
 open import Grammar
 open import Util
 

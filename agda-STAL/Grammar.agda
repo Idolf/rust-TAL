@@ -1,3 +1,5 @@
+module Grammar where
+
 open import Util
 
 ♯regs : ℕ

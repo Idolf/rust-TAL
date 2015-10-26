@@ -24,3 +24,6 @@ open import SubstitutionLemmas
 
 -- Semantics
 open import Semantics
+
+-- Soundness
+open import Soundness

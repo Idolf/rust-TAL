@@ -1,3 +1,5 @@
+module TypeJudgments where
+
 open import Util
 open import Grammar
 open import GrammarEq
