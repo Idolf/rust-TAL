@@ -98,24 +98,27 @@ mutual
       ---------------------------------------------
                   ψ₁ ⊢ H of ψ₂ heap
 
-  infix 3 _,_⊢_of_stack
-  data _,_⊢_of_stack (ψ₁ : GlobalLabelAssignment) (ψ₂ : HeapLabelAssignment) :
+  infix 3 _⊢_of_stack
+  data _⊢_of_stack : GlobalLabelAssignment × HeapLabelAssignment →
                      Stack → StackType → Set where
-    of-[] : ψ₁ , ψ₂ ⊢ [] of nil stack
+    of-[] :
+              ∀ {ψ₁ ψ₂} →
+      -------------------------
+      ψ₁ , ψ₂ ⊢ [] of nil stack
 
     of-∷ :
-           ∀ {w S τ σ} →
+           ∀ {ψ₁ ψ₂ w S τ σ} →
         ψ₁ , ψ₂ , [] ⊢ w of τ wval →
           ψ₁ , ψ₂ ⊢ S of σ stack →
       ------------------------
       ψ₁ , ψ₂ ⊢ w ∷ S of τ ∷ σ stack
 
-  infix 3 _,_⊢_of_register
-  data _,_⊢_of_register (ψ₁ : GlobalLabelAssignment)
-                        (ψ₂ : HeapLabelAssignment) :
+  infix 3 _⊢_of_register
+  data _⊢_of_register : GlobalLabelAssignment ×
+                        HeapLabelAssignment →
                         RegisterFile → RegisterAssignment → Set where
     of-register :
-                     ∀ {sp regs σ τs} →
+                     ∀ {ψ₁ ψ₂ sp regs σ τs} →
                      ψ₁ , ψ₂ ⊢ sp of σ stack →
       AllZipᵥ (λ w τ → ψ₁ , ψ₂ , [] ⊢ w of τ wval) regs τs →
       ------------------------------------------------
@@ -131,20 +134,21 @@ mutual
       ------------------------------------
        ψ₁ ⊢ ∀[ Δ ] Γ ∙ I of ∀[ Δ ] Γ gval
 
-  infix 3 _,_⊢_of_hval
-  data _,_⊢_of_hval (ψ₁ : GlobalLabelAssignment) (ψ₂ : HeapLabelAssignment) :
+  infix 3 _⊢_of_hval
+  data _⊢_of_hval : GlobalLabelAssignment × HeapLabelAssignment →
                     HeapValue → Type → Set where
     of-tuple :
-                       ∀ {ws τs⁻} →
+                       ∀ {ψ₁ ψ₂ ws τs⁻} →
       AllZip (λ w τ⁻ → ψ₁ , ψ₂ , [] ⊢ w of τ⁻ wval⁰) ws τs⁻ →
       -------------------------------------------------
              ψ₁ , ψ₂ ⊢ tuple ws of tuple τs⁻ hval
 
-  infix 3 _,_,_⊢_of_wval
-  data _,_,_⊢_of_wval (ψ₁ : GlobalLabelAssignment) (ψ₂ : HeapLabelAssignment)
-                      (Δ : TypeAssignment) : WordValue → Type → Set where
+  infix 3 _⊢_of_wval
+  data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment ×
+                    TypeAssignment →
+                    WordValue → Type → Set where
     of-globval :
-              ∀ {l ♯a τ₁ τ₂} →
+          ∀ {ψ₁ ψ₂ Δ l ♯a τ₁ τ₂} →
                 ψ₁ ↓ l ⇒ τ₁ →
                [] ⊢ τ₁ ≤ τ₂ →
          type-ctx-length τ₁ ≡ just ♯a →
@@ -152,23 +156,24 @@ mutual
       ψ₁ , ψ₂ , Δ ⊢ globval l ♯a of τ₂ wval
 
     of-heapval :
-               ∀ {lₕ τ₁ τ₂} →
+           ∀ {ψ₁ ψ₂ Δ lₕ τ₁ τ₂} →
                ψ₂ ↓ lₕ ⇒ τ₁ →
                Δ ⊢ τ₁ ≤ τ₂ →
       -----------------------------------
       ψ₁ , ψ₂ , Δ ⊢ heapval lₕ of τ₂ wval
 
     of-const :
-                   ∀ {n} →
+              ∀ {ψ₁ ψ₂ Δ n} →
       --------------------------------
       ψ₁ , ψ₂ , Δ ⊢ const n of int wval
 
     of-ns :
+            ∀ {ψ₁ ψ₂ Δ} →
       ---------------------------
       ψ₁ , ψ₂ , Δ ⊢ ns of ns wval
 
     of-inst :
-          ∀ {Δ₁ Δ₂ Γ₁ Γ₂ w c} →
+        ∀ {ψ₁ ψ₂ Δ Δ₁ Δ₂ Γ₁ Γ₂ w c} →
        ψ₁ , ψ₂ , Δ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
             Δ₁ ++ Δ ⊢ c Valid →
              Run Δ₁ ⟦ c ⟧≡ Δ₂ →
@@ -176,38 +181,37 @@ mutual
       ----------------------------------------
       ψ₁ , ψ₂ , Δ ⊢ w ⟦ c ⟧ of ∀[ Δ₂ ] Γ₂ wval
 
-  infix 3 _,_,_⊢_of_wval⁰
-  data _,_,_⊢_of_wval⁰ (ψ₁ : GlobalLabelAssignment) (ψ₂ : HeapLabelAssignment)
-                       (Γ : TypeAssignment) : WordValue → InitType → Set where
+  infix 3 _⊢_of_wval⁰
+  data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment ×
+                     TypeAssignment → WordValue → InitType → Set where
     of-uninit :
-                  ∀ {τ} →
+                 ∀ {ψ₁ ψ₂ Γ τ} →
       -----------------------------------
       ψ₁ , ψ₂ , Γ ⊢ uninit τ of τ , false wval⁰
 
     of-init :
-             ∀ {w τ φ} →
+          ∀ {ψ₁ ψ₂ Γ w τ φ} →
         ψ₁ , ψ₂ , Γ ⊢ w of τ wval →
       ------------------------
       ψ₁ , ψ₂ , Γ ⊢ w of τ , φ wval⁰
 
-  infix 3 _,_,_,_⊢_of_vval
-  data _,_,_,_⊢_of_vval (ψ₁ : GlobalLabelAssignment)
-                        (ψ₂ : HeapLabelAssignment)
-                        (Δ : TypeAssignment) (Γ : RegisterAssignment) :
-                        SmallValue → Type → Set where
+  infix 3 _⊢_of_vval
+  data _⊢_of_vval : GlobalLabelAssignment × HeapLabelAssignment ×
+                    TypeAssignment × RegisterAssignment →
+                    SmallValue → Type → Set where
     of-reg :
-                        ∀ {♯r} →
+                    ∀ {ψ₁ ψ₂ Δ Γ ♯r} →
       -------------------------------------------
       ψ₁ , ψ₂ , Δ , Γ ⊢ reg ♯r of lookup-regs ♯r Γ vval
 
     of-word :
-               ∀ {w τ} →
+             ∀ {ψ₁ ψ₂ Δ Γ w τ} →
           ψ₁ , ψ₂ , Δ ⊢ w of τ wval →
       ----------------------------
       ψ₁ , ψ₂ , Δ , Γ ⊢ word w of τ vval
 
     of-inst :
-              ∀ {Δ₁ Δ₂ Γ₁ Γ₂ v c} →
+          ∀ {ψ₁ ψ₂ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ v c} →
        ψ₁ , ψ₂ , Δ , Γ ⊢ v of ∀[ Δ₁ ] Γ₁ vval →
               Δ₁ ++ Δ ⊢ c Valid →
                Run Δ₁ ⟦ c ⟧≡ Δ₂ →
@@ -215,46 +219,46 @@ mutual
       ---------------------------------------
       ψ₁ , ψ₂ , Δ , Γ ⊢ v ⟦ c ⟧ᵥ of ∀[ Δ₂ ] Γ₂ vval
 
-  infix 3 _,_,_⊢_⇒_
-  data _,_,_⊢_⇒_ (ψ₁ : GlobalLabelAssignment) (Δ : TypeAssignment)
-                 (Γ : RegisterAssignment) :
-                 Instruction → RegisterAssignment → Set where
+  infix 3 _⊢_⇒_
+  data _⊢_⇒_ : GlobalLabelAssignment × TypeAssignment ×
+               RegisterAssignment →
+               Instruction → RegisterAssignment → Set where
     of-add :
-                      ∀ {♯rd ♯rs v} →
+                    ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
                   lookup-regs ♯rs Γ  ≡ int →
              ψ₁ , [] , Δ , Γ ⊢ v of int vval →
       --------------------------------------------------
       ψ₁ , Δ , Γ ⊢ add ♯rd ♯rs v ⇒ update-regs ♯rd int Γ
 
     of-sub :
-                       ∀ {♯rd ♯rs v} →
+                      ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
                     lookup-regs ♯rs Γ  ≡ int →
                ψ₁ , [] , Δ , Γ ⊢ v of int vval →
       --------------------------------------------------
       ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v ⇒ update-regs ♯rd int Γ
 
     of-sld :
-                    ∀ {♯rd i τ} →
+                 ∀ {ψ₁ Δ Γ ♯rd i τ} →
              register-stack-lookup i Γ τ →
       --------------------------------------------
       ψ₁ , Δ , Γ ⊢ sld ♯rd i ⇒ update-regs ♯rd τ Γ
 
     of-sst :
-              ∀ {i ♯rs τ Γ'} →
+           ∀ {ψ₁ Δ Γ i ♯rs τ Γ'} →
          lookup-regs ♯rs Γ ≡ τ →
       register-stack-update i τ Γ Γ' →
       --------------------------------
         ψ₁ , Δ , Γ ⊢ sst i ♯rs ⇒ Γ'
 
     of-ld :
-                  ∀ {♯rd ♯rs i τs⁻ τ} →
+               ∀ {ψ₁ Δ Γ ♯rd ♯rs i τs⁻ τ} →
               lookup-regs ♯rs Γ ≡ tuple τs⁻ →
                     τs⁻ ↓ i ⇒ τ , true →
       -----------------------------------------------
       ψ₁ , Δ , Γ ⊢ ld ♯rd ♯rs i ⇒ update-regs ♯rd τ Γ
 
     of-st :
-                     ∀ {♯rd i ♯rs τ τs⁻ τs⁻'} →
+                 ∀ {ψ₁ Δ Γ ♯rd i ♯rs τ τs⁻ τs⁻'} →
                       lookup-regs ♯rs Γ ≡ τ →
                   lookup-regs ♯rd Γ ≡ tuple τs⁻ →
                     τs⁻ ⟦ i ⟧← τ , true ⇒ τs⁻' →
@@ -262,39 +266,39 @@ mutual
       ψ₁ , Δ , Γ ⊢ st ♯rd i ♯rs ⇒ update-regs ♯rd (tuple τs⁻') Γ
 
     of-malloc :
-                          ∀ {♯rd τs} →
+                      ∀ {ψ₁ Δ Γ ♯rd τs} →
       ------------------------------------------------------
       ψ₁ , Δ , Γ ⊢ malloc ♯rd τs ⇒
         update-regs ♯rd (tuple (map (λ τ → τ , false) τs)) Γ
 
     of-mov :
-                  ∀ {♯rd v τ} →
+               ∀ {ψ₁ Δ Γ ♯rd v τ} →
           ψ₁ , [] , Δ , Γ ⊢ v of τ vval →
       --------------------------------------------
       ψ₁ , Δ , Γ ⊢ mov ♯rd v ⇒ update-regs ♯rd τ Γ
 
     of-beq :
-                    ∀ {♯r v Γ'} →
+                 ∀ {ψ₁ Δ Γ ♯r v Γ'} →
                lookup-regs ♯r Γ ≡ int →
                      Δ ⊢ Γ ≤ Γ' →
         ψ₁ , [] , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
         ------------------------------------------
               ψ₁ , Δ , Γ ⊢ beq ♯r v ⇒ Γ
 
-  infix 3 _,_,_⊢_instructionsequence
-  data _,_,_⊢_instructionsequence (ψ₁ : GlobalLabelAssignment)
-                                  (Δ : TypeAssignment)
-                                  (Γ : RegisterAssignment) :
-                                  InstructionSequence → Set where
+  infix 3 _⊢_instructionsequence
+  data _⊢_instructionsequence : GlobalLabelAssignment ×
+                                TypeAssignment ×
+                                RegisterAssignment →
+                                InstructionSequence → Set where
     of-~> :
-                 ∀ {Γ' ι I} →
+               ∀ {ψ₁ Δ Γ Γ' ι I} →
              ψ₁ , Δ , Γ ⊢ ι ⇒ Γ' →
       ψ₁ , Δ , Γ' ⊢ I instructionsequence →
       ---------------------------------------
       ψ₁ , Δ , Γ ⊢ ι ~> I instructionsequence
 
     of-jmp :
-                    ∀ {Γ' v} →
+                 ∀ {ψ₁ Δ Γ Γ' v} →
                     Δ ⊢ Γ ≤ Γ' →
       ψ₁ , [] , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
       -------------------------------------------
