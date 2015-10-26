@@ -145,6 +145,13 @@ data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → 
 ←-unique {xs = v ∷ xs} (there up₁) (there up₂) =
   cong (_∷_ v) (←-unique up₁ up₂)
 
+←-dec : ∀ {ℓ} {A : Set ℓ} xs i (v : A) → Dec (∃ λ xs' → xs ⟦ i ⟧← v ⇒ xs')
+←-dec [] i v = no (λ { (_ , ()) })
+←-dec (x ∷ xs) zero v = yes (v ∷ xs , here)
+←-dec (x ∷ xs) (suc i) v with ←-dec xs i v
+... | yes (xs' , up) = yes (x ∷ xs' , there up)
+... | no ¬up = no (λ { (._ , there up) → ¬up (_ , up)} )
+
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)
   List-Tree {A = A} = tree⋆ (λ { (node _ xs) → from xs })

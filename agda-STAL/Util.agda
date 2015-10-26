@@ -17,3 +17,4 @@ open import Util.Product public
 
 -- Re-exports
 open import Data.Unit using (⊤ ; tt) public
+open import Data.Empty using (⊥) public

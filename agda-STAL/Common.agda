@@ -13,11 +13,11 @@ open import GrammarEq
 -- Judgments about the validity of types and type-like objects
 open import TypeJudgments
 
--- Term Judgments
-open import TermJudgments
-
 -- Rules for definig subtyping
 open import Subtyping
+
+-- Term Judgments
+open import TermJudgments
 
 -- Substitution lemmas
 open import SubstitutionLemmas

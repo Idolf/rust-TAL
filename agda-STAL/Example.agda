@@ -22,10 +22,6 @@ foo-Δ = α ∷ α ∷ α ∷ α ∷ ρ ∷ []
 foo-τ : Type
 foo-τ = ∀[ foo-Δ  ] foo-Γ
 
-foo-τ-valid : foo-Δ ⊢ foo-τ Valid
-foo-τ-valid = valid-∀ (valid-α ∷ valid-α ∷ valid-α ∷ valid-α ∷ valid-ρ ∷ []) (valid-registerₐ (valid-ρ⁼ (there (there (there (there here))))) (valid-α⁼ here ∷ valid-α⁼ (there here) ∷ valid-α⁼ (there (there here)) ∷
-                                                                                                                                                                                         valid-α⁼ (there (there (there here))) ∷ []))
-
 foo-word-valid : [ foo-τ ] , [] , foo-Δ ⊢ foo-word of ∀[ [] ] foo-Γ wval
 foo-word-valid = of-inst (of-inst (of-inst (of-inst (of-inst (of-globval here (∀-≤ (valid-α ∷ valid-α ∷ valid-α ∷ valid-α ∷ valid-ρ ∷ []) (Γ-≤ (σ-≤ (valid-ρ⁼ (there (there (there (there here))))))
                                                                                                                                              (α⁼-≤ (valid-α⁼ here) ∷
