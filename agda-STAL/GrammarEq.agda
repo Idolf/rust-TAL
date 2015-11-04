@@ -4,6 +4,14 @@ open import Grammar
 open import Util
 
 private
+  φ-from : Tree → Maybe InitializationFlag
+  φ-from (node 0 _) = just init
+  φ-from _ = just uninit
+
+  φ-sur : IsSurjective φ-from
+  φ-sur init = T₀ 0 , refl
+  φ-sur uninit = T₀ 1 , refl
+
   mutual
     τ-from : Tree → Maybe Type
     τ-from (node 0 (ι ∷ _)) = α⁼ <$> fromTree ι
@@ -26,15 +34,15 @@ private
     τs-from [] = just []
     τs-from (node _ (τ ∷ φ ∷ _) ∷ τs) =
       (λ τ φ τs → (τ , φ) ∷ τs)
-        <$> τ-from τ <*> fromTree φ <*> τs-from τs
+        <$> τ-from τ <*> φ-from φ <*> τs-from τs
     τs-from _ = nothing
 
     τs-sur : IsSurjective τs-from
     τs-sur [] = [] , refl
     τs-sur ((τ , φ) ∷ τs) =
-      T₂ 0 (proj₁ (τ-sur τ)) φ ∷ proj₁ (τs-sur τs) ,
+      T₂ 0 (proj₁ (τ-sur τ)) (proj₁ (φ-sur φ)) ∷ proj₁ (τs-sur τs) ,
       (λ τ φ τs → (τ , φ) ∷ τs)
-        <$=> proj₂ (τ-sur τ) <*=> invTree φ <*=> proj₂ (τs-sur τs)
+        <$=> proj₂ (τ-sur τ) <*=> proj₂ (φ-sur φ) <*=> proj₂ (τs-sur τs)
 
     σ-from : Tree → Maybe StackType
     σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
@@ -89,6 +97,9 @@ private
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (regs-sur τs)
 
 instance
+  InitializationFlag-Tree : ToTree InitializationFlag
+  InitializationFlag-Tree = tree⋆ φ-from φ-sur
+
   Type-Tree : ToTree Type
   Type-Tree = tree⋆ τ-from τ-sur
 
@@ -134,7 +145,7 @@ instance
     where from : Tree → Maybe WordValue
           from (node 0 (l ∷ ♯a ∷ _)) = globval <$> fromTree l <*> fromTree ♯a
           from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
-          from (node 2 (n ∷ _)) = const <$> fromTree n
+          from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 _) = just ns
           from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
           from (node 5 (w ∷ i ∷ _)) = _⟦_⟧ <$> from w <*> fromTree i
@@ -143,7 +154,7 @@ instance
           sur (globval l ♯a) = T₂ 0 l ♯a ,
             globval <$=> invTree l <*=> invTree ♯a
           sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
-          sur (const n) = T₁ 2 n , const <$=> invTree n
+          sur (int n) = T₁ 2 n , int <$=> invTree n
           sur ns = T₀ 3 , refl
           sur (uninit τ) = T₁ 4 τ , uninit <$=> invTree τ
           sur (w ⟦ i ⟧) = T₂ 5 (proj₁ (sur w)) i ,

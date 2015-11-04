@@ -36,6 +36,26 @@ data AllZipᵥ {a b p} {A : Set a} {B : Set b} (P : A → B → Set p) :
                           AllZipᵥ P {m} xs ys →
                           AllZipᵥ P (x ∷ xs) (y ∷ ys)
 
+allzipᵥ-lookup : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {m} {xs : Vec A m} {ys : Vec B m} →
+                  (i : Fin m) →
+                  AllZipᵥ P xs ys →
+                  P (lookup i xs) (lookup i ys)
+allzipᵥ-lookup () []
+allzipᵥ-lookup zero (p ∷ ps) = p
+allzipᵥ-lookup (suc i) (p ∷ ps) = allzipᵥ-lookup i ps
+
+allzipᵥ-update : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {m} {xs : Vec A m} {ys : Vec B m} →
+                  {x : A} → {y : B} →
+                  (i : Fin m) →
+                  P x y →
+                  AllZipᵥ P xs ys →
+                  AllZipᵥ P (update i x xs) (update i y ys)
+allzipᵥ-update () p []
+allzipᵥ-update zero p (p' ∷ ps) = p ∷ ps
+allzipᵥ-update (suc i) p (p' ∷ ps) = p' ∷ allzipᵥ-update i p ps
+
 data Allᵥ {a p} {A : Set a} (P : A → Set p) :
           ∀ {m} (L : Vec A m) → Set (a ⊔ p) where
   [] : Allᵥ P []

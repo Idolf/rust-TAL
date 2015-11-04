@@ -27,8 +27,9 @@ mutual
     _∷_ : Type → StackType → StackType
 
   -- Initialization flags, φ
-  InitializationFlag : Set
-  InitializationFlag = Bool
+  data InitializationFlag : Set where
+    init : InitializationFlag
+    uninit : InitializationFlag
 
   -- Possible uninitialized type, τ⁻
   InitType : Set
@@ -103,7 +104,7 @@ mutual
   data WordValue : Set where
     globval : GlobLabel → ℕ → WordValue
     heapval : HeapLabel → WordValue
-    const   : ℕ → WordValue
+    int     : ℕ → WordValue
     ns      : WordValue
     uninit  : Type → WordValue
     _⟦_⟧    : WordValue → StrongCast → WordValue

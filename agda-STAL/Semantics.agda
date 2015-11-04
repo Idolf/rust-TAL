@@ -30,19 +30,19 @@ infix 3 _⊢_⇒_
 data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
     exec-add :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
-          evalSmallValue regs v ≡ const n₁ →
-                lookup ♯rs regs ≡ const n₂ →
+          evalSmallValue regs v ≡ int n₁ →
+                lookup ♯rs regs ≡ int n₂ →
       ------------------------------------------------------------
       G ⊢ H , register sp regs , add ♯rd ♯rs v ~> I ⇒
-          H , register sp (update ♯rd (const (n₁ + n₂)) regs) , I
+          H , register sp (update ♯rd (int (n₁ + n₂)) regs) , I
 
     exec-sub :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
-          evalSmallValue regs v ≡ const n₁ →
-                lookup ♯rs regs ≡ const n₂ →
+          evalSmallValue regs v ≡ int n₁ →
+                lookup ♯rs regs ≡ int n₂ →
       ------------------------------------------------------------
       G ⊢ H , register sp regs , sub ♯rd ♯rs v ~> I ⇒
-          H , register sp (update ♯rd (const (n₁ ∸ n₂)) regs) , I
+          H , register sp (update ♯rd (int (n₁ ∸ n₂)) regs) , I
 
     exec-push :
                       ∀ {H sp regs I v} →
@@ -80,7 +80,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
           H , register sp (update ♯rd w regs) , I
 
     exec-st :
-          ∀ {H H' sp regs I ♯rd ♯rs i lₕ ws ws'} →
+          ∀ {H H' sp regs I ♯rd i ♯rs lₕ ws ws'} →
              lookup ♯rd regs ≡ heapval lₕ →
                        H ↓ lₕ ⇒ tuple ws →
               ws ⟦ i ⟧← lookup ♯rs regs ⇒ ws' →
@@ -105,7 +105,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
 
     exec-beq₀ :
                     ∀ {H sp regs ♯r v Γ I₁ I₂} →
-                     lookup ♯r regs ≡ const 0 →
+                     lookup ♯r regs ≡ int 0 →
       EvalGlobal G (evalSmallValue regs v) (∀[ [] ] Γ ∙ I₂) →
       -------------------------------------------------------
              G ⊢ H , register sp regs , beq ♯r v ~> I₁ ⇒
@@ -113,7 +113,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
 
     exec-beq₁ :
                 ∀ {H sp regs I ♯r v n₀} →
-              lookup ♯r regs ≡ const n₀ →
+              lookup ♯r regs ≡ int n₀ →
                         n₀ ≢ 0 →
       ------------------------------------------
       G ⊢ H , register sp regs , beq ♯r v ~> I ⇒
@@ -142,11 +142,11 @@ data _⊢_⇒ₙ_/_ (G : Globals) : ProgramState → ℕ → ProgramState → Se
       G ⊢ P₁ ⇒ₙ suc n / P₃
 
 private
-  const-helper : ∀ {n₁ n₂ w} →
-                   w ≡ const n₁ →
-                   w ≡ const n₂ →
+  int-helper : ∀ {n₁ n₂} {w : WordValue} →
+                   w ≡ int n₁ →
+                   w ≡ int n₂ →
                    n₁ ≡ n₂
-  const-helper refl refl = refl
+  int-helper refl refl = refl
 
   heapval-helper : ∀ {lₕ₁ lₕ₂ w} →
                    w ≡ heapval lₕ₁ →
@@ -186,11 +186,11 @@ exec-unique : ∀ {G P P₁ P₂} →
                 G ⊢ P ⇒ P₂ →
                 P₁ ≡ P₂
 exec-unique (exec-add eq₁₁ eq₁₂) (exec-add eq₂₁ eq₂₂)
-  rewrite const-helper eq₁₁ eq₂₁
-        | const-helper eq₁₂ eq₂₂ = refl
+  rewrite int-helper eq₁₁ eq₂₁
+        | int-helper eq₁₂ eq₂₂ = refl
 exec-unique (exec-sub eq₁₁ eq₁₂) (exec-sub eq₂₁ eq₂₂)
-  rewrite const-helper eq₁₁ eq₂₁
-        | const-helper eq₁₂ eq₂₂ = refl
+  rewrite int-helper eq₁₁ eq₂₁
+        | int-helper eq₁₂ eq₂₂ = refl
 exec-unique exec-push exec-push = refl
 exec-unique exec-pop exec-pop = refl
 exec-unique (exec-sld l₁) (exec-sld l₂)
@@ -213,10 +213,10 @@ exec-unique (exec-beq₀ eq₁ eval₁) (exec-beq₀ eq₂ eval₂)
   with eval-unique eval₁ eval₂
 ... | refl = refl
 exec-unique (exec-beq₀ eq₁ eval₁) (exec-beq₁ eq₂ neq₂)
-  rewrite const-helper eq₁ eq₂ with neq₂ refl
+  rewrite int-helper eq₁ eq₂ with neq₂ refl
 ... | ()
 exec-unique (exec-beq₁ eq₁ neq₁) (exec-beq₀ eq₂ eval₂)
-  rewrite const-helper eq₁ eq₂ with neq₁ refl
+  rewrite int-helper eq₁ eq₂ with neq₁ refl
 ... | ()
 exec-unique (exec-beq₁ eq₁ neq₁) (exec-beq₁ eq₂ neq₂) = refl
 exec-unique (exec-jmp eval₁) (exec-jmp eval₂)
@@ -248,7 +248,7 @@ eval-dec G (globval l ♯a)
         help l₁ l₂ neq eq with ↓-unique l₁ l₂
         ... | refl = neq eq
 eval-dec G (heapval l) = no (λ { (_ , ()) })
-eval-dec G (const n) = no (λ { (_ , ()) })
+eval-dec G (int n) = no (λ { (_ , ()) })
 eval-dec G ns = no (λ { (_ , ()) })
 eval-dec G (uninit τ) = no (λ { (_ , ()) })
 eval-dec G (w ⟦ c ⟧) with eval-dec G w
@@ -293,25 +293,25 @@ eval-dec G (w ⟦ c ⟧) with eval-dec G w
         ... | refl = ¬sub-I sub-I
 
 private
-  is-const : ∀ v → Dec (∃ λ n → v ≡ const n)
-  is-const (globval l ♯a) = no (λ { (_ , ()) })
-  is-const (heapval lₕ) = no (λ { (_ , ()) })
-  is-const (const n) = yes (n , refl)
-  is-const ns = no (λ { (_ , ()) })
-  is-const (uninit τs) = no (λ { (_ , ()) })
-  is-const (v' ⟦ c ⟧) = no (λ { (_ , ()) })
+  is-int : ∀ v → Dec (∃ λ n → v ≡ int n)
+  is-int (globval l ♯a) = no (λ { (_ , ()) })
+  is-int (heapval lₕ) = no (λ { (_ , ()) })
+  is-int (int n) = yes (n , refl)
+  is-int ns = no (λ { (_ , ()) })
+  is-int (uninit τs) = no (λ { (_ , ()) })
+  is-int (v' ⟦ c ⟧) = no (λ { (_ , ()) })
 
-  ↓-is-const : ∀ regs ♯r → Dec (∃ λ n → regs ↓ ♯r ⇒ const n)
-  ↓-is-const regs ♯r with ↓-dec regs ♯r
+  ↓-is-int : ∀ regs ♯r → Dec (∃ λ n → regs ↓ ♯r ⇒ int n)
+  ↓-is-int regs ♯r with ↓-dec regs ♯r
   ... | no ¬l = no (λ { (n , l) → ¬l (_ , l)})
-  ... | yes (v , l) with is-const v
+  ... | yes (v , l) with is-int v
   ... | yes (n , eq) rewrite eq = yes (n , l)
   ... | no ¬eq = no (λ { (n , l') → ¬eq (n , ↓-unique l l')})
 
   is-heapval : ∀ v → Dec (∃ λ lₕ → v ≡ heapval lₕ)
   is-heapval (globval l ♯a) = no (λ { (_ , ()) })
   is-heapval (heapval lₕ) = yes (lₕ , refl)
-  is-heapval (const n) = no (λ { (_ , ()) })
+  is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval ns = no (λ { (_ , ()) })
   is-heapval (uninit τs) = no (λ { (_ , ()) })
   is-heapval (v' ⟦ c ⟧) = no (λ { (_ , ()) })
@@ -325,12 +325,12 @@ private
 
 exec-dec : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
 exec-dec G (H , register sp regs , add ♯rd ♯rs v ~> I)
-  with is-const (evalSmallValue regs v) | is-const (lookup ♯rs regs)
+  with is-int (evalSmallValue regs v) | is-int (lookup ♯rs regs)
 ... | yes (n₁ , eq₁) | yes (n₂ , eq₂) = yes (_ , exec-add eq₁ eq₂)
 ... | no ¬eq₁ | _ = no (λ { (._ , exec-add eq₁ eq₂) → ¬eq₁ (_ , eq₁)})
 ... | _ | no ¬eq₂ = no (λ { (._ , exec-add eq₁ eq₂) → ¬eq₂ (_ , eq₂)})
 exec-dec G (H , register sp regs , sub ♯rd ♯rs v ~> I)
-  with is-const (evalSmallValue regs v) | is-const (lookup ♯rs regs)
+  with is-int (evalSmallValue regs v) | is-int (lookup ♯rs regs)
 ... | yes (n₁ , eq₁) | yes (n₂ , eq₂) = yes (_ , exec-sub eq₁ eq₂)
 ... | no ¬eq₁ | _ = no (λ { (._ , exec-sub eq₁ eq₂) → ¬eq₁ (_ , eq₁)})
 ... | _ | no ¬eq₂ = no (λ { (._ , exec-sub eq₁ eq₂) → ¬eq₂ (_ , eq₂)})
@@ -385,20 +385,20 @@ exec-dec G (H , register sp regs , st ♯rd i ♯rs ~> I)
 exec-dec G (H , register sp regs , malloc ♯rd τs ~> I) = yes (_ , exec-malloc)
 exec-dec G (H , register sp regs , mov ♯rd v ~> I) = yes (_ , exec-mov)
 exec-dec G (H , register sp regs , beq ♯r v ~> I)
-  with is-const (lookup ♯r regs)
+  with is-int (lookup ♯r regs)
 ... | no ¬eq = no (λ { (._ , exec-beq₀ eq eval) → ¬eq (_ , eq)
                      ; (._ , exec-beq₁ eq neg) → ¬eq (_ , eq)})
 ... | yes (suc n , eq) = yes (_ , exec-beq₁ eq (λ ()))
 ... | yes (zero , eq) with eval-dec G (evalSmallValue regs v)
 ... | no ¬eval = no (λ { (._ , exec-beq₀ eq' eval) → ¬eval (_ , eval)
                        ; (._ , exec-beq₁ eq' neq) →
-                             neq (const-helper eq' eq)})
+                             neq (int-helper eq' eq)})
 ... | yes (∀[ [] ] Γ ∙ I' , eval) = yes (_ , exec-beq₀ eq eval)
 ... | yes (∀[ a ∷ Δ ] Γ ∙ I' , eval) = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , beq ♯r v ~> I ⇒ P')
         help (._ , exec-beq₀ eq' eval') with eval-unique eval eval'
         ... | ()
-        help (._ , exec-beq₁ eq' neq) = neq (const-helper eq' eq)
+        help (._ , exec-beq₁ eq' neq) = neq (int-helper eq' eq)
 exec-dec G (H , register sp regs , jmp v)
   with eval-dec G (evalSmallValue regs v)
 ... | no ¬eval = no (λ { (._ , exec-jmp  eval) → ¬eval (_ , eval) })

@@ -8,9 +8,8 @@ import Relation.Binary as B
 
 wctx-length : WordValue → ℕ
 wctx-length (globval l ♯a) = ♯a
-
 wctx-length (w ⟦ inst i / ι ⟧) = pred (wctx-length w)
-wctx-length (w ⟦ weaken Δ⁺ / ι ⟧) = length Δ⁺ + wctx-length w
+wctx-length (w ⟦ weaken Δ⁺ / ι ⟧) = wctx-length w + length Δ⁺
 wctx-length _ = 0
 
 vctx-length : SmallValue → ℕ
@@ -187,7 +186,7 @@ mutual
   data _⟦_⟧c≡_ : substᵗ StrongCast where
     subst-/ :
            ∀ {cᵥ₁ cᵥ₂ cᵥ ι₁ ι₂} →
-         cᵥ₁ ⟦ cᵥ / ι₁ ∸ ι₂ ⟧cᵥ≡ cᵥ₂ →
+         cᵥ₁ ⟦ cᵥ / ι₁ ∸ suc ι₂ ⟧cᵥ≡ cᵥ₂ →
       -------------------------------
       cᵥ₁ / ι₂ ⟦ cᵥ / ι₁ ⟧c≡ cᵥ₂ / ι₂
 
@@ -203,10 +202,10 @@ mutual
       ---------------------------
       heapval l ⟦ c ⟧w≡ heapval l
 
-    subst-const :
+    subst-int :
               ∀ {n c} →
       -----------------------
-      const n ⟦ c ⟧w≡ const n
+      int n ⟦ c ⟧w≡ int n
 
     subst-ns :
          ∀ {c} →
@@ -220,11 +219,11 @@ mutual
       uninit τ ⟦ c ⟧w≡ uninit τ'
 
     subst-⟦⟧ :
-              ∀ {w₁ w₂ c₁ c₂ cᵥ ι} →
+              ∀ {w₁ w₂ cᵥ₁ cᵥ₂ ιₘ cᵥ ι} →
                w₁ ⟦ cᵥ / ι ⟧w≡ w₂ →
-      c₁ ⟦ cᵥ / pred (wctx-length w₁ + ι) ⟧c≡ c₂ →
+      cᵥ₁ ⟦ cᵥ / (wctx-length w₁ ∸ suc ιₘ) + ι ⟧cᵥ≡ cᵥ₂ →
       ---------------------------------------
-        (w₁ ⟦ c₁ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ c₂ ⟧)
+      (w₁ ⟦ cᵥ₁ / ιₘ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ cᵥ₂ / ιₘ ⟧)
 
   infix 3 _⟦_⟧v≡_
   data _⟦_⟧v≡_ : substᵗ SmallValue where
@@ -843,11 +842,11 @@ instance
             cong₂ _/_ (subst-unique sub-cᵥ₁ sub-cᵥ₂) refl
 
           weak : ∀ c w ι → ∃ λ c' → c ⟦ weaken w / ι ⟧c≡ c'
-          weak (cᵥ / ι) w ι⋆ with can-weaken cᵥ w (ι⋆ ∸ ι)
+          weak (cᵥ / ι) w ι⋆ with can-weaken cᵥ w (ι⋆ ∸ suc ι)
           ... | cᵥ' , sub-cᵥ = cᵥ' / ι , subst-/ sub-cᵥ
 
           dec : ∀ c c⋆ → Dec (∃ λ c' → c ⟦ c⋆ ⟧c≡ c')
-          dec (cᵥ / ι) (cᵥ⋆ / ι⋆) with cᵥ ⟦ cᵥ⋆ / ι⋆ ∸ ι ⟧?
+          dec (cᵥ / ι) (cᵥ⋆ / ι⋆) with cᵥ ⟦ cᵥ⋆ / ι⋆ ∸ suc ι ⟧?
           ... | yes (cᵥ' , sub-cᵥ) = yes (cᵥ' / ι , subst-/ sub-cᵥ)
           ... | no ¬sub-cᵥ =
             no (λ { (cᵥ' / .ι , subst-/ sub-cᵥ) → ¬sub-cᵥ (cᵥ' , sub-cᵥ) })
@@ -863,51 +862,53 @@ instance
                      w₁ ≡ w₂
           unique subst-globval subst-globval = refl
           unique subst-heapval subst-heapval = refl
-          unique subst-const subst-const = refl
+          unique subst-int subst-int = refl
           unique subst-ns subst-ns = refl
           unique (subst-uninit sub-τ₁) (subst-uninit sub-τ₂) =
             cong uninit (subst-unique sub-τ₁ sub-τ₂)
-          unique (subst-⟦⟧ sub-w₁ sub-c₁) (subst-⟦⟧ sub-w₂ sub-c₂) =
-            cong₂ _⟦_⟧ (unique sub-w₁ sub-w₂) (subst-unique sub-c₁ sub-c₂)
+          unique (subst-⟦⟧ sub-w₁ sub-c₁) (subst-⟦⟧ sub-w₂ sub-c₂)
+            rewrite unique sub-w₁ sub-w₂
+                  | subst-unique sub-c₁ sub-c₂ = refl
+
 
           weak : ∀ w w⋆ ι → ∃ λ w' → w ⟦ weaken w⋆ / ι ⟧w≡ w'
           weak (globval l ♯a) w⋆ ι = globval l ♯a , subst-globval
           weak (heapval lₕ) w⋆ ι = heapval lₕ , subst-heapval
-          weak (const n) w⋆ ι = const n , subst-const
+          weak (int n) w⋆ ι = int n , subst-int
           weak ns w⋆ ι = ns , subst-ns
           weak (uninit τ) w⋆ ι = Σ-map uninit subst-uninit (can-weaken τ w⋆ ι)
-          weak (w ⟦ c ⟧) w⋆ ι =
-            Σ-zip _⟦_⟧ subst-⟦⟧
+          weak (w ⟦ cᵥ / ιₘ ⟧) w⋆ ι =
+            Σ-zip (λ w' cᵥ' → w' ⟦ cᵥ' / ιₘ ⟧) subst-⟦⟧
                   (weak w w⋆ ι)
-                  (can-weaken c w⋆ (pred (wctx-length w + ι)))
+                  (can-weaken cᵥ w⋆ (wctx-length w ∸ suc ιₘ + ι))
 
           dec : ∀ w c → Dec (∃ λ w' → w ⟦ c ⟧w≡ w')
           dec (globval l ♯a) c = yes (globval l ♯a , subst-globval)
           dec (heapval lₕ) c = yes (heapval lₕ , subst-heapval)
-          dec (const n) c = yes (const n , subst-const)
+          dec (int n) c = yes (int n , subst-int)
           dec ns c = yes (ns , subst-ns)
           dec (uninit τ) c with τ ⟦ c ⟧?
           ... | yes (τ' , sub-τ) = yes (uninit τ' , subst-uninit sub-τ)
           ... | no ¬sub-τ =
             no (λ { (uninit τ' , subst-uninit sub-τ) → ¬sub-τ (τ' , sub-τ) })
-          dec (w ⟦ c ⟧) (cᵥ / ι)
-            with dec w (cᵥ / ι) | c ⟦ cᵥ / pred (wctx-length w + ι) ⟧?
-          ... | yes (w' , sub-w) | yes (c' , sub-c) =
-            yes (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c)
+          dec (w ⟦ cᵥ₁ / ιₘ ⟧) (cᵥ / ι)
+            with dec w (cᵥ / ι) | cᵥ₁ ⟦ cᵥ / (wctx-length w ∸ suc ιₘ) + ι ⟧?
+          ... | yes (w' , sub-w) | yes (cᵥ₂ , sub-cᵥ) =
+            yes (w' ⟦ cᵥ₂ / ιₘ ⟧ , subst-⟦⟧ sub-w sub-cᵥ)
           ... | no ¬sub-w | _ =
-            no (λ { (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c ) →
+            no (λ { (w' ⟦ cᵥ₂ / .ιₘ ⟧ , subst-⟦⟧ sub-w sub-cᵥ ) →
               ¬sub-w (w' , sub-w)})
-          ... | _ | no ¬sub-c =
-            no (λ { (w' ⟦ c' ⟧ , subst-⟦⟧ sub-w sub-c ) →
-              ¬sub-c (c' , sub-c)})
+          ... | _ | no ¬sub-cᵥ =
+            no (λ { (w' ⟦ cᵥ₂ / .ιₘ ⟧ , subst-⟦⟧ sub-w sub-cᵥ ) →
+              ¬sub-cᵥ (cᵥ₂ , sub-cᵥ)})
 
           w-weaken-0 : ∀ w {ι} → w ⟦ weaken 0 / ι ⟧w≡ w
           w-weaken-0 (globval l ♯a) = subst-globval
           w-weaken-0 (heapval lₕ) = subst-heapval
-          w-weaken-0 (const n) = subst-const
+          w-weaken-0 (int n) = subst-int
           w-weaken-0 ns = subst-ns
           w-weaken-0 (uninit τ) = subst-uninit (weaken-0 τ)
-          w-weaken-0 (w ⟦ c ⟧) = subst-⟦⟧ (w-weaken-0 w) (weaken-0 c)
+          w-weaken-0 (w ⟦ cᵥ / ιₘ ⟧) = subst-⟦⟧ (w-weaken-0 w) (weaken-0 cᵥ)
 
   SmallValue-Substitution : Substitution SmallValue ℕ
   SmallValue-Substitution = substitution 0 _⟦_⟧v≡_ unique weak dec v-weaken-0
@@ -1105,11 +1106,16 @@ instance
     weaken-0
 
 
+data ReferenceMatch : TypeAssignmentValue → Instantiation → Set where
+  match-α : ∀ {τ} → ReferenceMatch α (α τ)
+  match-ρ : ∀ {σ} → ReferenceMatch ρ (ρ σ)
+
 infix 3 Run_⟦_⟧≡_
 data Run_⟦_⟧≡_ : TypeAssignment → StrongCast → TypeAssignment → Set where
   run-inst :
-               ∀ {a Δ i} →
-    -------------------------------
+               ∀ {Δ a i} →
+             ReferenceMatch a i →
+    ----------------------------------
     Run a ∷ Δ ⟦ inst i / zero ⟧≡ Δ
 
   run-weaken :
@@ -1130,7 +1136,7 @@ run-unique : ∀ {Δ Δ₁ Δ₂ c} →
                Run Δ ⟦ c ⟧≡ Δ₁ →
                Run Δ ⟦ c ⟧≡ Δ₂ →
                Δ₁ ≡ Δ₂
-run-unique run-inst run-inst = refl
+run-unique (run-inst m₁) (run-inst m₂) = refl
 run-unique run-weaken run-weaken = refl
 run-unique (run-suc sub-a₁ run-Δ₁) (run-suc sub-a₂ run-Δ₂) =
   cong₂ _∷_ (subst-unique {W = TypeAssignment} sub-a₁ sub-a₂)
@@ -1141,7 +1147,10 @@ Run_⟦_⟧? : ∀ Δ c → Dec (∃ λ Δ' → Run Δ ⟦ c ⟧≡ Δ')
 Run [] ⟦ inst i / ι ⟧? = no (λ { (_ , ()) })
 Run [] ⟦ weaken Δ⁺ / zero ⟧? = yes (Δ⁺ ++ [] , run-weaken)
 Run [] ⟦ weaken Δ⁺ / suc ι ⟧? = no (λ { (_ , ()) })
-Run a ∷ Δ ⟦ inst i / zero ⟧? = yes (Δ , run-inst)
+Run α ∷ Δ ⟦ inst (α τ) / zero ⟧? = yes (Δ , run-inst match-α)
+Run α ∷ Δ ⟦ inst (ρ σ) / zero ⟧? = no (λ { (_ , run-inst ()) })
+Run ρ ∷ Δ ⟦ inst (α τ) / zero ⟧? = no (λ { (_ , run-inst ()) })
+Run ρ ∷ Δ ⟦ inst (ρ σ) / zero ⟧? = yes (Δ , run-inst match-ρ)
 Run a ∷ Δ ⟦ weaken Δ⁺ / zero ⟧? = yes (Δ⁺ ++ a ∷ Δ , run-weaken)
 Run a ∷ Δ ⟦ cᵥ / suc ι ⟧? with a ⟦ cᵥ / ι ⟧? | Run Δ ⟦ cᵥ / ι ⟧?
 ... | yes (a' , sub-a) |

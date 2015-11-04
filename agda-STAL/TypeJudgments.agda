@@ -63,20 +63,12 @@ mutual
       Δ ⊢ τ ∷ σ StackType
 
   infix 3 ⊢_GlobalLabelAssignment
-  data ⊢_GlobalLabelAssignment : GlobalLabelAssignment → Set where
-    valid-G :
-                ∀ {G} →
-      All (λ τ → [] ⊢ τ Type) G →
-      ---------------------------
-       ⊢ G GlobalLabelAssignment
+  ⊢_GlobalLabelAssignment : GlobalLabelAssignment → Set
+  ⊢ ψ₁ GlobalLabelAssignment = All (λ τ → [] ⊢ τ Type) ψ₁
 
   infix 3 ⊢_HeapLabelAssignment
-  data ⊢_HeapLabelAssignment : HeapLabelAssignment → Set where
-    valid-H :
-                ∀ {H} →
-      All (λ τ → [] ⊢ τ Type) H →
-      ---------------------------
-        ⊢ H HeapLabelAssignment
+  ⊢_HeapLabelAssignment : HeapLabelAssignment → Set
+  ⊢ ψ₂ HeapLabelAssignment = All (λ τ → [] ⊢ τ Type) ψ₂
 
   infix 3 ⊢_LabelAssignment
   ⊢_LabelAssignment : LabelAssignment → Set
@@ -145,6 +137,20 @@ mutual
       ------------------------
       Δ ⊢ inst i WeakCastValue
 
+  infix 3 _⊢_StrongCastValue
+  data _⊢_StrongCastValue : TypeAssignment → StrongCastValue → Set where
+    valid-weaken :
+             ∀ {Δ Δ⁺} →
+       Δ ⊢ Δ⁺ TypeAssignment →
+      --------------------------
+      Δ ⊢ weaken Δ⁺ StrongCastValue
+
+    valid-inst :
+             ∀ {Δ i} →
+        Δ ⊢ i Instantiation →
+      ------------------------
+      Δ ⊢ inst i StrongCastValue
+
   infix 3 _⊢_WeakCast
   data _⊢_WeakCast : TypeAssignment → WeakCast → Set where
     valid-zero :
@@ -158,6 +164,20 @@ mutual
           Δ ⊢ cᵥ / ι WeakCast →
       ---------------------------
       a ∷ Δ ⊢ cᵥ / suc ι WeakCast
+
+  infix 3 _⊢_StrongCast
+  data _⊢_StrongCast : TypeAssignment → StrongCast → Set where
+    valid-zero :
+            ∀ {Δ cᵥ} →
+      Δ ⊢ cᵥ StrongCastValue →
+      ----------------------
+      Δ ⊢ cᵥ / zero StrongCast
+
+    valid-suc :
+             ∀ {a Δ cᵥ ι} →
+          Δ ⊢ cᵥ / ι StrongCast →
+      ---------------------------
+      a ∷ Δ ⊢ cᵥ / suc ι StrongCast
 
 private
   mutual
@@ -205,13 +225,11 @@ private
 
     infix 3 ⊢?_GlobalLabelAssignment
     ⊢?_GlobalLabelAssignment : ∀ ψ₁ → Dec (⊢ ψ₁ GlobalLabelAssignment)
-    ⊢? ψ₁ GlobalLabelAssignment =
-      dec-inj valid-G (λ { (valid-G τs⋆) → τs⋆ }) ([] ⊢? ψ₁ Types)
+    ⊢? ψ₁ GlobalLabelAssignment = [] ⊢? ψ₁ Types
 
     infix 3 ⊢?_HeapLabelAssignment
     ⊢?_HeapLabelAssignment : ∀ ψ₂ → Dec (⊢ ψ₂ HeapLabelAssignment)
-    ⊢? ψ₂ HeapLabelAssignment =
-      dec-inj valid-H (λ { (valid-H τs⋆) → τs⋆ }) ([] ⊢? ψ₂ Types)
+    ⊢? ψ₂ HeapLabelAssignment = [] ⊢? ψ₂ Types
 
     infix 3 ⊢?_LabelAssignment
     ⊢?_LabelAssignment : ∀ ψ → Dec (⊢ ψ LabelAssignment)
@@ -266,93 +284,237 @@ private
 
     infix 3 _⊢?_WeakCastValue
     _⊢?_WeakCastValue : ∀ Δ cᵥ → Dec (Δ ⊢ cᵥ WeakCastValue)
-    Δ ⊢? inst i WeakCastValue =
-      dec-inj valid-inst (λ { (valid-inst i⋆) → i⋆ }) (Δ ⊢? i Instantiation)
-    Δ ⊢? weaken x WeakCastValue = yes valid-weaken
+    Δ ⊢? inst i WeakCastValue
+      with Δ ⊢? i Instantiation
+    ... | yes i⋆ = yes (valid-inst i⋆)
+    ... | no ¬i⋆ = no (λ { (valid-inst i⋆) → ¬i⋆ i⋆ })
+    Δ ⊢? weaken n WeakCastValue = yes valid-weaken
 
     infix 3 _⊢?_WeakCast
     _⊢?_WeakCast : ∀ Δ c → Dec (Δ ⊢ c WeakCast)
-    Δ ⊢? cᵥ / zero WeakCast = dec-inj (valid-zero {Δ})
-                                      (λ { (valid-zero cᵥ⋆) → cᵥ⋆ })
-                                      (Δ ⊢? cᵥ WeakCastValue)
+    Δ ⊢? cᵥ / zero WeakCast
+      with Δ ⊢? cᵥ WeakCastValue
+    ... | yes cᵥ⋆ = yes (valid-zero cᵥ⋆)
+    ... | no ¬cᵥ⋆ = no (λ { (valid-zero cᵥ⋆) → ¬cᵥ⋆ cᵥ⋆ })
     [] ⊢? cᵥ / suc ι WeakCast = no (λ ())
-    a ∷ Δ ⊢? cᵥ / suc ι WeakCast = dec-inj valid-suc
-                                           (λ { (valid-suc c⋆) → c⋆ })
-                                           (Δ ⊢? cᵥ / ι WeakCast)
+    a ∷ Δ ⊢? cᵥ / suc ι WeakCast
+      with Δ ⊢? cᵥ / ι WeakCast
+    ... | yes cᵥ⋆ = yes (valid-suc cᵥ⋆)
+    ... | no ¬cᵥ⋆ = no (λ { (valid-suc cᵥ⋆) → ¬cᵥ⋆ cᵥ⋆ })
 
-record TypeLike (A Ctx : Set) : Set1 where
+    infix 3 _⊢?_StrongCastValue
+    _⊢?_StrongCastValue : ∀ Δ cᵥ → Dec (Δ ⊢ cᵥ StrongCastValue)
+    Δ ⊢? inst i StrongCastValue
+      with Δ ⊢? i Instantiation
+    ... | yes i⋆ = yes (valid-inst i⋆)
+    ... | no ¬i⋆ = no (λ { (valid-inst i⋆) → ¬i⋆ i⋆ })
+    Δ ⊢? weaken Δ⁺ StrongCastValue
+      with Δ ⊢? Δ⁺ TypeAssignment
+    ... | yes Δ⁺⋆ = yes (valid-weaken Δ⁺⋆)
+    ... | no ¬Δ⁺⋆ = no (λ { (valid-weaken Δ⁺⋆) → ¬Δ⁺⋆ Δ⁺⋆ })
+
+    infix 3 _⊢?_StrongCast
+    _⊢?_StrongCast : ∀ Δ c → Dec (Δ ⊢ c StrongCast)
+    Δ ⊢? cᵥ / zero StrongCast
+      with Δ ⊢? cᵥ StrongCastValue
+    ... | yes cᵥ⋆ = yes (valid-zero cᵥ⋆)
+    ... | no ¬cᵥ⋆ = no (λ { (valid-zero cᵥ⋆) → ¬cᵥ⋆ cᵥ⋆ })
+    [] ⊢? cᵥ / suc ι StrongCast = no (λ ())
+    a ∷ Δ ⊢? cᵥ / suc ι StrongCast
+      with Δ ⊢? cᵥ / ι StrongCast
+    ... | yes cᵥ⋆ = yes (valid-suc cᵥ⋆)
+    ... | no ¬cᵥ⋆ = no (λ { (valid-suc cᵥ⋆) → ¬cᵥ⋆ cᵥ⋆ })
+
+  mutual
+    τ-valid-++ : ∀ {Δ Δ' τ} →
+                   Δ ⊢ τ Type →
+                   Δ ++ Δ' ⊢ τ Type
+    τ-valid-++ (valid-α⁼ l) = valid-α⁼ (↓-add-right _ l)
+    τ-valid-++ valid-int = valid-int
+    τ-valid-++ valid-ns = valid-ns
+    τ-valid-++ {Δ = Δ} {Δ'} (valid-∀ {Δᵥ} {Γ} Δ⋆ Γ⋆) =
+      valid-∀ (Δ-valid-++ Δ⋆)
+              (subst (λ Δ → Δ ⊢ Γ RegisterAssignment)
+              (List-++-assoc Δᵥ Δ Δ') (Γ-valid-++ Γ⋆))
+    τ-valid-++ (valid-tuple τs⋆) = valid-tuple (τs⁻-valid-++ τs⋆)
+
+    τ⁻-valid-++ : ∀ {Δ Δ' τ⁻} →
+                    Δ ⊢ τ⁻ InitType →
+                    Δ ++ Δ' ⊢ τ⁻ InitType
+    τ⁻-valid-++ (valid-τ⁻ τ⋆) = valid-τ⁻ (τ-valid-++ τ⋆)
+
+    τs⁻-valid-++ : ∀ {Δ Δ' τs⁻} →
+                     All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs⁻ →
+                     All (λ τ⁻ → Δ ++ Δ' ⊢ τ⁻ InitType) τs⁻
+    τs⁻-valid-++ [] = []
+    τs⁻-valid-++ (τ⁻⋆ ∷ τs⁻⋆) = τ⁻-valid-++ τ⁻⋆ ∷ τs⁻-valid-++ τs⁻⋆
+
+    σ-valid-++ : ∀ {Δ Δ' σ} →
+                     Δ ⊢ σ StackType →
+                     Δ ++ Δ' ⊢ σ StackType
+    σ-valid-++ (valid-ρ⁼ l) = valid-ρ⁼ (↓-add-right _ l)
+    σ-valid-++ valid-[] = valid-[]
+    σ-valid-++ (τ⋆ ∷ σ⋆) = τ-valid-++ τ⋆ ∷ σ-valid-++ σ⋆
+
+    Δ-valid-++ : ∀ {Δ Δ' Δᵥ} →
+                   Δ ⊢ Δᵥ TypeAssignment →
+                   Δ ++ Δ' ⊢ Δᵥ TypeAssignment
+    Δ-valid-++ [] = []
+    Δ-valid-++ {Δ} {Δ'} {a ∷ Δᵥ} (a⋆ ∷ Δᵥ⋆) =
+      subst (λ Δ → Δ ⊢ a TypeAssignmentValue)
+            (List-++-assoc Δᵥ Δ Δ') (a-valid-++ a⋆)
+      ∷ Δ-valid-++ Δᵥ⋆
+
+    a-valid-++ : ∀ {Δ Δ' a} →
+                   Δ ⊢ a TypeAssignmentValue →
+                   Δ ++ Δ' ⊢ a TypeAssignmentValue
+    a-valid-++ valid-α = valid-α
+    a-valid-++ valid-ρ = valid-ρ
+
+    Γ-valid-++ : ∀ {Δ Δ' Γ} →
+                   Δ ⊢ Γ RegisterAssignment →
+                   Δ ++ Δ' ⊢ Γ RegisterAssignment
+    Γ-valid-++ (valid-registerₐ sp⋆ regs⋆) =
+      valid-registerₐ (σ-valid-++ sp⋆) (regs-valid-++ regs⋆)
+
+    regs-valid-++ : ∀ {Δ Δ' m} {τs : Vec Type m} →
+                      Allᵥ (λ τ → Δ ⊢ τ Type) τs →
+                      Allᵥ (λ τ → Δ ++ Δ' ⊢ τ Type) τs
+    regs-valid-++ [] = []
+    regs-valid-++ (τ⋆ ∷ τs⋆) = τ-valid-++ τ⋆ ∷ regs-valid-++ τs⋆
+
+    i-valid-++ : ∀ {Δ Δ' i} →
+                   Δ ⊢ i Instantiation →
+                   Δ ++ Δ' ⊢ i Instantiation
+    i-valid-++ (valid-α τ⋆) = valid-α (τ-valid-++ τ⋆)
+    i-valid-++ (valid-ρ σ⋆) = valid-ρ (σ-valid-++ σ⋆)
+
+    cᵥw-valid-++ : ∀ {Δ Δ' cᵥ} →
+                     Δ ⊢ cᵥ WeakCastValue →
+                     Δ ++ Δ' ⊢ cᵥ WeakCastValue
+    cᵥw-valid-++ (valid-inst i⋆) = valid-inst (i-valid-++ i⋆)
+    cᵥw-valid-++ valid-weaken = valid-weaken
+
+    cw-valid-++ : ∀ {Δ Δ' c} →
+                    Δ ⊢ c WeakCast →
+                    Δ ++ Δ' ⊢ c WeakCast
+    cw-valid-++ (valid-zero cᵥ⋆) = valid-zero (cᵥw-valid-++ cᵥ⋆)
+    cw-valid-++ (valid-suc c⋆) = valid-suc (cw-valid-++ c⋆)
+
+    cᵥ-valid-++ : ∀ {Δ Δ' cᵥ} →
+                   Δ ⊢ cᵥ StrongCastValue →
+                   Δ ++ Δ' ⊢ cᵥ StrongCastValue
+    cᵥ-valid-++ (valid-inst i⋆) = valid-inst (i-valid-++ i⋆)
+    cᵥ-valid-++ (valid-weaken Δ⁺⋆) = valid-weaken (Δ-valid-++ Δ⁺⋆)
+
+    c-valid-++ : ∀ {Δ Δ' c} →
+                  Δ ⊢ c StrongCast →
+                  Δ ++ Δ' ⊢ c StrongCast
+    c-valid-++ (valid-zero cᵥ⋆) = valid-zero (cᵥ-valid-++ cᵥ⋆)
+    c-valid-++ (valid-suc c⋆) = valid-suc (c-valid-++ c⋆)
+
+record TypeLike (A : Set) : Set1 where
   constructor typeLike
   field
-    _⊢_Valid : Ctx → A → Set
-    _⊢?_Valid : ∀ C v → Dec (C ⊢ v Valid)
+    _⊢_Valid : TypeAssignment → A → Set
+    _⊢?_Valid : ∀ Δ v → Dec (Δ ⊢ v Valid)
+    valid-++ : ∀ {Δ Δ' v} → Δ ⊢ v Valid → Δ ++ Δ' ⊢ v Valid
   infix 3 _⊢_Valid _⊢?_Valid
 open TypeLike {{...}} public
 
-Vec-typeLike : ∀ {A Ctx : Set} {{_ : TypeLike A Ctx}} {m} →
-                 TypeLike (Vec A m) Ctx
-Vec-typeLike {{r}} = typeLike
-  (λ C xs → Allᵥ (λ x → C ⊢ x Valid) xs)
-  (λ C xs → Allᵥ-dec (λ x → C ⊢? x Valid) xs)
+Vec-typeLike : ∀ {A} {{_ : TypeLike A}} {m} →
+                 TypeLike (Vec A m)
+Vec-typeLike {A} = typeLike
+    (λ Δ xs → Allᵥ (λ x → Δ ⊢ x Valid) xs)
+    (λ Δ xs → Allᵥ-dec (λ x → Δ ⊢? x Valid) xs)
+    xs-valid-++
+  where xs-valid-++ : ∀ {Δ Δ' m} {xs : Vec A m} →
+                        Allᵥ (λ v → Δ ⊢ v Valid) xs →
+                        Allᵥ (λ v → Δ ++ Δ' ⊢ v Valid) xs
+        xs-valid-++ [] = []
+        xs-valid-++ (x⋆ ∷ xs⋆) = valid-++ x⋆ ∷ xs-valid-++ xs⋆
 
-List-typeLike : ∀ {A Ctx : Set} {{_ : TypeLike A Ctx}} →
-                  TypeLike (List A) Ctx
-List-typeLike {{r}} = typeLike
-  (λ C xs → All (λ x → C ⊢ x Valid) xs)
-  (λ C xs → All-dec (λ x → C ⊢? x Valid) xs)
+
+List-typeLike : ∀ {A} {{_ : TypeLike A}} →
+                  TypeLike (List A)
+List-typeLike {A} = typeLike
+    (λ Δ xs → All (λ x → Δ ⊢ x Valid) xs)
+    (λ Δ xs → All-dec (λ x → Δ ⊢? x Valid) xs)
+    xs-valid-++
+  where xs-valid-++ : ∀ {Δ Δ'} {xs : List A} →
+                        All (λ v → Δ ⊢ v Valid) xs →
+                        All (λ v → Δ ++ Δ' ⊢ v Valid) xs
+        xs-valid-++ [] = []
+        xs-valid-++ (x⋆ ∷ xs⋆) = valid-++ x⋆ ∷ xs-valid-++ xs⋆
+
 
 instance
-  Type-typeLike : TypeLike Type TypeAssignment
-  Type-typeLike = typeLike _⊢_Type _⊢?_Type
+  InitializationFlag-typeLike : TypeLike InitializationFlag
+  InitializationFlag-typeLike = typeLike (λ Δ φ → ⊤) (λ Δ φ → yes tt) id
 
-  Typevec-typeLike : ∀ {m} → TypeLike (Vec Type m) TypeAssignment
-  Typevec-typeLike = Vec-typeLike
+  Type-typeLike : TypeLike Type
+  Type-typeLike = typeLike _⊢_Type _⊢?_Type τ-valid-++
 
-  Typelist-typeLike : TypeLike (List Type) TypeAssignment
-  Typelist-typeLike = List-typeLike
+  TypeVec-typeLike : ∀ {m} → TypeLike (Vec Type m)
+  TypeVec-typeLike = Vec-typeLike
 
-  InitType-typeLike : TypeLike InitType TypeAssignment
-  InitType-typeLike = typeLike _⊢_InitType _⊢?_InitType
+  TypeList-typeLike : TypeLike (List Type)
+  TypeList-typeLike = List-typeLike
 
-  InitTypevec-typeLike : ∀ {m} → TypeLike (Vec InitType m) TypeAssignment
-  InitTypevec-typeLike = Vec-typeLike
+  InitType-typeLike : TypeLike InitType
+  InitType-typeLike = typeLike _⊢_InitType _⊢?_InitType τ⁻-valid-++
 
-  InitTypelist-typeLike : TypeLike (List InitType) TypeAssignment
-  InitTypelist-typeLike = List-typeLike
+  InitTypeVec-typeLike : ∀ {m} → TypeLike (Vec InitType m)
+  InitTypeVec-typeLike = Vec-typeLike
 
-  StackType-typeLike : TypeLike StackType TypeAssignment
-  StackType-typeLike = typeLike _⊢_StackType _⊢?_StackType
+  InitTypeList-typeLike : TypeLike (List InitType)
+  InitTypeList-typeLike = List-typeLike
 
-  LabelAssignment-typeLike : TypeLike LabelAssignment ⊤
-  LabelAssignment-typeLike = typeLike (λ _ ψ → ⊢ ψ LabelAssignment)
-                                (λ _ ψ → ⊢? ψ LabelAssignment)
+  StackType-typeLike : TypeLike StackType
+  StackType-typeLike = typeLike _⊢_StackType _⊢?_StackType σ-valid-++
 
-  TypeAssignment-typeLike : TypeLike TypeAssignment TypeAssignment
+  LabelAssignment-typeLike : TypeLike LabelAssignment
+  LabelAssignment-typeLike = typeLike (const ⊢_LabelAssignment)
+                                      (const ⊢?_LabelAssignment)
+                                      id
+
+  TypeAssignment-typeLike : TypeLike TypeAssignment
   TypeAssignment-typeLike = typeLike _⊢_TypeAssignment
                                      _⊢?_TypeAssignment
+                                     Δ-valid-++
 
-  TypeAssignmentValue-typeLike : TypeLike TypeAssignmentValue TypeAssignment
+  TypeAssignmentValue-typeLike : TypeLike TypeAssignmentValue
   TypeAssignmentValue-typeLike = typeLike _⊢_TypeAssignmentValue
                                           _⊢?_TypeAssignmentValue
+                                          a-valid-++
 
-  RegisterAssignment-typeLike : TypeLike RegisterAssignment TypeAssignment
+  RegisterAssignment-typeLike : TypeLike RegisterAssignment
   RegisterAssignment-typeLike =
-    typeLike _⊢_RegisterAssignment _⊢?_RegisterAssignment
+    typeLike _⊢_RegisterAssignment _⊢?_RegisterAssignment Γ-valid-++
 
-  Instantiation-typeLike : TypeLike Instantiation TypeAssignment
-  Instantiation-typeLike = typeLike _⊢_Instantiation _⊢?_Instantiation
+  Instantiation-typeLike : TypeLike Instantiation
+  Instantiation-typeLike = typeLike _⊢_Instantiation _⊢?_Instantiation i-valid-++
 
-  WeakCastValue-typeLike : TypeLike WeakCastValue TypeAssignment
-  WeakCastValue-typeLike = typeLike _⊢_WeakCastValue _⊢?_WeakCastValue
+  WeakCastValue-typeLike : TypeLike WeakCastValue
+  WeakCastValue-typeLike = typeLike _⊢_WeakCastValue _⊢?_WeakCastValue cᵥw-valid-++
 
-  WeakCast-typeLike : TypeLike WeakCast TypeAssignment
-  WeakCast-typeLike = typeLike _⊢_WeakCast _⊢?_WeakCast
+  WeakCast-typeLike : TypeLike WeakCast
+  WeakCast-typeLike = typeLike _⊢_WeakCast _⊢?_WeakCast cw-valid-++
 
-  StrongCastValue-typeLike : TypeLike StrongCastValue TypeAssignment
-  StrongCastValue-typeLike = typeLike
-    (λ Δ cᵥ → Δ ⊢ Strong→WeakCastValue cᵥ WeakCastValue)
-    (λ Δ cᵥ → Δ ⊢? Strong→WeakCastValue cᵥ WeakCastValue)
+  StrongCastValue-typeLike : TypeLike StrongCastValue
+  StrongCastValue-typeLike = typeLike _⊢_StrongCastValue _⊢?_StrongCastValue cᵥ-valid-++
 
-  StrongCast-typeLike : TypeLike StrongCast TypeAssignment
-  StrongCast-typeLike = typeLike
-    (λ Δ c → Δ ⊢ Strong→WeakCast c WeakCast)
-    (λ Δ c → Δ ⊢? Strong→WeakCast c WeakCast)
+  StrongCast-typeLike : TypeLike StrongCast
+  StrongCast-typeLike = typeLike _⊢_StrongCast _⊢?_StrongCast c-valid-++
+
+c-valid-add-left : ∀ Δ₁ {Δ₂ ι} {cᵥ : StrongCastValue} →
+                    Δ₂ ⊢ cᵥ / ι Valid →
+                    Δ₁ ++ Δ₂ ⊢ cᵥ / length Δ₁ + ι Valid
+c-valid-add-left [] c⋆ = c⋆
+c-valid-add-left (a ∷ Δ₁) c⋆ = valid-suc (c-valid-add-left Δ₁ c⋆)
+
+c-valid-remove-left : ∀ Δ₁ {Δ₂ ι} {cᵥ : StrongCastValue} →
+                    Δ₁ ++ Δ₂ ⊢ cᵥ / length Δ₁ + ι Valid →
+                    Δ₂ ⊢ cᵥ / ι Valid
+c-valid-remove-left [] c⋆ = c⋆
+c-valid-remove-left (a ∷ Δ₁) (valid-suc c⋆) = c-valid-remove-left Δ₁ c⋆

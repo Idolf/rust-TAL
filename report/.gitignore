@@ -1,0 +1,9 @@
+*.aux
+*.log
+*.toc
+*.log
+*.out
+*.bbl
+*.blg
+aflevering.pdf
+auto

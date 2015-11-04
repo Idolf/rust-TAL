@@ -1,7 +1,7 @@
 module Util.Function where
 
 -- Re-exports
-open import Function using (_∘_ ; id) public
+open import Function using (_∘_ ; id ; const) public
 
 -- Local imports
 open import Util.Maybe

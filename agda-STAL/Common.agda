@@ -22,6 +22,9 @@ open import TermJudgments
 -- Substitution lemmas
 open import SubstitutionLemmas
 
+-- -- Subtyping lemmas for term judgments
+-- open import TermSubtyping
+
 -- Semantics
 open import Semantics
 

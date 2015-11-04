@@ -29,6 +29,19 @@ data AllZip {a b p} {A : Set a} {B : Set b} (P : A → B → Set p) :
   [] : AllZip P [] []
   _∷_ : ∀ {x y xs ys} → P x y → AllZip P xs ys → AllZip P (x ∷ xs) (y ∷ ys)
 
+AllZip-++ : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+              {xs₁ xs₂ ys₁ ys₂} →
+              AllZip P xs₁ ys₁ → AllZip P xs₂ ys₂ →
+              AllZip P (xs₁ ++ xs₂) (ys₁ ++ ys₂)
+AllZip-++ [] ps₂ = ps₂
+AllZip-++ (p₁ ∷ ps₁) ps₂ = p₁ ∷ AllZip-++ ps₁ ps₂
+
+AllZip-length : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {xs ys} →
+                  AllZip P xs ys → length xs ≡ length ys
+AllZip-length [] = refl
+AllZip-length (p ∷ ps) rewrite AllZip-length ps = refl
+
 List-++-assoc : ∀ {ℓ} {A : Set ℓ} (xs₁ xs₂ xs₃ : List A) →
                   (xs₁ ++ xs₂) ++ xs₃ ≡ xs₁ ++ xs₂ ++ xs₃
 List-++-assoc {A = A} = A.Monoid.assoc (L.monoid A)
@@ -53,6 +66,14 @@ data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
 <-to-↓ (x ∷ xs) {zero} i<len = x , here
 <-to-↓ (x ∷ xs) {suc i} (s≤s i<len) with <-to-↓ xs {i} i<len
 ... | v , l = v , there l
+
+↓-to-< : ∀ {ℓ} {A : Set ℓ}
+           {i x} →
+           {xs : List A} →
+           xs ↓ i ⇒ x →
+           i < length xs
+↓-to-< here = s≤s z≤n
+↓-to-< (there l) = s≤s (↓-to-< l)
 
 ↓-unique : ∀ {ℓ} {A : Set ℓ} {xs i} {v₁ v₂ : A} →
              xs ↓ i ⇒ v₁ →
@@ -129,6 +150,11 @@ data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
         | NP.m+n∸m≡n i≥len
   = l'
 
+↓-last : ∀ {ℓ} {A : Set ℓ} xs {x : A} →
+           xs ∷ʳ x ↓ length xs ⇒ x
+↓-last [] = here
+↓-last (x ∷ xs) = there (↓-last xs)
+
 infix 4 _⟦_⟧←_⇒_
 data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → Set ℓ where
   here : ∀ {x xᵥ xs} →
@@ -151,6 +177,69 @@ data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → 
 ←-dec (x ∷ xs) (suc i) v with ←-dec xs i v
 ... | yes (xs' , up) = yes (x ∷ xs' , there up)
 ... | no ¬up = no (λ { (._ , there up) → ¬up (_ , up)} )
+
+<-to-← : ∀ {ℓ} {A : Set ℓ} xs (x : A) {i} →
+           i < length xs →
+           ∃ λ xs' →
+             xs ⟦ i ⟧← x ⇒ xs'
+<-to-← [] xᵥ ()
+<-to-← (x ∷ xs) xᵥ {zero} (s≤s i<len) = xᵥ ∷ xs , here
+<-to-← (x ∷ xs) xᵥ {suc i} (s≤s i<len)
+  with <-to-← xs xᵥ i<len
+... | xs' , up = x ∷ xs' , there up
+
+←-to-< : ∀ {ℓ} {A : Set ℓ}
+           {i x} →
+           {xs xs' : List A} →
+           xs ⟦ i ⟧← x ⇒ xs' →
+           i < length xs
+←-to-< here = s≤s z≤n
+←-to-< (there l) = s≤s (←-to-< l)
+
+allzip-lookup : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {xs : List A} {ys : List B}
+                  {i x y} →
+                  xs ↓ i ⇒ x →
+                  ys ↓ i ⇒ y →
+                  AllZip P xs ys →
+                  P x y
+allzip-lookup here here (p ∷ ps) = p
+allzip-lookup (there l₁) (there l₂) (p ∷ ps) = allzip-lookup l₁ l₂ ps
+
+allzip-lookup₁ : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                   {xs : List A} {ys : List B}
+                   {i x} →
+                   xs ↓ i ⇒ x →
+                   AllZip P xs ys →
+                   ∃ λ y →
+                     ys ↓ i ⇒ y ×
+                     P x y
+allzip-lookup₁ here (p ∷ ps) = _ , here , p
+allzip-lookup₁ (there l) (p ∷ ps) with allzip-lookup₁ l ps
+... | y , l' , p' = y , there l' , p'
+
+allzip-lookup₂ : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                   {xs : List A} {ys : List B}
+                   {i y} →
+                   ys ↓ i ⇒ y →
+                   AllZip P xs ys →
+                   ∃ λ x →
+                     xs ↓ i ⇒ x ×
+                     P x y
+allzip-lookup₂ here (p ∷ ps) = _ , here , p
+allzip-lookup₂ (there l) (p ∷ ps) with allzip-lookup₂ l ps
+... | x , l' , p' = x , there l' , p'
+
+allzip-update : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {xs xs' : List A} {ys ys' : List B}
+                  {i x y} →
+                  xs ⟦ i ⟧← x ⇒ xs' →
+                  ys ⟦ i ⟧← y ⇒ ys' →
+                  P x y →
+                  AllZip P xs ys →
+                  AllZip P xs' ys'
+allzip-update here here p (p' ∷ ps) = p ∷ ps
+allzip-update (there up₁) (there up₂) p₁ (p' ∷ ps) = p' ∷ allzip-update up₁ up₂ p₁ ps
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)
