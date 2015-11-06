@@ -239,7 +239,8 @@ allzip-update : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
                   AllZip P xs ys →
                   AllZip P xs' ys'
 allzip-update here here p (p' ∷ ps) = p ∷ ps
-allzip-update (there up₁) (there up₂) p₁ (p' ∷ ps) = p' ∷ allzip-update up₁ up₂ p₁ ps
+allzip-update (there up₁) (there up₂) p₁ (p' ∷ ps) =
+  p' ∷ allzip-update up₁ up₂ p₁ ps
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)

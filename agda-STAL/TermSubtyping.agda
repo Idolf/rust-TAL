@@ -1,12 +1,8 @@
 module TermSubtyping where
 
 open import Util
-open import Grammar
-open import Subtyping
-open import Substitution
-open import SubstitutionLemmas
-open import TypeJudgments
-open import TermJudgments
+open import Judgments
+open import Lemmas
 
 uninit-of : ∀ {ψ₁ ψ₂ τs} →
               [] ⊢ τs Valid →

@@ -1,17 +1,14 @@
-module GrammarEq where
+module Lemmas.Equality where
 
-open import Grammar
 open import Util
+open import Judgments
+
+-- The purpose of this file is implement a
+-- ToTree instance to every element in the
+-- grammar, since this causes them to also
+-- implement DecEq.
 
 private
-  φ-from : Tree → Maybe InitializationFlag
-  φ-from (node 0 _) = just init
-  φ-from _ = just uninit
-
-  φ-sur : IsSurjective φ-from
-  φ-sur init = T₀ 0 , refl
-  φ-sur uninit = T₀ 1 , refl
-
   mutual
     τ-from : Tree → Maybe Type
     τ-from (node 0 (ι ∷ _)) = α⁼ <$> fromTree ι
@@ -29,6 +26,14 @@ private
       ∀[_]_ <$=> proj₂ (Δ-sur Δ) <*=> proj₂ (Γ-sur Γ)
     τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
       tuple <$=> proj₂ (τs-sur τs)
+
+    φ-from : Tree → Maybe InitializationFlag
+    φ-from (node 0 _) = just init
+    φ-from _ = just uninit
+
+    φ-sur : IsSurjective φ-from
+    φ-sur init = T₀ 0 , refl
+    φ-sur uninit = T₀ 1 , refl
 
     τs-from : List Tree → Maybe (List InitType)
     τs-from [] = just []
@@ -97,11 +102,11 @@ private
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (regs-sur τs)
 
 instance
-  InitializationFlag-Tree : ToTree InitializationFlag
-  InitializationFlag-Tree = tree⋆ φ-from φ-sur
-
   Type-Tree : ToTree Type
   Type-Tree = tree⋆ τ-from τ-sur
+
+  InitializationFlag-Tree : ToTree InitializationFlag
+  InitializationFlag-Tree = tree⋆ φ-from φ-sur
 
   StackType-Tree : ToTree StackType
   StackType-Tree = tree⋆ σ-from σ-sur
@@ -165,13 +170,13 @@ instance
     where from : Tree → Maybe SmallValue
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
           from (node 1 (w ∷ _)) = word <$> fromTree w
-          from (node 2 (v ∷ i ∷ _)) = _⟦_⟧ᵥ <$> from v <*> fromTree i
+          from (node 2 (v ∷ i ∷ _)) = _⟦_⟧ <$> from v <*> fromTree i
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
           sur (word w) = T₁ 1 w , word <$=> invTree w
-          sur (v ⟦ i ⟧ᵥ) = T₂ 2 (proj₁ (sur v)) i ,
-            _⟦_⟧ᵥ <$=> proj₂ (sur v) <*=> invTree i
+          sur (v ⟦ i ⟧) = T₂ 2 (proj₁ (sur v)) i ,
+            _⟦_⟧ <$=> proj₂ (sur v) <*=> invTree i
 
   Instruction-Tree : ToTree Instruction
   Instruction-Tree = tree⋆ from sur
@@ -245,10 +250,10 @@ instance
   GlobalValue-Tree : ToTree GlobalValue
   GlobalValue-Tree = tree⋆
     (λ { (node _ (Δ ∷ Γ ∷ I ∷ _)) →
-           ∀[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree I
+           code[_]_∙_ <$> fromTree Δ <*> fromTree Γ <*> fromTree I
        ; _ → nothing })
-    (λ { (∀[ Δ ] Γ ∙ I) → T₃ 0 Δ Γ I ,
-           ∀[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree I })
+    (λ { (code[ Δ ] Γ ∙ I) → T₃ 0 Δ Γ I ,
+           code[_]_∙_ <$=> invTree Δ <*=> invTree Γ <*=> invTree I })
 
   RegisterFile-Tree : ToTree RegisterFile
   RegisterFile-Tree = tree⋆

@@ -1,32 +1,17 @@
--- A few exensions of the base library
+-- A few exensions of the base library.
+-- It is not directly related to the current project.
 open import Util
 
--- Base datatypes and validity for them
-open import Grammar
+-- All of the judgments/datatypes
+-- Has almost no functions, only those
+-- needed to define the judgments
+open import Judgments
 
--- Substitution rules
-open import Substitution
+--
+open import Lemmas
 
--- Mapping the grammar to a tree structure to get equality
-open import GrammarEq
-
--- Judgments about the validity of types and type-like objects
-open import TypeJudgments
-
--- Rules for definig subtyping
-open import Subtyping
-
--- Term Judgments
-open import TermJudgments
-
--- Substitution lemmas
-open import SubstitutionLemmas
-
--- -- Subtyping lemmas for term judgments
--- open import TermSubtyping
-
--- Semantics
+-- A lot of junk
+open import TermSubtyping
 open import Semantics
-
--- Soundness
-open import Soundness
+open import Example
+-- open import Soundness

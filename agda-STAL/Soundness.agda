@@ -1,18 +1,10 @@
 module Soundness where
 
 open import Util
-open import Grammar
-open import TypeJudgments
-open import TermJudgments
+open import Judgments
+open import Lemmas
 open import Semantics
-open import Substitution
-open import SubstitutionLemmas
-open import SubstitutionLemmas2
-open import Subtyping
 open import TermSubtyping
-import Data.Nat.Properties as NP
-import Algebra as A
-open A.CommutativeSemiring NP.commutativeSemiring using (+-comm ; +-assoc)
 
 weaken-w⋆ : ∀ {ψ₁ ψ₂ w τ} →
               ψ₁ , [] , [] ⊢ w of τ wval →
@@ -33,13 +25,14 @@ eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs v τ} →
                      ψ₁ , ψ₂ , [] ⊢ evalSmallValue regs v of τ' wval
 eval-reduction {v = reg ♯r} regs⋆ (of-reg lookup≤τ) =
   _ , lookup≤τ , allzipᵥ-lookup ♯r regs⋆
-eval-reduction regs⋆ (of-word w⋆) = _ , ≤-refl (wval-valid-type w⋆) , weaken-w⋆ w⋆
+eval-reduction regs⋆ (of-word w⋆) =
+  _ , ≤-refl (wval-valid-type w⋆) , weaken-w⋆ w⋆
 eval-reduction regs⋆ (of-inst {Δ₁ = Δ₁} {Δ₂} {Γ₁} {Γ₂} {Γ₃} v⋆ c⋆ run-Δ sub-Γ Γ₂≤Γ₃)
   with eval-reduction regs⋆ v⋆
 ... | ∀[ .Δ₁ ] Γ₁' , ∀-≤ Δ⋆ Γ₁'≤Γ₁ , eval
   with can-subst c⋆ (run-append run-Δ) (proj₁ (≤-valid Γ₁'≤Γ₁))
 ... | Γ₂' , sub-Γ' , Γ₂'⋆
-  with valid-subtype {{r = RegisterAssignment-Subtype⁺}} c⋆ (run-append run-Δ)  Γ₁'≤Γ₁ sub-Γ' sub-Γ
+  with valid-subtype c⋆ (run-append run-Δ)  Γ₁'≤Γ₁ sub-Γ' sub-Γ
 ... | Γ₂'≤Γ₂ = ∀[ Δ₂ ] Γ₂' , ∀-≤ (run-valid c⋆ Δ⋆ run-Δ) (≤-trans Γ₂'≤Γ₂ Γ₂≤Γ₃) , of-inst eval c⋆ run-Δ sub-Γ' (≤-refl (proj₁ (≤-valid Γ₂'≤Γ₂)))
 
 stack-lookup-reduction : ∀ {ψ₁ ψ₂ sp σ i w τ} →
@@ -102,79 +95,79 @@ wctx-proof H⋆ (of-globval l (∀-≤ Δ⋆ Γ₁≤Γ₂) eq) rewrite just-inj
 wctx-proof (of-heap hs⋆) (of-heapval l (∀-≤ Δ⋆ Γ₁≤Γ₂))
   with allzip-lookup₂ l hs⋆
 ... | h , l' , ()
-wctx-proof H⋆ (of-inst {c = inst i / ι} w⋆ c⋆ run-Δ sub-Γ Γ₂≤Γ₃)
+wctx-proof H⋆ (of-inst {cᵥ = inst i} {ι} w⋆ c⋆ run-Δ sub-Γ Γ₂≤Γ₃)
   rewrite wctx-proof H⋆ w⋆
         | run-inst-length run-Δ = refl
-wctx-proof H⋆ (of-inst {c = weaken Δ⁺ / ι} w⋆ c⋆ run-Δ sub-Γ Γ₂≤Γ₃)
+wctx-proof H⋆ (of-inst {cᵥ = weaken Δ⁺} {ι} w⋆ c⋆ run-Δ sub-Γ Γ₂≤Γ₃)
   rewrite wctx-proof H⋆ w⋆
         | run-weaken-length run-Δ = refl
 
-wut : ∀ {Δ Δ' c Δ₁ Δ₁' Δ₂ cₘ} →
-        Δ ⊢ c Valid →
-        Run Δ ⟦ c ⟧≡ Δ' →
-        Δ₁ ⟦ c ⟧≡ Δ₁' →
+wut : ∀ {Δ Δ' cᵥ ι Δ₁ Δ₁' Δ₂ cₘ} →
+        Δ ⊢ cᵥ / ι Valid →
+        Run Δ ⟦ cᵥ / ι ⟧≡ Δ' →
+        Δ₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ Δ₁' →
         Δ₁ ++ Δ  ⊢ cₘ Valid →
         Run Δ₁ ⟦ cₘ ⟧≡ Δ₂ →
         ∃₂ λ cₘ' Δ₂' →
-           cₘ ⟦ c ⟧≡ cₘ' ×
+           cₘ ⟦ Strong→Weak cᵥ / ι ⟧≡ cₘ' ×
            Δ₁' ++ Δ' ⊢ cₘ' Valid ×
            Run Δ₁' ⟦ cₘ' ⟧≡ Δ₂'
 wut = {!!}
 
-can-subst-w : ∀ {ψ₁ H ψ₂ Δ Δ' c w τ τ'} →
-                ψ₁ ⊢ H of ψ₂ heap →
-                Δ ⊢ c Valid →
-                Run Δ ⟦ c ⟧≡ Δ' →
-                τ ⟦ c ⟧≡ τ' →
-                ψ₁ , ψ₂ , Δ ⊢ w of τ wval →
-                ∃ λ w' →
-                  w ⟦ c ⟧≡ w' ×
-                  ψ₁ , ψ₂ , Δ' ⊢ w' of τ' wval
-can-subst-w H⋆ c⋆ run-Δ sub-τ (of-globval l lookup≤τ eq)
-  with subst-empty-ctx (proj₂ (≤-valid lookup≤τ)) sub-τ
-... | eq' rewrite eq' = _ , subst-globval , of-globval l lookup≤τ eq
-can-subst-w H⋆ c⋆ run-Δ sub-τ (of-heapval l lookup≤τ)
-  with subst-empty-ctx (proj₂ (≤-valid lookup≤τ)) sub-τ
-... | eq' rewrite eq' = _ , subst-heapval , of-heapval l lookup≤τ
-can-subst-w H⋆ c⋆ run-Δ subst-int of-int = _ , subst-int , of-int
-can-subst-w H⋆ c⋆ run-Δ subst-ns of-ns = _ , subst-ns , of-ns
-can-subst-w {ψ₁} {H} {ψ₂} {Δ} {Δ'} {cᵥ / ι} {w ⟦ cₘ ⟧} {∀[ Δ₂ ] Γ₃} {∀[ Δ₂' ] Γ₃'} H⋆ c⋆ run-Δ (subst-∀ sub-Δ₂ sub-Γ₃) (of-inst .{ψ₁} .{ψ₂} .{Δ} {Δ₁} .{Δ₂} {Γ₁} {Γ₂} .{Γ₃} w⋆ cₘ⋆ run-Δ₁ sub-Γ₁ Γ₂≤Γ₃)
-  with wval-valid-type w⋆
-... | valid-∀ Δ₁⋆ Γ₁⋆
-  with can-subst c⋆ run-Δ Δ₁⋆
-... | Δ₁' , sub-Δ₁ , Δ₁'⋆
-  with can-subst (c-valid-add-left Δ₁ c⋆) (run-combine sub-Δ₁ run-Δ) Γ₁⋆
-... | Γ₁' , sub-Γ₁' , Γ₁'⋆
-  with
-    begin
-      wctx-length w + ι
-    ≡⟨ wctx-proof H⋆ w⋆ ∥ (λ v → v + ι)  ⟩
-      length Δ₁ + ι
-    ∎ where open Eq-Reasoning
-... | eq
-  with can-subst-w {ψ₁} {H} {ψ₂} {Δ} {Δ'} {cᵥ / ι} {w} {∀[ Δ₁ ] Γ₁} {∀[ Δ₁' ] Γ₁'} H⋆ c⋆ run-Δ (subst-∀ sub-Δ₁ sub-Γ₁') w⋆
-... | w' , sub-w , w'⋆
-  with wut c⋆ run-Δ sub-Δ₁ cₘ⋆ run-Δ₁
-... | cₘ' , Δ₂'' , sub-cₘ , cₘ'⋆ , run-Δ₁'
-  = w' ⟦ cₘ' ⟧ , subst-⟦⟧ sub-w {!!} , of-inst w'⋆ {!!} {!!} {!!} {!!}
+-- can-subst-w : ∀ {ψ₁ H ψ₂ Δ Δ' cᵥ ι w τ τ'} →
+--                 ψ₁ ⊢ H of ψ₂ heap →
+--                 Δ ⊢ cᵥ / ι Valid →
+--                 Run Δ ⟦ cᵥ / ι ⟧≡ Δ' →
+--                 τ ⟦ Strong→Weak cᵥ / ι ⟧≡ τ' →
+--                 ψ₁ , ψ₂ , Δ ⊢ w of τ wval →
+--                 ∃ λ w' →
+--                   w ⟦ Strong→Weak cᵥ / ι ⟧≡ w' ×
+--                   ψ₁ , ψ₂ , Δ' ⊢ w' of τ' wval
+-- can-subst-w H⋆ c⋆ run-Δ sub-τ (of-globval l lookup≤τ eq)
+--   with subst-empty-ctx (proj₂ (≤-valid lookup≤τ)) sub-τ
+-- ... | eq' rewrite eq' = _ , subst-globval , of-globval l lookup≤τ eq
+-- can-subst-w H⋆ c⋆ run-Δ sub-τ (of-heapval l lookup≤τ)
+--   with subst-empty-ctx (proj₂ (≤-valid lookup≤τ)) sub-τ
+-- ... | eq' rewrite eq' = _ , subst-heapval , of-heapval l lookup≤τ
+-- can-subst-w H⋆ c⋆ run-Δ subst-int of-int = _ , subst-int , of-int
+-- can-subst-w H⋆ c⋆ run-Δ subst-ns of-ns = _ , subst-ns , of-ns
+-- can-subst-w {ψ₁} {H} {ψ₂} {Δ} {Δ'} {cᵥ} {ι} {w ⟦ cₘ ⟧} {∀[ Δ₂ ] Γ₃} {∀[ Δ₂' ] Γ₃'} H⋆ c⋆ run-Δ (subst-∀ sub-Δ₂ sub-Γ₃) (of-inst .{ψ₁} .{ψ₂} .{Δ} {Δ₁} .{Δ₂} {Γ₁} {Γ₂} .{Γ₃} w⋆ cₘ⋆ run-Δ₁ sub-Γ₁ Γ₂≤Γ₃)
+--   with wval-valid-type w⋆
+-- ... | valid-∀ Δ₁⋆ Γ₁⋆
+--   with can-subst c⋆ run-Δ Δ₁⋆
+-- ... | Δ₁' , sub-Δ₁ , Δ₁'⋆
+--   with can-subst (c-valid-add-left Δ₁ c⋆) (run-combine sub-Δ₁ run-Δ) Γ₁⋆
+-- ... | Γ₁' , sub-Γ₁' , Γ₁'⋆
+--   with
+--     begin
+--       wctx-length w + ι
+--     ≡⟨ wctx-proof H⋆ w⋆ ∥ (λ v → v + ι)  ⟩
+--       length Δ₁ + ι
+--     ∎ where open Eq-Reasoning
+-- ... | eq
+--   with can-subst-w {ψ₁} {H} {ψ₂} {Δ} {Δ'} {cᵥ / ι} {w} {∀[ Δ₁ ] Γ₁} {∀[ Δ₁' ] Γ₁'} H⋆ c⋆ run-Δ (subst-∀ sub-Δ₁ sub-Γ₁') w⋆
+-- ... | w' , sub-w , w'⋆
+--   with wut c⋆ run-Δ sub-Δ₁ cₘ⋆ run-Δ₁
+-- ... | cₘ' , Δ₂'' , sub-cₘ , cₘ'⋆ , run-Δ₁'
+--   = w' ⟦ cₘ' ⟧ , subst-⟦⟧ sub-w {!!} , of-inst w'⋆ {!!} {!!} {!!} {!!}
 
-can-subst-v : ∀ {ψ₁ Δ Δ' Γ Γ' c v τ τ'} →
-                Δ ⊢ c Valid →
-                Run Δ ⟦ c ⟧≡ Δ' →
-                Γ ⟦ c ⟧≡ Γ' →
-                τ ⟦ c ⟧≡ τ' →
-                ψ₁ , Δ , Γ ⊢ v of τ vval →
-                ∃ λ v' →
-                  v ⟦ c ⟧≡ v' ×
-                  ψ₁ , Δ' , Γ' ⊢ v' of τ' vval
-can-subst-v {v = reg ♯r} c⋆ run-Δ (subst-registerₐ sub-sp sub-regs) sub-τ (of-reg lookup≤τ)
-  with allzipᵥ-lookup ♯r sub-regs
-... | sub-lookup =
-  reg ♯r , subst-reg , of-reg (valid-subtype {{r = Type-Subtype⁺}} c⋆ run-Δ lookup≤τ sub-lookup sub-τ)
-can-subst-v c⋆ run-Δ sub-Γ sub-τ (of-word w⋆)
-  with can-subst-w (of-heap []) c⋆ run-Δ sub-τ w⋆
-... | w' , sub-w , w'⋆ = word w' , subst-word sub-w , of-word w'⋆
-can-subst-v c⋆ run-Δ sub-Γ sub-τ (of-inst v⋆ c'⋆ run-Δ' sub-Γ' Γ₂≤Γ₃) = {!!}
+-- can-subst-v : ∀ {ψ₁ Δ Δ' Γ Γ' c v τ τ'} →
+--                 Δ ⊢ c Valid →
+--                 Run Δ ⟦ c ⟧≡ Δ' →
+--                 Γ ⟦ c ⟧≡ Γ' →
+--                 τ ⟦ c ⟧≡ τ' →
+--                 ψ₁ , Δ , Γ ⊢ v of τ vval →
+--                 ∃ λ v' →
+--                   v ⟦ c ⟧≡ v' ×
+--                   ψ₁ , Δ' , Γ' ⊢ v' of τ' vval
+-- can-subst-v {v = reg ♯r} c⋆ run-Δ (subst-registerₐ sub-sp sub-regs) sub-τ (of-reg lookup≤τ)
+--   with allzipᵥ-lookup ♯r sub-regs
+-- ... | sub-lookup =
+--   reg ♯r , subst-reg , of-reg (valid-subtype {{r = Type-Subtype⁺}} c⋆ run-Δ lookup≤τ sub-lookup sub-τ)
+-- can-subst-v c⋆ run-Δ sub-Γ sub-τ (of-word w⋆)
+--   with can-subst-w (of-heap []) c⋆ run-Δ sub-τ w⋆
+-- ... | w' , sub-w , w'⋆ = word w' , subst-word sub-w , of-word w'⋆
+-- can-subst-v c⋆ run-Δ sub-Γ sub-τ (of-inst v⋆ c'⋆ run-Δ' sub-Γ' Γ₂≤Γ₃) = {!!}
 
 -- subst-int-≡ : ∀ {c : WeakCast} {τ : Type} →
 --                 int ⟦ c ⟧≡ τ →
@@ -258,11 +251,11 @@ can-subst-v c⋆ run-Δ sub-Γ sub-τ (of-inst v⋆ c'⋆ run-Δ' sub-Γ' Γ₂�
 --            ψ₁ , ψ₂ , [] ⊢ w of ∀[ Δ ] Γ₁ wval →
 --            ∃₂ λ I Γ₂ →
 --                Δ ⊢ Γ₂ ≤ Γ₁ ×
---                EvalGlobal G w (∀[ Δ ] Γ₂ ∙ I) ×
---                ψ₁ ⊢ ∀[ Δ ] Γ₂ ∙ I of ∀[ Δ ] Γ₂ gval
+--                EvalGlobal G w (code[ Δ ] Γ₂ ∙ I) ×
+--                ψ₁ ⊢ code[ Δ ] Γ₂ ∙ I of ∀[ Δ ] Γ₂ gval
 -- wval-∀ {Δ = Δ} {Γ₁} (of-globals gs⋆) H⋆ (of-globval l (∀-≤ Δ⋆ Γ₂≤Γ₁) eq)
 --   with allzip-lookup₂ l gs⋆
--- ... | ∀[ .Δ ] Γ₂ ∙ I , l' , of-gval Δ⋆' Γ₂⋆ I⋆
+-- ... | code[ .Δ ] Γ₂ ∙ I , l' , of-gval Δ⋆' Γ₂⋆ I⋆
 --   = I , Γ₂ , ≤-change₁ Γ₂≤Γ₁ Γ₂⋆ , instantiate-globval l' (just-injective eq) , of-gval Δ⋆ Γ₂⋆ I⋆
 -- wval-∀ G⋆ (of-heap hs⋆) (of-heapval l (∀-≤ Δ⋆ Γ₂≤Γ₁))
 --   with allzip-lookup₂ l hs⋆

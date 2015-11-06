@@ -1,183 +1,18 @@
-module TypeJudgments where
+module Lemmas.Types where
 
 open import Util
-open import Grammar
-open import GrammarEq
-open import Substitution
+open import Judgments
+open import Lemmas.Equality
 
-mutual
-  infix 3 _⊢_Type
-  data _⊢_Type (Δ : TypeAssignment) : Type → Set where
-    valid-α⁼ :
-         ∀ {ι} →
-       Δ ↓ ι ⇒ α →
-      -------------
-      Δ ⊢ α⁼ ι Type
-
-    valid-int :
-      ------------
-      Δ ⊢ int Type
-
-    valid-ns :
-      -----------
-      Δ ⊢ ns Type
-
-    valid-∀ :
-                 ∀ {Δ' Γ} →
-           Δ ⊢ Δ' TypeAssignment →
-      Δ' ++ Δ ⊢ Γ RegisterAssignment →
-      --------------------------------
-            Δ ⊢ ∀[ Δ' ] Γ Type
-
-    valid-tuple :
-         ∀ {τs : List InitType} →
-      All (λ τ⁻ → Δ ⊢ τ⁻ InitType) τs →
-      ---------------------------------
-             Δ ⊢ tuple τs Type
-
-  infix 3 _⊢_InitType
-  data _⊢_InitType (Δ : TypeAssignment) : InitType → Set where
-    valid-τ⁻ :
-             ∀ {τ φ} →
-            Δ ⊢ τ Type →
-        --------------------
-        Δ ⊢ τ , φ InitType
-
-  infix 3  _⊢_StackType
-  data _⊢_StackType (Δ : TypeAssignment) : StackType → Set where
-    valid-ρ⁼ :
-         ∀ {ι} →
-       Δ ↓ ι ⇒ ρ →
-      -------------
-      Δ ⊢ ρ⁼ ι StackType
-
-    valid-[] :
-      ----------------
-      Δ ⊢ [] StackType
-
-    _∷_ :
-          ∀ {τ σ} →
-         Δ ⊢ τ Type →
-       Δ ⊢ σ StackType →
-      -------------------
-      Δ ⊢ τ ∷ σ StackType
-
-  infix 3 ⊢_GlobalLabelAssignment
-  ⊢_GlobalLabelAssignment : GlobalLabelAssignment → Set
-  ⊢ ψ₁ GlobalLabelAssignment = All (λ τ → [] ⊢ τ Type) ψ₁
-
-  infix 3 ⊢_HeapLabelAssignment
-  ⊢_HeapLabelAssignment : HeapLabelAssignment → Set
-  ⊢ ψ₂ HeapLabelAssignment = All (λ τ → [] ⊢ τ Type) ψ₂
-
-  infix 3 ⊢_LabelAssignment
-  ⊢_LabelAssignment : LabelAssignment → Set
-  ⊢ ψ₁ , ψ₂ LabelAssignment =
-    (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
-
-  infix 3  _⊢_TypeAssignment
-  infixr 5 _∷_
-  data _⊢_TypeAssignment : TypeAssignment → TypeAssignment → Set where
-    [] :
-             ∀ {Δ} →
-      ---------------------
-      Δ ⊢ [] TypeAssignment
-
-    _∷_ :
-              ∀ {a Δ₁ Δ₂} →
-       Δ₂ ++ Δ₁ ⊢ a TypeAssignmentValue →
-         Δ₁ ⊢ Δ₂ TypeAssignment →
-      -----------------------------------
-           Δ₁ ⊢ a ∷ Δ₂ TypeAssignment
-
-  infix 3  _⊢_TypeAssignmentValue
-  data _⊢_TypeAssignmentValue : TypeAssignment →
-                                TypeAssignmentValue → Set where
-    valid-α :
-              ∀ {Δ} →
-      -------------------------
-      Δ ⊢ α TypeAssignmentValue
-
-    valid-ρ :
-              ∀ {Δ} →
-      -------------------------
-      Δ ⊢ ρ TypeAssignmentValue
-
-  infix 3 _⊢_RegisterAssignment
-  record _⊢_RegisterAssignment
-         (Δ : TypeAssignment) (Γ : RegisterAssignment) : Set where
-    inductive
-    constructor valid-registerₐ
-    field
-      valid-sp : Δ ⊢ stack-type Γ StackType
-      valid-regs : Allᵥ (λ τ → Δ ⊢ τ Type) (reg-types Γ)
-
-  infix 3 _⊢_Instantiation
-  data _⊢_Instantiation : TypeAssignment → Instantiation → Set where
-    valid-α :
-      ∀ {Δ τ} →
-      Δ ⊢ τ Type →
-      α ∷ Δ ⊢ α τ Instantiation
-
-    valid-ρ :
-      ∀ {Δ σ} →
-      Δ ⊢ σ StackType →
-      ρ ∷ Δ ⊢ ρ σ Instantiation
-
-  infix 3 _⊢_WeakCastValue
-  data _⊢_WeakCastValue : TypeAssignment → WeakCastValue → Set where
-    valid-weaken :
-               ∀ {Δ n} →
-      --------------------------
-      Δ ⊢ weaken n WeakCastValue
-
-    valid-inst :
-             ∀ {Δ i} →
-        Δ ⊢ i Instantiation →
-      ------------------------
-      Δ ⊢ inst i WeakCastValue
-
-  infix 3 _⊢_StrongCastValue
-  data _⊢_StrongCastValue : TypeAssignment → StrongCastValue → Set where
-    valid-weaken :
-             ∀ {Δ Δ⁺} →
-       Δ ⊢ Δ⁺ TypeAssignment →
-      --------------------------
-      Δ ⊢ weaken Δ⁺ StrongCastValue
-
-    valid-inst :
-             ∀ {Δ i} →
-        Δ ⊢ i Instantiation →
-      ------------------------
-      Δ ⊢ inst i StrongCastValue
-
-  infix 3 _⊢_WeakCast
-  data _⊢_WeakCast : TypeAssignment → WeakCast → Set where
-    valid-zero :
-            ∀ {Δ cᵥ} →
-      Δ ⊢ cᵥ WeakCastValue →
-      ----------------------
-      Δ ⊢ cᵥ / zero WeakCast
-
-    valid-suc :
-             ∀ {a Δ cᵥ ι} →
-          Δ ⊢ cᵥ / ι WeakCast →
-      ---------------------------
-      a ∷ Δ ⊢ cᵥ / suc ι WeakCast
-
-  infix 3 _⊢_StrongCast
-  data _⊢_StrongCast : TypeAssignment → StrongCast → Set where
-    valid-zero :
-            ∀ {Δ cᵥ} →
-      Δ ⊢ cᵥ StrongCastValue →
-      ----------------------
-      Δ ⊢ cᵥ / zero StrongCast
-
-    valid-suc :
-             ∀ {a Δ cᵥ ι} →
-          Δ ⊢ cᵥ / ι StrongCast →
-      ---------------------------
-      a ∷ Δ ⊢ cᵥ / suc ι StrongCast
+-- The purpose of this file is
+-- to include instances of this record.
+record TypeLike⁺ (A : Set) {{_ : TypeLike A}} : Set1 where
+  constructor typeLike⁺
+  infix 3 _⊢?_Valid
+  field
+    _⊢?_Valid : ∀ Δ (v : A) → Dec (Δ ⊢ v Valid)
+    valid-++ : ∀ {Δ Δ'} {v : A} → Δ ⊢ v Valid → Δ ++ Δ' ⊢ v Valid
+open TypeLike⁺ {{...}} public
 
 private
   mutual
@@ -413,19 +248,9 @@ private
     c-valid-++ (valid-zero cᵥ⋆) = valid-zero (cᵥ-valid-++ cᵥ⋆)
     c-valid-++ (valid-suc c⋆) = valid-suc (c-valid-++ c⋆)
 
-record TypeLike (A : Set) : Set1 where
-  constructor typeLike
-  field
-    _⊢_Valid : TypeAssignment → A → Set
-    _⊢?_Valid : ∀ Δ v → Dec (Δ ⊢ v Valid)
-    valid-++ : ∀ {Δ Δ' v} → Δ ⊢ v Valid → Δ ++ Δ' ⊢ v Valid
-  infix 3 _⊢_Valid _⊢?_Valid
-open TypeLike {{...}} public
-
-Vec-typeLike : ∀ {A} {{_ : TypeLike A}} {m} →
-                 TypeLike (Vec A m)
-Vec-typeLike {A} = typeLike
-    (λ Δ xs → Allᵥ (λ x → Δ ⊢ x Valid) xs)
+Vec-TypeLike⁺ : ∀ A {T : TypeLike A} {{T⁺ : TypeLike⁺ A}} {m} →
+                 TypeLike⁺ (Vec A m) {{Vec-TypeLike A m}}
+Vec-TypeLike⁺ A = typeLike⁺
     (λ Δ xs → Allᵥ-dec (λ x → Δ ⊢? x Valid) xs)
     xs-valid-++
   where xs-valid-++ : ∀ {Δ Δ' m} {xs : Vec A m} →
@@ -434,11 +259,9 @@ Vec-typeLike {A} = typeLike
         xs-valid-++ [] = []
         xs-valid-++ (x⋆ ∷ xs⋆) = valid-++ x⋆ ∷ xs-valid-++ xs⋆
 
-
-List-typeLike : ∀ {A} {{_ : TypeLike A}} →
-                  TypeLike (List A)
-List-typeLike {A} = typeLike
-    (λ Δ xs → All (λ x → Δ ⊢ x Valid) xs)
+List-TypeLike⁺ : ∀ A {T : TypeLike A} {{T⁺ : TypeLike⁺ A}} →
+                  TypeLike⁺ (List A) {{List-TypeLike A}}
+List-TypeLike⁺ A = typeLike⁺
     (λ Δ xs → All-dec (λ x → Δ ⊢? x Valid) xs)
     xs-valid-++
   where xs-valid-++ : ∀ {Δ Δ'} {xs : List A} →
@@ -447,74 +270,57 @@ List-typeLike {A} = typeLike
         xs-valid-++ [] = []
         xs-valid-++ (x⋆ ∷ xs⋆) = valid-++ x⋆ ∷ xs-valid-++ xs⋆
 
-
 instance
-  InitializationFlag-typeLike : TypeLike InitializationFlag
-  InitializationFlag-typeLike = typeLike (λ Δ φ → ⊤) (λ Δ φ → yes tt) id
+  InitializationFlag-TypeLike⁺ : TypeLike⁺ InitializationFlag
+  InitializationFlag-TypeLike⁺ = typeLike⁺ (λ Δ φ → yes tt) id
 
-  Type-typeLike : TypeLike Type
-  Type-typeLike = typeLike _⊢_Type _⊢?_Type τ-valid-++
+  Type-TypeLike⁺ : TypeLike⁺ Type
+  Type-TypeLike⁺ = typeLike⁺ _⊢?_Type τ-valid-++
 
-  TypeVec-typeLike : ∀ {m} → TypeLike (Vec Type m)
-  TypeVec-typeLike = Vec-typeLike
+  TypeVec-TypeLike⁺ : ∀ {m} → TypeLike⁺ (Vec Type m)
+  TypeVec-TypeLike⁺ = Vec-TypeLike⁺ Type
 
-  TypeList-typeLike : TypeLike (List Type)
-  TypeList-typeLike = List-typeLike
+  TypeList-TypeLike⁺ : TypeLike⁺ (List Type)
+  TypeList-TypeLike⁺ = List-TypeLike⁺ Type
 
-  InitType-typeLike : TypeLike InitType
-  InitType-typeLike = typeLike _⊢_InitType _⊢?_InitType τ⁻-valid-++
+  InitType-TypeLike⁺ : TypeLike⁺ InitType
+  InitType-TypeLike⁺ = typeLike⁺ _⊢?_InitType τ⁻-valid-++
 
-  InitTypeVec-typeLike : ∀ {m} → TypeLike (Vec InitType m)
-  InitTypeVec-typeLike = Vec-typeLike
+  InitTypeVec-InitTypeLike⁺ : ∀ {m} → TypeLike⁺ (Vec InitType m)
+  InitTypeVec-InitTypeLike⁺ = Vec-TypeLike⁺ InitType
 
-  InitTypeList-typeLike : TypeLike (List InitType)
-  InitTypeList-typeLike = List-typeLike
+  InitTypeList-InitTypeLike⁺ : TypeLike⁺ (List InitType)
+  InitTypeList-InitTypeLike⁺ = List-TypeLike⁺ InitType
 
-  StackType-typeLike : TypeLike StackType
-  StackType-typeLike = typeLike _⊢_StackType _⊢?_StackType σ-valid-++
+  StackType-TypeLike⁺ : TypeLike⁺ StackType
+  StackType-TypeLike⁺ = typeLike⁺ _⊢?_StackType σ-valid-++
 
-  LabelAssignment-typeLike : TypeLike LabelAssignment
-  LabelAssignment-typeLike = typeLike (const ⊢_LabelAssignment)
-                                      (const ⊢?_LabelAssignment)
-                                      id
+  LabelAssignment-TypeLike⁺ : TypeLike⁺ LabelAssignment
+  LabelAssignment-TypeLike⁺ = typeLike⁺ (const ⊢?_LabelAssignment)
+                                        id
 
-  TypeAssignment-typeLike : TypeLike TypeAssignment
-  TypeAssignment-typeLike = typeLike _⊢_TypeAssignment
-                                     _⊢?_TypeAssignment
-                                     Δ-valid-++
+  TypeAssignment-TypeLike⁺ : TypeLike⁺ TypeAssignment
+  TypeAssignment-TypeLike⁺ = typeLike⁺ _⊢?_TypeAssignment
+                                       Δ-valid-++
 
-  TypeAssignmentValue-typeLike : TypeLike TypeAssignmentValue
-  TypeAssignmentValue-typeLike = typeLike _⊢_TypeAssignmentValue
-                                          _⊢?_TypeAssignmentValue
-                                          a-valid-++
+  TypeAssignmentValue-TypeLike⁺ : TypeLike⁺ TypeAssignmentValue
+  TypeAssignmentValue-TypeLike⁺ = typeLike⁺ _⊢?_TypeAssignmentValue
+                                            a-valid-++
 
-  RegisterAssignment-typeLike : TypeLike RegisterAssignment
-  RegisterAssignment-typeLike =
-    typeLike _⊢_RegisterAssignment _⊢?_RegisterAssignment Γ-valid-++
+  RegisterAssignment-TypeLike⁺ : TypeLike⁺ RegisterAssignment
+  RegisterAssignment-TypeLike⁺ = typeLike⁺ _⊢?_RegisterAssignment Γ-valid-++
 
-  Instantiation-typeLike : TypeLike Instantiation
-  Instantiation-typeLike = typeLike _⊢_Instantiation _⊢?_Instantiation i-valid-++
+  Instantiation-TypeLike⁺ : TypeLike⁺ Instantiation
+  Instantiation-TypeLike⁺ = typeLike⁺ _⊢?_Instantiation i-valid-++
 
-  WeakCastValue-typeLike : TypeLike WeakCastValue
-  WeakCastValue-typeLike = typeLike _⊢_WeakCastValue _⊢?_WeakCastValue cᵥw-valid-++
+  WeakCastValue-TypeLike⁺ : TypeLike⁺ WeakCastValue
+  WeakCastValue-TypeLike⁺ = typeLike⁺ _⊢?_WeakCastValue cᵥw-valid-++
 
-  WeakCast-typeLike : TypeLike WeakCast
-  WeakCast-typeLike = typeLike _⊢_WeakCast _⊢?_WeakCast cw-valid-++
+  WeakCast-TypeLike⁺ : TypeLike⁺ WeakCast
+  WeakCast-TypeLike⁺ = typeLike⁺ _⊢?_WeakCast cw-valid-++
 
-  StrongCastValue-typeLike : TypeLike StrongCastValue
-  StrongCastValue-typeLike = typeLike _⊢_StrongCastValue _⊢?_StrongCastValue cᵥ-valid-++
+  StrongCastValue-TypeLike⁺ : TypeLike⁺ StrongCastValue
+  StrongCastValue-TypeLike⁺ = typeLike⁺ _⊢?_StrongCastValue cᵥ-valid-++
 
-  StrongCast-typeLike : TypeLike StrongCast
-  StrongCast-typeLike = typeLike _⊢_StrongCast _⊢?_StrongCast c-valid-++
-
-c-valid-add-left : ∀ Δ₁ {Δ₂ ι} {cᵥ : StrongCastValue} →
-                    Δ₂ ⊢ cᵥ / ι Valid →
-                    Δ₁ ++ Δ₂ ⊢ cᵥ / length Δ₁ + ι Valid
-c-valid-add-left [] c⋆ = c⋆
-c-valid-add-left (a ∷ Δ₁) c⋆ = valid-suc (c-valid-add-left Δ₁ c⋆)
-
-c-valid-remove-left : ∀ Δ₁ {Δ₂ ι} {cᵥ : StrongCastValue} →
-                    Δ₁ ++ Δ₂ ⊢ cᵥ / length Δ₁ + ι Valid →
-                    Δ₂ ⊢ cᵥ / ι Valid
-c-valid-remove-left [] c⋆ = c⋆
-c-valid-remove-left (a ∷ Δ₁) (valid-suc c⋆) = c-valid-remove-left Δ₁ c⋆
+  StrongCast-TypeLike⁺ : TypeLike⁺ StrongCast
+  StrongCast-TypeLike⁺ = typeLike⁺ _⊢?_StrongCast c-valid-++

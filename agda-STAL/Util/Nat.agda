@@ -15,6 +15,10 @@ open import Data.Product using (_,_ ; ,_ ; ∃ ; proj₂)
 import Data.Nat as N
 import Data.Nat.Properties as NP
 import Relation.Binary as B
+import Algebra as A
+
+open A.CommutativeSemiring NP.commutativeSemiring
+  using (+-comm ; +-assoc) public
 
 Nat-cmp : Trichotomous {A = ℕ} _≡_ _<_
 Nat-cmp = B.StrictTotalOrder.compare NP.strictTotalOrder

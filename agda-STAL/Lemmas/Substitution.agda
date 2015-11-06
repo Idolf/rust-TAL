@@ -1,327 +1,29 @@
-module Substitution where
+module Lemmas.Substitution where
 
-open import Grammar
 open import Util
-import Data.Nat as N
+open import Judgments
 import Data.Nat.Properties as NP
-import Relation.Binary as B
 
-wctx-length : WordValue → ℕ
-wctx-length (globval l ♯a) = ♯a
-wctx-length (w ⟦ inst i / ι ⟧) = pred (wctx-length w)
-wctx-length (w ⟦ weaken Δ⁺ / ι ⟧) = wctx-length w + length Δ⁺
-wctx-length _ = 0
+-- The purpose of this file is
+-- to include instances of this record,
+-- along with a few additional functions
+-- at the bottom of the file
+record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
+  constructor substitution⁺
+  infix 3 _⟦_⟧?
+  field
+    subst-unique : ∀ {v v₁ v₂ : A} {c} →
+                     v ⟦ c ⟧≡ v₁ →
+                     v ⟦ c ⟧≡ v₂ →
+                     v₁ ≡ v₂
+    can-weaken : ∀ (v : A) w ι → ∃ λ v' → v ⟦ weaken w / ι ⟧≡ v'
+    _⟦_⟧? : ∀ (v : A) c → Dec (∃ λ v' → v ⟦ c ⟧≡ v')
+    weaken-0 : ∀ (v : A) {ι} → v ⟦ weaken 0 / ι ⟧≡ v
 
-vctx-length : SmallValue → ℕ
-vctx-length (word w) = wctx-length w
-vctx-length (v ⟦ inst i / ι ⟧ᵥ) = pred (vctx-length v)
-vctx-length (v ⟦ weaken Δ⁺ / ι ⟧ᵥ) = length Δ⁺ + vctx-length v
-vctx-length _ = 0
-
-mutual
-  private
-
-    substᵗ : Set → Set1
-    substᵗ A = A → WeakCast → A → Set
-
-
-  infix 3 _⟦_⟧n≡_
-  data _⟦_⟧n≡_ : substᵗ ℕ where
-    subst-< :
-         ∀ {n ι cᵥ} →
-           n < ι →
-      ----------------
-      n ⟦ cᵥ / ι ⟧n≡ n
-
-    subst-inst-> :
-             ∀ {n ι i} →
-             suc n > ι →
-      ------------------------
-      suc n ⟦ inst i / ι ⟧n≡ n
-
-    subst-weaken-≥ :
-            ∀ {n ι n⁺} →
-               n ≥ ι →
-      ----------------------------
-      n ⟦ weaken n⁺ / ι ⟧n≡ n⁺ + n
-
-  infix 3 _⟦_⟧τ≡_
-  data _⟦_⟧τ≡_ : substᵗ Type where
-    subst-α-¬inst :
-          ∀ {ι₁ ι₁' ι₂ cᵥ} →
-         ι₁ ⟦ cᵥ / ι₂ ⟧n≡ ι₁' →
-      --------------------------
-      α⁼ ι₁ ⟦ cᵥ / ι₂ ⟧τ≡ α⁼ ι₁'
-
-    subst-α-inst :
-            ∀ {ι τ τ'} →
-       τ ⟦ weaken ι / zero ⟧τ≡ τ' →
-      ---------------------------
-      α⁼ ι  ⟦ inst (α τ) / ι ⟧τ≡ τ'
-
-    subst-int :
-          ∀ {c} →
-      ---------------
-      int ⟦ c ⟧τ≡ int
-
-    subst-ns :
-         ∀ {c} →
-      -------------
-      ns ⟦ c ⟧τ≡ ns
-
-    subst-∀ :
-            ∀ {Δ Δ' Γ Γ' cᵥ ι} →
-            Δ ⟦ cᵥ / ι ⟧Δ≡ Δ' →
-       Γ ⟦ cᵥ / length Δ + ι ⟧Γ≡ Γ' →
-      --------------------------------
-      ∀[ Δ ] Γ ⟦ cᵥ / ι ⟧τ≡ ∀[ Δ' ] Γ'
-
-    subst-tuple :
-           ∀ {c τs τs'} →
-          τs ⟦ c ⟧τs⁻≡ τs' →
-      --------------------------
-      tuple τs ⟦ c ⟧τ≡ tuple τs'
-
-  infix 3 _⟦_⟧τ⁻≡_
-  data _⟦_⟧τ⁻≡_ : substᵗ InitType where
-    subst-τ⁻ :
-            ∀ {φ τ τ' c} →
-            τ ⟦ c ⟧τ≡ τ' →
-      -------------------------
-      (τ , φ) ⟦ c ⟧τ⁻≡ (τ' , φ)
-
-  infix 3 _⟦_⟧τs⁻≡_
-  _⟦_⟧τs⁻≡_ : substᵗ (List InitType)
-  τs⁻ ⟦ c ⟧τs⁻≡ τs⁻' =
-    AllZip (λ τ⁻ τ⁻' → τ⁻ ⟦ c ⟧τ⁻≡ τ⁻') τs⁻ τs⁻'
-
-  infix 3 _⟦_⟧σ≡_
-  data _⟦_⟧σ≡_ : substᵗ StackType where
-    subst-ρ-¬inst :
-          ∀ {ι₁ ι₁' ι₂ cᵥ} →
-        ι₁ ⟦ cᵥ / ι₂ ⟧n≡ ι₁' →
-      --------------------------
-      ρ⁼ ι₁ ⟦ cᵥ / ι₂ ⟧σ≡ ρ⁼ ι₁'
-
-    subst-ρ-inst :
-               ∀ {ι σ σ'} →
-      σ ⟦ weaken ι / zero ⟧σ≡ σ' →
-      ----------------------------
-      ρ⁼ ι  ⟦ inst (ρ σ) / ι ⟧σ≡ σ'
-
-    subst-[] :
-         ∀ {c} →
-     -------------
-     [] ⟦ c ⟧σ≡ []
-
-    _∷_ :
-        ∀ {τ τ' σ σ' c} →
-         τ ⟦ c ⟧τ≡ τ' →
-         σ ⟦ c ⟧σ≡ σ' →
-      ---------------------
-      τ ∷ σ ⟦ c ⟧σ≡ τ' ∷ σ'
-
-  infix 3 _⟦_⟧Γ≡_
-  data _⟦_⟧Γ≡_ : substᵗ RegisterAssignment where
-    subst-registerₐ :
-              ∀ {regs regs' sp sp' c} →
-                  sp ⟦ c ⟧σ≡ sp' →
-               regs ⟦ c ⟧regs≡ regs' →
-      ---------------------------------------------
-      registerₐ sp regs ⟦ c ⟧Γ≡ registerₐ sp' regs'
-
-  infix 3 _⟦_⟧regs≡_
-  _⟦_⟧regs≡_ : ∀ {m} → substᵗ (Vec Type m)
-  τs ⟦ c ⟧regs≡ τs' = AllZipᵥ (λ τ τ' → τ ⟦ c ⟧τ≡ τ') τs τs'
-
-  infix 3 _⟦_⟧Δ≡_
-  infixr 5 _∷_
-  data _⟦_⟧Δ≡_ : substᵗ TypeAssignment where
-    [] :
-          ∀ {c} →
-      -------------
-      [] ⟦ c ⟧Δ≡ []
-
-    _∷_ :
-            ∀ {a a' Δ Δ' cᵥ ι} →
-      a ⟦ cᵥ / length Δ + ι ⟧a≡ a' →
-            Δ ⟦ cᵥ / ι ⟧Δ≡ Δ' →
-      ------------------------------
-        a ∷ Δ ⟦ cᵥ / ι ⟧Δ≡ a' ∷ Δ'
-
-  infix 3 _⟦_⟧a≡_
-  data _⟦_⟧a≡_ : substᵗ TypeAssignmentValue where
-    subst-α : ∀ {c} → α ⟦ c ⟧a≡ α
-    subst-ρ : ∀ {c} → ρ ⟦ c ⟧a≡ ρ
-
-  infix 3 _⟦_⟧i≡_
-  data _⟦_⟧i≡_ : substᵗ Instantiation where
-    subst-α :
-        ∀ {τ τ' c} →
-       τ ⟦ c ⟧τ≡ τ' →
-      ----------------
-      α τ ⟦ c ⟧i≡ α τ'
-
-    subst-ρ :
-        ∀ {σ σ' c} →
-       σ ⟦ c ⟧σ≡ σ' →
-      ----------------
-      ρ σ ⟦ c ⟧i≡ ρ σ'
-
-  infix 3 _⟦_⟧cᵥ≡_
-  data _⟦_⟧cᵥ≡_ : substᵗ StrongCastValue where
-    subst-inst :
-            ∀ {i i' c} →
-           i ⟦ c ⟧i≡ i' →
-      -----------------------
-      inst i ⟦ c ⟧cᵥ≡ inst i'
-
-    subst-weaken :
-             ∀ {Δ⁺ Δ⁺' c} →
-             Δ⁺ ⟦ c ⟧Δ≡ Δ⁺' →
-      -----------------------------
-      weaken Δ⁺ ⟦ c ⟧cᵥ≡ weaken Δ⁺'
-
-  infix 3 _⟦_⟧c≡_
-  data _⟦_⟧c≡_ : substᵗ StrongCast where
-    subst-/ :
-           ∀ {cᵥ₁ cᵥ₂ cᵥ ι₁ ι₂} →
-         cᵥ₁ ⟦ cᵥ / ι₁ ∸ suc ι₂ ⟧cᵥ≡ cᵥ₂ →
-      -------------------------------
-      cᵥ₁ / ι₂ ⟦ cᵥ / ι₁ ⟧c≡ cᵥ₂ / ι₂
-
-  infix 3 _⟦_⟧w≡_
-  data _⟦_⟧w≡_ : substᵗ WordValue where
-    subst-globval :
-               ∀ {l ♯a c} →
-      ---------------------------------
-      globval l ♯a ⟦ c ⟧w≡ globval l ♯a
-
-    subst-heapval :
-              ∀ {l c} →
-      ---------------------------
-      heapval l ⟦ c ⟧w≡ heapval l
-
-    subst-int :
-              ∀ {n c} →
-      -----------------------
-      int n ⟦ c ⟧w≡ int n
-
-    subst-ns :
-         ∀ {c} →
-      -------------
-      ns ⟦ c ⟧w≡ ns
-
-    subst-uninit :
-             ∀ {τ τ' c} →
-            τ ⟦ c ⟧τ≡ τ' →
-      --------------------------
-      uninit τ ⟦ c ⟧w≡ uninit τ'
-
-    subst-⟦⟧ :
-              ∀ {w₁ w₂ cᵥ₁ cᵥ₂ ιₘ cᵥ ι} →
-               w₁ ⟦ cᵥ / ι ⟧w≡ w₂ →
-      cᵥ₁ ⟦ cᵥ / (wctx-length w₁ ∸ suc ιₘ) + ι ⟧cᵥ≡ cᵥ₂ →
-      ---------------------------------------
-      (w₁ ⟦ cᵥ₁ / ιₘ ⟧) ⟦ cᵥ / ι ⟧w≡ (w₂ ⟦ cᵥ₂ / ιₘ ⟧)
-
-  infix 3 _⟦_⟧v≡_
-  data _⟦_⟧v≡_ : substᵗ SmallValue where
-    subst-reg :
-          ∀ {♯r c} →
-      ---------------------
-      reg ♯r ⟦ c ⟧v≡ reg ♯r
-
-    subst-word :
-          ∀ {w w' c} →
-         w ⟦ c ⟧w≡ w' →
-      ----------------------
-      word w ⟦ c ⟧v≡ word w'
-
-    subst-⟦⟧ :
-             ∀ {v₁ v₂ c₁ c₂ cᵥ ι} →
-              v₁ ⟦ cᵥ / ι ⟧v≡ v₂ →
-       c₁ ⟦ cᵥ / (vctx-length v₁ + ι) ⟧c≡ c₂ →
-      ----------------------------------------
-       (v₁ ⟦ c₁ ⟧ᵥ) ⟦ cᵥ / ι ⟧v≡ (v₂ ⟦ c₂ ⟧ᵥ)
-
-  infix 3 _⟦_⟧ι≡_
-  data _⟦_⟧ι≡_ : substᵗ Instruction where
-    subst-add :
-             ∀ {♯rd ♯rs v v' c} →
-                 v ⟦ c ⟧v≡ v' →
-      ------------------------------------
-      add ♯rd ♯rs v ⟦ c ⟧ι≡ add ♯rd ♯rs v'
-
-    subst-sub :
-             ∀ {♯rd ♯rs v v' c} →
-                 v ⟦ c ⟧v≡ v' →
-      ------------------------------------
-      sub ♯rd ♯rs v ⟦ c ⟧ι≡ sub ♯rd ♯rs v'
-
-    subst-push :
-          ∀ {v v' c} →
-          v ⟦ c ⟧v≡ v' →
-      ----------------------
-      push v ⟦ c ⟧ι≡ push v'
-
-    subst-pop :
-         ∀ {c} →
-      ---------------
-      pop ⟦ c ⟧ι≡ pop
-
-    subst-sld :
-             ∀ {♯rd i c} →
-      ---------------------------
-      sld ♯rd i ⟦ c ⟧ι≡ sld ♯rd i
-
-    subst-sst :
-             ∀ {♯rs i c} →
-      ---------------------------
-      sst i ♯rs ⟦ c ⟧ι≡ sst i ♯rs
-
-    subst-ld :
-               ∀ {♯rd ♯rs i c} →
-      ---------------------------------
-      ld ♯rd ♯rs i ⟦ c ⟧ι≡ ld ♯rd ♯rs i
-
-    subst-st :
-               ∀ {♯rd ♯rs i c} →
-      ---------------------------------
-      st ♯rd i ♯rs ⟦ c ⟧ι≡ st ♯rd i ♯rs
-
-    subst-malloc :
-               ∀ {♯rd τs τs' c} →
-      AllZip (λ τ τ' → τ ⟦ c ⟧τ≡ τ') τs τs' →
-      ---------------------------------------
-        malloc ♯rd τs ⟦ c ⟧ι≡ malloc ♯rd τs'
-
-    subst-mov :
-           ∀ {♯rd v v' c} →
-            v ⟦ c ⟧v≡ v' →
-      ----------------------------
-      mov ♯rd v ⟦ c ⟧ι≡ mov ♯rd v'
-
-    subst-beq :
-            ∀ {♯r v v' c} →
-             v ⟦ c ⟧v≡ v' →
-      --------------------------
-      beq ♯r v ⟦ c ⟧ι≡ beq ♯r v'
-
-  infix 3 _⟦_⟧I≡_
-  data _⟦_⟧I≡_ : substᵗ InstructionSequence where
-    subst-~> :
-          ∀ {ι ι' I I' c} →
-           ι ⟦ c ⟧ι≡ ι' →
-           I ⟦ c ⟧I≡ I' →
-      -----------------------
-      ι ~> I ⟦ c ⟧I≡ ι' ~> I'
-
-    subst-jmp :
-          ∀ {v v' c} →
-         v ⟦ c ⟧v≡ v' →
-      --------------------
-      jmp v ⟦ c ⟧I≡ jmp v'
+  weaken-0-unique : ∀ {v₁ v₂ ι} → v₁ ⟦ weaken 0 / ι ⟧≡ v₂ →
+                                  v₁ ≡ v₂
+  weaken-0-unique {v₁} = subst-unique (weaken-0 v₁)
+open Substitution⁺ {{...}} public
 
 private
   subst-n-≢-inst : ∀ {i ι₁ ι₂} → ¬ (ι₁ ⟦ inst i / ι₁ ⟧n≡ ι₂)
@@ -329,13 +31,13 @@ private
   subst-n-≢-inst (subst-inst-> ι₁>ι₁) = NP.1+n≰n ι₁>ι₁
 
   mutual
-    substᵗ-unique : ∀ {A} → substᵗ A → Set
-    substᵗ-unique _⟦_⟧≡_ = ∀ {v v₁ v₂ c} →
-                             v ⟦ c ⟧≡ v₁ →
-                             v ⟦ c ⟧≡ v₂ →
-                             v₁ ≡ v₂
+    substᵗ-unique : ∀ A {{S : Substitution A}} → Set
+    substᵗ-unique A = ∀ {v v₁ v₂ : A} {c : WeakCast} →
+                        v ⟦ c ⟧≡ v₁ →
+                        v ⟦ c ⟧≡ v₂ →
+                        v₁ ≡ v₂
 
-    subst-n-unique : substᵗ-unique _⟦_⟧n≡_
+    subst-n-unique : substᵗ-unique ℕ
     subst-n-unique (subst-< n<ι) (subst-< n<ι') = refl
     subst-n-unique (subst-< n<ι) (subst-inst-> n>ι)
       with NP.1+n≰n (NP.<-trans n<ι n>ι)
@@ -352,7 +54,7 @@ private
     ... | ()
     subst-n-unique (subst-weaken-≥ n≥ι) (subst-weaken-≥ n≥ι') = refl
 
-    subst-τ-unique : substᵗ-unique _⟦_⟧τ≡_
+    subst-τ-unique : substᵗ-unique Type
     subst-τ-unique (subst-α-¬inst sub-n₁) (subst-α-¬inst sub-n₂)
       = cong α⁼ (subst-n-unique sub-n₁ sub-n₂)
     subst-τ-unique (subst-α-¬inst sub-n₁) (subst-α-inst sub-τ₂)
@@ -371,17 +73,17 @@ private
     subst-τ-unique (subst-tuple sub-τs₁) (subst-tuple sub-τs₂) =
       cong tuple (subst-τs⁻-unique sub-τs₁ sub-τs₂)
 
-    subst-τ⁻-unique : substᵗ-unique _⟦_⟧τ⁻≡_
+    subst-τ⁻-unique : substᵗ-unique InitType
     subst-τ⁻-unique (subst-τ⁻ {φ = φ} sub-τ₁) (subst-τ⁻ sub-τ₂) =
       cong₂ _,_ (subst-τ-unique sub-τ₁ sub-τ₂) refl
 
-    subst-τs⁻-unique : substᵗ-unique _⟦_⟧τs⁻≡_
+    subst-τs⁻-unique : substᵗ-unique (List InitType)
     subst-τs⁻-unique [] [] = refl
     subst-τs⁻-unique (sub-τ⁻₁ ∷ sub-τs⁻₁) (sub-τ⁻₂ ∷ sub-τs⁻₂) =
         cong₂ _∷_ (subst-τ⁻-unique sub-τ⁻₁ sub-τ⁻₂)
                   (subst-τs⁻-unique sub-τs⁻₁ sub-τs⁻₂)
 
-    subst-σ-unique : substᵗ-unique _⟦_⟧σ≡_
+    subst-σ-unique : substᵗ-unique StackType
     subst-σ-unique (subst-ρ-¬inst sub-n₁) (subst-ρ-¬inst sub-n₂)
       = cong ρ⁼ (subst-n-unique sub-n₁ sub-n₂)
     subst-σ-unique (subst-ρ-¬inst sub-n₁) (subst-ρ-inst sub-σ₂)
@@ -396,26 +98,26 @@ private
     subst-σ-unique (sub-τ₁ ∷ sub-σ₁) (sub-τ₂ ∷ sub-σ₂) =
       cong₂ _∷_ (subst-τ-unique sub-τ₁ sub-τ₂) (subst-σ-unique sub-σ₁ sub-σ₂)
 
-    subst-Γ-unique : substᵗ-unique _⟦_⟧Γ≡_
+    subst-Γ-unique : substᵗ-unique RegisterAssignment
     subst-Γ-unique (subst-registerₐ sub-sp₁ sub-regs₁)
                    (subst-registerₐ sub-sp₂ sub-regs₂) =
       cong₂ registerₐ (subst-σ-unique sub-sp₁ sub-sp₂)
                       (subst-regs-unique sub-regs₁ sub-regs₂)
 
-    subst-regs-unique : ∀ {m} → substᵗ-unique (_⟦_⟧regs≡_ {m})
+    subst-regs-unique : ∀ {m} → substᵗ-unique (Vec Type m)
     subst-regs-unique {v = []} {[]} {[]} [] [] = refl
     subst-regs-unique {v = τ ∷ τs} {τ₁ ∷ τs₁} {τ₂ ∷ τs₂}
       (sub-τ₁ ∷ sub-τs₁) (sub-τ₂ ∷ sub-τs₂) =
         cong₂ _∷_ (subst-τ-unique sub-τ₁ sub-τ₂)
                   (subst-regs-unique sub-τs₁ sub-τs₂)
 
-    subst-Δ-unique : substᵗ-unique _⟦_⟧Δ≡_
+    subst-Δ-unique : substᵗ-unique TypeAssignment
     subst-Δ-unique [] [] = refl
     subst-Δ-unique (sub-a₁ ∷ sub-Δ₁) (sub-a₂ ∷ sub-Δ₂) =
       cong₂ _∷_ (subst-a-unique sub-a₁ sub-a₂)
                 (subst-Δ-unique sub-Δ₁ sub-Δ₂)
 
-    subst-a-unique : substᵗ-unique _⟦_⟧a≡_
+    subst-a-unique : substᵗ-unique TypeAssignmentValue
     subst-a-unique subst-α subst-α = refl
     subst-a-unique subst-ρ subst-ρ = refl
 
@@ -635,36 +337,15 @@ private
     a-weaken-0 α = subst-α
     a-weaken-0 ρ = subst-ρ
 
-record Substitution (A W : Set) : Set1 where
-  constructor substitution
-  field
-    W₀ : W
-    _⟦_⟧≡_ : A → Cast W → A → Set
-    subst-unique : ∀ {v v₁ v₂ c} → v ⟦ c ⟧≡ v₁ →
-                                   v ⟦ c ⟧≡ v₂ →
-                                   v₁ ≡ v₂
-    can-weaken : ∀ v w ι → ∃ λ v' → v ⟦ weaken w / ι ⟧≡ v'
-    _⟦_⟧? : ∀ v c → Dec (∃ λ v' → v ⟦ c ⟧≡ v')
-    weaken-0 : ∀ v {ι} → v ⟦ weaken W₀ / ι ⟧≡ v
-  infix 3 _⟦_⟧≡_ _⟦_⟧?
-
-  weaken-0-unique : ∀ {v₁ v₂ ι} → v₁ ⟦ weaken W₀ / ι ⟧≡ v₂ →
-                                  v₁ ≡ v₂
-  weaken-0-unique {v₁} = subst-unique (weaken-0 v₁)
-
-open Substitution {{...}} public
-
-Vec-Substitution : ∀ {A W} {m} {{s : Substitution A W}} →
-                     Substitution (Vec A m) W
-Vec-Substitution {A} {W} = substitution
-    W₀
-    _⟦_⟧xs≡_
+Vec-Substitution⁺ : ∀ A {S} {{S⁺ : Substitution⁺ A {{S}}}} m →
+                      Substitution⁺ (Vec A m) {{Vec-Substitution A m}}
+Vec-Substitution⁺ A {S} m = substitution⁺
     unique
     weak
     dec
     xs-weaken-0
 
-  where _⟦_⟧xs≡_ : ∀ {m} → Vec A m → Cast W → Vec A m → Set
+  where _⟦_⟧xs≡_ : ∀ {m} → Vec A m → WeakCast → Vec A m → Set
         xs ⟦ c ⟧xs≡ xs' =
           AllZipᵥ (λ x x' → x ⟦ c ⟧≡ x') xs xs'
 
@@ -691,20 +372,19 @@ Vec-Substitution {A} {W} = substitution
         dec (x ∷ xs) c | _ | no ¬sub-xs =
           no (λ { (x' ∷ xs' , sub-x ∷ sub-xs) → ¬sub-xs (xs' , sub-xs)})
 
-        xs-weaken-0 : ∀ {m} (xs : Vec A m) {ι} → xs ⟦ weaken W₀ / ι ⟧xs≡ xs
+        xs-weaken-0 : ∀ {m} (xs : Vec A m) {ι} → xs ⟦ weaken 0 / ι ⟧xs≡ xs
         xs-weaken-0 [] = []
         xs-weaken-0 (x ∷ xs) = weaken-0 x ∷ xs-weaken-0 xs
 
-List-Substitution : ∀ {A W} {{s : Substitution A W}} → Substitution (List A) W
-List-Substitution {A} {W} = substitution
-    W₀
-    _⟦_⟧xs≡_
+List-Substitution⁺ : ∀ A {S} {{S⁺ : Substitution⁺ A {{S}}}} →
+                       Substitution⁺ (List A) {{List-Substitution A}}
+List-Substitution⁺ A = substitution⁺
     unique
     weak
     dec
     xs-weaken-0
 
-  where _⟦_⟧xs≡_ : List A → Cast W → List A → Set
+  where _⟦_⟧xs≡_ : List A → WeakCast → List A → Set
         xs ⟦ c ⟧xs≡ xs' = AllZip (λ x x' → x ⟦ c ⟧≡ x') xs xs'
 
         unique : ∀ {c} {xs xs₁ xs₂ : List A} →
@@ -730,50 +410,49 @@ List-Substitution {A} {W} = substitution
         dec (x ∷ xs) c | _ | no ¬sub-xs =
           no (λ { (x' ∷ xs' , sub-x ∷ sub-xs) → ¬sub-xs (xs' , sub-xs)})
 
-        xs-weaken-0 : ∀ (xs : List A) {ι} → xs ⟦ weaken W₀ / ι ⟧xs≡ xs
+        xs-weaken-0 : ∀ (xs : List A) {ι} → xs ⟦ weaken 0 / ι ⟧xs≡ xs
         xs-weaken-0 [] = []
         xs-weaken-0 (x ∷ xs) = weaken-0 x ∷ xs-weaken-0 xs
 
 instance
-  Type-Substitution : Substitution Type ℕ
-  Type-Substitution =
-    substitution 0 _⟦_⟧τ≡_ subst-τ-unique can-weaken-τ _⟦_⟧τ? τ-weaken-0
+  Type-Substitution⁺ : Substitution⁺ Type
+  Type-Substitution⁺ =
+    substitution⁺ subst-τ-unique can-weaken-τ _⟦_⟧τ? τ-weaken-0
 
-  TypeVec-Substitution : ∀ {m} → Substitution (Vec Type m) ℕ
-  TypeVec-Substitution = Vec-Substitution
+  TypeVec-Substitution⁺ : ∀ {m} → Substitution⁺ (Vec Type m)
+  TypeVec-Substitution⁺ = Vec-Substitution⁺ Type _
 
-  TypeList-Substitution : Substitution (List Type) ℕ
-  TypeList-Substitution = List-Substitution
+  TypeList-Substitution⁺  : Substitution⁺ (List Type)
+  TypeList-Substitution⁺ = List-Substitution⁺ Type
 
-  InitType-Substitution : Substitution InitType ℕ
-  InitType-Substitution =
-    substitution 0 _⟦_⟧τ⁻≡_ subst-τ⁻-unique can-weaken-τ⁻ _⟦_⟧τ⁻? τ⁻-weaken-0
+  InitType-Substitution⁺  : Substitution⁺ InitType
+  InitType-Substitution⁺ =
+    substitution⁺ subst-τ⁻-unique can-weaken-τ⁻ _⟦_⟧τ⁻? τ⁻-weaken-0
 
-  InitTypeVec-Substitution : ∀ {m} → Substitution (Vec InitType m) ℕ
-  InitTypeVec-Substitution = Vec-Substitution
+  InitTypeVec-Substitution⁺ : ∀ {m} → Substitution⁺ (Vec InitType m)
+  InitTypeVec-Substitution⁺ = Vec-Substitution⁺ InitType _
 
-  InitTypeList-Substitution : Substitution (List InitType) ℕ
-  InitTypeList-Substitution = List-Substitution
+  InitTypeList-Substitution⁺  : Substitution⁺ (List InitType)
+  InitTypeList-Substitution⁺ = List-Substitution⁺ InitType
 
-  StackType-Substitution : Substitution StackType ℕ
-  StackType-Substitution =
-    substitution 0 _⟦_⟧σ≡_ subst-σ-unique can-weaken-σ _⟦_⟧σ? σ-weaken-0
+  StackType-Substitution⁺  : Substitution⁺ StackType
+  StackType-Substitution⁺ =
+    substitution⁺ subst-σ-unique can-weaken-σ _⟦_⟧σ? σ-weaken-0
 
-  RegisterAssignment-Substitution : Substitution RegisterAssignment ℕ
-  RegisterAssignment-Substitution =
-    substitution 0 _⟦_⟧Γ≡_ subst-Γ-unique can-weaken-Γ _⟦_⟧Γ? Γ-weaken-0
+  RegisterAssignment-Substitution⁺  : Substitution⁺ RegisterAssignment
+  RegisterAssignment-Substitution⁺ =
+    substitution⁺ subst-Γ-unique can-weaken-Γ _⟦_⟧Γ? Γ-weaken-0
 
-  TypeAssignment-Substitution : Substitution TypeAssignment ℕ
-  TypeAssignment-Substitution =
-    substitution 0 _⟦_⟧Δ≡_ subst-Δ-unique can-weaken-Δ _⟦_⟧Δ? Δ-weaken-0
+  TypeAssignment-Substitution⁺  : Substitution⁺ TypeAssignment
+  TypeAssignment-Substitution⁺ =
+    substitution⁺ subst-Δ-unique can-weaken-Δ _⟦_⟧Δ? Δ-weaken-0
 
-  TypeAssignmentValue-Substitution : Substitution TypeAssignmentValue ℕ
-  TypeAssignmentValue-Substitution =
-    substitution 0 _⟦_⟧a≡_ subst-a-unique can-weaken-a _⟦_⟧a? a-weaken-0
+  TypeAssignmentValue-Substitution⁺  : Substitution⁺ TypeAssignmentValue
+  TypeAssignmentValue-Substitution⁺ =
+    substitution⁺ subst-a-unique can-weaken-a _⟦_⟧a? a-weaken-0
 
-  Instantiation-Substitution : Substitution Instantiation ℕ
-  Instantiation-Substitution =
-      substitution 0 _⟦_⟧i≡_ unique weak dec i-weaken-0
+  Instantiation-Substitution⁺  : Substitution⁺ Instantiation
+  Instantiation-Substitution⁺ = substitution⁺ unique weak dec i-weaken-0
     where unique : ∀ {c} {i i₁ i₂} →
                      i ⟦ c ⟧i≡ i₁ →
                      i ⟦ c ⟧i≡ i₂ →
@@ -801,9 +480,8 @@ instance
           i-weaken-0 (α τ) = subst-α (weaken-0 τ)
           i-weaken-0 (ρ σ) = subst-ρ (weaken-0 σ)
 
-  StrongCastValue-Substitution : Substitution StrongCastValue ℕ
-  StrongCastValue-Substitution =
-      substitution 0 _⟦_⟧cᵥ≡_ unique weak dec cᵥ-weaken-0
+  StrongCastValue-Substitution⁺  : Substitution⁺ StrongCastValue
+  StrongCastValue-Substitution⁺ = substitution⁺ unique weak dec cᵥ-weaken-0
     where unique : ∀ {c} {cᵥ cᵥ₁ cᵥ₂} →
                      cᵥ ⟦ c ⟧cᵥ≡ cᵥ₁ →
                      cᵥ ⟦ c ⟧cᵥ≡ cᵥ₂ →
@@ -832,8 +510,8 @@ instance
           cᵥ-weaken-0 (inst i) = subst-inst (weaken-0 i)
           cᵥ-weaken-0 (weaken Δ⁺) = subst-weaken (weaken-0 Δ⁺)
 
-  StrongCast-Substitution : Substitution StrongCast ℕ
-  StrongCast-Substitution = substitution 0 _⟦_⟧c≡_ unique weak dec c-weaken-0
+  StrongCast-Substitution⁺  : Substitution⁺ StrongCast
+  StrongCast-Substitution⁺ = substitution⁺ unique weak dec c-weaken-0
     where unique : ∀ {c⋆} {c c₁ c₂} →
                      c ⟦ c⋆ ⟧c≡ c₁ →
                      c ⟦ c⋆ ⟧c≡ c₂ →
@@ -854,8 +532,8 @@ instance
           c-weaken-0 : ∀ c {ι} → c ⟦ weaken 0 / ι ⟧c≡ c
           c-weaken-0 (cᵥ / ι) = subst-/ (weaken-0 cᵥ)
 
-  WordValue-Substitution : Substitution WordValue ℕ
-  WordValue-Substitution = substitution 0 _⟦_⟧w≡_ unique weak dec w-weaken-0
+  WordValue-Substitution⁺  : Substitution⁺ WordValue
+  WordValue-Substitution⁺ = substitution⁺ unique weak dec w-weaken-0
     where unique : ∀ {c} {w w₁ w₂} →
                      w ⟦ c ⟧w≡ w₁ →
                      w ⟦ c ⟧w≡ w₂ →
@@ -910,8 +588,8 @@ instance
           w-weaken-0 (uninit τ) = subst-uninit (weaken-0 τ)
           w-weaken-0 (w ⟦ cᵥ / ιₘ ⟧) = subst-⟦⟧ (w-weaken-0 w) (weaken-0 cᵥ)
 
-  SmallValue-Substitution : Substitution SmallValue ℕ
-  SmallValue-Substitution = substitution 0 _⟦_⟧v≡_ unique weak dec v-weaken-0
+  SmallValue-Substitution⁺  : Substitution⁺ SmallValue
+  SmallValue-Substitution⁺ = substitution⁺ unique weak dec v-weaken-0
     where unique : ∀ {c} {v v₁ v₂} →
                      v ⟦ c ⟧v≡ v₁ →
                      v ⟦ c ⟧v≡ v₂ →
@@ -920,13 +598,13 @@ instance
           unique (subst-word sub-w₁) (subst-word sub-w₂) =
             cong word (subst-unique sub-w₁ sub-w₂)
           unique (subst-⟦⟧ sub-v₁ sub-c₁) (subst-⟦⟧ sub-v₂ sub-c₂) =
-            cong₂ _⟦_⟧ᵥ (unique sub-v₁ sub-v₂) (subst-unique sub-c₁ sub-c₂)
+            cong₂ _⟦_⟧ (unique sub-v₁ sub-v₂) (subst-unique sub-c₁ sub-c₂)
 
           weak : ∀ v w ι → ∃ λ v' → v ⟦ weaken w / ι ⟧v≡ v'
           weak (reg ♯r) w ι = reg ♯r , subst-reg
           weak (word w) w⋆ ι = Σ-map word subst-word (can-weaken w w⋆ ι)
-          weak (v ⟦ c ⟧ᵥ) w ι =
-            Σ-zip _⟦_⟧ᵥ subst-⟦⟧
+          weak (v ⟦ c ⟧) w ι =
+            Σ-zip _⟦_⟧ subst-⟦⟧
                   (weak v w ι)
                   (can-weaken c w (vctx-length v + ι))
 
@@ -936,24 +614,24 @@ instance
           ... | yes (w' , sub-w) = yes (word w' , subst-word sub-w)
           ... | no ¬sub-w =
             no (λ { (word w' , subst-word sub-w) → ¬sub-w (w' , sub-w)})
-          dec (v ⟦ c ⟧ᵥ) (cᵥ / ι)
+          dec (v ⟦ c ⟧) (cᵥ / ι)
             with dec v (cᵥ / ι) | c ⟦ cᵥ / vctx-length v + ι ⟧?
           ... | yes (v' , sub-v) | yes (c' , sub-c) =
-            yes (v' ⟦ c' ⟧ᵥ , subst-⟦⟧ sub-v sub-c)
+            yes (v' ⟦ c' ⟧ , subst-⟦⟧ sub-v sub-c)
           ... | no ¬sub-v | _ =
-            no (λ { (v' ⟦ c' ⟧ᵥ , subst-⟦⟧ sub-v sub-c) →
+            no (λ { (v' ⟦ c' ⟧ , subst-⟦⟧ sub-v sub-c) →
               ¬sub-v (v' , sub-v)})
           ... | _ | no ¬sub-c =
-            no (λ { (v' ⟦ c' ⟧ᵥ , subst-⟦⟧ sub-v sub-c) →
+            no (λ { (v' ⟦ c' ⟧ , subst-⟦⟧ sub-v sub-c) →
               ¬sub-c (c' , sub-c)})
 
           v-weaken-0 : ∀ v {ι} → v ⟦ weaken 0 / ι ⟧v≡ v
           v-weaken-0 (reg ♯r) = λ {ι} → subst-reg
           v-weaken-0 (word w) = subst-word (weaken-0 w)
-          v-weaken-0 (v ⟦ c ⟧ᵥ) = subst-⟦⟧ (v-weaken-0 v) (weaken-0 c)
+          v-weaken-0 (v ⟦ c ⟧) = subst-⟦⟧ (v-weaken-0 v) (weaken-0 c)
 
-  Instruction-Substitution : Substitution Instruction ℕ
-  Instruction-Substitution = substitution 0 _⟦_⟧ι≡_ unique weak dec ι-weaken-0
+  Instruction-Substitution⁺  : Substitution⁺ Instruction
+  Instruction-Substitution⁺ = substitution⁺ unique weak dec ι-weaken-0
     where unique : ∀ {c} {ι ι₁ ι₂} →
                      ι ⟦ c ⟧ι≡ ι₁ →
                      ι ⟦ c ⟧ι≡ ι₂ →
@@ -1050,9 +728,8 @@ instance
           ι-weaken-0 (mov ♯rd v) = subst-mov (weaken-0 v)
           ι-weaken-0 (beq ♯r v) = subst-beq (weaken-0 v)
 
-  InstructionSequence-Substitution : Substitution InstructionSequence ℕ
-  InstructionSequence-Substitution =
-      substitution 0 _⟦_⟧I≡_ unique weak dec I-weaken-0
+  InstructionSequence-Substitution⁺  : Substitution⁺ InstructionSequence
+  InstructionSequence-Substitution⁺ = substitution⁺ unique weak dec I-weaken-0
     where unique : ∀ {c} {I I₁ I₂} →
                      I ⟦ c ⟧I≡ I₁ →
                      I ⟦ c ⟧I≡ I₂ →
@@ -1083,79 +760,3 @@ instance
           I-weaken-0 : ∀ I {ι} → I ⟦ weaken 0 / ι ⟧I≡ I
           I-weaken-0 (ι ~> I) = subst-~> (weaken-0 ι) (I-weaken-0 I)
           I-weaken-0 (jmp v) = subst-jmp (weaken-0 v)
-
-Strong→WeakCastValue : StrongCastValue → WeakCastValue
-Strong→WeakCastValue (inst i) = inst i
-Strong→WeakCastValue (weaken Δ) = weaken (length Δ)
-
-Strong→WeakCast : StrongCast → WeakCast
-Strong→WeakCast (cᵥ / ι) = Strong→WeakCastValue cᵥ / ι
-
-instance
-  Weak→StrongSubstitution : ∀ {A} {{s : Substitution A ℕ}} →
-                              {{_ : Substitution.W₀ s ≡ 0}} →
-                              Substitution A TypeAssignment
-  Weak→StrongSubstitution {{substitution .0 _⟦_⟧≡_ subst-unique
-                                         can-weaken _⟦_⟧? weaken-0}}
-                          {{refl}} = substitution
-    []
-    (λ v₁ c v₂ → v₁ ⟦ Strong→WeakCast c ⟧≡ v₂)
-    subst-unique
-    (λ v w ι → can-weaken v (length w) ι)
-    (λ v c → v ⟦ Strong→WeakCast c ⟧?)
-    weaken-0
-
-
-data ReferenceMatch : TypeAssignmentValue → Instantiation → Set where
-  match-α : ∀ {τ} → ReferenceMatch α (α τ)
-  match-ρ : ∀ {σ} → ReferenceMatch ρ (ρ σ)
-
-infix 3 Run_⟦_⟧≡_
-data Run_⟦_⟧≡_ : TypeAssignment → StrongCast → TypeAssignment → Set where
-  run-inst :
-               ∀ {Δ a i} →
-             ReferenceMatch a i →
-    ----------------------------------
-    Run a ∷ Δ ⟦ inst i / zero ⟧≡ Δ
-
-  run-weaken :
-               ∀ {Δ Δ⁺} →
-    -----------------------------------
-    Run Δ ⟦ weaken Δ⁺ / zero ⟧≡ Δ⁺ ++ Δ
-
-  run-suc :
-        ∀ {a a' : TypeAssignmentValue}
-          {Δ Δ' : TypeAssignment}
-          {cᵥ : StrongCastValue} {ι} →
-         a ⟦ cᵥ / ι ⟧≡ a' →
-         Run Δ ⟦ cᵥ / ι ⟧≡ Δ' →
-    ---------------------------------
-    Run a ∷ Δ ⟦ cᵥ / suc ι ⟧≡ a' ∷ Δ'
-
-run-unique : ∀ {Δ Δ₁ Δ₂ c} →
-               Run Δ ⟦ c ⟧≡ Δ₁ →
-               Run Δ ⟦ c ⟧≡ Δ₂ →
-               Δ₁ ≡ Δ₂
-run-unique (run-inst m₁) (run-inst m₂) = refl
-run-unique run-weaken run-weaken = refl
-run-unique (run-suc sub-a₁ run-Δ₁) (run-suc sub-a₂ run-Δ₂) =
-  cong₂ _∷_ (subst-unique {W = TypeAssignment} sub-a₁ sub-a₂)
-            (run-unique run-Δ₁ run-Δ₂)
-
-infix 3 Run_⟦_⟧?
-Run_⟦_⟧? : ∀ Δ c → Dec (∃ λ Δ' → Run Δ ⟦ c ⟧≡ Δ')
-Run [] ⟦ inst i / ι ⟧? = no (λ { (_ , ()) })
-Run [] ⟦ weaken Δ⁺ / zero ⟧? = yes (Δ⁺ ++ [] , run-weaken)
-Run [] ⟦ weaken Δ⁺ / suc ι ⟧? = no (λ { (_ , ()) })
-Run α ∷ Δ ⟦ inst (α τ) / zero ⟧? = yes (Δ , run-inst match-α)
-Run α ∷ Δ ⟦ inst (ρ σ) / zero ⟧? = no (λ { (_ , run-inst ()) })
-Run ρ ∷ Δ ⟦ inst (α τ) / zero ⟧? = no (λ { (_ , run-inst ()) })
-Run ρ ∷ Δ ⟦ inst (ρ σ) / zero ⟧? = yes (Δ , run-inst match-ρ)
-Run a ∷ Δ ⟦ weaken Δ⁺ / zero ⟧? = yes (Δ⁺ ++ a ∷ Δ , run-weaken)
-Run a ∷ Δ ⟦ cᵥ / suc ι ⟧? with a ⟦ cᵥ / ι ⟧? | Run Δ ⟦ cᵥ / ι ⟧?
-... | yes (a' , sub-a) |
-  yes (Δ' , run-Δ) = yes (a' ∷ Δ' , run-suc sub-a run-Δ)
-... | no ¬sub-a | _ =
-  no (λ { (a' ∷ Δ' , run-suc sub-a run-Δ) → ¬sub-a (a' , sub-a)})
-... | _ | no ¬run-Δ =
-  no (λ { (a' ∷ Δ' , run-suc sub-a run-Δ) → ¬run-Δ (Δ' , run-Δ)})

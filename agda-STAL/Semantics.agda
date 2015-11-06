@@ -1,145 +1,8 @@
 module Semantics where
 
 open import Util
-open import Grammar
-open import Substitution
-
-evalSmallValue : Vec WordValue ♯regs → SmallValue → WordValue
-evalSmallValue regs (reg ♯r) = lookup ♯r regs
-evalSmallValue regs (word w) = w
-evalSmallValue regs (v ⟦ i ⟧ᵥ) = evalSmallValue regs v ⟦ i ⟧
-
-data EvalGlobal (G : Globals) : WordValue → GlobalValue → Set where
-  instantiate-globval :
-                 ∀ {l ♯a Δ Γ I} →
-             G ↓ l ⇒ (∀[ Δ ] Γ ∙ I) →
-                  length Δ ≡ ♯a →
-    ------------------------------------------
-    EvalGlobal G (globval l ♯a) (∀[ Δ ] Γ ∙ I)
-
-  instantiate-⟦⟧ :
-           ∀ {w c Δ Δ' Γ Γ' I I'} →
-         EvalGlobal G w (∀[ Δ ] Γ ∙ I) →
-               Run Δ ⟦ c ⟧≡ Δ' →
-                 Γ ⟦ c ⟧≡ Γ' →
-                 I ⟦ c ⟧≡ I' →
-    -----------------------------------------
-    EvalGlobal G (w ⟦ c ⟧) (∀[ Δ' ] Γ' ∙ I')
-
-infix 3 _⊢_⇒_
-data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
-    exec-add :
-             ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
-          evalSmallValue regs v ≡ int n₁ →
-                lookup ♯rs regs ≡ int n₂ →
-      ------------------------------------------------------------
-      G ⊢ H , register sp regs , add ♯rd ♯rs v ~> I ⇒
-          H , register sp (update ♯rd (int (n₁ + n₂)) regs) , I
-
-    exec-sub :
-             ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
-          evalSmallValue regs v ≡ int n₁ →
-                lookup ♯rs regs ≡ int n₂ →
-      ------------------------------------------------------------
-      G ⊢ H , register sp regs , sub ♯rd ♯rs v ~> I ⇒
-          H , register sp (update ♯rd (int (n₁ ∸ n₂)) regs) , I
-
-    exec-push :
-                      ∀ {H sp regs I v} →
-      -------------------------------------------------------
-      G ⊢ H , register sp regs , push v ~> I ⇒
-          H , register (evalSmallValue regs v ∷ sp) regs , I
-
-    exec-pop :
-                  ∀ {H w sp regs I} →
-      --------------------------------------------
-      G ⊢ H , register (w ∷ sp) regs , pop ~> I ⇒
-          H , register sp regs , I
-
-    exec-sld :
-             ∀ {H sp regs I ♯rd i w} →
-                    sp ↓ i ⇒ w →
-      --------------------------------------------
-      G ⊢ H , register sp regs , sld ♯rd i ~> I ⇒
-          H , register sp (update ♯rd w regs) , I
-
-    exec-sst :
-             ∀ {H sp sp' regs I ♯rs i} →
-           sp ⟦ i ⟧← lookup ♯rs regs ⇒ sp' →
-      --------------------------------------------
-      G ⊢ H , register sp  regs , sst i ♯rs ~> I ⇒
-          H , register sp' regs , I
-
-    exec-ld :
-          ∀ {H sp regs I ♯rd ♯rs i lₕ ws w} →
-             lookup ♯rs regs ≡ heapval lₕ →
-                     H ↓ lₕ ⇒ tuple ws →
-                     ws ↓ i ⇒ w →
-      -----------------------------------------------
-      G ⊢ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒
-          H , register sp (update ♯rd w regs) , I
-
-    exec-st :
-          ∀ {H H' sp regs I ♯rd i ♯rs lₕ ws ws'} →
-             lookup ♯rd regs ≡ heapval lₕ →
-                       H ↓ lₕ ⇒ tuple ws →
-              ws ⟦ i ⟧← lookup ♯rs regs ⇒ ws' →
-                    H ⟦ lₕ ⟧← tuple ws' ⇒ H' →
-      -----------------------------------------------
-      G ⊢ H  , register sp regs , st ♯rd i ♯rs ~> I ⇒
-          H' , register sp regs , I
-
-    exec-malloc :
-                    ∀ {H sp regs I ♯rd τs} →
-      --------------------------------------------------------
-      G ⊢ H , register sp regs , malloc ♯rd τs ~> I ⇒
-          H ∷ʳ tuple (map uninit τs) ,
-          register sp (update ♯rd (heapval (length H)) regs) ,
-          I
-
-    exec-mov :
-                       ∀ {H sp regs I ♯rd v} →
-      -----------------------------------------------------------------
-      G ⊢ H , register sp regs , mov ♯rd v ~> I ⇒
-          H , register sp (update ♯rd (evalSmallValue regs v) regs) , I
-
-    exec-beq₀ :
-                    ∀ {H sp regs ♯r v Γ I₁ I₂} →
-                     lookup ♯r regs ≡ int 0 →
-      EvalGlobal G (evalSmallValue regs v) (∀[ [] ] Γ ∙ I₂) →
-      -------------------------------------------------------
-             G ⊢ H , register sp regs , beq ♯r v ~> I₁ ⇒
-                 H , register sp regs , I₂
-
-    exec-beq₁ :
-                ∀ {H sp regs I ♯r v n₀} →
-              lookup ♯r regs ≡ int n₀ →
-                        n₀ ≢ 0 →
-      ------------------------------------------
-      G ⊢ H , register sp regs , beq ♯r v ~> I ⇒
-          H , register sp regs , I
-
-    exec-jmp :
-                    ∀ {H sp regs v Γ I} →
-      EvalGlobal G (evalSmallValue regs v) (∀[ [] ] Γ ∙ I) →
-      ------------------------------------------------------
-               G ⊢ H , register sp regs , jmp v ⇒
-                   H , register sp regs , I
-
-infix 3 _⊢_⇒ₙ_/_
-infixr 5 _∷_
-data _⊢_⇒ₙ_/_ (G : Globals) : ProgramState → ℕ → ProgramState → Set where
-  []  :
-        ∀ {P} →
-    --------------
-    G ⊢ P ⇒ₙ 0 / P
-
-  _∷_ :
-       ∀ {P₁ P₂ P₃ n} →
-         G ⊢ P₁ ⇒ P₂ →
-       G ⊢ P₂ ⇒ₙ n / P₃ →
-      --------------------
-      G ⊢ P₁ ⇒ₙ suc n / P₃
+open import Judgments
+open import Lemmas
 
 private
   int-helper : ∀ {n₁ n₂} {w : WordValue} →
@@ -178,8 +41,8 @@ eval-unique (instantiate-⟦⟧ eval₁ run-Δ₁ sub-Γ₁ sub-I₁)
   with eval-unique eval₁ eval₂
 ... | refl
   rewrite run-unique run-Δ₁ run-Δ₂
-        | subst-unique {W = ℕ} sub-Γ₁ sub-Γ₂
-        | subst-unique {W = ℕ} sub-I₁ sub-I₂ = refl
+        | subst-unique sub-Γ₁ sub-Γ₂
+        | subst-unique sub-I₁ sub-I₂ = refl
 
 exec-unique : ∀ {G P P₁ P₂} →
                 G ⊢ P ⇒ P₁ →
@@ -236,13 +99,13 @@ eval-dec : ∀ G w → Dec (∃ λ g → EvalGlobal G w g)
 eval-dec G (globval l ♯a)
   with ↓-dec G l
 ... | no ¬l' = no (λ { (._ , instantiate-globval l' eq) → ¬l' (_ , l') })
-... | yes (∀[ Δ ] Γ ∙ I , l') with length Δ ≟ ♯a
-... | yes ♯a≡len = yes (∀[ Δ ] Γ ∙ I , instantiate-globval l' ♯a≡len)
+... | yes (code[ Δ ] Γ ∙ I , l') with length Δ ≟ ♯a
+... | yes ♯a≡len = yes (code[ Δ ] Γ ∙ I , instantiate-globval l' ♯a≡len)
 ... | no ♯a≢len = no (λ { (._ , instantiate-globval l'' eq) →
                      help l' l'' ♯a≢len eq })
   where help : ∀ {G l ♯a Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 G ↓ l ⇒ ∀[ Δ₁ ] Γ₁ ∙ I₁ →
-                 G ↓ l ⇒ ∀[ Δ₂ ] Γ₂ ∙ I₂ →
+                 G ↓ l ⇒ code[ Δ₁ ] Γ₁ ∙ I₁ →
+                 G ↓ l ⇒ code[ Δ₂ ] Γ₂ ∙ I₂ →
                  length Δ₁ ≢ ♯a →
                  length Δ₂ ≢ ♯a
         help l₁ l₂ neq eq with ↓-unique l₁ l₂
@@ -251,43 +114,44 @@ eval-dec G (heapval l) = no (λ { (_ , ()) })
 eval-dec G (int n) = no (λ { (_ , ()) })
 eval-dec G ns = no (λ { (_ , ()) })
 eval-dec G (uninit τ) = no (λ { (_ , ()) })
-eval-dec G (w ⟦ c ⟧) with eval-dec G w
+eval-dec G (w ⟦ cᵥ / ι ⟧) with eval-dec G w
 ... | no ¬eval =
   no (λ { (._ , instantiate-⟦⟧ eval run-Δ sub-Γ sub-I) → ¬eval (_ , eval) })
-... | yes (∀[ Δ ] Γ ∙ I , eval₁)
-  with Run Δ ⟦ c ⟧? |  Γ ⟦ c ⟧? | I ⟦ c ⟧?
+... | yes (code[ Δ ] Γ ∙ I , eval₁)
+  with Run Δ ⟦ cᵥ / ι ⟧? | Γ ⟦ Strong→Weak cᵥ / ι ⟧?
+                         | I ⟦ Strong→Weak cᵥ / ι ⟧?
 ... | yes (Δ' , run-Δ) | yes (Γ' , sub-Γ) | yes (I' , sub-I) =
- yes (∀[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₁ run-Δ sub-Γ sub-I)
+ yes (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₁ run-Δ sub-Γ sub-I)
 ... | no ¬run-Δ | _ | _ =
-  no (λ { (∀[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
+  no (λ { (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
     help eval₁ eval₂ ¬run-Δ (Δ' , run-Δ) })
   where help : ∀ {G w c Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 EvalGlobal G w (∀[ Δ₁ ] Γ₁ ∙ I₁) →
-                 EvalGlobal G w (∀[ Δ₂ ] Γ₂ ∙ I₂) →
+                 EvalGlobal G w (code[ Δ₁ ] Γ₁ ∙ I₁) →
+                 EvalGlobal G w (code[ Δ₂ ] Γ₂ ∙ I₂) →
                  ¬ (∃ λ Δ' → Run Δ₁ ⟦ c ⟧≡ Δ') →
                  ¬ (∃ λ Δ' → Run Δ₂ ⟦ c ⟧≡ Δ')
         help eval₁ eval₂ ¬run-Δ run-Δ
           with eval-unique eval₁ eval₂
         ... | refl = ¬run-Δ run-Δ
 ... | _ | no ¬sub-Γ | _ =
-  no (λ { (∀[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
+  no (λ { (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
     help eval₁ eval₂ ¬sub-Γ (Γ' , sub-Γ) })
-  where help : ∀ {G w} {c : StrongCast} {Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 EvalGlobal G w (∀[ Δ₁ ] Γ₁ ∙ I₁) →
-                 EvalGlobal G w (∀[ Δ₂ ] Γ₂ ∙ I₂) →
-                 ¬ (∃ λ Γ' → Γ₁ ⟦ c ⟧≡ Γ') →
-                 ¬ (∃ λ Γ' → Γ₂ ⟦ c ⟧≡ Γ')
+  where help : ∀ {G w cᵥ ι Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
+                 EvalGlobal G w (code[ Δ₁ ] Γ₁ ∙ I₁) →
+                 EvalGlobal G w (code[ Δ₂ ] Γ₂ ∙ I₂) →
+                 ¬ (∃ λ Γ' → Γ₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ') →
+                 ¬ (∃ λ Γ' → Γ₂ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ')
         help eval₁ eval₂ ¬sub-Γ sub-Γ
           with eval-unique eval₁ eval₂
         ... | refl = ¬sub-Γ sub-Γ
 ... | _ | _ | no ¬sub-I =
-  no (λ { (∀[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
+  no (λ { (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
     help eval₁ eval₂ ¬sub-I (I' , sub-I) })
-  where help : ∀ {G w} {c : StrongCast} {Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 EvalGlobal G w (∀[ Δ₁ ] Γ₁ ∙ I₁) →
-                 EvalGlobal G w (∀[ Δ₂ ] Γ₂ ∙ I₂) →
-                 ¬ (∃ λ I' → I₁ ⟦ c ⟧≡ I') →
-                 ¬ (∃ λ I' → I₂ ⟦ c ⟧≡ I')
+  where help : ∀ {G w cᵥ ι Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
+                 EvalGlobal G w (code[ Δ₁ ] Γ₁ ∙ I₁) →
+                 EvalGlobal G w (code[ Δ₂ ] Γ₂ ∙ I₂) →
+                 ¬ (∃ λ I' → I₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ I') →
+                 ¬ (∃ λ I' → I₂ ⟦ Strong→Weak cᵥ / ι ⟧≡ I')
         help eval₁ eval₂ ¬sub-I sub-I
           with eval-unique eval₁ eval₂
         ... | refl = ¬sub-I sub-I
@@ -393,8 +257,8 @@ exec-dec G (H , register sp regs , beq ♯r v ~> I)
 ... | no ¬eval = no (λ { (._ , exec-beq₀ eq' eval) → ¬eval (_ , eval)
                        ; (._ , exec-beq₁ eq' neq) →
                              neq (int-helper eq' eq)})
-... | yes (∀[ [] ] Γ ∙ I' , eval) = yes (_ , exec-beq₀ eq eval)
-... | yes (∀[ a ∷ Δ ] Γ ∙ I' , eval) = no help
+... | yes (code[ [] ] Γ ∙ I' , eval) = yes (_ , exec-beq₀ eq eval)
+... | yes (code[ a ∷ Δ ] Γ ∙ I' , eval) = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , beq ♯r v ~> I ⇒ P')
         help (._ , exec-beq₀ eq' eval') with eval-unique eval eval'
         ... | ()
@@ -402,8 +266,8 @@ exec-dec G (H , register sp regs , beq ♯r v ~> I)
 exec-dec G (H , register sp regs , jmp v)
   with eval-dec G (evalSmallValue regs v)
 ... | no ¬eval = no (λ { (._ , exec-jmp  eval) → ¬eval (_ , eval) })
-... | yes (∀[ [] ] Γ ∙ I' , eval) = yes (_ , exec-jmp eval)
-... | yes (∀[ a ∷ Δ ] Γ ∙ I' , eval) = no help
+... | yes (code[ [] ] Γ ∙ I' , eval) = yes (_ , exec-jmp eval)
+... | yes (code[ a ∷ Δ ] Γ ∙ I' , eval) = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , jmp v ⇒ P')
         help (._ , exec-jmp eval') with eval-unique eval eval'
         ... | ()
