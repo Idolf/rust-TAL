@@ -7,7 +7,7 @@ open import Util
 -- needed to define the judgments
 open import Judgments
 
---
+-- Most lemmas are in this directory
 open import Lemmas
 
 -- A lot of junk
