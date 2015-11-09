@@ -1,5 +1,5 @@
 GRAPHS=
-TARGET=aflevering.pdf
+TARGET=report.pdf
 TEXFILES=*.tex */*.tex
 HELPFILES=
 
