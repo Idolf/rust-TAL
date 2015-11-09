@@ -1,42 +1,18 @@
-\documentclass[11pt,fleqn]{report}
-\usepackage[a4paper, hmargin={2.8cm, 2.8cm}, vmargin={2.8cm, 2.8cm}]{geometry}
+\documentclass[a4paper]{report}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage{listingsutf8}
 \usepackage{amsmath, amssymb}
 \usepackage{stmaryrd}
 \usepackage{mathpartir}
-
-\usepackage{lastpage}
-\usepackage{fancyhdr}
-\usepackage[toc]{appendix}
-\usepackage{pdfpages}
 \usepackage{semantic}
+\usepackage{titling}
+\usepackage[lang=en,grid]{kufront}
 
-\mathlig{|-}{\vdash}
-
-\author{Mathias Svensson \\ freaken@freaken.dk}
-\date{29 July 2015}
+\author{\Large Mathias Svensson \quad {\ttfamily\large tpx783@alumni.ku.dk}}
+\date{\today}
 \title{A Rust-like Typed Assembly Language}
+\project{\mdseries\LARGE Master Thesis}
+\supervisor{Supervisor: {\large Ken Friis Larsen} \texttt{kflarsen@di.ku.dk} \\[0.5cm]
+            Co-supervisor: {\large Andrzej Filinski} \texttt{andrzej@di.ku.dk}}
 
-\usepackage[pdftitle={A Rust-like Typed Assembly Language},
-  pdfauthor={Mathias Svensson}, linkbordercolor={0.8 0.8 0.8}]{hyperref}
-
-\lstset{
-%    language=c,
-    basicstyle=\ttfamily\footnotesize,
-    keywordstyle=,
-    numbers=left,
-    numberstyle=\footnotesize,
-    numbersep=5pt,
-    backgroundcolor=\color{white},
-    showspaces=false,
-    showstringspaces=false,
-    showtabs=false,
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false
-}
-
-\setcounter{secnumdepth}{1}
-\setcounter{tocdepth}{2}
+\usepackage[pdftitle={\thetitle}, pdfauthor={\theauthor}, linkbordercolor={0.8 0.8 0.8}]{hyperref}

@@ -1,39 +1,18 @@
-\include{preamble}
+\input{preamble}
+\input{macros}
 
 \begin{document}
 
-\AddToShipoutPicture*{\put(0,0){\includegraphics*[viewport=0 0 700 600]{nat-farve}}}
-\AddToShipoutPicture*{\put(0,602){\includegraphics*[viewport=0 600 700 1600]{nat-farve}}}
-\AddToShipoutPicture*{\put(0,0){\includegraphics*{nat-en}}}
-
 \begin{titlepage}
-\begin{center}
-\phantom{}
-\vspace{5.0cm}
-{\LARGE A Rust-like Typed Assembly Language}\\[0.5cm]
-{\Large Using affine types to avoid garbage collection}\\[1.0cm]
-{\large Mathias Svensson} \\
-\texttt{freaken@freaken.dk} \\[0.8cm]
-\begin{tabular}{rl}
-Supervisor: & {\large Ken Friis Larsen} \\
-            & \texttt{kflarsen@di.ku.dk} \\[0.5cm]
-Co-supervisor: & {\large Andrzej Filinski} \\
-               & \texttt{andrzej@di.ku.dk}
-\end{tabular}
-
-\vfill
-%% % Bottom of the page
-{\large \today}
-\end{center}
+\maketitle
 \end{titlepage}
-
-\newpage
 \tableofcontents
-\newpage
 
 \chapter{Judgments}
 \input{judgments/grammar}
 \input{judgments/types}
 \input{judgments/subtypes}
+
+\chapter{Lemmas}
 
 \end{document}
