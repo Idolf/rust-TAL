@@ -1,6 +1,6 @@
 GRAPHS=
 TARGET=aflevering.pdf
-TEXFILES=*.tex
+TEXFILES=*.tex */*.tex
 HELPFILES=
 
 all: $(TARGET)

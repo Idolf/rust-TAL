@@ -1,0 +1,31 @@
+\section{Subtyping judgments}
+
+\newcommand \subtype[3] {{#1} |- {#2} \le {#3}}
+
+\fbox{$\subtype{\Delta}{\tau_1}{\tau_2}$}
+\begin{mathpar}
+\infer{\alpha \in \Delta}{\subtype{\Delta}{\alpha}{\alpha}} \and
+\infer{ }{\subtype{\Delta}{\mathtt{int}}{\mathtt{int}}} \and
+\infer{ }{\subtype{\Delta}{\mathtt{ns}}{\mathtt{ns}}} \and
+\infer
+  {\valid{\Delta}{\Delta'} \and
+    \subtype{\Delta', \Delta}{\Gamma_1}{\Gamma_2}}
+  {\subtype{\Delta}{\forall[ \Delta' ]\Gamma_1}{\forall[ \Delta' ]\Gamma_2}} \and
+\infer
+  {\subtype{\Delta}{\tau_1^{\phi_1}}{\tau'_1{}^{\phi'_1}} \and
+    \dots \and
+    \subtype{\Delta}{\tau_n^{\phi_n}}{\tau'_n{}^{\phi'_n}}}
+  {\subtype{\Delta}{\langle \tau'_1{}^{\phi_1}, \dots, \tau_n{}^{\phi_n} \rangle}
+                   {\langle \tau'_1{}^{\phi'_1}, \dots, \tau'_n{}^{\phi'_n} \rangle}}
+\end{mathpar}
+
+\fbox{$\subtype{}{\phi_1}{\phi_2}$}
+\begin{mathpar}
+\infer{ }{\subtype{}{\mathtt{init}}{\mathtt{init}}} \and
+\infer{ }{\subtype{}{\mathtt{\phi}}{\mathtt{uninit}}}
+\end{mathpar}
+
+\fbox{$\subtype{\Delta}{\tau_1^{\phi_1}}{\tau_2^{\phi_2}}$}
+\begin{mathpar}
+\infer{\valid{\Delta}{\tau} \and \subtype{}{\phi_1}{\phi_2}}{\subtype{\Delta}{\tau^{\phi_1}}{\tau^{\phi_2}}}
+\end{mathpar}

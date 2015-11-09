@@ -1,0 +1,66 @@
+\section{Grammar}
+
+\begin{tabular}{lrcl}
+$types$ & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau_1^{\phi_1},\dots,\tau_n^{\phi_n}\rangle$ \\
+$stack\ types$ & $\sigma$ & ::= & $\rho \mid \mathtt{nil} \mid \tau :: \sigma$ \\
+$initialization\ flags$ & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
+$type\ assignments$ & $\Delta$ & ::= & $\mathtt{nil} \mid a :: \Delta$ \\
+$type\ assignment\ value$ & $a$ & ::= & $\alpha \mid \rho$ \\
+$global\ label\ assignments$ & $\Psi_g$ & ::= & $\{\ell_{g,1}: \tau_1,\dots,\ell_{g,n}:\tau_n\}$ \\
+$heap\ label\ assignmentss$ & $\Psi_h$ & ::= & $\{\ell_{h,1}: \tau_1,\dots,\ell_{h,n}:\tau_n\}$ \\
+$label\ assignments$ & $\Psi$ & ::= & $(\Psi_g , \Psi_h)$ \\
+$register\ assignments$ & $\Gamma$ & ::= & $\{\mathtt{sp} : \sigma, \mathtt{r}_1: \tau_1, \dots, \mathtt{r}_{regs}: \tau_{regs}\}$ \\
+\\
+$registers$ & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{regs}$ \\
+$casts$ & $c$ & ::= & $\mathtt{\alpha}\Rightarrow\tau \mid \rho\Rightarrow\sigma \mid \mathtt{weaken}\ \Delta$ \\
+$word\ values$ & $w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid w[c]$ \\
+$small\ values$ & $w$ & ::= & $\mathtt{reg}\ r \mid \mathtt{word}\ w \mid v[c]$ \\
+$global\ values$ & $g$ & ::= & $\mathtt{code}[\Delta]\Gamma.I$ \\
+$globals$ & $G$ & ::= & $\{l_{g,1}\mapsto g_1, \dots, l_{g,n} \mapsto g_n\}$ \\
+$heap\ values$ & $h$ & ::= & $\langle w_1, \dots, w_n \rangle$ \\
+$heaps$ & $H$ & ::= & $\{l_{h,1}\mapsto h_1, \dots, l_{h,n} \mapsto h_n\}$ \\
+$register\ files$ & $R$ & ::= & $\{sp \mapsto S, r_1 \mapsto w_1, \dots, r_{regs} \mapsto w_{regs}\}$ \\
+\\
+$instructions$ & $\iota$ & ::= & $\mathtt{add}\ r_d, r_s, v \mid \mathtt{sub}\ r_d, r_s, v \mid$ \\
+        &&& $\mathtt{push}\ v \mid \mathtt{pop} \mid$ \\
+        &&& $\mathtt{ld}\ r_d, \mathtt{sp}, i \mid \mathtt{st}\ \mathtt{sp}, i, r_s \mid$\\
+        &&& $\mathtt{ld}\ r_d, r_s, i \mid \mathtt{st}\ r_d, i, r_s \mid$\\
+        &&& $\mathtt{malloc}\ \langle \tau_1, \dots, \tau_n \rangle \mid $ \\
+        &&& $\mathtt{mov}\ r_d, r_s \mid \mathtt{beq}\ r, v$ \\
+$instruction\ sequences$ & $I$ & ::= & $\iota ; I \mid \mathtt{jmp}\ v$ \\
+$program\ states$ & $P$ & ::= & $(H, R, I)$ \\
+\end{tabular}
+
+\subsection{Comments}
+In the previous, $regs$ is a constant. Its value of the number of registers on
+the machine in question. The concrete value of $regs$ does not matter for any of
+the proofs, but in my code, I set the value to $4$.
+
+The references $\alpha$ and $\rho$ are implemented using De Bruijn indexes. This
+is relevant both in $types$, $stack\ types$ and in $casts$, where they are
+used. It is also relevant in the $\mathtt{weaken}$ case of $casts$, as we need
+to know \emph{where} to weaken.
+
+Note also that for technical reasons, a lot of the constructors in Agda does not
+actually look like this. For instance we use $\iota \sim> I$ instead of
+$\iota ; I$ and $v \llbracket c \rrbracket$ instead of $v [ c ]$. We also use
+$\mathtt{sld}\ r_d, i$ and $\mathtt{sst}\ i, r_s$ instead of
+$\mathtt{ld}\ r_d, \mathtt{sp}, i$ and $\mathtt{st}\ \mathtt{sp}, i, r_s$.
+
+Note also that in the Agda-code, the $\mathtt{globval}\ l_{g,k}$ of $w$ also
+includes the number of assumptions used in the corresponding code global. This
+would ideally be removed later.
+
+\subsection{Differences from STAL}
+
+\begin{itemize}
+\item No existential types
+\item No stack-pointer types
+\item No compound stacks
+\item The original paper has an unlimited number of registers, with only a
+  finite amount used at any time. We have a fixed number.
+\item The heap has been split up into the \texttt{Globals}, containing immutable
+  code and, and \texttt{Heap} containing only mutable tuples.
+\item The instructions are slightly different -- for instance there is no \texttt{salloc}/\texttt{sfree}, only \texttt{push}/\texttt{pop}.
+\item The small step semanics will not update the globals.
+\end{itemize}

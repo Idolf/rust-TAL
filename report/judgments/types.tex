@@ -1,0 +1,89 @@
+\section{Typing judgments}
+
+\newcommand \valid[2] {{#1} |- {#2}\ \mathbf{Valid}}
+
+\fbox{$\valid{\Delta}{\tau}$}
+\begin{mathpar}
+\infer{\alpha \in \Delta}{\valid{\Delta}{\alpha}} \and
+\infer{ }{\valid{\Delta}{\mathtt{int}}} \and
+\infer{ }{\valid{\Delta}{\mathtt{ns}}} \and
+\infer{\valid{\Delta}{\Delta'} \and \valid{\Delta', \Delta}{\Gamma}}{\valid{\Delta}{\mathtt{ns}}} \and
+\infer{\valid{\Delta}{\tau_1^{\phi_1}} \and \dots \and \valid{\Delta}{\tau_n^{\phi_n}}}
+      {\valid{\Delta}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\tau^\phi}$}
+\begin{mathpar}
+\infer{\valid{\Delta}{\tau}}{\valid{\Delta}{\tau^\phi}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\sigma}$}
+\begin{mathpar}
+\infer{\rho \in \Delta}{\valid{\Delta}{\rho}} \and
+\infer{ }{\valid{\Delta}{\mathtt{nil}}} \and
+\infer{\valid{\Delta}{\tau} \and \valid{\Delta}{\sigma}}{\valid{\Delta}{\tau :: \sigma}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\Delta'}$}
+\begin{mathpar}
+\infer{ }{\valid{\Delta}{\mathtt{nil}}} \and
+\infer{\valid{\Delta}{a} \and \valid{\Delta}{\Delta'}}{\valid{\Delta}{a :: \Delta'}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{a}$}
+\begin{mathpar}
+\infer{ }{\valid{\Delta}{\alpha}} \and
+\infer{ }{\valid{\Delta}{\rho}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\Gamma}$}
+\begin{mathpar}
+\infer{\valid{\Delta}{\sigma} \and \valid{\Delta}{\tau_1} \and \dots \and \valid{\Delta}{\tau_{regs}}}{\valid{\Delta}{\{\mathtt{sp}:\sigma, \mathtt{r}_1:\tau_1, \dots, \mathtt{r}_{regs}:\tau_{regs}\}}}
+\end{mathpar}
+
+\fbox{$\valid{}{\Psi_g}$}
+\begin{mathpar}
+\infer
+  {\valid{\mathtt{nil}}{\tau_1} \and
+    \dots \and
+    \valid{\mathtt{nil}}{\tau_{regs}}}
+  {\valid{}{\{\ell_{g,1}\mapsto\tau_1, \dots, \ell_{g,n}\mapsto\tau_{n}\}}}
+\end{mathpar}
+
+\fbox{$\valid{}{\Psi_g}$}
+\begin{mathpar}
+\infer
+  {\valid{\mathtt{nil}}{\tau_1} \and
+  \dots \and
+  \valid{\mathtt{nil}}{\tau_{regs}}}
+  {\valid{}{\{\ell_{h,1}\mapsto\tau_1, \dots, \ell_{h,n}\mapsto\tau_{n}\}}}
+\end{mathpar}
+
+\fbox{$\valid{}{\Psi}$}
+\begin{mathpar}
+\infer{\valid{}{\Psi_g} \and \valid{}{\Psi_h}}{\valid{}{(\Psi_g, \Psi_h)}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{c}$}
+\begin{mathpar}
+\infer{\valid{\Delta_2}{\tau}}{\valid{\Delta_1, \alpha, \Delta_2}{\alpha => \tau}} \and
+\infer{\valid{\Delta_2}{\sigma}}{\valid{\Delta_1, \rho, \Delta_2}{\rho => \sigma}} \and
+\infer{\valid{\Delta_2}{\Delta^{+}}}{\valid{\Delta_1, \Delta_2}{\mathtt{weaken}\ \Delta^{+}}}\text{($\Delta^{+}$ is to be inserted between $\Delta_1$ and $\Delta_2$)}
+\end{mathpar}
+
+\subsection{Comments}
+The judgment $\valid{\Delta}{a}$ seems superfluous... because it currently
+is. The only reason it is currently there, is to later support assumptions
+depending on other assumptions.
+
+Note also that the only reason we even support type assumptions, is to allow
+parametric code blocks, and since these will never contain references to
+$\Psi_g$, $\Psi_h$ or $\Psi$ values, then these can only be valid in the empty
+context.
+
+\subsection{Differences from STAL}
+
+In STAL, they give a (somewhat weird) definition of deep equality, and then
+based wellformedness on top of this equality. I have instead chosen to simply
+use Agdas builtin shallow equality and then built my own judgments for
+wellformedness.
