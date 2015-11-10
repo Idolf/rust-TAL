@@ -1,4 +1,5 @@
 \section{Grammar}
+\label{sec:grammar}
 
 \begin{tabular}{lrcl}
 $types$ & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau_1^{\phi_1},\dots,\tau_n^{\phi_n}\rangle$ \\
@@ -14,22 +15,28 @@ $register\ assignments$ & $\Gamma$ & ::= & $\{\mathtt{sp} : \sigma, \mathtt{r}_1
 $registers$ & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{regs}$ \\
 $casts$ & $c$ & ::= & $\mathtt{\alpha}\Rightarrow\tau \mid \rho\Rightarrow\sigma \mid \mathtt{weaken}\ \Delta$ \\
 $word\ values$ & $w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid w[c]$ \\
-$small\ values$ & $w$ & ::= & $\mathtt{reg}\ r \mid \mathtt{word}\ w \mid v[c]$ \\
+$small\ values$ & $v$ & ::= & $\mathtt{reg}\ \mathtt{r}_k \mid \mathtt{word}\ w \mid v[c]$ \\
 $global\ values$ & $g$ & ::= & $\mathtt{code}[\Delta]\Gamma.I$ \\
-$globals$ & $G$ & ::= & $\{l_{g,1}\mapsto g_1, \dots, l_{g,n} \mapsto g_n\}$ \\
+$globals$ & $G$ & ::= & $\{\ell_{g,1}\mapsto g_1, \dots, \ell_{g,n} \mapsto g_n\}$ \\
 $heap\ values$ & $h$ & ::= & $\langle w_1, \dots, w_n \rangle$ \\
-$heaps$ & $H$ & ::= & $\{l_{h,1}\mapsto h_1, \dots, l_{h,n} \mapsto h_n\}$ \\
+$heaps$ & $H$ & ::= & $\{\ell_{h,1}\mapsto h_1, \dots, \ell_{h,n} \mapsto h_n\}$ \\
+$stacks$ & $S$ & ::= & $\mathtt{nil} \mid w :: S$ \\
 $register\ files$ & $R$ & ::= & $\{sp \mapsto S, r_1 \mapsto w_1, \dots, r_{regs} \mapsto w_{regs}\}$ \\
 \\
-$instructions$ & $\iota$ & ::= & $\mathtt{add}\ r_d, r_s, v \mid \mathtt{sub}\ r_d, r_s, v \mid$ \\
+$instructions$ & $\iota$ & ::= & $\mathtt{add}\ \mathtt{r}_d, \mathtt{r}_s, v \mid \mathtt{sub}\ \mathtt{r}_d, \mathtt{r}_s, v \mid$ \\
         &&& $\mathtt{push}\ v \mid \mathtt{pop} \mid$ \\
-        &&& $\mathtt{ld}\ r_d, \mathtt{sp}, i \mid \mathtt{st}\ \mathtt{sp}, i, r_s \mid$\\
-        &&& $\mathtt{ld}\ r_d, r_s, i \mid \mathtt{st}\ r_d, i, r_s \mid$\\
-        &&& $\mathtt{malloc}\ \langle \tau_1, \dots, \tau_n \rangle \mid $ \\
-        &&& $\mathtt{mov}\ r_d, r_s \mid \mathtt{beq}\ r, v$ \\
+        &&& $\mathtt{ld}\ \mathtt{r}_d, \mathtt{sp}, i \mid \mathtt{st}\ \mathtt{sp}, i, \mathtt{r}_s \mid$\\
+        &&& $\mathtt{ld}\ \mathtt{r}_d, \mathtt{r}_s, i \mid \mathtt{st}\ \mathtt{r}_d, i, \mathtt{r}_s \mid$\\
+        &&& $\mathtt{malloc}\ \mathtt{r}_d,\ \langle \tau_1, \dots, \tau_n \rangle \mid $ \\
+        &&& $\mathtt{mov}\ \mathtt{r}_d, \mathtt{r}_s \mid \mathtt{beq}\ \mathtt{r}_k, v$ \\
 $instruction\ sequences$ & $I$ & ::= & $\iota ; I \mid \mathtt{jmp}\ v$ \\
 $program\ states$ & $P$ & ::= & $(H, R, I)$ \\
 \end{tabular}
+
+\begin{definition}
+  The above set of datatypes are called the \textbf{core datatypes} and referred
+  to by $\mathbb{C}$.
+\end{definition}
 
 \subsection{Comments}
 In the previous, $regs$ is a constant. Its value of the number of registers on

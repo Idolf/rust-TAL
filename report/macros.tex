@@ -4,3 +4,21 @@
 \newcommand \subtype[3] {{#1} |- {#2} \le {#3}}
 \newcommand \substitution[3] {{#1} \llbracket {#2} \rrbracket \equiv {#3}}
 \newcommand \run[3] {\mathtt{Run}\ {#1} \llbracket {#2} \rrbracket \equiv {#3}}
+
+\newcommand \ofglobs[2] {|- {#1} : {#2}}
+\newcommand \ofheap[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofgval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofhval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofwval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofwvaln[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofvval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofstack[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofword[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofregister[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofinstructions[2] {{#1} |- {#2}\ \mathbf{instruction\ sequence}}
+\newcommand \ofinstruction[3] {{#1} |- {#2}\ => {#3}}
+\newcommand \ofprogram[2] {{#1} |- {#2}}
+
+\newcommand \evalsmall[3] {{#1} |- \mathbf{eval}\ ({#2}) = {#3}}
+\newcommand \evalword[3] {{#1} |- \mathbf{inst}\ ({#2}) = {#3}}
+\newcommand \execinstruction[3] {{#1} |- \mathbf{exec}\ ({#2}) = {#3}}

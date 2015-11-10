@@ -1,4 +1,6 @@
+\clearpage
 \section{Typing judgments}
+\label{judgments:types}
 
 \fbox{$\valid{\Delta}{\tau}$}
 \begin{mathpar}
@@ -68,6 +70,18 @@
 \infer{\valid{\Delta_2}{\sigma}}{\valid{\Delta_1, \rho, \Delta_2}{\rho => \sigma}} \and
 \infer{\valid{\Delta_2}{\Delta^{+}}}{\valid{\Delta_1, \Delta_2}{\mathtt{weaken}\ \Delta^{+}}}\text{($\Delta^{+}$ is to be inserted between $\Delta_1$ and $\Delta_2$)}
 \end{mathpar}
+
+\begin{definition}
+  Let $T \in \mathbb{C}$ and $v \in T$.  We define
+  $\mathbb{V}_\Delta, \mathbb{V}$ to be the subsets of $\mathbb{C}$
+  with the properties:
+  \begin{itemize}
+  \item $\valid{\Delta}{v}$ is a meaningful expression iff $T \in \mathbb{V}_\Delta$.
+  \item $\valid{}{v}$ is a meaningful expression iff $T \in \mathbb{V}$.
+  \end{itemize}
+\end{definition}
+
+We obverse that we have $\mathbb{V}_\Delta \cap \mathbb{V} = \emptyset$.
 
 \subsection{Comments}
 The judgment $\valid{\Delta}{a}$ seems superfluous... because it currently

@@ -1,0 +1,36 @@
+\section{Typing Lemmas}
+
+\begin{lemma}
+  Let $T \in \mathbb{C}$, $v \in T$ and assume we have some $\Delta$. We will
+  now show these two statements:
+  \begin{enumerate}
+  \item Assume $T \in \mathbb{V}_\Delta$. It is then decidable if there exists a
+    derivation of $\valid{\Delta}{v}$.
+  \item Assume $T \in \mathbb{V}$. It is then decidable if there exists a
+    derivation of $\valid{}{v}$.
+  \end{enumerate}
+\end{lemma}
+\label{dec:type}
+\begin{proof}
+  We prove both statements together using induction over $v$. There are only two
+  non-trivial cases:
+
+  \begin{itemize}
+  \item Let $T = types$. Do we then have a derivation of
+    $\valid{\Delta}{\alpha}$?  There is obviously only one such derivation,
+    which depends on whether $\alpha \in \Delta$. Since this is decidable, the
+    original question is too.
+  \item Let $T = stack\ types$. Do we then have a derivation of
+    $\valid{\Delta}{\rho}$? However this questions is analogous to the previous
+    one.
+  \end{itemize}
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{V}_\Delta$, let $v \in T$ and assume we get a derivation of
+  $\valid{\Delta}{v}$. We can now construct a derivation of
+  $\valid{\Delta,\Delta'}{v}$ for any $\Delta'$.
+\end{lemma}
+\begin{proof}
+  By induction over the structure of $\valid{\Delta}{v}$.
+\end{proof}

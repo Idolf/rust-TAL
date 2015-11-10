@@ -1,12 +1,13 @@
 \documentclass[a4paper]{report}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage{amsmath, amssymb}
+\usepackage{amsmath, amssymb, amsthm}
 \usepackage{stmaryrd}
 \usepackage{mathpartir}
 \usepackage{semantic}
 \usepackage{titling}
 \usepackage[lang=en,grid]{kufront}
+
 
 \author{\Large Mathias Svensson \quad {\ttfamily\large tpx783@alumni.ku.dk}}
 \date{\today}
@@ -16,3 +17,8 @@
             Co-supervisor: {\large Andrzej Filinski} \texttt{andrzej@di.ku.dk}}
 
 \usepackage[pdftitle={\thetitle}, pdfauthor={\theauthor}, linkbordercolor={0.8 0.8 0.8}]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}

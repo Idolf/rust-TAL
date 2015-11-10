@@ -1,0 +1,30 @@
+\section{Miscellaneous small lemmas}
+
+There are more small lemmas in the Agda file \texttt{Misc.agda}. I have only
+included those that are not deemed trivial.
+
+\begin{lemma}
+  If we have $\substitution{\Delta_1}{c}{\Delta_1'}$ and
+  $\substitution{\Delta_2}{c}{\Delta_2'}$, then we also have
+  $\substitution{(\Delta_1,\Delta_2)}{c}{(\Delta_1',\Delta_2')}$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $\substitution{\Delta_1}{c}{\Delta_1'}$.
+\end{proof}
+
+\begin{lemma}
+  If we have $\substitution{\Delta_1}{c}{\Delta_1'}$ and
+  $\run{\Delta_2}{c}{\Delta_2'}$, then we also have
+  $\run{(\Delta_1,\Delta_2)}{c}{(\Delta_1',\Delta_2')}$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $\substitution{\Delta_1}{c}{\Delta_1'}$.
+\end{proof}
+
+\begin{lemma}
+  If we have $\run{\Delta_1}{c}{\Delta_1'}$, then we also have
+  $\run{(\Delta_1,\Delta_2)}{c}{(\Delta_1',\Delta_2)}$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $\run{\Delta_1}{c}{\Delta_1'}$.
+\end{proof}

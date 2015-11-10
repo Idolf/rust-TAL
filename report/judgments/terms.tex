@@ -1,0 +1,274 @@
+\section{Term judgments}
+
+Judgments that values are valid or of a specific type.
+
+\fbox{$\ofglobs{G}{\Psi_g}$}
+\begin{mathpar}
+\infer{
+  \ofgval{\Psi_g}{g_1}{\tau_1} \and
+  \dots \and
+  \ofgval{\Psi_g}{g_n}{\tau_n} \and
+  \Psi_g = \{\ell_{g,1}:\tau_1, \dots, \ell_{g,n}:\tau_n\}
+}{
+  \ofglobs{\{\ell_{g,1}\mapsto g_1, \dots, \ell_{g,n} \mapsto g_n\}}{\Psi_g}
+}
+\end{mathpar}
+
+\fbox{$\ofheap{\Psi_g}{H}{\Psi_h}$}
+\begin{mathpar}
+\infer{
+  \ofhval{\Psi_g,\Psi_h}{h_1}{\tau_1} \and
+  \dots \and
+  \ofhval{\Psi_g,\Psi_h}{h_n}{\tau_n} \and
+  \Psi_h = \{\ell_{h,1}:\tau_1, \dots, \ell_{h,n}:\tau_n\}
+}{
+  \ofheap{\Psi_g}{\{\ell_{h,1}\mapsto h_1, \dots, \ell_{h,n} \mapsto h_n\}}{\Psi_h}
+}
+\end{mathpar}
+
+\fbox{$\ofstack{\Psi_g,\Psi_h}{S}{\sigma}$}
+\begin{mathpar}
+\infer{ }{\ofstack{\Psi_g,\Psi_h}{\mathtt{nil}}{\mathtt{nil}}} \and
+\infer{
+  \ofword{\Psi_g,\Psi_h}{w}{\tau} \and
+  \ofstack{\Psi_g,\Psi_h}{S}{\sigma}
+}{
+  \ofstack{\Psi_g,\Psi_h}{w :: S}{\tau :: \sigma}
+}
+\end{mathpar}
+
+\fbox{$\ofregister{\Psi}{R}{\Gamma}$}
+\begin{mathpar}
+\infer{
+  \ofstack{\Psi_g,\Psi_h}{S}{\sigma} \and
+  \ofwval{\Psi_g,\Psi_h,\mathtt{nil}}{w_1}{\tau_1} \and
+  \dots
+  \ofwval{\Psi_g,\Psi_h,\mathtt{nil}}{w_{regs}}{\tau_{regs}} \and
+}{
+  \ofregister{\Psi_g,\Psi_h}{\{\mathtt{sp}\mapsto S, \mathtt{r}_1\mapsto w_1, \dots, \mathtt{r}_{regs}\mapsto w_{regs}\}}{\{\mathtt{sp}:\sigma, \mathtt{r}_1:\tau_1, \dots, \mathtt{r}_{regs}:\tau_{regs}\}}
+}
+\end{mathpar}
+
+\fbox{$\ofgval{\Psi_g}{g}{\tau}$}
+\begin{mathpar}
+\infer{
+  \valid{\mathtt{nil}}{\Delta} \and
+  \valid{\Delta}{\Gamma} \and
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{I}
+}{
+  \ofgval{\Psi_g}{\mathtt{code}[\Delta]\Gamma.I}{\forall[\Delta]\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofhval{\Psi_g,\Psi_h}{h}{\tau}$}
+\begin{mathpar}
+\infer{
+  \ofwvaln{\Psi_g,\Psi_h}{w_1}{\tau_1^{\phi_1}} \and
+  \dots \and
+  \ofwvaln{\Psi_g,\Psi_h}{w_n}{\tau_n^{\phi_n}}
+}{
+  \ofgval{\Psi_g,\Psi_h}{\langle w_1, \dots, w_n \rangle}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n}\rangle}
+}
+\end{mathpar}
+
+\fbox{$\ofwval{\Psi_g,\Psi_h,\Delta}{w}{\tau}$}
+\begin{mathpar}
+\infer{
+  (\ell_g: \tau_1) \in \Psi_g \and
+  \subtype{\mathtt{nil}}{\tau_1}{\tau_2}
+}{
+  \ofwval{\Psi_g,\Psi_h,\Delta}{\mathtt{globval}\ \ell_g}{\tau_2}
+}\and
+\infer{
+  (\ell_h: \tau_1) \in \Psi_h \and
+  \subtype{\mathtt{nil}}{\tau_1}{\tau_2}
+}{
+  \ofwval{\Psi_g,\Psi_h,\Delta}{\mathtt{heapval}\ \ell_h}{\tau_2}
+}\and
+\infer{ }{\ofwval{\Psi_g,\Psi_h,\Delta}{\mathtt{int}\ i}{\mathtt{int}}} \and
+\infer{ }{\ofwval{\Psi_g,\Psi_h,\Delta}{\mathtt{ns}}{\mathtt{ns}}} \and
+\infer{
+  \ofwval{\Psi_g,\Psi_h,\Delta}{w}{\forall[\Delta_1]\Gamma_1} \and
+  \valid{\Delta_1,\Delta}{c} \and
+  \run{\Delta_1}{c}{\Delta_2} \\
+  \substitution{\Gamma_1}{c}{\Gamma_2} \and
+  \subtype{\Delta_2,\Delta}{\Gamma_2}{\Gamma_3}
+}{
+  \ofwval{\Psi_g,\Psi_h,\Delta}{w \llbracket c \rrbracket}{\forall[\Delta_2]\Gamma_3}
+}
+\end{mathpar}
+
+\fbox{$\ofwvaln{\Psi_g,\Psi_h}{w}{\tau^\phi}$}
+\begin{mathpar}
+\infer{
+  \valid{\mathtt{nil}}{\tau}
+}{
+  \ofwvaln{\Psi_g,\Psi_h}{\mathtt{uninit}\ \tau}{\tau^{\mathtt{uninit}}}
+} \and
+\infer{
+  \ofwval{\Psi_g,\Psi_h,\mathtt{nil}}{w}{\tau}
+}{
+  \ofwvaln{\Psi_g,\Psi_h}{w}{\tau^{\mathtt{init}}}
+}
+\end{mathpar}
+
+\fbox{$\ofvval{\Psi_g,\Delta,\Gamma}{v}{\tau}$}
+\begin{mathpar}
+\infer{
+  (\mathtt{r}_k:\tau_k) \in \Gamma \and
+  \subtype{\Delta}{\tau_k}{\tau'_k}
+}{
+  \ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{reg}\ \mathtt{r}_k}{\tau'_k}
+} \and
+\infer{
+  \ofwval{\Psi_g,\{\},\Delta}{w}{\tau}
+}{
+  \ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{word}\ w}{\tau}
+} \and
+\infer{
+  \ofvval{\Psi_g,\Delta,\Gamma}{w}{\forall[\Delta_1]\Gamma_1} \and
+  \valid{\Delta_1,\Delta}{c} \and
+  \run{\Delta_1}{c}{\Delta_2} \\
+  \substitution{\Gamma_1}{c}{\Gamma_2} \and
+  \subtype{\Delta_2,\Delta}{\Gamma_2}{\Gamma_3}
+}{
+  \ofvval{\Psi_g,\Delta,\Gamma}{w \llbracket c \rrbracket}{\forall[\Delta_2]\Gamma_3}
+}
+\end{mathpar}
+
+\fbox{$\ofinstructions{\Psi_g, \Delta, \Gamma}{I}$}
+\begin{mathpar}
+\infer{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}{\iota}{\Gamma'} \and
+  \ofinstructions{\Psi_g, \Delta, \Gamma'}{I}
+}{
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\iota ; I}
+} \and
+\infer{
+  \ofvval{\Psi_1, \Delta, \Gamma}{v}{\forall[ \mathtt{nil} ]\Gamma'} \and
+  \subtype{\Delta}{\Gamma}{\Gamma'}
+}{
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\mathtt{jmp}\ v}
+}
+\end{mathpar}
+
+\fbox{$\ofinstruction{\Psi_g, \Delta, \Gamma}{\iota}{\Gamma'}$}
+\begin{mathpar}
+\infer{
+  (\mathtt{r}_s : \mathtt{int}) \in \Gamma \and
+  \ofvval{\Psi_g, \Delta, \Gamma}{v}{\mathtt{int}}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{add}\ \mathtt{r}_d, \mathtt{r}_s, v}
+    {\Gamma\{\mathtt{r}_d:\mathtt{int}\}}
+} \and
+\infer{
+  (\mathtt{r}_s : \mathtt{int}) \in \Gamma \and
+  \ofvval{\Psi_g, \Delta, \Gamma}{v}{\mathtt{int}}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{sub}\ \mathtt{r}_d, \mathtt{r}_s, v}
+    {\Gamma\{\mathtt{r}_d:\mathtt{int}\}}
+} \and
+\infer{
+  \ofvval{\Psi_g, \Delta, \Gamma}{v}{\tau} \and
+  (\mathtt{sp}:\sigma) \in \Gamma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{push}\ v}
+    {\Gamma\{\mathtt{sp}: \tau :: \sigma\}}
+} \and
+\infer{
+  (\mathtt{sp}: \tau::\sigma) \in \Gamma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{pop}}
+    {\Gamma\{\mathtt{sp}: \sigma\}}
+} \and
+\infer{
+  (\mathtt{sp}: \tau_1 :: \tau_2 :: \dots :: \tau_i :: \sigma) \in \Gamma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{ld}\ \mathtt{r}_d, \mathtt{sp}, i}
+    {\Gamma\{\mathtt{r}_d: \tau_i\}}
+} \and
+\infer{
+  (\mathtt{sp}: \tau_1 :: \tau_2 :: \dots :: \tau_i :: \sigma) \in \Gamma \and
+  (\mathtt{r}_s: \tau_i') \in \Gamma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{st}\ \mathtt{sp}, i, \mathtt{r}_s}
+    {\Gamma\{\mathtt{sp}: \tau_1 :: \tau_2 :: \dots :: \tau_i' :: \sigma\}}
+} \and
+\infer{
+  (\mathtt{r}_s: \langle \tau_1^{\phi_1}, \dots, \tau_i^{\mathtt{init}}, \dots, \tau_n^{\phi_n}\rangle) \in \Gamma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{ld}\ \mathtt{r}_d, \mathtt{r}_s, i}
+    {\Gamma\{\mathtt{r}_d: \tau_i\}}
+} \and
+\infer{
+  (\mathtt{r}_d: \langle \tau_1^{\phi_1}, \dots, \tau_i^{\phi_i}, \dots, \tau_n^{\phi_n}\rangle) \in \Gamma \and
+  (\mathtt{r}_s: \tau_i') \in \Gamma \and
+  \subtype{\Delta}{\tau_i'}{\tau_i}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{st}\ \mathtt{r}_d, i, \mathtt{r}_s}
+    {\Gamma\{\mathtt{r}_d: \langle \tau_1^{\phi_1}, \dots, \tau_i^{\mathtt{init}}, \dots, \tau_n^{\phi_n}\}}
+} \and
+\infer{
+  \valid{\Delta}{\tau_1} \and
+  \dots \and
+  \valid{\Delta}{\tau_n}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{malloc}\ \mathtt{r}_d, \langle \tau_1, \dots, \tau_n \rangle}
+    {\Gamma\{\mathtt{r}_d: \langle \tau_1^{\mathtt{uninit}}, \dots, \tau_n^{\mathtt{uninit}}\rangle\}}
+} \and
+\infer{
+  \ofvval{\Psi_g, \Delta, \Gamma}{v}{\tau}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{mov}\ \mathtt{r}_d, v}
+    {\Gamma\{\mathtt{r}_d: \tau\}}
+} \and
+\infer{
+  (\mathtt{r}_k: \mathtt{int}) \in \Gamma \and
+  \ofvval{\Psi_g, \Delta, \Gamma}{v}{\forall[ \mathtt{nil} ] \Gamma'} \and
+  \subtype{\Delta}{\Gamma}{\Gamma'}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{beq}\ \mathtt{r}_k, v}
+    {\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofinstruction{\Psi_g, \Delta, \Gamma}{I}{\Gamma'}$}
+\begin{mathpar}
+\infer{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}{\iota}{\Gamma'} \and
+  \ofinstructions{\Psi_g, \Delta, \Gamma'}{I}
+}{
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\iota ; I}
+}
+\end{mathpar}
+
+\fbox{$\ofprogram{G}{P}$}
+\begin{mathpar}
+\infer{
+  \ofglobs{G}{\Psi_g} \and
+  \ofheap{\Psi_g}{H}{\Psi_h} \\
+  \ofregister{\Psi_g,\Psi_h}{R}{\Gamma} \and
+  \ofinstructions{\Psi_g,\mathtt{nil},\Gamma}{I}
+}{
+  \ofprogram{G}{(H,R,I)}
+}
+\end{mathpar}
+
+\subsection{Comments}
+
+TODO
+
+\subsection{Differences from STAL}
+
+TODO

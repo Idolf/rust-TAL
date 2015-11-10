@@ -10,7 +10,7 @@ uninit-of : ∀ {ψ₁ ψ₂ τs} →
 uninit-of {ψ₁} {ψ₂} τs⋆ = of-tuple (help τs⋆)
   where help : ∀ {τs} →
                  All (λ τ → [] ⊢ τ Valid) τs →
-                 AllZip (λ w τ⁻ → ψ₁ , ψ₂ , [] ⊢ w of τ⁻ wval⁰) (map uninit τs) (map (λ τ → τ , uninit) τs)
+                 AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) (map uninit τs) (map (λ τ → τ , uninit) τs)
         help [] = []
         help (τ⋆ ∷ τs⋆) = of-uninit τ⋆ ∷ help τs⋆
 
@@ -46,14 +46,14 @@ mutual
   hval-++ (of-tuple ws⋆) = of-tuple (wvals⁰-++ ws⋆)
 
   wvals⁰-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ ws τs⁻} →
-                AllZip (λ h τ⁻ → ψ₁ , ψ₂ , [] ⊢ h of τ⁻ wval⁰) ws τs⁻ →
-                AllZip (λ h τ⁻ → ψ₁ , ψ₂ ++ ψ₂⁺ , [] ⊢ h of τ⁻ wval⁰) ws τs⁻
+                AllZip (λ h τ⁻ → ψ₁ , ψ₂ ⊢ h of τ⁻ wval⁰) ws τs⁻ →
+                AllZip (λ h τ⁻ → ψ₁ , ψ₂ ++ ψ₂⁺ ⊢ h of τ⁻ wval⁰) ws τs⁻
   wvals⁰-++ [] = []
   wvals⁰-++ (w⋆ ∷ ws⋆) = wval⁰-++ w⋆ ∷ wvals⁰-++ ws⋆
 
-  wval⁰-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ Δ w τ⁻} →
-               ψ₁ , ψ₂ , Δ ⊢ w of τ⁻ wval⁰ →
-               ψ₁ , ψ₂ ++ ψ₂⁺ , Δ ⊢ w of τ⁻ wval⁰
+  wval⁰-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ w τ⁻} →
+               ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰ →
+               ψ₁ , ψ₂ ++ ψ₂⁺ ⊢ w of τ⁻ wval⁰
   wval⁰-++ (of-uninit τs⋆) = of-uninit τs⋆
   wval⁰-++ (of-init w⋆) = of-init (wval-++ w⋆)
 
@@ -153,15 +153,15 @@ wval-valid-type (of-inst w⋆ c⋆ run-Δ sub-Γ Γ₂≤Γ₃)
   with wval-valid-type w⋆
 ... | valid-∀ Δ₁⋆ Γ₁⋆ = valid-∀ (run-valid c⋆ Δ₁⋆ run-Δ) (proj₂ (≤-valid Γ₂≤Γ₃))
 
-wval⁰-valid-type : ∀ {ψ₁ ψ₂ Δ w τ⁻} →
-                     ψ₁ , ψ₂ , Δ ⊢ w of τ⁻ wval⁰ →
-                     Δ ⊢ τ⁻ Valid
+wval⁰-valid-type : ∀ {ψ₁ ψ₂ w τ⁻} →
+                     ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰ →
+                     [] ⊢ τ⁻ Valid
 wval⁰-valid-type (of-uninit τ⋆) = valid-τ⁻ (valid-++ τ⋆)
 wval⁰-valid-type (of-init w⋆) = valid-τ⁻ (wval-valid-type w⋆)
 
-wvals⁰-valid-type : ∀ {ψ₁ ψ₂ Δ ws τs⁻} →
-                      AllZip (λ w τ⁻ → ψ₁ , ψ₂ , Δ ⊢ w of τ⁻ wval⁰) ws τs⁻ →
-                      Δ ⊢ τs⁻ Valid
+wvals⁰-valid-type : ∀ {ψ₁ ψ₂ ws τs⁻} →
+                      AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻ →
+                      [] ⊢ τs⁻ Valid
 wvals⁰-valid-type [] = []
 wvals⁰-valid-type (w⋆ ∷ ws⋆) = wval⁰-valid-type w⋆ ∷ wvals⁰-valid-type ws⋆
 
@@ -331,10 +331,10 @@ instruction-subtype {ι = mov ♯rd v} ψ₁⋆
   with vval-subtype₁ v⋆ (Γ-≤ sp₂≤sp₁ regs₂≤regs₁)
 ... | v⋆' = _ , of-mov v⋆' , Γ-≤ sp₂≤sp₁ (regs-update-≤ ♯rd regs₂≤regs₁ (≤-refl (vval-valid-type ψ₁⋆ (proj₁ (≤-valid (Γ-≤ sp₂≤sp₁ regs₂≤regs₁))) v⋆')))
 instruction-subtype {ι = beq ♯r v} ψ₁⋆
-                    (Γ-≤ sp₂≤sp₁ regs₂≤regs₁) (of-beq eq Γ₁≤Γ' v⋆)
+                    (Γ-≤ sp₂≤sp₁ regs₂≤regs₁) (of-beq eq v⋆ Γ₁≤Γ')
   with allzipᵥ-lookup ♯r regs₂≤regs₁
 ... | ♯r⋆ rewrite eq
-  = _ , of-beq (≤int⇒≡int ♯r⋆) (≤-trans (Γ-≤ sp₂≤sp₁ regs₂≤regs₁) Γ₁≤Γ') (vval-subtype₁ v⋆ (Γ-≤ sp₂≤sp₁ regs₂≤regs₁)) , Γ-≤ sp₂≤sp₁ regs₂≤regs₁
+  = _ , of-beq (≤int⇒≡int ♯r⋆) (vval-subtype₁ v⋆ (Γ-≤ sp₂≤sp₁ regs₂≤regs₁)) (≤-trans (Γ-≤ sp₂≤sp₁ regs₂≤regs₁) Γ₁≤Γ') , Γ-≤ sp₂≤sp₁ regs₂≤regs₁
 
 instructionsequence-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ I} →
                                 [] ⊢ ψ₁ Valid →
@@ -346,4 +346,4 @@ instructionsequence-subtype ψ₁⋆ Γ₂≤Γ₁ (of-~> ι⋆ I⋆)
 ... | Γ₂' , ι⋆' , Γ₂'≤Γ₁'
   with instructionsequence-subtype ψ₁⋆ Γ₂'≤Γ₁' I⋆
 ... | I⋆' = of-~> ι⋆' I⋆'
-instructionsequence-subtype ψ₁⋆ Γ₂≤Γ₁ (of-jmp {Γ' = registerₐ sp' regs'} Γ₁≤Γ' v⋆) = of-jmp (≤-trans Γ₂≤Γ₁ Γ₁≤Γ') (vval-subtype₁ v⋆ Γ₂≤Γ₁)
+instructionsequence-subtype ψ₁⋆ Γ₂≤Γ₁ (of-jmp {Γ' = registerₐ sp' regs'} v⋆ Γ₁≤Γ') = of-jmp (vval-subtype₁ v⋆ Γ₂≤Γ₁) (≤-trans Γ₂≤Γ₁ Γ₁≤Γ')

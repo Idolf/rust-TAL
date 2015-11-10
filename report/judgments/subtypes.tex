@@ -39,6 +39,20 @@
                    {\{\mathtt{sp}: \sigma', \mathtt{r}_1:\tau'_1, \dots, \mathtt{r}_{regs}:\tau'_{regs}\}}}
 \end{mathpar}
 
+
+\begin{definition}
+  Let $T \in \mathbb{C}$ and $v_1, v_2 \in T$.  We define
+  $\mathbb{S}_\Delta, \mathbb{S}$ to be the subsets of $\mathbb{C}$
+  with the properties:
+  \begin{itemize}
+  \item $\subtype{\Delta}{v_1}{v_2}$ is a meaningful expression iff $T \in \mathbb{S}_\Delta$.
+  \item $\valid{}{v_1}{v_2}$ is a meaningful expression iff $T \in \mathbb{S}$.
+  \end{itemize}
+\end{definition}
+
+We obverse that we have $\mathbb{S}_\Delta \cap \mathbb{S} = \emptyset$ and
+$\mathbb{S}_\Delta \subset \mathbb{V}_\Delta$.
+
 \subsection{Comments}
 This is pretty much what you would expect. A few things of note though:
 

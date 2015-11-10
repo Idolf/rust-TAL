@@ -1,0 +1,91 @@
+\section{Subtyping Lemmas}
+
+
+\begin{lemma}
+  Let $T \in \mathbb{C}$, $v_1, v_2 \in T$ and assume we have some $\Delta$. We
+  will now show these two statements:
+  \begin{enumerate}
+  \item Assume $T \in \mathbb{S}_\Delta$. It is then decidable whether there
+    exists a derivation of $\subtype{\Delta}{v_1}{v_2}$.
+  \item Assume $T \in \mathbb{S}$. It is then decidable if there exists a
+    derivation of $\valid{}{v_1}{v_2}$.
+  \end{enumerate}
+\end{lemma}
+\label{dec:subtype}
+\begin{proof}
+  We prove both statements together using induction over $v$. There only
+  non-trivial cases are equivalent to \autoref{dec:type}.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{C}$, $v \in T$ and assume we have some $\Delta$. We
+  will now show these two statements:
+  \begin{enumerate}
+  \item Assume $T \in \mathbb{S}_\Delta$ and assume $\valid{\Delta}{v}$. We can
+    now construct a derivation of $\subtype{\Delta}{v}{v}$.
+  \item Assume $T \in \mathbb{S}$. We can now construct a derivation of
+    $\subtype{}{v}{v}$.
+  \end{enumerate}
+\end{lemma}
+\begin{proof}
+  We prove both statements together using induction over $v$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{C}$, $v_1, v_2, v_3 \in T$ and assume we have some
+  $\Delta$. We will now show these two statements:
+  \begin{enumerate}
+  \item Assume $T \in \mathbb{S}_\Delta$, $\subtype{\Delta}{v_1}{v_2}$ and
+    $\subtype{\Delta}{v_2}{v_3}$. We can now construct a derivation of
+    $\subtype{\Delta}{v_1}{v_3}$.
+  \item Assume $T \in \mathbb{S}$, $\subtype{}{v_1}{v_2}$ and
+    $\subtype{}{v_2}{v_3}$. We can now construct a derivation of
+    $\subtype{}{v_1}{v_3}$.
+  \end{enumerate}
+\end{lemma}
+\begin{proof}
+  We prove both statements together using structural induction over the
+  derivations of $v_1\le v_2$ and $v_2 \le v_3$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{S}_\Delta$, $v_1, v_2 \in T$ and assume we have some
+  $\Delta$. Further assume that $\subtype{\Delta}{v_1}{v_2}$. We can then
+  construct derivations $\valid{\Delta}{v_1}$ and $\valid{\Delta}{v_2}$.
+\end{lemma}
+\begin{proof}
+  We prove the lemmas using structural induction over the derivations of
+  $\subtype{\Delta}{v_1}{v_2}$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{S}_\Delta$, $v_1, v_2 \in T$ and assume we have some
+  $\Delta$. Further assume that $\subtype{\Delta}{v_1}{v_2}$. We can then
+  construct a derivation of $\subtype{\Delta,\Delta'}{v_1}{v_2}$ for any $\Delta'$.
+\end{lemma}
+\begin{proof}
+  We prove the lemmas using structural induction over the derivations of
+  $\subtype{\Delta}{v_1}{v_2}$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{S}_\Delta$, $v_1, v_2 \in T$ and assume we have some
+  $\Delta$. Further assume that $\subtype{\Delta_1}{v_1}{v_2}$ and
+  $\valid{\Delta_2}{v_1}$. We can then construct a derivation of
+  $\subtype{\Delta_2}{v_1}{v_2}$.
+\end{lemma}
+\begin{proof}
+  We prove the lemmas using structural induction over the derivations of
+  $\subtype{\Delta_1}{v_1}{v_2}$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{S}_\Delta$, $v_1, v_2 \in T$ and assume we have some
+  $\Delta$. Further assume that $\subtype{\Delta_1}{v_1}{v_2}$ and
+  $\valid{\Delta_2}{v_2}$. We can then construct a derivation of
+  $\subtype{\Delta_2}{v_1}{v_2}$.
+\end{lemma}
+\begin{proof}
+  We prove the lemmas using structural induction over the derivations of
+  $\subtype{\Delta_1}{v_1}{v_2}$.
+\end{proof}

@@ -296,16 +296,13 @@ instance
   StackType-TypeLike⁺ = typeLike⁺ _⊢?_StackType σ-valid-++
 
   LabelAssignment-TypeLike⁺ : TypeLike⁺ LabelAssignment
-  LabelAssignment-TypeLike⁺ = typeLike⁺ (const ⊢?_LabelAssignment)
-                                        id
+  LabelAssignment-TypeLike⁺ = typeLike⁺ (const ⊢?_LabelAssignment) id
 
   TypeAssignment-TypeLike⁺ : TypeLike⁺ TypeAssignment
-  TypeAssignment-TypeLike⁺ = typeLike⁺ _⊢?_TypeAssignment
-                                       Δ-valid-++
+  TypeAssignment-TypeLike⁺ = typeLike⁺ _⊢?_TypeAssignment Δ-valid-++
 
   TypeAssignmentValue-TypeLike⁺ : TypeLike⁺ TypeAssignmentValue
-  TypeAssignmentValue-TypeLike⁺ = typeLike⁺ _⊢?_TypeAssignmentValue
-                                            a-valid-++
+  TypeAssignmentValue-TypeLike⁺ = typeLike⁺ _⊢?_TypeAssignmentValue a-valid-++
 
   RegisterAssignment-TypeLike⁺ : TypeLike⁺ RegisterAssignment
   RegisterAssignment-TypeLike⁺ = typeLike⁺ _⊢?_RegisterAssignment Γ-valid-++

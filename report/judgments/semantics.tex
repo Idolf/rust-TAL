@@ -1,0 +1,138 @@
+\section{Semantics}
+
+Finally: The semantics!\\
+
+\fbox{$\evalsmall{R}{v}{w}$}
+\begin{mathpar}
+\infer{
+  (\mathbf{r}_k \mapsto w) \in R
+}{
+  \evalsmall{R}{\mathtt{reg}_k}{w}
+} \and
+\infer{ }{\evalsmall{R}{\mathtt{word}\ w}{w}} \and
+\infer{
+  \evalsmall{R}{v}{w}
+}{
+  \evalsmall{R}{v \llbracket c \rrbracket}{w \llbracket c \rrbracket}
+}
+\end{mathpar}
+
+\fbox{$\evalword{G}{w}{I}$}
+\begin{mathpar}
+\infer{
+  (\ell_g \mapsto \mathtt{code}[\Delta]\Gamma.I) \in G
+}{
+  \evalword{G}{\mathtt{globval}\ \ell_g}{I}
+} \and
+\infer{
+  \evalword{G}{w}{I} \and
+  \substitution{I}{c}{I'}
+}{
+  \evalword{G}{w \llbracket c \rrbracket}{I'}
+}
+\end{mathpar}
+
+\fbox{$\execinstruction{G}{P}{P'}$}
+\begin{mathpar}
+\infer{
+  \evalsmall{R}{v}{\mathtt{int}\ n_1} \and
+  (\mathtt{r}_s \mapsto \mathtt{int}\ n_2) \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{add}\ \mathtt{r}_d, \mathtt{r}_s, v) ; I}
+    {(H, R\{\mathtt{r}_d \mapsto \mathtt{int}\ (n_1 + n_2)\}, I)}
+} \and
+\infer{
+  \evalsmall{R}{v}{\mathtt{int}\ n_1} \and
+  (\mathtt{r}_s \mapsto \mathtt{int}\ n_2) \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{sub}\ \mathtt{r}_d, \mathtt{r}_s, v) ; I}
+    {(H, R\{\mathtt{r}_d \mapsto \mathtt{int}\ (n_1 - n_2)\}, I)}
+} \and
+\infer{
+  \evalsmall{R}{v}{w} \and
+  (\mathtt{sp} \mapsto S) \in R
+}{
+  \execinstruction{G}
+    {H, R, \mathtt{push}\ v ; I}
+    {(H, R\{\mathtt{sp} \mapsto w :: S\}, I)}
+} \and
+\infer{
+  (\mathtt{sp} \mapsto w :: S) \in R
+}{
+  \execinstruction{G}
+    {H, R, \mathtt{pop} ; I}
+    {(H, R\{\mathtt{sp} \mapsto S\}, I)}
+} \and
+\infer{
+  (\mathtt{sp} \mapsto w_1 :: w_2 :: \dots :: w_i :: S) \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{ld}\ \mathtt{r}_d, \mathtt{sp}, i) ; I}
+    {(H, R\{\mathtt{r}_d \mapsto w_i\}, I)}
+} \and
+\infer{
+  (\mathtt{sp} \mapsto w_1 :: w_2 :: \dots :: w_i :: S) \in R \and
+  (\mathtt{r}_s \mapsto w_i') \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{st}\ \mathtt{sp}, i, \mathtt{r}_s) ; I}
+    {(H, R\{\mathtt{sp} \mapsto w_1 :: w_2 \dots :: w_i' :: S\}, I)}
+} \and
+\infer{
+  (\mathtt{r}_s \mapsto \mathtt{heapval}\ \ell_h) \in R \and
+  (\ell_h \mapsto \langle w_1, \dots, w_i, \dots, w_n \rangle) \in H
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{ld}\ \mathtt{r}_d, \mathtt{r}_s, i) ; I}
+    {(H, R\{\mathtt{r}_d \mapsto w_i\}, I)}
+} \and
+\infer{
+  (\mathtt{r}_d \mapsto \ell_h) \in R \and
+  (\ell_h \mapsto \langle w_1, \dots, w_i, w_n \rangle) \in H \and
+  (\mathtt{r}_s \mapsto w_i') \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{st}\ \mathtt{r}_d, i, \mathtt{r}_s) ; I}
+    {(H\{\ell_h \mapsto \langle w_1, \dots, w_i', \dots, w_n \rangle\}, R, I)}
+} \and
+\infer{
+  \text{$\ell_h$ is not present in $H$}
+}{
+  G |- \mathtt{eval} (H, R, (\mathtt{malloc}\ \mathtt{r}_d, \langle \tau_1, \dots, \tau_n \rangle) ; I) = \\
+  (H\{\ell_h \mapsto \langle \mathtt{uninit}\ \tau_1, \dots, \mathtt{uninit}\ \tau_n \rangle\}, R\{\mathtt{r}_d \mapsto \mathtt{heapval}\ \ell_h\}, I)
+} \and
+\infer{
+  \evalsmall{R}{v}{w}
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{mov}\ \mathtt{r}_d, v) ; I}
+    {(H, R\{\mathtt{r}_d \mapsto w\}, I)}
+} \and
+\infer{
+  (\mathtt{r}_k \mapsto \mathtt{int}\ 0) \in R \and
+  \evalsmall{R}{v}{w} \and
+  \evalword{G}{w}{I'}
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{beq}\ \mathtt{r}_k, v) ; I}
+    {(H, R, I')}
+} \and
+\infer{
+  (\mathtt{r}_k \mapsto \mathtt{int}\ i) \in R \and
+  i \neq 0
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{beq}\ \mathtt{r}_k, v) ; I}
+    {(H, R, I)}
+} \and
+\infer{
+  \evalsmall{R}{v}{w} \and
+  \evalword{G}{w}{I'}
+}{
+  \execinstruction{G}
+    {H, R, \mathtt{jmp}\ v}
+    {(H, R, I')}
+}
+\end{mathpar}

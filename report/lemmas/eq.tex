@@ -1,0 +1,36 @@
+\section{Decidable Equality}
+
+\begin{definition}
+  Let $\mathbb{T}$ be the set of all rooted trees where each node has been
+  assigned a single value from $\mathbb{N}$.
+\end{definition}
+
+\begin{lemma}
+  Let $t_1, t_2 \in \mathbb{T}$. Then it is decidable if $t_1 = t_2$.
+\end{lemma}
+\label{eq:tree}
+\begin{proof}
+  By induction over the structure of $t_1$ and $t_2$.
+\end{proof}
+
+\begin{lemma}
+  Let $T$ be one of the core datatypes from \autoref{sec:grammar}. Then there
+  exists a injective mapping from $T \to \mathbb{T}$.
+\end{lemma}
+\label{eq:inj}
+\begin{proof}
+  The mapping is obvious, since all of the definitions are finite, inductive
+  datatypes.
+\end{proof}
+
+\begin{corollary}
+  Let $T$ be one of the datatypes from \autoref{sec:grammar} and let
+  $a, b \in T$. Then it is decidable if whether $a=b$ or $a \neq b$.
+\end{corollary}
+\label{dec:eq}
+\begin{proof}
+  Let $f$ be the function from \autoref{eq:inj}. Since
+  $f(a), f(b) \in \mathbb{T}$ then by \autoref{eq:tree} we can decide if
+  $f(a) = f(b)$. Because $f$ is injective, we have $a = b \iff f(a) = f(b)$, so
+  we are done.
+\end{proof}

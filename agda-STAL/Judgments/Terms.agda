@@ -83,7 +83,7 @@ mutual
                     HeapValue → Type → Set where
     of-tuple :
                        ∀ {ψ₁ ψ₂ ws τs⁻} →
-      AllZip (λ w τ⁻ → ψ₁ , ψ₂ , [] ⊢ w of τ⁻ wval⁰) ws τs⁻ →
+      AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻ →
       -------------------------------------------------------
              ψ₁ , ψ₂ ⊢ tuple ws of tuple τs⁻ hval
 
@@ -127,19 +127,19 @@ mutual
       ψ₁ , ψ₂ , Δ ⊢ w ⟦ cᵥ / ι ⟧ of ∀[ Δ₂ ] Γ₃ wval
 
   infix 3 _⊢_of_wval⁰
-  data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment ×
-                     TypeAssignment → WordValue → InitType → Set where
+  data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment →
+                     WordValue → InitType → Set where
     of-uninit :
-                 ∀ {ψ₁ ψ₂ Δ τ} →
+                  ∀ {ψ₁ ψ₂ τ} →
                  [] ⊢ τ Valid →
-      ------------------------------------------
-      ψ₁ , ψ₂ , Δ ⊢ uninit τ of τ , uninit wval⁰
+      --------------------------------------
+      ψ₁ , ψ₂ ⊢ uninit τ of τ , uninit wval⁰
 
     of-init :
-          ∀ {ψ₁ ψ₂ Δ w τ φ} →
-        ψ₁ , ψ₂ , Δ ⊢ w of τ wval →
-      ------------------------------
-      ψ₁ , ψ₂ , Δ ⊢ w of τ , φ wval⁰
+           ∀ {ψ₁ ψ₂ w τ φ} →
+      ψ₁ , ψ₂ , [] ⊢ w of τ wval →
+      ----------------------------
+       ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰
 
   infix 3 _⊢_of_vval
   data _⊢_of_vval : GlobalLabelAssignment ×
@@ -241,8 +241,8 @@ mutual
     of-beq :
              ∀ {ψ₁ Δ ♯r v Γ Γ'} →
            lookup-regs ♯r Γ ≡ int →
-                 Δ ⊢ Γ ≤ Γ' →
       ψ₁ , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
+                 Δ ⊢ Γ ≤ Γ' →
       -------------------------------------
       ψ₁ , Δ , Γ ⊢ beq ♯r v ⇒ Γ instruction
 
@@ -260,8 +260,8 @@ mutual
 
     of-jmp :
               ∀ {ψ₁ Δ Γ Γ' v} →
-                 Δ ⊢ Γ ≤ Γ' →
        ψ₁ , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
+                 Δ ⊢ Γ ≤ Γ' →
       --------------------------------------
       ψ₁ , Δ , Γ ⊢ jmp v instructionsequence
 

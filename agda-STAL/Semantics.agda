@@ -30,19 +30,17 @@ private
   ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
   ... | refl = refl
 
-eval-unique : ∀ {G w g₁ g₂} →
-                EvalGlobal G w g₁ →
-                EvalGlobal G w g₂ →
-                g₁ ≡ g₂
-eval-unique (instantiate-globval l₁ eq₁) (instantiate-globval l₂ eq₂)
-  rewrite ↓-unique l₁ l₂ = refl
-eval-unique (instantiate-⟦⟧ eval₁ run-Δ₁ sub-Γ₁ sub-I₁)
-            (instantiate-⟦⟧ eval₂ run-Δ₂ sub-Γ₂ sub-I₂)
+eval-unique : ∀ {G w I₁ I₂} →
+                EvalGlobal G w I₁ →
+                EvalGlobal G w I₂ →
+                I₁ ≡ I₂
+eval-unique (instantiate-globval l₁) (instantiate-globval l₂)
+  with ↓-unique l₁ l₂
+... | refl = refl
+eval-unique (instantiate-⟦⟧ eval₁ sub-I₁)
+            (instantiate-⟦⟧ eval₂ sub-I₂)
   with eval-unique eval₁ eval₂
-... | refl
-  rewrite run-unique run-Δ₁ run-Δ₂
-        | subst-unique sub-Γ₁ sub-Γ₂
-        | subst-unique sub-I₁ sub-I₂ = refl
+... | refl = subst-unique sub-I₁ sub-I₂
 
 exec-unique : ∀ {G P P₁ P₂} →
                 G ⊢ P ⇒ P₁ →
@@ -95,66 +93,29 @@ execs-unique (exec₁ ∷ execs₁) (exec₂ ∷ execs₂)
   rewrite exec-unique exec₁ exec₂
         | execs-unique execs₁ execs₂ = refl
 
-eval-dec : ∀ G w → Dec (∃ λ g → EvalGlobal G w g)
+eval-dec : ∀ G w → Dec (∃ λ I → EvalGlobal G w I)
 eval-dec G (globval l ♯a)
   with ↓-dec G l
-... | no ¬l' = no (λ { (._ , instantiate-globval l' eq) → ¬l' (_ , l') })
-... | yes (code[ Δ ] Γ ∙ I , l') with length Δ ≟ ♯a
-... | yes ♯a≡len = yes (code[ Δ ] Γ ∙ I , instantiate-globval l' ♯a≡len)
-... | no ♯a≢len = no (λ { (._ , instantiate-globval l'' eq) →
-                     help l' l'' ♯a≢len eq })
-  where help : ∀ {G l ♯a Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 G ↓ l ⇒ code[ Δ₁ ] Γ₁ ∙ I₁ →
-                 G ↓ l ⇒ code[ Δ₂ ] Γ₂ ∙ I₂ →
-                 length Δ₁ ≢ ♯a →
-                 length Δ₂ ≢ ♯a
-        help l₁ l₂ neq eq with ↓-unique l₁ l₂
-        ... | refl = neq eq
+... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
+... | yes (code[ Δ ] Γ ∙ I , l') = yes (I , instantiate-globval l')
 eval-dec G (heapval l) = no (λ { (_ , ()) })
 eval-dec G (int n) = no (λ { (_ , ()) })
 eval-dec G ns = no (λ { (_ , ()) })
 eval-dec G (uninit τ) = no (λ { (_ , ()) })
-eval-dec G (w ⟦ cᵥ / ι ⟧) with eval-dec G w
-... | no ¬eval =
-  no (λ { (._ , instantiate-⟦⟧ eval run-Δ sub-Γ sub-I) → ¬eval (_ , eval) })
-... | yes (code[ Δ ] Γ ∙ I , eval₁)
-  with Run Δ ⟦ cᵥ / ι ⟧? | Γ ⟦ Strong→Weak cᵥ / ι ⟧?
-                         | I ⟦ Strong→Weak cᵥ / ι ⟧?
-... | yes (Δ' , run-Δ) | yes (Γ' , sub-Γ) | yes (I' , sub-I) =
- yes (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₁ run-Δ sub-Γ sub-I)
-... | no ¬run-Δ | _ | _ =
-  no (λ { (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
-    help eval₁ eval₂ ¬run-Δ (Δ' , run-Δ) })
-  where help : ∀ {G w c Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 EvalGlobal G w (code[ Δ₁ ] Γ₁ ∙ I₁) →
-                 EvalGlobal G w (code[ Δ₂ ] Γ₂ ∙ I₂) →
-                 ¬ (∃ λ Δ' → Run Δ₁ ⟦ c ⟧≡ Δ') →
-                 ¬ (∃ λ Δ' → Run Δ₂ ⟦ c ⟧≡ Δ')
-        help eval₁ eval₂ ¬run-Δ run-Δ
-          with eval-unique eval₁ eval₂
-        ... | refl = ¬run-Δ run-Δ
-... | _ | no ¬sub-Γ | _ =
-  no (λ { (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
-    help eval₁ eval₂ ¬sub-Γ (Γ' , sub-Γ) })
-  where help : ∀ {G w cᵥ ι Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 EvalGlobal G w (code[ Δ₁ ] Γ₁ ∙ I₁) →
-                 EvalGlobal G w (code[ Δ₂ ] Γ₂ ∙ I₂) →
-                 ¬ (∃ λ Γ' → Γ₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ') →
-                 ¬ (∃ λ Γ' → Γ₂ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ')
-        help eval₁ eval₂ ¬sub-Γ sub-Γ
-          with eval-unique eval₁ eval₂
-        ... | refl = ¬sub-Γ sub-Γ
-... | _ | _ | no ¬sub-I =
-  no (λ { (code[ Δ' ] Γ' ∙ I' , instantiate-⟦⟧ eval₂ run-Δ sub-Γ sub-I) →
-    help eval₁ eval₂ ¬sub-I (I' , sub-I) })
-  where help : ∀ {G w cᵥ ι Δ₁ Δ₂ Γ₁ Γ₂ I₁ I₂} →
-                 EvalGlobal G w (code[ Δ₁ ] Γ₁ ∙ I₁) →
-                 EvalGlobal G w (code[ Δ₂ ] Γ₂ ∙ I₂) →
-                 ¬ (∃ λ I' → I₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ I') →
-                 ¬ (∃ λ I' → I₂ ⟦ Strong→Weak cᵥ / ι ⟧≡ I')
+eval-dec G (w ⟦ cᵥ / ι ⟧)
+  with eval-dec G w
+... | no ¬eval = no (λ { (._ , instantiate-⟦⟧ eval sub-I) → ¬eval (_ , eval) })
+... | yes (I , eval)
+  with I ⟦ Strong→Weak cᵥ / ι ⟧?
+... | yes (I' , sub-I) = yes (I' , instantiate-⟦⟧ eval sub-I)
+... | no ¬sub-I = no (λ { (._ , instantiate-⟦⟧ eval' sub-I) → help eval eval' ¬sub-I (_ , sub-I) })
+  where help : ∀ {G w c I₁ I₂} →
+                 EvalGlobal G w I₁ →
+                 EvalGlobal G w I₂ →
+                 ¬ (∃ λ I' → I₁ ⟦ c ⟧≡ I') →
+                 ¬ (∃ λ I' → I₂ ⟦ c ⟧≡ I')
         help eval₁ eval₂ ¬sub-I sub-I
-          with eval-unique eval₁ eval₂
-        ... | refl = ¬sub-I sub-I
+          rewrite eval-unique eval₁ eval₂ = ¬sub-I sub-I
 
 private
   is-int : ∀ v → Dec (∃ λ n → v ≡ int n)
@@ -257,20 +218,11 @@ exec-dec G (H , register sp regs , beq ♯r v ~> I)
 ... | no ¬eval = no (λ { (._ , exec-beq₀ eq' eval) → ¬eval (_ , eval)
                        ; (._ , exec-beq₁ eq' neq) →
                              neq (int-helper eq' eq)})
-... | yes (code[ [] ] Γ ∙ I' , eval) = yes (_ , exec-beq₀ eq eval)
-... | yes (code[ a ∷ Δ ] Γ ∙ I' , eval) = no help
-  where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , beq ♯r v ~> I ⇒ P')
-        help (._ , exec-beq₀ eq' eval') with eval-unique eval eval'
-        ... | ()
-        help (._ , exec-beq₁ eq' neq) = neq (int-helper eq' eq)
+... | yes (I' , eval) = yes (_ , exec-beq₀ eq eval)
 exec-dec G (H , register sp regs , jmp v)
   with eval-dec G (evalSmallValue regs v)
 ... | no ¬eval = no (λ { (._ , exec-jmp  eval) → ¬eval (_ , eval) })
-... | yes (code[ [] ] Γ ∙ I' , eval) = yes (_ , exec-jmp eval)
-... | yes (code[ a ∷ Δ ] Γ ∙ I' , eval) = no help
-  where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , jmp v ⇒ P')
-        help (._ , exec-jmp eval') with eval-unique eval eval'
-        ... | ()
+... | yes (I' , eval) = yes (_ , exec-jmp eval)
 
 execs-dec : ∀ G P n → Dec (∃ λ P' → G ⊢ P ⇒ₙ n / P')
 execs-dec G P zero = yes (P , [])

@@ -146,14 +146,6 @@ data InstructionSequence : Set where
   _~>_ : Instruction → InstructionSequence → InstructionSequence
   jmp : SmallValue → InstructionSequence
 
--- Heap values, h
-data HeapValue : Set where
-  tuple : List WordValue → HeapValue
-
--- Heaps, H
-Heap : Set
-Heap = List HeapValue
-
 -- Global values, g
 infix 7 code[_]_∙_
 data GlobalValue : Set where
@@ -163,6 +155,14 @@ data GlobalValue : Set where
 -- Global constants, G
 Globals : Set
 Globals = List GlobalValue
+
+-- Heap values, h
+data HeapValue : Set where
+  tuple : List WordValue → HeapValue
+
+-- Heaps, H
+Heap : Set
+Heap = List HeapValue
 
 -- Stacks, S
 Stack : Set

@@ -13,22 +13,19 @@ evalSmallValue regs (reg ♯r) = lookup ♯r regs
 evalSmallValue regs (word w) = w
 evalSmallValue regs (v ⟦ i ⟧) = evalSmallValue regs v ⟦ i ⟧
 
-data EvalGlobal (G : Globals) : WordValue → GlobalValue → Set where
+data EvalGlobal (G : Globals) : WordValue → InstructionSequence → Set where
   instantiate-globval :
-                 ∀ {l ♯a Δ Γ I} →
-             G ↓ l ⇒ (code[ Δ ] Γ ∙ I) →
-                  length Δ ≡ ♯a →
-    ---------------------------------------------
-    EvalGlobal G (globval l ♯a) (code[ Δ ] Γ ∙ I)
+          ∀ {l ♯a Δ Γ I} →
+     G ↓ l ⇒ (code[ Δ ] Γ ∙ I) →
+    -----------------------------
+    EvalGlobal G (globval l ♯a) I
 
   instantiate-⟦⟧ :
-           ∀ {w cᵥ ι Δ Δ' Γ Γ' I I'} →
-         EvalGlobal G w (code[ Δ ] Γ ∙ I) →
-               Run Δ ⟦ cᵥ / ι ⟧≡ Δ' →
-                 Γ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ' →
-                 I ⟦ Strong→Weak cᵥ / ι ⟧≡ I' →
-    -----------------------------------------
-    EvalGlobal G (w ⟦ cᵥ / ι ⟧) (code[ Δ' ] Γ' ∙ I')
+           ∀ {w cᵥ ι I I'} →
+          EvalGlobal G w I →
+     I ⟦ Strong→Weak cᵥ / ι ⟧≡ I' →
+    ------------------------------
+    EvalGlobal G (w ⟦ cᵥ / ι ⟧) I'
 
 infix 3 _⊢_⇒_
 data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
@@ -107,9 +104,9 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
           H , register sp (update ♯rd (evalSmallValue regs v) regs) , I
 
     exec-beq₀ :
-                    ∀ {H sp regs ♯r v Γ I₁ I₂} →
+                    ∀ {H sp regs ♯r v I₁ I₂} →
                      lookup ♯r regs ≡ int 0 →
-      EvalGlobal G (evalSmallValue regs v) (code[ [] ] Γ ∙ I₂) →
+      EvalGlobal G (evalSmallValue regs v) I₂ →
       ----------------------------------------------------------
              G ⊢ H , register sp regs , beq ♯r v ~> I₁ ⇒
                  H , register sp regs , I₂
@@ -123,8 +120,8 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
           H , register sp regs , I
 
     exec-jmp :
-                    ∀ {H sp regs v Γ I} →
-      EvalGlobal G (evalSmallValue regs v) (code[ [] ] Γ ∙ I) →
+                    ∀ {H sp regs v I} →
+      EvalGlobal G (evalSmallValue regs v) I →
       ---------------------------------------------------------
                G ⊢ H , register sp regs , jmp v ⇒
                    H , register sp regs , I
