@@ -27,3 +27,29 @@
 \begin{mathpar}
 \infer{\valid{\Delta}{\tau} \and \subtype{}{\phi_1}{\phi_2}}{\subtype{\Delta}{\tau^{\phi_1}}{\tau^{\phi_2}}}
 \end{mathpar}
+
+\fbox{$\subtype{\Delta}{\Gamma_1}{\Gamma_2}$}
+\begin{mathpar}
+\infer
+  {\subtype{\Delta}{\sigma}{\sigma'} \and
+    \subtype{\Delta}{\tau_1}{\tau'_1} \and
+    \dots \and
+    \subtype{\Delta}{\tau_{regs}}{\tau'_{regs}}}
+  {\subtype{\Delta}{\{\mathtt{sp}: \sigma, \mathtt{r}_1:\tau'_1, \dots, \mathtt{r}_{regs}:\tau_{regs}\}}
+                   {\{\mathtt{sp}: \sigma', \mathtt{r}_1:\tau'_1, \dots, \mathtt{r}_{regs}:\tau'_{regs}\}}}
+\end{mathpar}
+
+\subsection{Comments}
+This is pretty much what you would expect. A few things of note though:
+
+\begin{itemize}
+\item For code-types we require identical assumption lists.
+\item For possibly uninitialized types, we require identical base types, not
+  just that they also have subtyping.
+\end{itemize}
+
+The last one is a requirement, for soundness. (The exact reasons are somewhat complicated and will be included in the final report).
+
+\subsection{Differences from STAL}
+While the STAL-paper has reflection and transitivity as rules, we instead derive
+them as theorems. This means that we have slightly more rules though.

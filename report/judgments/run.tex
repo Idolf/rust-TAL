@@ -1,0 +1,32 @@
+\section{Running judments}
+
+\fbox{$\run{\Delta_1}{c}{\Delta_2}$}\\
+
+\begin{mathpar}
+\infer{ }{\run{(\alpha :: \Delta)}{\alpha => \tau}{\Delta}} \and
+\infer{ }{\run{(\rho :: \Delta)}{\rho => \sigma}{\Delta}} \and
+\infer{
+  a_1 \neq a \and
+  \substitution{a_1}{a => v}{a_2} \and
+  \substitution{\Delta_1}{a => v}{\Delta_2}
+}{
+  \run{(a_1 :: \Delta_1)}{a => v}{(a_2 :: \Delta_2)}
+} \and
+\infer{
+  \text{$\Delta^{+}$ should be inserted elsewhere} \and
+  \substitution{a_1}{\mathtt{weaken}\ \Delta^{+}}{a_2} \and
+  \substitution{\Delta_1}{\mathtt{weaken}\ \Delta^{+}}{\Delta_2}
+}{
+  \run{(a_1 :: \Delta_1)}{\mathtt{weaken}\ \Delta^{+}}{(a_2 :: \Delta_2)}
+} \and
+\infer{
+  \text{$\Delta^{+}$ should be inserted here}
+}{
+  \run{\Delta}{\mathtt{weaken}\ \Delta^{+}}{(\Delta^{+}, \Delta)}
+}
+\end{mathpar}
+
+\subsection{Comments}
+
+We again have a bit of imprecision/handwaving because the actual Agda-code deals
+with De Bruijn indices, and the paper notation deals with variable-names.

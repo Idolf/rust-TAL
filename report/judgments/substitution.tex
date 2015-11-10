@@ -1,0 +1,74 @@
+\section{Substitution judgments}
+
+\fbox{$\substitution{\tau_1}{c}{\tau_2}$}
+\begin{mathpar}
+  \infer{ }{\substitution{\alpha}{\alpha => \tau}{\tau}} \and
+  \infer{\alpha_1 \neq \alpha_2}{\substitution{\alpha_1}{\alpha_2 => \tau}{\alpha_1}} \and
+  \infer{ }{\substitution{\alpha}{\rho => \sigma}{\alpha}} \and
+  \infer{ }{\substitution{\alpha}{\mathtt{weaken}\ \Delta^{+}}{\alpha}}
+\end{mathpar}
+
+(This also includes obvious, mutually recursive definition.)\\\\
+\fbox{$\substitution{\tau_1^{\phi_1}}{c}{\tau_2^{\phi_2}}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{\sigma_1}{c}{\sigma_2}$}
+\begin{mathpar}
+  \infer{ }{\substitution{\rho}{\rho => \sigma}{\sigma}} \and
+  \infer{\rho_1 \neq \rho_2}{\substitution{\rho_1}{\rho_2 => \sigma}{\rho_1}} \and
+  \infer{ }{\substitution{\rho}{\alpha => \tau}{\rho}} \and
+  \infer{ }{\substitution{\rho}{\mathtt{weaken}\ \Delta^{+}}{\rho}}
+\end{mathpar}
+
+(This also includes obvious, mutually recursive definition.)\\\\
+\fbox{$\substitution{\Delta_1}{c}{\Delta_2}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{a_1}{c}{a_2}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{\Gamma_1}{c}{\Gamma_2}$}\\
+\begin{mathpar}
+  \infer{ }{\substitution{\mathtt{nil}}{c}{\mathtt{nil}}} \and
+  \infer{
+    \substitution{a_1}{c}{a_2} \and
+    \substitution{\Delta_1}{c}{\Delta_2}
+  }{
+    \substitution{(a_1 :: \Delta_1)}{c}{a_2 :: \Delta_2}
+  }
+\end{mathpar}\\
+\fbox{$\substitution{c_1}{c}{c_2}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{w_1}{c}{w_2}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{v_1}{c}{v_2}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{\iota_1}{c}{\iota_2}$}\\
+
+(The obvious, mutually recursive definitions.)\\\\
+\fbox{$\substitution{I_1}{c}{I_2}$}\\
+
+(The obvious, mutually recursive definitions.)
+
+\subsection{Comments}
+
+I write that the rules are obvious -- and they are, as long as you keep yourself
+to using paper-notation. If you want to use De Bruijn indices they are not
+nearly as obvious.
+
+Note that the substitution for $\Delta$ assumes that the actual substitution is
+to be done elsewhere -- it merely updates all references inside the $\Delta$. In
+the current grammar there \emph{are} no references inside the assumptions, so we
+get that $\substitution{\Delta}{c}{\Delta}$ for all $\Delta$. This would ideally
+not hold in the final version.
+
+For the substitution that actually updates the assumption list, see the next
+section.
+
+\subsection{Differences from STAL}
+
+STAL handwaves even more that I do here. Rest assured that my Agda-code is
+precise enough for a machine-verified proof.
