@@ -1,0 +1,31 @@
+\section{Run Lemmas}
+
+\begin{lemma}
+  Assume we have $\Delta, \Delta_1, \Delta_2$ and $c$ such that
+  $\run{\Delta}{c}{\Delta_1}$ and $\run{\Delta}{c}{\Delta_2}$. We can then
+  conclude that $\Delta_1 = \Delta_2$.
+\end{lemma}
+
+\begin{proof}
+  By induction over the derivations of $\run{\Delta}{c}{\Delta_1}$ and
+  $\run{\Delta}{c}{\Delta_2}$.
+\end{proof}
+
+\begin{lemma}
+  Assume we have $\Delta$ and $c$. It is now decidable whether there exists some
+  $\Delta'$ such that $\run{\Delta}{c}{\Delta'}$.
+\end{lemma}
+
+\begin{proof}
+  By structural induction over $\Delta$, using \autoref{dec:substitution}.
+\end{proof}
+
+\begin{lemma}
+  Assume we have some $\Delta$ and $c$, such that $\valid{\mathtt{nil}}{\Delta}$
+  and $\valid{\Delta}{c}$. We can then find a $\Delta'$ such that
+  $\run{\Delta}{c}{\Delta'}$.
+\end{lemma}
+
+\begin{proof}
+  Long proof using previous lemmas.
+\end{proof}

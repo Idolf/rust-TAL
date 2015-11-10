@@ -1,0 +1,55 @@
+\section{Substitution Lemmas}
+
+\begin{lemma}
+  Let $T \in \mathbb{SUB}$ and let $v, v_1, v_2 \in T$. Assume we have
+  derivations of $\substitution{v}{c}{v_1}$ and $\substitution{v}{c}{v_2}$. We
+  can then conclude that $v_1 = v_2$.
+\end{lemma}
+\begin{proof}
+  By structural induction of the derivations of $\substitution{v}{c}{v_1}$ and
+  $\substitution{v}{c}{v_2}$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{SUB}$ and let $v \in T$ and that we have some $c$.  It is
+  now decidable if there exists some $v'$ such that $\substitution{v}{c}{v'}$.
+\end{lemma}
+\label{dec:substitution}
+\begin{proof}
+  By structural induction of the derivations of $v$.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{SUB} \cap \mathbb{V}_\Delta$ and $v \in T$. Assume we have
+  some $c, \Delta, \Delta'$ such that $\valid{\Delta}{c}$,
+  $\run{\Delta}{c}{\Delta'}$ and $\valid{\Delta}{v}$.
+
+  There now exists a $v'$ such that $\substitution{v}{c}{v'}$ and
+  $\valid{\Delta'}{v'}$.
+\end{lemma}
+
+\begin{proof}
+  This is a long proof requiring further lemmas.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{SUB} \cap \mathbb{V}_\Delta$ and $v_1, v_2 \in T$. Assume
+  we have some $c$, such that $\substitution{v_1}{c}{v_2}$ and that
+  $\valid{\mathtt{nil}}{v_1}$. We can then conclude that $v_1 = v_2$.
+\end{lemma}
+
+\begin{proof}
+  This is a long proof requiring further lemmas.
+\end{proof}
+
+\begin{lemma}
+  Let $T \in \mathbb{SUB} \cap \mathbb{S}_\Delta$ and
+  $v_1, v_1', v_2, v_2' \in T$. Assume we have some $c, \Delta, \Delta'$, such
+  that $\run{\Delta}{c}{\Delta'}$, $\substitution{v_1}{c}{v_1'}$,
+  $\substitution{v_2}{c}{v_2'}$, $\subtype{\Delta}{v_1}{v_2}$. We can then
+  conclude that $\subtype{\Delta'}{v_1'}{v_2'}$.
+\end{lemma}
+
+\begin{proof}
+  By structural induction over the derivation of $\subtype{\Delta}{v_1}{v_2}$.
+\end{proof}
