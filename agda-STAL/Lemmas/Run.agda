@@ -75,3 +75,12 @@ can-run {a₁ ∷ Δ} (a⋆ ∷ Δ⋆) {weaken Δ⁺ / suc ι} (valid-suc c⋆)
       a₁' ∷ Δ₁' ++ Δ⁺ ++ Δ₂ ,
       run-combine' (ι-subst (+-comm 0 (length Δ₁)) sub-a₁ ∷ sub-Δ₁)
                    (run-weaken {Δ₂} {Δ⁺})
+
+run-valid : ∀ {Δ₁ Δ₂ Δ c} →
+              Δ₁ ++ Δ ⊢ c Valid →
+              Δ ⊢ Δ₁ Valid →
+              Run Δ₁ ⟦ c ⟧≡ Δ₂ →
+              Δ ⊢ Δ₂ Valid
+run-valid (valid-zero (valid-inst i⋆)) (a⋆ ∷ Δ₁⋆) (run-inst m) = Δ₁⋆
+run-valid (valid-zero (valid-weaken Δ⁺⋆)) Δ₁⋆ run-weaken = Δ-valid-combine Δ₁⋆ Δ⁺⋆
+run-valid (valid-suc c⋆) (a⋆ ∷ Δ₁⋆) (run-suc sub-a run-Δ) = subst-valid c⋆ (run-append run-Δ) a⋆ sub-a ∷ run-valid c⋆ Δ₁⋆ run-Δ

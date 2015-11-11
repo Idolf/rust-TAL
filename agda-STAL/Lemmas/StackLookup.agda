@@ -33,3 +33,18 @@ stack-update-unique : ∀ {i τ σ σ₁ σ₂} →
 stack-update-unique here here = refl
 stack-update-unique (there up₁) (there up₂)
   rewrite stack-update-unique up₁ up₂ = refl
+
+stack-lookup-valid : ∀ {Δ i σ τ} →
+                       Δ ⊢ σ Valid →
+                       stack-lookup i σ τ →
+                       Δ ⊢ τ Valid
+stack-lookup-valid (τ⋆ ∷ σ⋆) here = τ⋆
+stack-lookup-valid (τ⋆ ∷ σ⋆) (there l) = stack-lookup-valid σ⋆ l
+
+stack-update-valid : ∀ {Δ i σ σ' τ} →
+                       Δ ⊢ σ Valid →
+                       Δ ⊢ τ Valid →
+                       stack-update i τ σ σ' →
+                       Δ ⊢ σ' Valid
+stack-update-valid (τ'⋆ ∷ σ⋆) τ⋆ here = τ⋆ ∷ σ⋆
+stack-update-valid (τ'⋆ ∷ σ⋆) τ⋆ (there up) = τ'⋆ ∷ stack-update-valid σ⋆ τ⋆ up

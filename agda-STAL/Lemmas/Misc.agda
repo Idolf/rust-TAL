@@ -138,3 +138,10 @@ run-ρ⇒↓ : ∀ {Δ₁ Δ₂ ι σ} →
             Δ₁ ↓ ι ⇒ ρ
 run-ρ⇒↓ (run-inst match-ρ) = here
 run-ρ⇒↓ (run-suc sub-a run-Δ) = there (run-ρ⇒↓ run-Δ)
+
+Δ-valid-combine : ∀ {Δ₁ Δ₂ Δ₃} →
+                    Δ₁ ⊢ Δ₂ Valid →
+                    Δ₂ ++ Δ₁ ⊢ Δ₃ Valid →
+                    Δ₁ ⊢ Δ₃ ++ Δ₂ Valid
+Δ-valid-combine Δ₂⋆ [] = Δ₂⋆
+Δ-valid-combine {Δ₁} {Δ₂} {a ∷ Δ₃} Δ₂⋆ (a⋆ ∷ Δ₃⋆) rewrite sym (List-++-assoc Δ₃ Δ₂ Δ₁) = a⋆ ∷ Δ-valid-combine Δ₂⋆ Δ₃⋆

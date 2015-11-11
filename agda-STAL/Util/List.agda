@@ -242,6 +242,23 @@ allzip-update here here p (p' ∷ ps) = p ∷ ps
 allzip-update (there up₁) (there up₂) p₁ (p' ∷ ps) =
   p' ∷ allzip-update up₁ up₂ p₁ ps
 
+All-lookup : ∀ {a p} {A : Set a} {P : A → Set p}
+               {x} {xs : List A} {i} →
+               xs ↓ i ⇒ x →
+               All P xs →
+               P x
+All-lookup here (x⋆ ∷ xs⋆) = x⋆
+All-lookup (there l) (x⋆ ∷ xs⋆) = All-lookup l xs⋆
+
+All-update : ∀ {a p} {A : Set a} {P : A → Set p}
+               {x} {xs xs' : List A} {i} →
+               P x →
+               xs ⟦ i ⟧← x ⇒ xs' →
+               All P xs →
+               All P xs'
+All-update x⋆ here (x'⋆ ∷ xs⋆) = x⋆ ∷ xs⋆
+All-update x⋆ (there up) (x'⋆ ∷ xs⋆) = x'⋆ ∷ All-update x⋆ up xs⋆
+
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)
   List-Tree {A = A} = tree⋆ (λ { (node _ xs) → from xs })

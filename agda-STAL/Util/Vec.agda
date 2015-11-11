@@ -79,6 +79,23 @@ Allᵥ-zip : ∀ {a p} {A : Set a} {P : A × A → Set p} {m} {L : Vec A m} →
 Allᵥ-zip [] = []
 Allᵥ-zip (p ∷ ps) = p ∷ Allᵥ-zip ps
 
+Allᵥ-update : ∀ {a p} {A : Set a} {P : A → Set p} {m}
+                {x} {xs : Vec A m} →
+                (i : Fin m) →
+                P x →
+                Allᵥ P xs →
+                Allᵥ P (update i x xs)
+Allᵥ-update zero x⋆ (x'⋆ ∷ xs⋆) = x⋆ ∷ xs⋆
+Allᵥ-update (suc i) x⋆ (x'⋆ ∷ xs⋆) = x'⋆ ∷ Allᵥ-update i x⋆ xs⋆
+
+Allᵥ-lookup : ∀ {a p} {A : Set a} {P : A → Set p} {m}
+                {xs : Vec A m} →
+                (i : Fin m) →
+                Allᵥ P xs →
+                P (lookup i xs)
+Allᵥ-lookup zero (x⋆ ∷ xs⋆) = x⋆
+Allᵥ-lookup (suc i) (x⋆ ∷ xs⋆) = Allᵥ-lookup i xs⋆
+
 Allᵥ-dec : ∀ {a p} {A : Set a} {P : A → Set p} {m} →
              (f : (a : A) → Dec (P a)) →
              (L : Vec A m) →
