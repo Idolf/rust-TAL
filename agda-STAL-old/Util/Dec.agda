@@ -20,7 +20,6 @@ record DecEq {ℓ} (A : Set ℓ) : Set ℓ where
     _≟_ : DecEqFun A
 
 -- These two should be equivalent, but they are apparently not
--- then there is only a single field
 -- open DecEq {{...}} public
 _≟_ : ∀ {ℓ} {A : Set ℓ} {{r : DecEq A}} → DecEqFun A
 _≟_ {{eq}} = DecEq._≟_ eq

@@ -48,38 +48,3 @@ stack-update-valid : ∀ {Δ i σ σ' τ} →
                        Δ ⊢ σ' Valid
 stack-update-valid (τ'⋆ ∷ σ⋆) τ⋆ here = τ⋆ ∷ σ⋆
 stack-update-valid (τ'⋆ ∷ σ⋆) τ⋆ (there up) = τ'⋆ ∷ stack-update-valid σ⋆ τ⋆ up
-
-stack-append-valid : ∀ {Δ τs σ} →
-                       Δ ⊢ τs Valid →
-                       Δ ⊢ σ Valid →
-                       Δ ⊢ stack-append τs σ Valid
-stack-append-valid [] σ⋆ = σ⋆
-stack-append-valid (τ⋆ ∷ τs⋆) σ⋆ = τ⋆ ∷ stack-append-valid τs⋆ σ⋆
-
-stack-append-subtype : ∀ {Δ τs₁ τs₂ σ₁ σ₂} →
-                         Δ ⊢ τs₁ ≤ τs₂ →
-                         Δ ⊢ σ₁ ≤ σ₂ →
-                         Δ ⊢ stack-append τs₁ σ₁ ≤ stack-append τs₂ σ₂
-stack-append-subtype [] σ₁≤σ₂ = σ₁≤σ₂
-stack-append-subtype (τ₁≤τ₂ ∷ τs₁≤τs₂) σ₁≤σ₂ = τ₁≤τ₂ ∷ stack-append-subtype τs₁≤τs₂ σ₁≤σ₂
-
-stack-drop-valid : ∀ {Δ i σ σ'} →
-                     Δ ⊢ σ Valid →
-                     stack-drop i σ σ' →
-                     Δ ⊢ σ' Valid
-stack-drop-valid (valid-ρ⁼ l) here = valid-ρ⁼ l
-stack-drop-valid [] here = []
-stack-drop-valid σ⋆ here = σ⋆
-stack-drop-valid (τ⋆ ∷ σ⋆) (there drop) = stack-drop-valid σ⋆ drop
-
-stack-drop-subtype : ∀ {Δ i σ₁ σ₂ σ₂'} →
-                     Δ ⊢ σ₁ ≤ σ₂ →
-                     stack-drop i σ₂ σ₂' →
-                     ∃ λ σ₁' →
-                       stack-drop i σ₁ σ₁' ×
-                       Δ ⊢ σ₁' ≤ σ₂'
-stack-drop-subtype (ρ⁼-≤ l) here = _ , here , ρ⁼-≤ l
-stack-drop-subtype [] here = _ , here , []
-stack-drop-subtype σ₁≤σ₂ here = _ , here , σ₁≤σ₂
-stack-drop-subtype (τ₁≤τ₂ ∷ σ₁≤σ₂) (there drop₁) =
-  Σ-map _ (Σ-map there id) (stack-drop-subtype σ₁≤σ₂ drop₁)

@@ -2,7 +2,7 @@ module Lemmas where
 
 -- Various small helper lemmas, that
 -- does not fit in very well in other places
--- open import Lemmas.Misc public
+open import Lemmas.Misc public
 
 -- Lemmas about lookup and update of StackTypes.
 -- Includes uniqueness proofs and decidibility proofs.
@@ -33,3 +33,9 @@ open import Lemmas.TypeSubstitution public
 -- and subtyping. The main result is that substitution
 -- preserves subtyping.
 open import Lemmas.SubtypeSubstitution public
+
+-- Lemmas about updating TypeAssignment's using
+-- substitutions. It contains a uniqueness-proof,
+-- a decidibility-proof and a proof that it is always
+-- possible to update with a valid substitution
+open import Lemmas.Run public

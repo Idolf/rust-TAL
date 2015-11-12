@@ -2,9 +2,7 @@ module Util.List where
 
 -- Re-exports
 open import Data.List
-  using (List ; [] ; _∷_ ; _∷ʳ_ ; [_] ; map ;
-        length ; zip ; _++_ ; replicate ; drop)
-  public
+  using (List ; [] ; _∷_ ; _∷ʳ_ ; [_] ; map ; length ; zip ; _++_) public
 open import Data.List.All using (All ; [] ; _∷_)
                           renaming (all to All-dec) public
 open import Data.List.Properties using ()
@@ -121,14 +119,36 @@ data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
 ↓-remove-left (x₁ ∷ xs₁) () here
 ↓-remove-left (x ∷ xs₁) (s≤s i≥len) (there l) = ↓-remove-left xs₁ i≥len l
 
-↓-remove-right : ∀ {ℓ} {A : Set ℓ} xs₁ {xs₂} {i} {v : A} →
+↓-remove-right : ∀ {ℓ} {A : Set ℓ} {xs₁} xs₂ {i} {v : A} →
                       i < length xs₁ →
                       xs₁ ++ xs₂ ↓ i ⇒ v →
                       xs₁ ↓ i ⇒ v
-↓-remove-right [] () l
-↓-remove-right (x ∷ xs₁) i<len here = here
-↓-remove-right (x ∷ xs₁) (s≤s i<len) (there l) =
-  there (↓-remove-right xs₁ i<len l)
+↓-remove-right {xs₁ = []} xs₂ () l
+↓-remove-right {xs₁ = x ∷ xs₁} xs₂ i<len here = here
+↓-remove-right {xs₁ = x ∷ xs₁} xs₂ (s≤s i<len) (there l) =
+  there (↓-remove-right xs₂ i<len l)
+
+↓-replace-left : ∀ {ℓ} {A : Set ℓ} xs₁ xs₁' {xs₂ i} {v : A} →
+                   length xs₁ ≡ length xs₁' →
+                   i ≥ length xs₁ →
+                   xs₁ ++ xs₂ ↓ i ⇒ v →
+                   xs₁' ++ xs₂ ↓ i ⇒ v
+↓-replace-left xs₁ xs₁' eq i≥len l
+  with ↓-add-left xs₁' (↓-remove-left xs₁ i≥len l)
+... | l' rewrite eq | NP.m+n∸m≡n i≥len = l'
+
+↓-add-middle : ∀ {ℓ} {A : Set ℓ} xs₁ xs⁺ {xs₂} {i} {v : A} →
+                 i ≥ length xs₁ →
+                 xs₁ ++ xs₂ ↓ i ⇒ v →
+                 xs₁ ++ xs⁺ ++ xs₂ ↓ length xs⁺ + i ⇒ v
+↓-add-middle xs₁ xs⁺ {i = i} i≥len l
+  with ↓-add-left xs₁ (↓-add-left xs⁺ (↓-remove-left xs₁ i≥len l))
+... | l'
+  rewrite sym (+-assoc (length xs₁) (length xs⁺) (i ∸ length xs₁))
+        | +-comm (length xs₁) (length xs⁺)
+        | +-assoc (length xs⁺) (length xs₁) (i ∸ length xs₁)
+        | NP.m+n∸m≡n i≥len
+  = l'
 
 ↓-last : ∀ {ℓ} {A : Set ℓ} xs {x : A} →
            xs ∷ʳ x ↓ length xs ⇒ x

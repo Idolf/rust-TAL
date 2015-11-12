@@ -19,7 +19,7 @@ mutual
     α⁼    : AssignmentIndex → Type
     int   : Type
     ns    : Type
-    ∀[_]_ : TypeAssumptions → RegisterAssignment → Type
+    ∀[_]_ : TypeAssignment → RegisterAssignment → Type
     tuple : List InitType → Type
 
   -- Initialization flags, φ
@@ -39,13 +39,13 @@ mutual
     _∷_ : Type → StackType → StackType
 
   -- Type assignments, Δ
-  TypeAssumptions : Set
-  TypeAssumptions = List TypeAssumptionValue
+  TypeAssignment : Set
+  TypeAssignment = List TypeAssignmentValue
 
   -- Type assignment values, a
-  data TypeAssumptionValue : Set where
-    α : TypeAssumptionValue
-    ρ : TypeAssumptionValue
+  data TypeAssignmentValue : Set where
+    α : TypeAssignmentValue
+    ρ : TypeAssignmentValue
 
   -- Register assignments, Γ
   data RegisterAssignment : Set where
@@ -75,40 +75,63 @@ GlobLabel = ℕ
 HeapLabel : Set
 HeapLabel = ℕ
 
--- Instantiation, i
+-- Instantiations i
 data Instantiation : Set where
   α : Type → Instantiation
   ρ : StackType → Instantiation
 
--- Instantiations, is
-Instantiations : Set
-Instantiations = List Instantiation
+-- CastValue cᵥ
+data CastValue (W : Set) : Set where
+  inst : Instantiation → CastValue W
+  weaken : W → CastValue W
+WeakCastValue : Set
+WeakCastValue = CastValue ℕ
+StrongCastValue : Set
+StrongCastValue = CastValue TypeAssignment
+
+-- Casting c
+infix 6 _/_
+data Cast (W : Set) : Set where
+  _/_ : CastValue W → ℕ → Cast W
+WeakCast : Set
+WeakCast = Cast ℕ
+StrongCast : Set
+StrongCast = Cast TypeAssignment
 
 -- Word value, w
-infixl 6 Λ_∙_⟦_⟧
+infixl 6 _⟦_⟧
 data WordValue : Set where
-  globval : GlobLabel → WordValue
+  globval : GlobLabel → ℕ → WordValue
   heapval : HeapLabel → WordValue
   int     : ℕ → WordValue
   ns      : WordValue
   uninit  : Type → WordValue
-  Λ_∙_⟦_⟧ : TypeAssumptions → WordValue → Instantiations → WordValue
+  _⟦_⟧    : WordValue → StrongCast → WordValue
+
+-- Some sugar
+infixl 6 _⟦⟦_⟧⟧
+_⟦⟦_⟧⟧ : WordValue → List Instantiation → WordValue
+w ⟦⟦ [] ⟧⟧ = w
+w ⟦⟦ i ∷ is ⟧⟧ = w ⟦ inst i / 0 ⟧ ⟦⟦ is ⟧⟧
 
 -- Small values, v
 data SmallValue : Set where
-  reg     : Register → SmallValue
-  globval : GlobLabel → SmallValue
-  int     : ℕ → SmallValue
-  ns      : SmallValue
-  uninit  : Type → SmallValue
-  Λ_∙_⟦_⟧ : TypeAssumptions → SmallValue → Instantiations → SmallValue
+  reg  : Register → SmallValue
+  word : WordValue → SmallValue
+  _⟦_⟧ : SmallValue → StrongCast → SmallValue
+
+-- Some sugar
+infixl 6 _⟦⟦_⟧⟧ᵥ
+_⟦⟦_⟧⟧ᵥ : SmallValue → List Instantiation → SmallValue
+v ⟦⟦ [] ⟧⟧ᵥ = v
+v ⟦⟦ i ∷ is ⟧⟧ᵥ = v ⟦ inst i / 0 ⟧ ⟦⟦ is ⟧⟧ᵥ
 
 -- ι
 data Instruction : Set where
   add    : Register → Register → SmallValue → Instruction
   sub    : Register → Register → SmallValue → Instruction
-  salloc : ℕ → Instruction
-  sfree  : ℕ → Instruction
+  push   : SmallValue → Instruction
+  pop    : Instruction
   sld    : Register → ℕ → Instruction
   sst    : ℕ → Register → Instruction
   ld     : Register → Register → ℕ → Instruction
@@ -127,7 +150,7 @@ data InstructionSequence : Set where
 infix 7 code[_]_∙_
 data GlobalValue : Set where
   code[_]_∙_ :
-    TypeAssumptions → RegisterAssignment → InstructionSequence → GlobalValue
+    TypeAssignment → RegisterAssignment → InstructionSequence → GlobalValue
 
 -- Global constants, G
 Globals : Set

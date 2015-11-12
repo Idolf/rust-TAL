@@ -15,6 +15,10 @@ open import Judgments.Subtypes public
 -- Substitution judgments
 open import Judgments.Substitution public
 
+-- "Run" judgments, i.e. updating an assumption list
+-- by removing/adding assumptions
+open import Judgments.Run public
+
 -- Judgments to show if a term is valid
 open import Judgments.Terms public
 

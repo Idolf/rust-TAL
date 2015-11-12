@@ -11,13 +11,19 @@ record Subtype (A : Set) : Set1 where
   constructor subtype
   infix 3 _⊢_≤_
   field
-    _⊢_≤_ : TypeAssumptions → A → A → Set
-    Subtype-junk : ⊤
-open Subtype {{...}} public
+    _⊢_≤_ : TypeAssignment → A → A → Set
+
+-- It would be really nice if these were equivalent, but they are
+-- apparently not.
+-- open Subtype {{...}} public
+infix 3 _⊢_≤_
+_⊢_≤_ : ∀ {A} {{S : Subtype A}} →
+        TypeAssignment → A → A → Set
+_⊢_≤_ {{S}} = Subtype._⊢_≤_ S
 
 mutual
   infix 3 _⊢_≤τ_
-  data _⊢_≤τ_ (Δ : TypeAssumptions) : Type → Type → Set where
+  data _⊢_≤τ_ (Δ : TypeAssignment) : Type → Type → Set where
     α⁼-≤ :
           ∀ {ι} →
         Δ ↓ ι ⇒ α →
@@ -34,6 +40,7 @@ mutual
 
     ∀-≤ :
             ∀ {Δ' Γ₁ Γ₂} →
+        Δ ⊢ Δ' TypeAssignment →
           Δ' ++ Δ ⊢ Γ₁ ≤Γ Γ₂ →
       ----------------------------
       Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ ∀[ Δ' ] Γ₂
@@ -56,7 +63,7 @@ mutual
       φ ≤φ uninit
 
   infix 3 _⊢_≤τ⁻_
-  data _⊢_≤τ⁻_ (Δ : TypeAssumptions) : InitType → InitType → Set where
+  data _⊢_≤τ⁻_ (Δ : TypeAssignment) : InitType → InitType → Set where
     τ⁻-≤ :
           ∀ {τ φ₁ φ₂} →
           Δ ⊢ τ Valid →
@@ -66,7 +73,7 @@ mutual
 
   infix 3 _⊢_≤σ_
   infixr 5 _∷_
-  data _⊢_≤σ_ (Δ : TypeAssumptions) : StackType → StackType → Set where
+  data _⊢_≤σ_ (Δ : TypeAssignment) : StackType → StackType → Set where
     ρ⁼-≤ :
           ∀ {ι} →
         Δ ↓ ι ⇒ ρ →
@@ -85,7 +92,7 @@ mutual
       Δ ⊢ τ₁ ∷ σ₁ ≤σ τ₂ ∷ σ₂
 
   infix 3 _⊢_≤Γ_
-  data _⊢_≤Γ_ (Δ : TypeAssumptions) : (Γ₁ Γ₂ : RegisterAssignment) → Set where
+  data _⊢_≤Γ_ (Δ : TypeAssignment) : (Γ₁ Γ₂ : RegisterAssignment) → Set where
     Γ-≤ :
                 ∀ {sp₁ sp₂ regs₁ regs₂} →
                     Δ ⊢ sp₁ ≤σ sp₂ →
@@ -93,38 +100,39 @@ mutual
       ----------------------------------------------
       Δ ⊢ registerₐ sp₁ regs₁ ≤Γ registerₐ sp₂ regs₂
 
+
 Vec-Subtype : ∀ A m {{S : Subtype A}} → Subtype (Vec A m)
 Vec-Subtype A m =
-  subtype (λ Δ xs₁ xs₂ → AllZipᵥ (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂) tt
+  subtype (λ Δ xs₁ xs₂ → AllZipᵥ (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂)
 
 List-Subtype : ∀ A {{S : Subtype A}} → Subtype (List A)
 List-Subtype A =
-  subtype (λ Δ xs₁ xs₂ → AllZip (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂) tt
+  subtype (λ Δ xs₁ xs₂ → AllZip (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂)
 
 instance
   InitializationFlag-Subtype : Subtype InitializationFlag
-  InitializationFlag-Subtype = subtype (const _≤φ_) tt
+  InitializationFlag-Subtype = subtype (const _≤φ_)
 
   Type-Subtype : Subtype Type
-  Type-Subtype = subtype _⊢_≤τ_ tt
+  Type-Subtype = subtype _⊢_≤τ_
 
-  TypeVec-Subtype : ∀ {n} → Subtype (Vec Type n)
+  TypeVec-Subtype : ∀ {m} → Subtype (Vec Type m)
   TypeVec-Subtype = Vec-Subtype Type _
 
   TypeList-Subtype : Subtype (List Type)
   TypeList-Subtype = List-Subtype Type
 
   InitType-Subtype : Subtype InitType
-  InitType-Subtype = subtype _⊢_≤τ⁻_ tt
+  InitType-Subtype = subtype _⊢_≤τ⁻_
 
-  InitTypeVec-Subtype : ∀ {n} → Subtype (Vec InitType n)
+  InitTypeVec-Subtype : ∀ {m} → Subtype (Vec InitType m)
   InitTypeVec-Subtype = Vec-Subtype InitType _
 
   InitTypeList-Subtype : Subtype (List InitType)
   InitTypeList-Subtype = List-Subtype InitType
 
   StackType-Subtype : Subtype StackType
-  StackType-Subtype = subtype _⊢_≤σ_ tt
+  StackType-Subtype = subtype _⊢_≤σ_
 
   RegisterAssignment-Subtype : Subtype RegisterAssignment
-  RegisterAssignment-Subtype = subtype _⊢_≤Γ_ tt
+  RegisterAssignment-Subtype = subtype _⊢_≤Γ_

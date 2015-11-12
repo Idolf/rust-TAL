@@ -29,11 +29,3 @@ data stack-update : ℕ → Type → StackType → StackType → Set where
 
 register-stack-lookup : ℕ → RegisterAssignment → Type → Set
 register-stack-lookup n (registerₐ sp regs) τ = stack-lookup n sp τ
-
-stack-append : List Type → StackType → StackType
-stack-append [] σ = σ
-stack-append (τ ∷ τs) σ = τ ∷ stack-append τs σ
-
-data stack-drop : ℕ → StackType → StackType → Set where
-  here : ∀ {σ} → stack-drop 0 σ σ
-  there : ∀ {n τ σ σ'} → stack-drop n σ σ' → stack-drop (suc n) (τ ∷ σ) σ'

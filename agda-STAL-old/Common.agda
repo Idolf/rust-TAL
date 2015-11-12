@@ -12,6 +12,6 @@ open import Lemmas
 
 -- A lot of junk
 open import TermSubtyping
--- open import Semantics
+open import Semantics
 open import Example
 -- open import Soundness

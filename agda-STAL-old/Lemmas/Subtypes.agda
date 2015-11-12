@@ -14,6 +14,7 @@ record Subtype⁺ (A : Set) {{T : TypeLike A}} {{S : Subtype A}} : Set1 where
     ≤-refl : ∀ {Δ} {v : A} → Δ ⊢ v Valid → Δ ⊢ v ≤ v
     ≤-trans : ∀ {Δ} {v₁ v₂ v₃ : A} → Δ ⊢ v₁ ≤ v₂ → Δ ⊢ v₂ ≤ v₃ → Δ ⊢ v₁ ≤ v₃
     ≤-valid : ∀ {Δ} {v₁ v₂ : A} → Δ ⊢ v₁ ≤ v₂ → Δ ⊢ v₁ Valid × Δ ⊢ v₂ Valid
+    ≤-++ : ∀ {Δ Δ'} {v₁ v₂ : A} → Δ ⊢ v₁ ≤ v₂ → Δ ++ Δ' ⊢ v₁ ≤ v₂
     ≤-change₁ : ∀ {Δ₁ Δ₂} {v₁ v₂ : A} →
                   Δ₁ ⊢ v₁ ≤ v₂ →
                   Δ₂ ⊢ v₁ Valid →
@@ -59,14 +60,16 @@ private
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? int = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? ns = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂)
-      with Δ₁ ≟ Δ₂ | Δ₁ ++ Δ ⊢ Γ₁ ≤Γ? Γ₂
+      with Δ₁ ≟ Δ₂ | Δ ⊢? Δ₁ Valid | Δ₁ ++ Δ ⊢ Γ₁ ≤Γ? Γ₂
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
-      | yes refl | yes Γ₁≤Γ₂ = yes (∀-≤ Γ₁≤Γ₂)
+      | yes refl | yes Δ'⋆ | yes Γ₁≤Γ₂ = yes (∀-≤ Δ'⋆ Γ₁≤Γ₂)
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
-      | yes refl | no Γ₁≰Γ₂  = no (λ { (∀-≤ Γ₁≤Γ₂) → Γ₁≰Γ₂ Γ₁≤Γ₂ })
-    Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂) | no Δ₁≢Δ₂ | _ = no (Δ₁≢Δ₂ ∘ help)
+      | yes refl | no ¬Δ'* | _ = no (λ { (∀-≤ Δ'⋆ Γ₁≤Γ₂) → ¬Δ'* Δ'⋆ })
+    Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
+      | yes refl | _ | no Γ₁≰Γ₂  = no (λ { (∀-≤ Δ'⋆ Γ₁≤Γ₂) → Γ₁≰Γ₂ Γ₁≤Γ₂ })
+    Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂) | no Δ₁≢Δ₂ | _ | _ = no (Δ₁≢Δ₂ ∘ help)
       where help : ∀ {Δ Δ₁ Δ₂ Γ₁ Γ₂} → Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ ∀[ Δ₂ ] Γ₂ → Δ₁ ≡ Δ₂
-            help (∀-≤ Γ₁≤Γ₂) = refl
+            help (∀-≤ Δ'⋆ Γ₁≤Γ₂) = refl
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? tuple τs₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? α⁼ ι₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? int = no (λ ())
@@ -155,7 +158,7 @@ private
     τ-refl (valid-α⁼ l) = α⁼-≤ l
     τ-refl valid-int = int-≤
     τ-refl valid-ns = ns-≤
-    τ-refl (valid-∀ Γ⋆) = ∀-≤ (Γ-refl Γ⋆)
+    τ-refl (valid-∀ Δ⋆ Γ⋆) = ∀-≤ Δ⋆ (Γ-refl Γ⋆)
     τ-refl (valid-tuple τs⋆) = tuple-≤ (τs⁻-refl τs⋆)
 
     τ⁻-refl : ∀ {Δ τ⁻} → Δ ⊢ τ⁻ InitType → Δ ⊢ τ⁻ ≤τ⁻ τ⁻
@@ -169,7 +172,7 @@ private
 
     σ-refl : ∀ {Δ σ} → Δ ⊢ σ StackType → Δ ⊢ σ ≤σ σ
     σ-refl (valid-ρ⁼ l) = ρ⁼-≤ l
-    σ-refl [] = []
+    σ-refl valid-[] = []
     σ-refl (τ⋆ ∷ σ⋆) = τ-refl τ⋆ ∷ σ-refl σ⋆
 
     Γ-refl : ∀ {Δ Γ} → Δ ⊢ Γ RegisterAssignment → Δ ⊢ Γ ≤Γ Γ
@@ -191,7 +194,7 @@ private
     τ-trans (α⁼-≤ l) (α⁼-≤ l') = α⁼-≤ l
     τ-trans int-≤ int-≤ = int-≤
     τ-trans ns-≤ ns-≤ = ns-≤
-    τ-trans (∀-≤ Γ₁₂≤) (∀-≤ Γ₂₃≤) = ∀-≤ (Γ-trans Γ₁₂≤ Γ₂₃≤)
+    τ-trans (∀-≤ Δ'⋆ Γ₁₂≤) (∀-≤ _ Γ₂₃≤) = ∀-≤ Δ'⋆ (Γ-trans Γ₁₂≤ Γ₂₃≤)
     τ-trans (tuple-≤ τs₁₂≤) (tuple-≤ τs₂₃≤) = tuple-≤ (τs⁻-trans τs₁₂≤ τs₂₃≤)
 
     τ⁻-trans : ∀ {Δ τ⁻₁ τ⁻₂ τ⁻₃} → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ →
@@ -231,8 +234,8 @@ private
     τ-valid (α⁼-≤ l) = valid-α⁼ l , valid-α⁼ l
     τ-valid int-≤ = valid-int , valid-int
     τ-valid ns-≤ = valid-ns , valid-ns
-    τ-valid (∀-≤ Γ≤) with Γ-valid Γ≤
-    ... | Γ₁⋆ , Γ₂⋆ = valid-∀ Γ₁⋆ , valid-∀ Γ₂⋆
+    τ-valid (∀-≤ Δ⋆ Γ≤) with Γ-valid Γ≤
+    ... | Γ₁⋆ , Γ₂⋆ = valid-∀ Δ⋆ Γ₁⋆ , valid-∀ Δ⋆ Γ₂⋆
     τ-valid (tuple-≤ τs⋆) with τs⁻-valid τs⋆
     ... | τs₁⋆ , τs₂⋆ = (valid-tuple τs₁⋆) , valid-tuple τs₂⋆
 
@@ -254,7 +257,7 @@ private
                             Δ ⊢ σ₁ StackType ×
                             Δ ⊢ σ₂ StackType
     σ-valid (ρ⁼-≤ l) = valid-ρ⁼ l , valid-ρ⁼ l
-    σ-valid [] = [] , []
+    σ-valid [] = valid-[] , valid-[]
     σ-valid (τ₁≤τ₂ ∷ σ₁≤σ₂) = Σ-zip _∷_ _∷_ (τ-valid τ₁≤τ₂) (σ-valid σ₁≤σ₂)
 
     Γ-valid : ∀ {Δ Γ₁ Γ₂} → Δ ⊢ Γ₁ ≤Γ Γ₂ →
@@ -275,6 +278,48 @@ private
     ...   | τ₁⋆ , τ₂⋆ | τs₁⋆ , τs₂⋆ = τ₁⋆ ∷ τs₁⋆ , τ₂⋆ ∷ τs₂⋆
 
   mutual
+    τ-weaken : ∀ {Δ Δ' τ₁ τ₂} →
+                 Δ ⊢ τ₁ ≤τ τ₂ →
+                 Δ ++ Δ' ⊢ τ₁ ≤τ τ₂
+    τ-weaken {Δ' = Δ'} (α⁼-≤ l) = α⁼-≤ (↓-add-right Δ' l)
+    τ-weaken int-≤ = int-≤
+    τ-weaken ns-≤ = ns-≤
+    τ-weaken {Δ} {Δ'} (∀-≤ {Δ' = Δᵢ} Δᵢ⋆ Γ₁≤Γ₂) with Γ-weaken {Δ' = Δ'} Γ₁≤Γ₂
+    ... | Γ₁≤Γ₂' rewrite List-++-assoc Δᵢ Δ Δ' = ∀-≤ (valid-++ Δᵢ⋆) Γ₁≤Γ₂'
+    τ-weaken (tuple-≤ τs⁻) = tuple-≤ (τs⁻-weaken τs⁻)
+
+    τ⁻-weaken : ∀ {Δ Δ' τ⁻₁ τ⁻₂} →
+                  Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ →
+                  Δ ++ Δ' ⊢ τ⁻₁ ≤τ⁻ τ⁻₂
+    τ⁻-weaken (τ⁻-≤ τ⋆ φ₁≤φ₂) = τ⁻-≤ (valid-++ τ⋆) φ₁≤φ₂
+
+    τs⁻-weaken : ∀ {Δ Δ' τs⁻₁ τs⁻₂} →
+                   AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs⁻₁ τs⁻₂ →
+                   AllZip (λ τ⁻₁ τ⁻₂ → Δ ++ Δ' ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs⁻₁ τs⁻₂
+    τs⁻-weaken [] = []
+    τs⁻-weaken (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) =
+      τ⁻-weaken τ⁻₁≤τ⁻₂ ∷ τs⁻-weaken τs⁻₁≤τs⁻₂
+
+    σ-weaken : ∀ {Δ Δ' σ₁ σ₂} →
+                 Δ ⊢ σ₁ ≤σ σ₂ →
+                 Δ ++ Δ' ⊢ σ₁ ≤σ σ₂
+    σ-weaken {Δ' = Δ'} (ρ⁼-≤ l) = ρ⁼-≤ (↓-add-right Δ' l)
+    σ-weaken [] = []
+    σ-weaken (τ₁≤τ₂ ∷ σ₁≤σ₂) = τ-weaken τ₁≤τ₂ ∷ σ-weaken σ₁≤σ₂
+
+    Γ-weaken : ∀ {Δ Δ' Γ₁ Γ₂} →
+                 Δ ⊢ Γ₁ ≤Γ Γ₂ →
+                 Δ ++ Δ' ⊢ Γ₁ ≤Γ Γ₂
+    Γ-weaken (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) =
+      Γ-≤ (σ-weaken sp₁≤sp₂) (regs-weaken regs₁≤regs₂)
+
+    regs-weaken : ∀ {Δ Δ' m} {τs₁ τs₂ : Vec Type m} →
+                   AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) τs₁ τs₂ →
+                   AllZipᵥ (λ τ₁ τ₂ → Δ ++ Δ' ⊢ τ₁ ≤τ τ₂) τs₁ τs₂
+    regs-weaken [] = []
+    regs-weaken (τ₁≤τ₂ ∷ τs₁≤τs₂) = τ-weaken τ₁≤τ₂ ∷ regs-weaken τs₁≤τs₂
+
+  mutual
     τ-change₁ : ∀ {Δ₁ Δ₂ τ₁ τ₂} →
                   Δ₁ ⊢ τ₁ ≤τ τ₂ →
                   Δ₂ ⊢ τ₁ Valid →
@@ -282,7 +327,7 @@ private
     τ-change₁ (α⁼-≤ l) (valid-α⁼ l') = α⁼-≤ l'
     τ-change₁ int-≤ valid-int = int-≤
     τ-change₁ ns-≤ valid-ns = ns-≤
-    τ-change₁ (∀-≤ Γ₁≤Γ₂) (valid-∀ Γ₁⋆) = ∀-≤ (Γ-change₁ Γ₁≤Γ₂ Γ₁⋆)
+    τ-change₁ (∀-≤ Δ⋆ Γ₁≤Γ₂) (valid-∀ Δ⋆' Γ₁⋆) = ∀-≤ Δ⋆' (Γ-change₁ Γ₁≤Γ₂ Γ₁⋆)
     τ-change₁ (tuple-≤ τs⁻₁≤τs⁻₂) (valid-tuple τs⁻₁⋆) =
       tuple-≤ (τs⁻-change₁ τs⁻₁≤τs⁻₂ τs⁻₁⋆)
 
@@ -305,7 +350,7 @@ private
                   Δ₂ ⊢ σ₁ Valid →
                   Δ₂ ⊢ σ₁ ≤σ σ₂
     σ-change₁ (ρ⁼-≤ l) (valid-ρ⁼ l') = ρ⁼-≤ l'
-    σ-change₁ [] [] = []
+    σ-change₁ [] valid-[] = []
     σ-change₁ (τ₁≤τ₂ ∷ σ₁≤σ₂) (τ₁⋆ ∷ σ₁⋆) =
       τ-change₁ τ₁≤τ₂ τ₁⋆ ∷ σ-change₁ σ₁≤σ₂ σ₁⋆
 
@@ -332,7 +377,7 @@ private
     τ-change₂ (α⁼-≤ l) (valid-α⁼ l') = α⁼-≤ l'
     τ-change₂ int-≤ valid-int = int-≤
     τ-change₂ ns-≤ valid-ns = ns-≤
-    τ-change₂ (∀-≤ Γ₁≤Γ₂) (valid-∀ Γ₂⋆) = ∀-≤ (Γ-change₂ Γ₁≤Γ₂ Γ₂⋆)
+    τ-change₂ (∀-≤ Δ⋆ Γ₁≤Γ₂) (valid-∀ Δ⋆' Γ₂⋆) = ∀-≤ Δ⋆' (Γ-change₂ Γ₁≤Γ₂ Γ₂⋆)
     τ-change₂ (tuple-≤ τs⁻₁≤τs⁻₂) (valid-tuple τs⁻₂⋆) =
       tuple-≤ (τs⁻-change₂ τs⁻₁≤τs⁻₂ τs⁻₂⋆)
 
@@ -355,7 +400,7 @@ private
                   Δ₂ ⊢ σ₂ Valid →
                   Δ₂ ⊢ σ₁ ≤σ σ₂
     σ-change₂ (ρ⁼-≤ l) (valid-ρ⁼ l') = ρ⁼-≤ l'
-    σ-change₂ [] [] = []
+    σ-change₂ [] valid-[] = []
     σ-change₂ (τ₁≤τ₂ ∷ σ₁≤σ₂) (τ₂⋆ ∷ σ₂⋆) =
       τ-change₂ τ₁≤τ₂ τ₂⋆ ∷ σ-change₂ σ₁≤σ₂ σ₂⋆
 
@@ -376,14 +421,15 @@ private
 
 Vec-Subtype⁺ : ∀ A {T S} {{S⁺ : Subtype⁺ A {{T}} {{S}}}} m →
                  Subtype⁺ (Vec A m) {{Vec-TypeLike A m}} {{Vec-Subtype A m}}
-Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
+Vec-Subtype⁺ A {T} {S} m = subtype⁺
     dec'
     refl'
     trans'
     valid
+    xs-weaken
     xs-change₁
     xs-change₂
-  where _⊢_≤xs_ : ∀ {m} → TypeAssumptions → Vec A m → Vec A m → Set
+  where _⊢_≤xs_ : ∀ {m} → TypeAssignment → Vec A m → Vec A m → Set
         Δ ⊢ xs₁ ≤xs xs₂ = AllZipᵥ (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂
 
         dec' : ∀ {m} Δ (xs₁ xs₂ : Vec A m) →
@@ -399,7 +445,7 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
                   _⊢_Valid {{Vec-TypeLike A m}} Δ xs →
                   Δ ⊢ xs ≤xs xs
         refl' [] = []
-        refl' (x⋆ ∷ xs⋆) = ≤-refl {{S⁺}} x⋆ ∷ refl' xs⋆
+        refl' (x⋆ ∷ xs⋆) = ≤-refl x⋆ ∷ refl' xs⋆
 
         trans' : ∀ {Δ m} {xs₁ xs₂ xs₃ : Vec A m} →
                    Δ ⊢ xs₁ ≤xs xs₂ →
@@ -407,7 +453,7 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
                    Δ ⊢ xs₁ ≤xs xs₃
         trans' [] [] = []
         trans' (x₁₂≤ ∷ xs₁₂≤) (x₂₃≤ ∷ xs₂₃≤) =
-          (≤-trans {{S⁺}} x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
+          (≤-trans x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
 
         valid : ∀ {Δ m} {xs₁ xs₂ : Vec A m} →
                   Δ ⊢ xs₁ ≤xs xs₂ →
@@ -415,8 +461,14 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
                   _⊢_Valid {{Vec-TypeLike A m}} Δ xs₂
         valid [] = [] , []
         valid (x≤ ∷ xs≤)
-          with ≤-valid {{S⁺}} x≤ | valid xs≤
+          with ≤-valid x≤ | valid xs≤
         ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
+
+        xs-weaken : ∀ {m Δ Δ'} {xs₁ xs₂ : Vec A m} →
+                      Δ ⊢ xs₁ ≤xs xs₂ →
+                      (Δ ++ Δ') ⊢ xs₁ ≤xs xs₂
+        xs-weaken [] = []
+        xs-weaken (x₁≤x₂ ∷ xs₁≤xs₂) = ≤-++ x₁≤x₂ ∷ xs-weaken xs₁≤xs₂
 
         xs-change₁ : ∀ {Δ₁ Δ₂ m} {xs₁ xs₂ : Vec A m} →
                        Δ₁ ⊢ xs₁ ≤xs xs₂ →
@@ -424,7 +476,7 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
                        Δ₂ ⊢ xs₁ ≤xs xs₂
         xs-change₁ [] [] = []
         xs-change₁ (x₁≤x₂ ∷ xs₁≤xs₂) (x₁⋆ ∷ xs₁⋆) =
-          ≤-change₁ {{S⁺}} x₁≤x₂ x₁⋆ ∷ xs-change₁ xs₁≤xs₂ xs₁⋆
+          ≤-change₁ x₁≤x₂ x₁⋆ ∷ xs-change₁ xs₁≤xs₂ xs₁⋆
 
         xs-change₂ : ∀ {Δ₁ Δ₂ m} {xs₁ xs₂ : Vec A m} →
                        Δ₁ ⊢ xs₁ ≤xs xs₂ →
@@ -432,18 +484,19 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
                        Δ₂ ⊢ xs₁ ≤xs xs₂
         xs-change₂ [] [] = []
         xs-change₂ (x₁≤x₂ ∷ xs₁≤xs₂) (x₂⋆ ∷ xs₂⋆) =
-          ≤-change₂ {{S⁺}} x₁≤x₂ x₂⋆ ∷ xs-change₂ xs₁≤xs₂ xs₂⋆
+          ≤-change₂ x₁≤x₂ x₂⋆ ∷ xs-change₂ xs₁≤xs₂ xs₂⋆
 
 List-Subtype⁺ : ∀ A {T S} {{S⁺ : Subtype⁺ A {{T}} {{S}}}} →
                   Subtype⁺ (List A) {{List-TypeLike A}} {{List-Subtype A}}
-List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
+List-Subtype⁺ A {T} {S} = subtype⁺
     dec'
     refl'
     trans'
     valid
+    xs-weaken
     xs-change₁
     xs-change₂
-  where _⊢_≤xs_ : TypeAssumptions → List A → List A → Set
+  where _⊢_≤xs_ : TypeAssignment → List A → List A → Set
         Δ ⊢ xs₁ ≤xs xs₂ = AllZip (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂
 
         dec' : ∀ Δ xs₁ xs₂ →
@@ -461,7 +514,7 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
                   _⊢_Valid {{List-TypeLike A}} Δ xs →
                   Δ ⊢ xs ≤xs xs
         refl' [] = []
-        refl' (x⋆ ∷ xs⋆) = ≤-refl {{S⁺}} x⋆ ∷ refl' xs⋆
+        refl' (x⋆ ∷ xs⋆) = ≤-refl x⋆ ∷ refl' xs⋆
 
         trans' : ∀ {Δ xs₁ xs₂ xs₃} →
                    Δ ⊢ xs₁ ≤xs xs₂ →
@@ -469,7 +522,7 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
                    Δ ⊢ xs₁ ≤xs xs₃
         trans' [] [] = []
         trans' (x₁₂≤ ∷ xs₁₂≤) (x₂₃≤ ∷ xs₂₃≤) =
-          (≤-trans {{S⁺}} x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
+          (≤-trans x₁₂≤ x₂₃≤) ∷ trans' xs₁₂≤ xs₂₃≤
 
         valid : ∀ {Δ xs₁ xs₂} →
                   Δ ⊢ xs₁ ≤xs xs₂ →
@@ -477,8 +530,14 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
                   _⊢_Valid {{List-TypeLike A}} Δ xs₂
         valid [] = [] , []
         valid (x≤ ∷ xs≤)
-          with ≤-valid {{S⁺}} x≤ | valid xs≤
+          with ≤-valid x≤ | valid xs≤
         ... | x₁⋆ , x₂⋆ | xs₁⋆ , xs₂⋆ = x₁⋆ ∷ xs₁⋆ , x₂⋆ ∷ xs₂⋆
+
+        xs-weaken : ∀ {Δ Δ' xs₁ xs₂} →
+                      Δ ⊢ xs₁ ≤xs xs₂ →
+                      (Δ ++ Δ') ⊢ xs₁ ≤xs xs₂
+        xs-weaken [] = []
+        xs-weaken (x₁≤x₂ ∷ xs₁≤xs₂) = ≤-++ x₁≤x₂ ∷ xs-weaken xs₁≤xs₂
 
         xs-change₁ : ∀ {Δ₁ Δ₂ xs₁ xs₂} →
                        Δ₁ ⊢ xs₁ ≤xs xs₂ →
@@ -486,7 +545,7 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
                        Δ₂ ⊢ xs₁ ≤xs xs₂
         xs-change₁ [] [] = []
         xs-change₁ (x₁≤x₂ ∷ xs₁≤xs₂) (x₁⋆ ∷ xs₁⋆) =
-          ≤-change₁ {{S⁺}} x₁≤x₂ x₁⋆ ∷ xs-change₁ xs₁≤xs₂ xs₁⋆
+          ≤-change₁ x₁≤x₂ x₁⋆ ∷ xs-change₁ xs₁≤xs₂ xs₁⋆
 
         xs-change₂ : ∀ {Δ₁ Δ₂ xs₁ xs₂} →
                        Δ₁ ⊢ xs₁ ≤xs xs₂ →
@@ -494,7 +553,7 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
                        Δ₂ ⊢ xs₁ ≤xs xs₂
         xs-change₂ [] [] = []
         xs-change₂ (x₁≤x₂ ∷ xs₁≤xs₂) (x₂⋆ ∷ xs₂⋆) =
-          ≤-change₂ {{S⁺}} x₁≤x₂ x₂⋆ ∷ xs-change₂ xs₁≤xs₂ xs₂⋆
+          ≤-change₂ x₁≤x₂ x₂⋆ ∷ xs-change₂ xs₁≤xs₂ xs₂⋆
 
 instance
   InitializationFlag-Subtype⁺ : Subtype⁺ InitializationFlag
@@ -503,12 +562,13 @@ instance
     (const φ-refl)
     φ-trans
     (const (tt , tt))
+    id
     (λ φ₁≤φ₂ _ → φ₁≤φ₂)
     (λ φ₁≤φ₂ _ → φ₁≤φ₂)
 
   Type-Subtype⁺ : Subtype⁺ Type
   Type-Subtype⁺ =
-    subtype⁺ _⊢_≤τ?_ τ-refl τ-trans τ-valid τ-change₁ τ-change₂
+    subtype⁺ _⊢_≤τ?_ τ-refl τ-trans τ-valid τ-weaken τ-change₁ τ-change₂
 
   TypeVec-Subtype⁺ : ∀ {m} → Subtype⁺ (Vec Type m)
   TypeVec-Subtype⁺ = Vec-Subtype⁺ Type _
@@ -519,7 +579,7 @@ instance
   InitType-Subtype⁺ : Subtype⁺ InitType
   InitType-Subtype⁺ =
     subtype⁺ _⊢_≤τ⁻?_ τ⁻-refl τ⁻-trans τ⁻-valid
-             τ⁻-change₁ τ⁻-change₂
+             τ⁻-weaken τ⁻-change₁ τ⁻-change₂
 
   InitTypeVec-Subtype⁺ : ∀ {m} → Subtype⁺ (Vec InitType m)
   InitTypeVec-Subtype⁺ = Vec-Subtype⁺ InitType _
@@ -529,8 +589,8 @@ instance
 
   StackType-Subtype⁺ : Subtype⁺ StackType
   StackType-Subtype⁺ =
-    subtype⁺ _⊢_≤σ?_ σ-refl σ-trans σ-valid σ-change₁ σ-change₂
+    subtype⁺ _⊢_≤σ?_ σ-refl σ-trans σ-valid σ-weaken σ-change₁ σ-change₂
 
   RegisterAssignment-Subtype⁺ : Subtype⁺ RegisterAssignment
   RegisterAssignment-Subtype⁺ =
-    subtype⁺ _⊢_≤Γ?_ Γ-refl Γ-trans Γ-valid Γ-change₁ Γ-change₂
+    subtype⁺ _⊢_≤Γ?_ Γ-refl Γ-trans Γ-valid Γ-weaken Γ-change₁ Γ-change₂

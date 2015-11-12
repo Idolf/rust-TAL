@@ -3,31 +3,29 @@ module Judgments.Semantics where
 open import Util
 open import Judgments.Grammar
 open import Judgments.Substitution
+open import Judgments.Run
 
 -- The purpose of this file is to define the
 -- small-step semantics for our assembler language
 
 evalSmallValue : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValue regs (reg ♯r) = lookup ♯r regs
-evalSmallValue regs (globval l) = globval l
-evalSmallValue regs (int i) = int i
-evalSmallValue regs ns = ns
-evalSmallValue regs (uninit τ) = uninit τ
-evalSmallValue regs Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ evalSmallValue regs v ⟦ is ⟧
+evalSmallValue regs (word w) = w
+evalSmallValue regs (v ⟦ i ⟧) = evalSmallValue regs v ⟦ i ⟧
 
 data EvalGlobal (G : Globals) : WordValue → InstructionSequence → Set where
   instantiate-globval :
-          ∀ {l Δ Γ I} →
+          ∀ {l ♯a Δ Γ I} →
      G ↓ l ⇒ (code[ Δ ] Γ ∙ I) →
     -----------------------------
-    EvalGlobal G (globval l) I
+    EvalGlobal G (globval l ♯a) I
 
-  instantiate-Λ :
-           ∀ {w I I' Δ is} →
+  instantiate-⟦⟧ :
+           ∀ {w cᵥ ι I I'} →
           EvalGlobal G w I →
-         I ⟦ is / 0 ⟧many≡ I' →
+     I ⟦ Strong→Weak cᵥ / ι ⟧≡ I' →
     ------------------------------
-    EvalGlobal G (Λ Δ ∙ w ⟦ is ⟧) I'
+    EvalGlobal G (w ⟦ cᵥ / ι ⟧) I'
 
 infix 3 _⊢_⇒_
 data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
@@ -48,16 +46,16 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
           H , register sp (update ♯rd (int (n₁ ∸ n₂)) regs) , I
 
     exec-push :
-                      ∀ {H sp regs I n} →
+                      ∀ {H sp regs I v} →
       ------------------------------------------------------
-      G ⊢ H , register sp regs , salloc n ~> I ⇒
-          H , register (replicate n ns ++ sp) regs , I
+      G ⊢ H , register sp regs , push v ~> I ⇒
+          H , register (evalSmallValue regs v ∷ sp) regs , I
 
     exec-pop :
-                  ∀ {H sp regs I n} →
+                  ∀ {H w sp regs I} →
       -------------------------------------------
-      G ⊢ H , register sp regs , sfree n ~> I ⇒
-          H , register (drop n sp) regs , I
+      G ⊢ H , register (w ∷ sp) regs , pop ~> I ⇒
+          H , register sp regs , I
 
     exec-sld :
              ∀ {H sp regs I ♯rd i w} →

@@ -5,8 +5,18 @@ open import Judgments.Grammar
 open import Judgments.Types
 open import Judgments.Subtypes
 open import Judgments.Substitution
+open import Judgments.Run
 open import Judgments.StackLookup
 
+-- The purpose of this file is to include
+-- judgments to show if a term is valid.
+
+type-ctx-length : Type → Maybe ℕ
+type-ctx-length (α⁼ ι) = nothing
+type-ctx-length int = nothing
+type-ctx-length ns = nothing
+type-ctx-length (∀[ Δ ] Γ) = just (length Δ)
+type-ctx-length (tuple τs) = nothing
 
 lookup-regs : Register → RegisterAssignment → Type
 lookup-regs ♯r (registerₐ sp regs) = lookup ♯r regs
@@ -41,7 +51,7 @@ mutual
 
     _∷_ :
            ∀ {ψ₁ ψ₂ w S τ σ} →
-        ψ₁ , ψ₂ ⊢ w of τ wval →
+        ψ₁ , ψ₂ , [] ⊢ w of τ wval →
           ψ₁ , ψ₂ ⊢ S of σ stack →
       ------------------------
       ψ₁ , ψ₂ ⊢ w ∷ S of τ ∷ σ stack
@@ -53,7 +63,7 @@ mutual
     of-register :
                      ∀ {ψ₁ ψ₂ sp regs σ τs} →
                      ψ₁ , ψ₂ ⊢ sp of σ stack →
-      AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
+      AllZipᵥ (λ w τ → ψ₁ , ψ₂ , [] ⊢ w of τ wval) regs τs →
       ------------------------------------------------------
        ψ₁ , ψ₂ ⊢ register sp regs of registerₐ σ τs register
 
@@ -62,6 +72,7 @@ mutual
                                                  Type → Set where
     of-gval :
                  ∀ {Δ Γ I} →
+                [] ⊢ Δ Valid →
                 Δ ⊢ Γ Valid →
       ψ₁ , Δ , Γ ⊢ I instructionsequence →
       -------------------------------------
@@ -76,74 +87,44 @@ mutual
       -------------------------------------------------------
              ψ₁ , ψ₂ ⊢ tuple ws of tuple τs⁻ hval
 
-
-  infix 3 _⊢_of_instantiation
-  data _⊢_of_instantiation (Δ : TypeAssumptions) :
-                           Instantiation →
-                           TypeAssumptionValue → Set where
-    of-α :
-               ∀ {τ} →
-            Δ ⊢ τ Valid →
-      --------------------------
-      Δ ⊢ α τ of α instantiation
-
-    of-ρ :
-               ∀ {σ} →
-            Δ ⊢ σ Valid →
-      --------------------------
-      Δ ⊢ ρ σ of ρ instantiation
-
-
-  infix 3 _⊢_of_instantiations
-  data _⊢_of_instantiations (Δ : TypeAssumptions) :
-                            Instantiations →
-                            TypeAssumptions → Set where
-    [] :
-      ---------------------------
-      Δ ⊢ [] of [] instantiations
-
-    _∷_ :
-               ∀ {i is a Δ'} →
-           Δ ⊢ i of a instantiation →
-         Δ ⊢ is of Δ' instantiations →
-      -------------------------------------
-      Δ ⊢ i ∷ is of a ∷ Δ' instantiations
-
   infix 3 _⊢_of_wval
-  data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment →
+  data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment ×
+                    TypeAssignment →
                     WordValue → Type → Set where
     of-globval :
-          ∀ {ψ₁ ψ₂ l τ₁ τ₂} →
+          ∀ {ψ₁ ψ₂ Δ l ♯a τ₁ τ₂} →
                 ψ₁ ↓ l ⇒ τ₁ →
                [] ⊢ τ₁ ≤ τ₂ →
-      ---------------------------------
-      ψ₁ , ψ₂ ⊢ globval l of τ₂ wval
+         type-ctx-length τ₁ ≡ just ♯a →
+      -------------------------------------
+      ψ₁ , ψ₂ , Δ ⊢ globval l ♯a of τ₂ wval
 
     of-heapval :
-          ∀ {ψ₁ ψ₂ lₕ τ₁ τ₂} →
-              ψ₂ ↓ lₕ ⇒ τ₁ →
-              [] ⊢ τ₁ ≤ τ₂ →
-      -------------------------------
-      ψ₁ , ψ₂ ⊢ heapval lₕ of τ₂ wval
+           ∀ {ψ₁ ψ₂ Δ lₕ τ₁ τ₂} →
+               ψ₂ ↓ lₕ ⇒ τ₁ →
+               [] ⊢ τ₁ ≤ τ₂ →
+      -----------------------------------
+      ψ₁ , ψ₂ , Δ ⊢ heapval lₕ of τ₂ wval
 
     of-int :
-             ∀ {ψ₁ ψ₂ n} →
-      ---------------------------
-      ψ₁ , ψ₂ ⊢ int n of int wval
+              ∀ {ψ₁ ψ₂ Δ n} →
+      --------------------------------
+      ψ₁ , ψ₂ , Δ ⊢ int n of int wval
 
     of-ns :
-            ∀ {ψ₁ ψ₂} →
-      -----------------------
-      ψ₁ , ψ₂ ⊢ ns of ns wval
+            ∀ {ψ₁ ψ₂ Δ} →
+      ---------------------------
+      ψ₁ , ψ₂ , Δ ⊢ ns of ns wval
 
-    of-Λ :
-          ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
-          ψ₁ , ψ₂ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
-          [] ⊢ is of Δ₁ instantiations →
-            Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
-                Δ₂ ⊢ Γ₂ ≤ Γ₃ →
-      -----------------------------------------
-      ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ wval
+    of-inst :
+          ∀ {ψ₁ ψ₂ Δ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w cᵥ ι} →
+          ψ₁ , ψ₂ , Δ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
+               Δ₁ ++ Δ ⊢ cᵥ / ι Valid →
+                Run Δ₁ ⟦ cᵥ / ι ⟧≡ Δ₂ →
+            Γ₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ₂ →
+                 Δ₂ ++ Δ ⊢ Γ₂ ≤ Γ₃ →
+      ---------------------------------------------
+      ψ₁ , ψ₂ , Δ ⊢ w ⟦ cᵥ / ι ⟧ of ∀[ Δ₂ ] Γ₃ wval
 
   infix 3 _⊢_of_wval⁰
   data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment →
@@ -156,13 +137,13 @@ mutual
 
     of-init :
            ∀ {ψ₁ ψ₂ w τ φ} →
-        ψ₁ , ψ₂ ⊢ w of τ wval →
-      --------------------------
-      ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰
+      ψ₁ , ψ₂ , [] ⊢ w of τ wval →
+      ----------------------------
+       ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰
 
   infix 3 _⊢_of_vval
   data _⊢_of_vval : GlobalLabelAssignment ×
-                    TypeAssumptions × RegisterAssignment →
+                    TypeAssignment × RegisterAssignment →
                     SmallValue → Type → Set where
     of-reg :
              ∀ {ψ₁ Δ Γ ♯r τ} →
@@ -170,34 +151,24 @@ mutual
       -----------------------------
       ψ₁ , Δ , Γ ⊢ reg ♯r of τ vval
 
-    of-globval :
-          ∀ {ψ₁ Δ Γ l τ₁ τ₂} →
-                ψ₁ ↓ l ⇒ τ₁ →
-               [] ⊢ τ₁ ≤ τ₂ →
-      ---------------------------------
-      ψ₁ , Δ , Γ ⊢ globval l of τ₂ vval
+    of-word :
+           ∀ {ψ₁ Δ Γ w τ} →
+       ψ₁ , [] , Δ ⊢ w of τ wval →
+      -----------------------------
+      ψ₁ , Δ , Γ ⊢ word w of τ vval
 
-    of-int :
-             ∀ {ψ₁ Δ Γ n} →
-      ---------------------------
-      ψ₁ , Δ , Γ ⊢ int n of int vval
-
-    of-ns :
-            ∀ {ψ₁ Δ Γ} →
-      -----------------------
-      ψ₁ , Δ , Γ ⊢ ns of ns vval
-
-    of-Λ :
-          ∀ {ψ₁ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ v is} →
-          ψ₁ , Δ , Γ ⊢ v of ∀[ Δ₁ ] Γ₁ vval →
-          Δ ⊢ is of Δ₁ instantiations →
-            Γ₁ ⟦ is / length Δ ⟧many≡ Γ₂ →
-                 Δ₂ ++ Δ ⊢ Γ₂ ≤ Γ₃ →
-      -----------------------------------------
-      ψ₁ , Δ , Γ ⊢ Λ Δ₂ ∙ v ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ vval
+    of-inst :
+          ∀ {ψ₁ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ v cᵥ ι} →
+         ψ₁ , Δ , Γ ⊢ v of ∀[ Δ₁ ] Γ₁ vval →
+              Δ₁ ++ Δ ⊢ cᵥ / ι Valid →
+               Run Δ₁ ⟦ cᵥ / ι ⟧≡ Δ₂ →
+           Γ₁ ⟦ Strong→Weak cᵥ / ι ⟧≡ Γ₂ →
+                Δ₂ ++ Δ ⊢ Γ₂ ≤ Γ₃ →
+      --------------------------------------------
+      ψ₁ , Δ , Γ ⊢ v ⟦ cᵥ / ι ⟧ of ∀[ Δ₂ ] Γ₃ vval
 
   infix 3 _⊢_⇒_instruction
-  data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssumptions ×
+  data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssignment ×
                           RegisterAssignment →
                           Instruction → RegisterAssignment → Set where
     of-add :
@@ -214,17 +185,17 @@ mutual
       --------------------------------------------------------------
       ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v ⇒ update-regs ♯rd int Γ instruction
 
-    of-salloc :
-                ∀ {ψ₁ Δ sp regs n} →
+    of-push :
+                ∀ {ψ₁ Δ sp regs v τ} →
+       ψ₁ , Δ , registerₐ sp regs ⊢ v of τ vval →
       --------------------------------------------
-      ψ₁ , Δ , registerₐ sp regs ⊢ salloc n ⇒
-               registerₐ (stack-append (replicate n ns) sp) regs instruction
+      ψ₁ , Δ , registerₐ sp regs ⊢ push v ⇒
+               registerₐ (τ ∷ sp) regs instruction
 
-    of-sfree :
-                               ∀ {ψ₁ Δ sp sp' regs n} →
-                               stack-drop n sp sp' →
+    of-pop :
+                               ∀ {ψ₁ Δ τ sp regs} →
       ----------------------------------------------------------------------
-      ψ₁ , Δ , registerₐ sp regs ⊢ sfree n ⇒ registerₐ sp' regs instruction
+      ψ₁ , Δ , registerₐ (τ ∷ sp) regs ⊢ pop ⇒ registerₐ sp regs instruction
 
     of-sld :
                       ∀ {ψ₁ Δ Γ ♯rd i τ} →
@@ -277,7 +248,7 @@ mutual
 
   infix 3 _⊢_instructionsequence
   data _⊢_instructionsequence : GlobalLabelAssignment ×
-                                TypeAssumptions ×
+                                TypeAssignment ×
                                 RegisterAssignment →
                                 InstructionSequence → Set where
     of-~> :

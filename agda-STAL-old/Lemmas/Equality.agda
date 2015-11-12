@@ -61,7 +61,7 @@ private
     σ-sur (τ ∷ σ) = T₂ 2 (proj₁ (τ-sur τ)) (proj₁ (σ-sur σ)) ,
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (σ-sur σ)
 
-    Δ-from : Tree → Maybe TypeAssumptions
+    Δ-from : Tree → Maybe TypeAssignment
     Δ-from (node 0 _) = just []
     Δ-from (node 1 (a ∷ Δ ∷ _)) = _∷_ <$> a-from a <*> Δ-from Δ
     Δ-from _ = nothing
@@ -71,7 +71,7 @@ private
     Δ-sur (a ∷ Δ) = T₂ 1 (proj₁ (a-sur a)) (proj₁ (Δ-sur Δ)) ,
       _∷_ <$=> proj₂ (a-sur a) <*=> proj₂ (Δ-sur Δ)
 
-    a-from : Tree → Maybe TypeAssumptionValue
+    a-from : Tree → Maybe TypeAssignmentValue
     a-from (node 0 _) = just α
     a-from (node 1 _) = just ρ
     a-from _ = nothing
@@ -111,8 +111,8 @@ instance
   StackType-Tree : ToTree StackType
   StackType-Tree = tree⋆ σ-from σ-sur
 
-  TypeAssumptionValue-Tree : ToTree TypeAssumptionValue
-  TypeAssumptionValue-Tree = tree⋆ a-from a-sur
+  TypeAssignmentValue-Tree : ToTree TypeAssignmentValue
+  TypeAssignmentValue-Tree = tree⋆ a-from a-sur
 
   RegisterAssignment-Tree : ToTree RegisterAssignment
   RegisterAssignment-Tree = tree⋆ Γ-from Γ-sur
@@ -127,44 +127,56 @@ instance
           sur (α τ) = T₁ 0 τ , α <$=> invTree τ
           sur (ρ σ) = T₁ 1 σ , ρ <$=> invTree σ
 
+  CastValue-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (CastValue A)
+  CastValue-Tree {A} = tree⋆ from sur
+    where from : Tree → Maybe (CastValue A)
+          from (node 0 (i ∷ _)) = inst <$> fromTree i
+          from (node 1 (n ∷ _)) = weaken <$> fromTree n
+          from _ = nothing
+          sur : IsSurjective from
+          sur (inst i) = T₁ 0 i , inst <$=> invTree i
+          sur (weaken n) = T₁ 1 n , weaken <$=> invTree n
+
+  Cast-Tree : ∀ {A} {{_ : ToTree A}} → ToTree (Cast A)
+  Cast-Tree {A} = tree⋆ from sur
+    where from : Tree → Maybe (Cast A)
+          from (node _ (cᵥ ∷ ι ∷ _)) = _/_ <$> fromTree cᵥ <*> fromTree ι
+          from _ = nothing
+          sur : IsSurjective from
+          sur (cᵥ / ι) = T₂ 0 cᵥ ι , _/_ <$=> invTree cᵥ <*=> invTree ι
+
   WordValue-Tree : ToTree WordValue
   WordValue-Tree = tree⋆ from sur
     where from : Tree → Maybe WordValue
-          from (node 0 (l ∷ _)) = globval <$> fromTree l
+          from (node 0 (l ∷ ♯a ∷ _)) = globval <$> fromTree l <*> fromTree ♯a
           from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 _) = just ns
           from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
-          from (node 5 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
+          from (node 5 (w ∷ i ∷ _)) = _⟦_⟧ <$> from w <*> fromTree i
           from _ = nothing
           sur : IsSurjective from
-          sur (globval l) = T₁ 0 l ,
-            globval <$=> invTree l
+          sur (globval l ♯a) = T₂ 0 l ♯a ,
+            globval <$=> invTree l <*=> invTree ♯a
           sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
           sur ns = T₀ 3 , refl
           sur (uninit τ) = T₁ 4 τ , uninit <$=> invTree τ
-          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 5 Δ (proj₁ (sur w)) is ,
-            Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is
+          sur (w ⟦ i ⟧) = T₂ 5 (proj₁ (sur w)) i ,
+            _⟦_⟧ <$=> proj₂ (sur w) <*=> invTree i
 
   SmallValue-Tree : ToTree SmallValue
   SmallValue-Tree = tree⋆ from sur
     where from : Tree → Maybe SmallValue
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
-          from (node 1 (l ∷ _)) = globval <$> fromTree l
-          from (node 2 (n ∷ _)) = int <$> fromTree n
-          from (node 3 _) = just ns
-          from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
-          from (node 5 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
+          from (node 1 (w ∷ _)) = word <$> fromTree w
+          from (node 2 (v ∷ i ∷ _)) = _⟦_⟧ <$> from v <*> fromTree i
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
-          sur (globval l) = T₁ 1 l , globval <$=> invTree l
-          sur (int n) = T₁ 2 n , int <$=> invTree n
-          sur ns = T₀ 3 , refl
-          sur (uninit τ) = T₁ 4 τ , uninit <$=> invTree τ
-          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 5 Δ (proj₁ (sur w)) is ,
-            Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is
+          sur (word w) = T₁ 1 w , word <$=> invTree w
+          sur (v ⟦ i ⟧) = T₂ 2 (proj₁ (sur v)) i ,
+            _⟦_⟧ <$=> proj₂ (sur v) <*=> invTree i
 
   Instruction-Tree : ToTree Instruction
   Instruction-Tree = tree⋆ from sur
@@ -173,8 +185,8 @@ instance
             add <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
           from (node 1 (♯r₁ ∷ ♯r₂ ∷ v ∷ _)) =
             sub <$> fromTree ♯r₁ <*> fromTree ♯r₂ <*> fromTree v
-          from (node 2 (n ∷ _)) = salloc <$> fromTree n
-          from (node 3 (n ∷ _)) = sfree <$> fromTree n
+          from (node 2 (v ∷ _)) = push <$> fromTree v
+          from (node 3 _) = just pop
           from (node 4 (♯r ∷ i ∷ _)) = sld <$> fromTree ♯r <*> fromTree i
           from (node 5 (i ∷ ♯r ∷ _)) = sst <$> fromTree i <*> fromTree ♯r
           from (node 6 (♯r₁ ∷ ♯r₂ ∷ i ∷ _)) =
@@ -193,8 +205,8 @@ instance
             add <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
           sur (sub ♯r₁ ♯r₂ v) = T₃ 1 ♯r₁ ♯r₂ v ,
             sub <$=> invTree ♯r₁ <*=> invTree ♯r₂ <*=> invTree v
-          sur (salloc n) = T₁ 2 n , salloc <$=> invTree n
-          sur (sfree n) = T₁ 3 n , sfree <$=> invTree n
+          sur (push v) = T₁ 2 v , push <$=> invTree v
+          sur pop = T₀ 3 , refl
           sur (sld ♯r i) = T₂ 4 ♯r i , sld <$=> invTree ♯r <*=> invTree i
           sur (sst i ♯r) = T₂ 5 i ♯r , sst <$=> invTree i <*=> invTree ♯r
           sur (ld ♯r₁ ♯r₂ i) = T₃ 6 ♯r₁ ♯r₂ i ,
