@@ -3,7 +3,7 @@ module Util.List where
 -- Re-exports
 open import Data.List
   using (List ; [] ; _∷_ ; _∷ʳ_ ; [_] ; map ;
-        length ; zip ; _++_ ; replicate ; drop)
+        length ; zip ; _++_ ; replicate)
   public
 open import Data.List.All using (All ; [] ; _∷_)
                           renaming (all to All-dec) public
@@ -24,7 +24,6 @@ import Algebra as A
 import Data.List as L
 import Data.Nat.Properties as NP
 open A.CommutativeSemiring NP.commutativeSemiring using (+-comm ; +-assoc)
-
 infixr 5 _∷_
 data AllZip {a b p} {A : Set a} {B : Set b} (P : A → B → Set p) :
             List A → List B → Set (p ⊔ a ⊔ b) where
@@ -238,6 +237,26 @@ All-update : ∀ {a p} {A : Set a} {P : A → Set p}
                All P xs'
 All-update x⋆ here (x'⋆ ∷ xs⋆) = x⋆ ∷ xs⋆
 All-update x⋆ (there up) (x'⋆ ∷ xs⋆) = x'⋆ ∷ All-update x⋆ up xs⋆
+
+data Drop {a} {A : Set a} : ℕ → List A → List A → Set a where
+  here : ∀ {xs} → Drop 0 xs xs
+  there : ∀ {x xs xs' i} → Drop i xs xs' → Drop (suc i) (x ∷ xs) xs'
+
+drop-dec : ∀ {a} {A : Set a} i (xs : List A) →
+             Dec (∃ λ xs' → Drop i xs xs')
+drop-dec zero xs = yes (xs , here)
+drop-dec (suc i) [] = no (λ { (_ , ()) })
+drop-dec (suc i) (x ∷ xs)
+  with drop-dec i xs
+... | yes (xs' , drop) = yes (xs' , there drop)
+... | no ¬drop = no (λ { (xs' , there drop) → ¬drop (xs' , drop)})
+
+drop-unique : ∀ {a} {A : Set a} {i} {xs xs₁ xs₂ : List A} →
+                Drop i xs xs₁ →
+                Drop i xs xs₂ →
+                xs₁ ≡ xs₂
+drop-unique here here = refl
+drop-unique (there drop₁) (there drop₂) = drop-unique drop₁ drop₂
 
 instance
   List-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} → ToTree (List A)

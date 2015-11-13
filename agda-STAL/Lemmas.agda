@@ -33,3 +33,7 @@ open import Lemmas.TypeSubstitution public
 -- and subtyping. The main result is that substitution
 -- preserves subtyping.
 open import Lemmas.SubtypeSubstitution public
+
+-- Lemmas about determinism and decidibility of evaluation
+-- of smallvalues along with stepping+execution of instructions.
+open import Lemmas.Semantics public

@@ -17,13 +17,35 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
                      v ⟦ i / ι ⟧≡ v₂ →
                      v₁ ≡ v₂
     _⟦_/_⟧? : ∀ (v : A) i ι → Dec (∃ λ v' → v ⟦ i / ι ⟧≡ v')
+  subst-unique-many : ∀ {v v₁ v₂ : A} {is ι} →
+                        v ⟦ is / ι ⟧many≡ v₁ →
+                        v ⟦ is / ι ⟧many≡ v₂ →
+                        v₁ ≡ v₂
+  subst-unique-many {is = []} refl refl = refl
+  subst-unique-many {is = i ∷ is} (v₁' , sub-v₁ , subs-v₁) (v₂' , sub-v₂ , subs-v₂)
+    with subst-unique sub-v₁ sub-v₂
+  subst-unique-many {is = i ∷ is} (v' , sub-v₁ , subs-v₁) (.v' , sub-v₂ , subs-v₂)
+      | refl with subst-unique-many subs-v₁ subs-v₂
+  subst-unique-many {is = i ∷ is} (v' , sub-v₁ , subs-v₁) (.v' , sub-v₂ , subs-v₂)
+      | refl | refl = refl
+
+  _⟦_/_⟧many? : ∀ (v : A) is ι → Dec (∃ λ v' → v ⟦ is / ι ⟧many≡ v')
+  v ⟦ [] / ι ⟧many? = yes (v , refl)
+  v ⟦ i ∷ is / ι ⟧many?
+    with v ⟦ i / ι ⟧?
+  ... | no ¬sub-v = no (λ { (vₑ , v' , sub-v , subs-v) → ¬sub-v (v' , sub-v)})
+  ... | yes (v' , sub-v)
+    with v' ⟦ is / ι ⟧many?
+  ... | yes (vₑ , subs-v) = yes (vₑ , v' , sub-v , subs-v)
+  ... | no ¬subs-v = no help
+    where help : ¬ (∃₂ λ vₑ v'' → v ⟦ i / ι ⟧≡ v'' × v'' ⟦ is / ι ⟧many≡ vₑ)
+          help (vₑ , v'' , sub-v' , subs-v)
+            with subst-unique sub-v sub-v'
+          help (vₑ , .v' , sub-v' , subs-v)
+              | refl = ¬subs-v (vₑ , subs-v)
 open Substitution⁺ {{...}} public
 
 private
-  -- subst-n-≢-inst : ∀ {i ι₁ ι₂} → ¬ (ι₁ ⟦ inst i / ι₁ ⟧n≡ ι₂)
-  -- subst-n-≢-inst (subst-< ι₁<ι₁) = NP.1+n≰n ι₁<ι₁
-  -- subst-n-≢-inst (subst-inst-> ι₁>ι₁) = NP.1+n≰n ι₁>ι₁
-
   mutual
     substᵗ-unique : ∀ A {{S : Substitution A}} → Set
     substᵗ-unique A = ∀ {v v₁ v₂ : A} {i ι} →

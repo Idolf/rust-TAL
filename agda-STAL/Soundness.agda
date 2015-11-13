@@ -3,7 +3,6 @@ module Soundness where
 open import Util
 open import Judgments
 open import Lemmas
-open import Semantics
 open import TermSubtyping
 
 weaken-w⋆ : ∀ {ψ₁ ψ₂ w τ} →

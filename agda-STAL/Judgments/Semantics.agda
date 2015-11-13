@@ -31,7 +31,7 @@ data EvalGlobal (G : Globals) : WordValue → InstructionSequence → Set where
 
 infix 3 _⊢_⇒_
 data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
-    exec-add :
+    step-add :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
           evalSmallValue regs v ≡ int n₁ →
                 lookup ♯rs regs ≡ int n₂ →
@@ -39,7 +39,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       G ⊢ H , register sp regs , add ♯rd ♯rs v ~> I ⇒
           H , register sp (update ♯rd (int (n₁ + n₂)) regs) , I
 
-    exec-sub :
+    step-sub :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
           evalSmallValue regs v ≡ int n₁ →
                 lookup ♯rs regs ≡ int n₂ →
@@ -47,33 +47,34 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       G ⊢ H , register sp regs , sub ♯rd ♯rs v ~> I ⇒
           H , register sp (update ♯rd (int (n₁ ∸ n₂)) regs) , I
 
-    exec-push :
+    step-salloc :
                       ∀ {H sp regs I n} →
       ------------------------------------------------------
       G ⊢ H , register sp regs , salloc n ~> I ⇒
           H , register (replicate n ns ++ sp) regs , I
 
-    exec-pop :
-                  ∀ {H sp regs I n} →
+    step-sfree :
+                  ∀ {H sp sp' regs I n} →
+                     Drop n sp sp' →
       -------------------------------------------
       G ⊢ H , register sp regs , sfree n ~> I ⇒
-          H , register (drop n sp) regs , I
+          H , register sp' regs , I
 
-    exec-sld :
+    step-sld :
              ∀ {H sp regs I ♯rd i w} →
                     sp ↓ i ⇒ w →
       -------------------------------------------
       G ⊢ H , register sp regs , sld ♯rd i ~> I ⇒
           H , register sp (update ♯rd w regs) , I
 
-    exec-sst :
+    step-sst :
              ∀ {H sp sp' regs I ♯rs i} →
            sp ⟦ i ⟧← lookup ♯rs regs ⇒ sp' →
       --------------------------------------------
       G ⊢ H , register sp  regs , sst i ♯rs ~> I ⇒
           H , register sp' regs , I
 
-    exec-ld :
+    step-ld :
           ∀ {H sp regs I ♯rd ♯rs i lₕ ws w} →
              lookup ♯rs regs ≡ heapval lₕ →
                      H ↓ lₕ ⇒ tuple ws →
@@ -82,7 +83,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       G ⊢ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒
           H , register sp (update ♯rd w regs) , I
 
-    exec-st :
+    step-st :
           ∀ {H H' sp regs I ♯rd i ♯rs lₕ ws ws'} →
              lookup ♯rd regs ≡ heapval lₕ →
                        H ↓ lₕ ⇒ tuple ws →
@@ -92,20 +93,20 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       G ⊢ H  , register sp regs , st ♯rd i ♯rs ~> I ⇒
           H' , register sp regs , I
 
-    exec-malloc :
+    step-malloc :
                     ∀ {H sp regs I ♯rd τs} →
       ----------------------------------------------------------
       G ⊢ H , register sp regs , malloc ♯rd τs ~> I ⇒
           H ∷ʳ tuple (map uninit τs) ,
           register sp (update ♯rd (heapval (length H)) regs) , I
 
-    exec-mov :
+    step-mov :
                        ∀ {H sp regs I ♯rd v} →
       -----------------------------------------------------------------
       G ⊢ H , register sp regs , mov ♯rd v ~> I ⇒
           H , register sp (update ♯rd (evalSmallValue regs v) regs) , I
 
-    exec-beq₀ :
+    step-beq₀ :
                     ∀ {H sp regs ♯r v I₁ I₂} →
                      lookup ♯r regs ≡ int 0 →
       EvalGlobal G (evalSmallValue regs v) I₂ →
@@ -113,7 +114,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
              G ⊢ H , register sp regs , beq ♯r v ~> I₁ ⇒
                  H , register sp regs , I₂
 
-    exec-beq₁ :
+    step-beq₁ :
                 ∀ {H sp regs I ♯r v n₀} →
               lookup ♯r regs ≡ int n₀ →
                         n₀ ≢ 0 →
@@ -121,7 +122,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       G ⊢ H , register sp regs , beq ♯r v ~> I ⇒
           H , register sp regs , I
 
-    exec-jmp :
+    step-jmp :
                     ∀ {H sp regs v I} →
       EvalGlobal G (evalSmallValue regs v) I →
       ---------------------------------------------------------

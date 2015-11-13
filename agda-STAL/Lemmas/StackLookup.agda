@@ -83,3 +83,12 @@ stack-drop-subtype [] here = _ , here , []
 stack-drop-subtype σ₁≤σ₂ here = _ , here , σ₁≤σ₂
 stack-drop-subtype (τ₁≤τ₂ ∷ σ₁≤σ₂) (there drop₁) =
   Σ-map _ (Σ-map there id) (stack-drop-subtype σ₁≤σ₂ drop₁)
+
+stack-drop-dec : ∀ i σ → Dec (∃ λ σ' → stack-drop i σ σ')
+stack-drop-dec zero σ = yes (σ , here)
+stack-drop-dec (suc i) (ρ⁼ ι) = no (λ { (_ , ()) })
+stack-drop-dec (suc i) [] = no (λ { (_ , ()) })
+stack-drop-dec (suc i) (τ ∷ σ)
+  with stack-drop-dec i σ
+... | yes (σ' , drop) = yes (σ' , there drop)
+... | no ¬drop = no (λ { (σ' , there drop) → ¬drop (σ' , drop) })
