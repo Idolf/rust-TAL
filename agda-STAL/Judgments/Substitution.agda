@@ -69,6 +69,10 @@ mutual
   weaken-i pos inc (α τ) = α (weaken-τ pos inc τ)
   weaken-i pos inc (ρ σ) = ρ (weaken-σ pos inc σ)
 
+  weaken-is : ℕ → ℕ → Instantiations → Instantiations
+  weaken-is pos inc [] = []
+  weaken-is pos inc (i ∷ is) = weaken-i (length is + pos) inc i ∷ weaken-is pos inc is
+
 mutual
   infix 3 _⟦_/_⟧τ≡_
   data _⟦_/_⟧τ≡_ : Type → Instantiation → ℕ → Type → Set where
@@ -186,8 +190,18 @@ data _⟦_/_⟧i≡_ : Instantiation → Instantiation → ℕ → Instantiation
     ρ σ ⟦ i / ι ⟧i≡ ρ σ'
 
 infix 3 _⟦_/_⟧is≡_
-_⟦_/_⟧is≡_ : Instantiations → Instantiation → ℕ → Instantiations → Set
-is₁ ⟦ i / ι ⟧is≡ is₂ = AllZip (λ i₁ i₂ → i₁ ⟦ i / ι ⟧i≡ i₂) is₁ is₂
+data _⟦_/_⟧is≡_ : Instantiations → Instantiation → ℕ → Instantiations → Set where
+  [] :
+        ∀ {i ι} →
+    ------------------
+    [] ⟦ i / ι ⟧is≡ []
+
+  _∷_ :
+         ∀ {i ι i₁ i₂ is₁ is₂} →
+    i₁  ⟦ i / length is₁ + ι ⟧i≡ i₂ →
+         is₁ ⟦ i / ι ⟧is≡ is₂ →
+    ---------------------------------
+     i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
 
 infix 3 _⟦_/_⟧v≡_
 data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → Set where
@@ -345,7 +359,7 @@ instance
   Instantiation-Substitution = substitution weaken-i _⟦_/_⟧i≡_
 
   Instantiations-Substitution : Substitution Instantiations
-  Instantiations-Substitution = List-Substitution Instantiation
+  Instantiations-Substitution = substitution weaken-is _⟦_/_⟧is≡_
 
   SmallValue-Substitution : Substitution SmallValue
   SmallValue-Substitution = substitution weaken-v _⟦_/_⟧v≡_

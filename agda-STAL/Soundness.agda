@@ -47,10 +47,10 @@ instantiation-reduction' {Δ = Δ} (of-globals gs⋆) (of-globval l₁ (∀-≤ 
 instantiation-reduction' (of-globals gs⋆) (of-Λ {Δ₁ = Δ₁} {Δ₂ = Δ₂} w⋆ is⋆ subs-Γ Γ₃≤Γ₂) (instantiate-Λ ig subs-I)
   with instantiation-reduction' (of-globals gs⋆) w⋆ ig
 ... | I⋆ , Γ⋆
-  with instructionsequence-weaken ? Δ₂ Γ⋆ I⋆
+  with instructionsequence-weaken Δ₂ Γ⋆ I⋆
 ... | I'⋆
   rewrite weaken-outside-ctx-0 (length Δ₂) Γ⋆
-  with instructionsequence-subst-many is⋆ subs-Γ subs-I I'⋆
+  with instructionsequence-subst-many (globals-valid-type (of-globals gs⋆)) (valid-++ Γ⋆) is⋆ subs-Γ subs-I I'⋆
 ... | q = instructionsequence-subtype (globals-valid-type (of-globals gs⋆)) Γ₃≤Γ₂ q , proj₁ (≤-valid Γ₃≤Γ₂)
 
 

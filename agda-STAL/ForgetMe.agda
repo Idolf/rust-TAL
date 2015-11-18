@@ -72,13 +72,19 @@ lookup-subst : ∀ {n} {regs regs' : Vec Type n} {i} ♯r →
 lookup-subst zero (sub-w ∷ sub-regs) = sub-w
 lookup-subst (suc ♯r) (sub-w ∷ sub-regs) = lookup-subst ♯r sub-regs
 
-instantiation-subst : ∀ {Δ i a i₁ i₂ a'} Δ' Δₒ →
+instantiations-length : ∀ {Δ₁ is Δ₂} →
+                          Δ₁ ⊢ is of Δ₂ instantiations →
+                          length is ≡ length Δ₂
+instantiations-length [] = refl
+instantiations-length (i⋆ ∷ is⋆) = cong suc (instantiations-length is⋆)
+
+instantiation-subst : ∀ {Δ i a i₁ i₂ a'} Δₑ →
                         Δ ⊢ i of a instantiation →
-                        i₁ ⟦ i / length Δₒ ⟧≡ i₂ →
-                        Δ' ++ Δₒ ++ a ∷ Δ ⊢ i₁ of a' instantiation →
-                        Δ' ++ Δₒ ++ Δ ⊢ i₂ of a' instantiation
-instantiation-subst Δ' Δₒ i⋆ (subst-α sub-τ) (of-α τ⋆) = of-α {!!}
-instantiation-subst Δ' Δₒ i⋆ (subst-ρ sub-σ) (of-ρ σ⋆) = of-ρ {!!}
+                        i₁ ⟦ i / length Δₑ ⟧≡ i₂ →
+                        Δₑ ++ a ∷ Δ ⊢ i₁ of a' instantiation →
+                        Δₑ ++ Δ ⊢ i₂ of a' instantiation
+instantiation-subst Δₑ i⋆ (subst-α sub-τ) (of-α τ⋆) = of-α (valid-subst Δₑ i⋆ τ⋆ sub-τ )
+instantiation-subst Δₑ i⋆ (subst-ρ sub-σ) (of-ρ σ⋆) = of-ρ (valid-subst Δₑ i⋆ σ⋆ sub-σ)
 
 instantiations-subst : ∀ {Δ i a is is'} Δₒ {Δᵢ} →
                          Δ ⊢ i of a instantiation →
@@ -86,7 +92,27 @@ instantiations-subst : ∀ {Δ i a is is'} Δₒ {Δᵢ} →
                          Δₒ ++ a ∷ Δ ⊢ is of Δᵢ instantiations →
                          Δₒ ++ Δ ⊢ is' of Δᵢ instantiations
 instantiations-subst Δₒ i⋆ [] [] = []
-instantiations-subst Δₒ i⋆ (sub-i ∷ sub-is) (_∷_ {Δ' = Δ'} i'⋆ is⋆) = instantiation-subst Δ' Δₒ i⋆ sub-i i'⋆  ∷ instantiations-subst Δₒ i⋆ sub-is is⋆
+instantiations-subst {Δ} {a = a} Δₒ i⋆ (sub-i ∷ sub-is) (_∷_ {Δ' = Δ'} i'⋆ is⋆)
+  rewrite instantiations-length is⋆
+        | sym (List-length-++ Δ' {Δₒ})
+        | sym (List-++-assoc Δ' Δₒ (a ∷ Δ))
+  with instantiation-subst (Δ' ++ Δₒ) i⋆ sub-i i'⋆
+... | i''⋆
+   rewrite List-++-assoc Δ' Δₒ Δ
+    = i''⋆ ∷ instantiations-subst Δₒ i⋆ sub-is is⋆
+
+{-# TERMINATING #-}
+subst-helper : ∀ {Δ Δᵢ} Δₒ {Γᵢ Γᵢ' Γₒ Γₒ' : RegisterAssignment} {i a is is'} →
+                 Δ ⊢ i of a instantiation →
+                 Δₒ ++ a ∷ Δ ⊢ is of Δᵢ instantiations →
+                 Δᵢ ++ a ∷ Δ ⊢ Γᵢ Valid →
+                 is ⟦ i / length Δₒ ⟧≡ is' →
+                 Γₒ ⟦ i / length Δₒ ⟧≡ Γₒ' →
+                 Γᵢ ⟦ i / length Δᵢ ⟧≡ Γᵢ' →
+                 weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ is / 0 ⟧many≡ Γₒ →
+                 weaken (length Δᵢ) (length Δₒ) Γᵢ' ⟦ is' / 0 ⟧many≡ Γₒ'
+subst-helper Δₒ i⋆ [] Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ = subst-helper Δₒ i⋆ [] Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ
+subst-helper Δₒ i⋆ (x ∷ is⋆) Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ = subst-helper Δₒ i⋆ (x ∷ is⋆) Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ
 
 vval-subst : ∀ {ψ₁ a Δ i Γ Γ' v v' τ τ'} →
                [] ⊢ ψ₁ Valid →
@@ -117,17 +143,37 @@ vval-subst {ψ₁} {a} {Δ} {i} {Γᵥ} {Γᵥ'} {v = Λ Δₒ ∙ v ⟦ is ⟧}
 ... | v'⋆
   rewrite +-comm (length Δₒ) 0
   with instantiations-subst Δₒ i⋆ sub-is is⋆
-... | is'⋆ = of-Λ v'⋆ is'⋆ {!!}
+... | is'⋆
+  with subst-helper Δₒ i⋆ is⋆ Γᵢ⋆ sub-is sub-Γₒ sub-Γᵢ subs-Γ
+... | subs-Γ' = of-Λ v'⋆ is'⋆ subs-Γ'
 
+
+{-# TERMINATING #-}
 instruction-subst : ∀ {ψ₁ a Δ i Γ₁ Γ₁' Γ₂ Γ₂' ι ι'} →
                       [] ⊢ ψ₁ Valid →
+                      a ∷ Δ ⊢ Γ₁ Valid →
                       Δ ⊢ i of a instantiation →
                       Γ₁ ⟦ i / 0 ⟧≡ Γ₁' →
                       Γ₂ ⟦ i / 0 ⟧≡ Γ₂' →
                       ι ⟦ i / 0 ⟧≡ ι' →
                       ψ₁ , a ∷ Δ , Γ₁ ⊢ ι ⇒ Γ₂ instruction →
                       ψ₁ , Δ , Γ₁' ⊢ ι' ⇒ Γ₂' instruction
-instruction-subst ψ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ sub-ι ι⋆ = {!!}
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-add sub-v) (of-add eq v⋆) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-add sub-v) (of-add eq v⋆)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-sub sub-v) (of-sub eq v⋆) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-sub sub-v) (of-sub eq v⋆)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-salloc of-salloc = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-salloc of-salloc
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-sfree (of-sfree drop) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-sfree (of-sfree drop)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-sld (of-sld l) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-sld (of-sld l)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-sst (of-sst up) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-sst (of-sst up)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-ld (of-ld eq l) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-ld (of-ld eq l)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-st (of-st eq lookup≤τ l up) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ subst-st (of-st eq lookup≤τ l up)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-malloc sub-τs) (of-malloc τs⋆) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-malloc sub-τs) (of-malloc τs⋆)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-mov sub-v) (of-mov v⋆) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ (subst-mov sub-v) (of-mov v⋆)
+instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₁' (subst-beq sub-v) (of-beq eq v⋆ Γ₁≤Γ₂) = instruction-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁ sub-Γ₁' (subst-beq sub-v) (of-beq eq v⋆ Γ₁≤Γ₂)
+--   with subtype-subst-exists [] i⋆ Γ₁≤Γ₂
+-- ... | Γ₁' , Γ₂' , sub-Γ₁'' , sub-Γ₂ , Γ₁'≤Γ₂'
+--   rewrite subst-unique sub-Γ₁  sub-Γ₁''
+--         | subst-unique sub-Γ₁' sub-Γ₁''
+--       = of-beq {!!} (vval-subst ψ₁⋆ Γ₁⋆ i⋆ sub-Γ₁'' sub-v (subst-∀ sub-Γ₂) v⋆) Γ₁'≤Γ₂'
 
 instructionsequence-subst : ∀ {ψ₁ a Δ i Γ Γ' I I'} →
                               [] ⊢ ψ₁ Valid →
@@ -140,7 +186,7 @@ instructionsequence-subst : ∀ {ψ₁ a Δ i Γ Γ' I I'} →
 instructionsequence-subst ψ₁⋆ Γ⋆ i⋆ sub-Γ₁ (subst-~> sub-ι sub-I) (of-~> ι⋆ I⋆)
   with valid-subst-exists [] i⋆ (instruction-valid-type ψ₁⋆ Γ⋆ ι⋆)
 ... | Γ₂' , sub-Γ₂ , Γ₂'⋆
-  with instruction-subst ψ₁⋆ i⋆ sub-Γ₁ sub-Γ₂ sub-ι ι⋆
+  with instruction-subst ψ₁⋆ Γ⋆ i⋆ sub-Γ₁ sub-Γ₂ sub-ι ι⋆
 ... | ι'⋆
   with instructionsequence-subst ψ₁⋆ (instruction-valid-type ψ₁⋆ Γ⋆ ι⋆) i⋆ sub-Γ₂ sub-I I⋆
 ... | I'⋆
@@ -148,7 +194,8 @@ instructionsequence-subst ψ₁⋆ Γ⋆ i⋆ sub-Γ₁ (subst-~> sub-ι sub-I) 
 instructionsequence-subst ψ₁⋆ Γ⋆ i⋆ sub-Γ₁ (subst-jmp sub-v) (of-jmp v⋆ Γ₁≤Γ₂)
   with subtype-subst-exists [] i⋆ Γ₁≤Γ₂
 ... | Γ₁' , Γ₂' , sub-Γ₁' , sub-Γ₂ , Γ₁'≤Γ₂'
-  rewrite subst-unique sub-Γ₁ sub-Γ₁' = of-jmp (vval-subst ψ₁⋆ Γ⋆ i⋆ sub-Γ₁' sub-v (subst-∀ sub-Γ₂) v⋆) Γ₁'≤Γ₂'
+  rewrite subst-unique sub-Γ₁ sub-Γ₁'
+    = of-jmp (vval-subst ψ₁⋆ Γ⋆ i⋆ sub-Γ₁' sub-v (subst-∀ sub-Γ₂) v⋆) Γ₁'≤Γ₂'
 
 instructionsequence-subst-many : ∀ {ψ₁ Δ₁ Δ₂ is Γ Γ' I I'} →
                                    [] ⊢ ψ₁ Valid →

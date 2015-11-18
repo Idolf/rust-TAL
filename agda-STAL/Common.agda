@@ -11,7 +11,9 @@ open import Judgments
 open import Lemmas
 
 -- A lot of junk
+open import ForgetMe
+open import HeapPush
 open import TermSubtyping
 open import TermSubstitution
 open import Example
--- open import Soundness
+open import Soundness

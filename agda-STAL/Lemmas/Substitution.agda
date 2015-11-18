@@ -387,9 +387,30 @@ instance
           i-weaken-0 pos (ρ σ)
             rewrite σ-weaken-0 pos σ = refl
 
+  Instantiations-Substitution⁺ : Substitution⁺ Instantiations
+  Instantiations-Substitution⁺ = substitution⁺ unique dec is-weaken-0
+    where unique : ∀ {i ι} {is is₁ is₂} →
+                     is ⟦ i / ι ⟧is≡ is₁ →
+                     is ⟦ i / ι ⟧is≡ is₂ →
+                     is₁ ≡ is₂
+          unique [] [] = refl
+          unique (sub-i₁ ∷ sub-is₁) (sub-i₂ ∷ sub-is₂)
+            rewrite subst-unique sub-i₁ sub-i₂
+                  | unique sub-is₁ sub-is₂ = refl
 
-  Instantiations-Substitution⁺  : Substitution⁺ Instantiations
-  Instantiations-Substitution⁺ = List-Substitution⁺ Instantiation
+          dec : ∀ is i ι → Dec (∃ λ is' → is ⟦ i / ι ⟧is≡ is')
+          dec [] i ι = yes ([] , [])
+          dec (i₁ ∷ is₁) i ι
+            with i₁ ⟦ i / length is₁ + ι ⟧? | dec is₁ i ι
+          ... | yes (i₂ , sub-i) | yes (is₂ , sub-is) = yes (i₂ ∷ is₂ , sub-i ∷ sub-is)
+          ... | no ¬sub-i | _ = no ( λ { (._ , sub-i ∷ sub-is) → ¬sub-i (_ , sub-i) })
+          ... | _ | no ¬sub-is = no ( λ { (._ , sub-i ∷ sub-is) → ¬sub-is (_ , sub-is) })
+
+          is-weaken-0 : weaken-0ᵗ Instantiations
+          is-weaken-0 pos [] = refl
+          is-weaken-0 pos (i ∷ is)
+            rewrite weaken-0 (length is + pos) i
+                  | is-weaken-0 pos is = refl
 
   SmallValue-Substitution⁺  : Substitution⁺ SmallValue
   SmallValue-Substitution⁺ = substitution⁺ unique dec v-weaken-0
