@@ -22,6 +22,9 @@ record Subtype⁺ (A : Set) {{T : TypeLike A}} {{S : Subtype A}} : Set1 where
                   Δ₁ ⊢ v₁ ≤ v₂ →
                   Δ₂ ⊢ v₂ Valid →
                   Δ₂ ⊢ v₁ ≤ v₂
+    ≤-++ : ∀ {Δ Δ'} {v₁ v₂ : A} →
+             Δ ⊢ v₁ ≤ v₂ →
+             Δ ++ Δ' ⊢ v₁ ≤ v₂
 open Subtype⁺ {{...}} public
 
 private
@@ -59,14 +62,14 @@ private
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? int = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? ns = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂)
-      with Δ₁ ≟ Δ₂ | Δ₁ ++ Δ ⊢ Γ₁ ≤Γ? Γ₂
+      with Δ₁ ≟ Δ₂ | Δ₁ ++ Δ ⊢ Γ₂ ≤Γ? Γ₁
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
-      | yes refl | yes Γ₁≤Γ₂ = yes (∀-≤ Γ₁≤Γ₂)
+      | yes refl | yes Γ₂≤Γ₁ = yes (∀-≤ Γ₂≤Γ₁)
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
-      | yes refl | no Γ₁≰Γ₂  = no (λ { (∀-≤ Γ₁≤Γ₂) → Γ₁≰Γ₂ Γ₁≤Γ₂ })
+      | yes refl | no Γ₂≰Γ₁  = no (λ { (∀-≤ Γ₂≤Γ₁) → Γ₂≰Γ₁ Γ₂≤Γ₁ })
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂) | no Δ₁≢Δ₂ | _ = no (Δ₁≢Δ₂ ∘ help)
       where help : ∀ {Δ Δ₁ Δ₂ Γ₁ Γ₂} → Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ ∀[ Δ₂ ] Γ₂ → Δ₁ ≡ Δ₂
-            help (∀-≤ Γ₁≤Γ₂) = refl
+            help (∀-≤ Γ₂≤Γ₁) = refl
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? tuple τs₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? α⁼ ι₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? int = no (λ ())
@@ -139,12 +142,12 @@ private
     _⊢_≤regs?_ : ∀ Δ {m} (regs₁ regs₂ : Vec Type m) →
                    Dec (AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) regs₁ regs₂)
     Δ ⊢ [] ≤regs? [] = yes []
-    Δ ⊢ τ₁ ∷ regs₁ ≤regs? τ₂ ∷ regs₂ with
-      Δ ⊢ τ₁ ≤τ? τ₂ | Δ ⊢ regs₁ ≤regs? regs₂
-    ... | yes τ₁≤τ₂ | yes regs₁≤regs₂ = yes (τ₁≤τ₂ ∷ regs₁≤regs₂)
-    ... | no τ₁≰τ₂ | _ = no (λ { (τ₁≤τ₂ ∷ regs₁≤regs₂) → τ₁≰τ₂ τ₁≤τ₂ })
-    ... | _ | no regs₁≰regs₂ =
-      no (λ { (τ₁≤τ₂ ∷ regs₁≤regs₂) → regs₁≰regs₂ regs₁≤regs₂ })
+    Δ ⊢ τ₁ ∷ τs₁ ≤regs? τ₂ ∷ τs₂ with
+      Δ ⊢ τ₁ ≤τ? τ₂ | Δ ⊢ τs₁ ≤regs? τs₂
+    ... | yes τ₁≤τ₂ | yes τs₁≤τs₂ = yes (τ₁≤τ₂ ∷ τs₁≤τs₂)
+    ... | no τ₁≰τ₂ | _ = no (λ { (τ₁≤τ₂ ∷ τs₁≤τs₂) → τ₁≰τ₂ τ₁≤τ₂ })
+    ... | _ | no τs₁≰τs₂ =
+      no (λ { (τ₁≤τ₂ ∷ τs₁≤τs₂) → τs₁≰τs₂ τs₁≤τs₂ })
 
   φ-refl : ∀ {φ} → φ ≤φ φ
   φ-refl {init} = φ-≤-init
@@ -191,7 +194,7 @@ private
     τ-trans (α⁼-≤ l) (α⁼-≤ l') = α⁼-≤ l
     τ-trans int-≤ int-≤ = int-≤
     τ-trans ns-≤ ns-≤ = ns-≤
-    τ-trans (∀-≤ Γ₁₂≤) (∀-≤ Γ₂₃≤) = ∀-≤ (Γ-trans Γ₁₂≤ Γ₂₃≤)
+    τ-trans (∀-≤ Γ₂₁≤) (∀-≤ Γ₃₂≤) = ∀-≤ (Γ-trans Γ₃₂≤ Γ₂₁≤)
     τ-trans (tuple-≤ τs₁₂≤) (tuple-≤ τs₂₃≤) = tuple-≤ (τs⁻-trans τs₁₂≤ τs₂₃≤)
 
     τ⁻-trans : ∀ {Δ τ⁻₁ τ⁻₂ τ⁻₃} → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂ →
@@ -215,8 +218,8 @@ private
       τ-trans τ₁≤τ₂ τ₂≤τ₃ ∷ σ-trans σ₁≤σ₂ σ₂≤σ₃
 
     Γ-trans : ∀ {Δ Γ₁ Γ₂ Γ₃} → Δ ⊢ Γ₁ ≤Γ Γ₂ → Δ ⊢ Γ₂ ≤Γ Γ₃ → Δ ⊢ Γ₁ ≤Γ Γ₃
-    Γ-trans (Γ-≤ sp₁₂≤ regs₁₂≤) (Γ-≤ sp₂₃≤ regs₂₃≤) =
-      Γ-≤ (σ-trans sp₁₂≤ sp₂₃≤) (regs-trans regs₁₂≤ regs₂₃≤)
+    Γ-trans (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) (Γ-≤ sp₂≤sp₃ regs₂≤regs₃) =
+      Γ-≤ (σ-trans sp₁≤sp₂ sp₂≤sp₃) (regs-trans regs₁≤regs₂ regs₂≤regs₃)
 
     regs-trans : ∀ {Δ m} {τs₁ τs₂ τs₃ : Vec Type m} →
                    AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤τ τ₂) τs₁ τs₂ →
@@ -231,8 +234,8 @@ private
     τ-valid (α⁼-≤ l) = valid-α⁼ l , valid-α⁼ l
     τ-valid int-≤ = valid-int , valid-int
     τ-valid ns-≤ = valid-ns , valid-ns
-    τ-valid (∀-≤ Γ≤) with Γ-valid Γ≤
-    ... | Γ₁⋆ , Γ₂⋆ = valid-∀ Γ₁⋆ , valid-∀ Γ₂⋆
+    τ-valid (∀-≤ Γ₂≤Γ₁) with Γ-valid Γ₂≤Γ₁
+    ... | Γ₂⋆ , Γ₁⋆ = valid-∀ Γ₁⋆ , valid-∀ Γ₂⋆
     τ-valid (tuple-≤ τs⋆) with τs⁻-valid τs⋆
     ... | τs₁⋆ , τs₂⋆ = (valid-tuple τs₁⋆) , valid-tuple τs₂⋆
 
@@ -260,7 +263,7 @@ private
     Γ-valid : ∀ {Δ Γ₁ Γ₂} → Δ ⊢ Γ₁ ≤Γ Γ₂ →
                             Δ ⊢ Γ₁ RegisterAssignment ×
                             Δ ⊢ Γ₂ RegisterAssignment
-    Γ-valid  (Γ-≤ sp≤ regs≤) with σ-valid sp≤ | regs-valid regs≤
+    Γ-valid  (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) with σ-valid sp₁≤sp₂ | regs-valid regs₁≤regs₂
     ... | sp₁⋆ , sp₂⋆ | regs₁⋆ , regs₂⋆ =
       valid-registerₐ sp₁⋆ regs₁⋆ , valid-registerₐ sp₂⋆ regs₂⋆
 
@@ -282,7 +285,7 @@ private
     τ-change₁ (α⁼-≤ l) (valid-α⁼ l') = α⁼-≤ l'
     τ-change₁ int-≤ valid-int = int-≤
     τ-change₁ ns-≤ valid-ns = ns-≤
-    τ-change₁ (∀-≤ Γ₁≤Γ₂) (valid-∀ Γ₁⋆) = ∀-≤ (Γ-change₁ Γ₁≤Γ₂ Γ₁⋆)
+    τ-change₁ (∀-≤ Γ₂≤Γ₁) (valid-∀ Γ₁⋆) = ∀-≤ (Γ-change₂ Γ₂≤Γ₁ Γ₁⋆)
     τ-change₁ (tuple-≤ τs⁻₁≤τs⁻₂) (valid-tuple τs⁻₁⋆) =
       tuple-≤ (τs⁻-change₁ τs⁻₁≤τs⁻₂ τs⁻₁⋆)
 
@@ -324,7 +327,6 @@ private
     regs-change₁ (τ₁≤τ₂ ∷ τs₁≤τs₂) (τ₁⋆ ∷ τs₁⋆) =
       τ-change₁ τ₁≤τ₂ τ₁⋆ ∷ regs-change₁ τs₁≤τs₂ τs₁⋆
 
-  mutual
     τ-change₂ : ∀ {Δ₁ Δ₂ τ₁ τ₂} →
                   Δ₁ ⊢ τ₁ ≤τ τ₂ →
                   Δ₂ ⊢ τ₂ Valid →
@@ -332,7 +334,7 @@ private
     τ-change₂ (α⁼-≤ l) (valid-α⁼ l') = α⁼-≤ l'
     τ-change₂ int-≤ valid-int = int-≤
     τ-change₂ ns-≤ valid-ns = ns-≤
-    τ-change₂ (∀-≤ Γ₁≤Γ₂) (valid-∀ Γ₂⋆) = ∀-≤ (Γ-change₂ Γ₁≤Γ₂ Γ₂⋆)
+    τ-change₂ (∀-≤ Γ₂≤Γ₁) (valid-∀ Γ₂⋆) = ∀-≤ (Γ-change₁ Γ₂≤Γ₁ Γ₂⋆)
     τ-change₂ (tuple-≤ τs⁻₁≤τs⁻₂) (valid-tuple τs⁻₂⋆) =
       tuple-≤ (τs⁻-change₂ τs⁻₁≤τs⁻₂ τs⁻₂⋆)
 
@@ -374,6 +376,48 @@ private
     regs-change₂ (τ₁≤τ₂ ∷ τs₁≤τs₂) (τ₂⋆ ∷ τs₂⋆) =
       τ-change₂ τ₁≤τ₂ τ₂⋆ ∷ regs-change₂ τs₁≤τs₂ τs₂⋆
 
+  mutual
+    τ-≤-++ : ∀ {Δ Δ' τ₁ τ₂} →
+               Δ ⊢ τ₁ ≤ τ₂ →
+               Δ ++ Δ' ⊢ τ₁ ≤τ τ₂
+    τ-≤-++ {Δ' = Δ'} (α⁼-≤ l) = α⁼-≤ (↓-add-right Δ' l)
+    τ-≤-++ int-≤ = int-≤
+    τ-≤-++ ns-≤ = ns-≤
+    τ-≤-++ {Δ} {Δ'} (∀-≤ {Δᵥ} Γ₂≤Γ₁)
+      with Γ-≤-++ {Δ' = Δ'} Γ₂≤Γ₁
+    ... | Γ₂≤Γ₁'
+      rewrite List-++-assoc Δᵥ Δ Δ' = ∀-≤ Γ₂≤Γ₁'
+    τ-≤-++ (tuple-≤ τs⁻₁≤τs⁻₂) = tuple-≤ (τs⁻-≤-++ τs⁻₁≤τs⁻₂)
+
+    τ⁻-≤-++ : ∀ {Δ Δ' τ⁻₁ τ⁻₂} →
+                Δ ⊢ τ⁻₁ ≤ τ⁻₂ →
+                Δ ++ Δ' ⊢ τ⁻₁ ≤τ⁻ τ⁻₂
+    τ⁻-≤-++ (τ⁻-≤ τ⋆ φ₁≤φ₂) = τ⁻-≤ (valid-++ τ⋆) φ₁≤φ₂
+
+    τs⁻-≤-++ : ∀ {Δ Δ' τs⁻₁ τs⁻₂} →
+                 AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤ τ⁻₂) τs⁻₁ τs⁻₂ →
+                 AllZip (λ τ⁻₁ τ⁻₂ → Δ ++ Δ' ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs⁻₁ τs⁻₂
+    τs⁻-≤-++ [] = []
+    τs⁻-≤-++ (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) = τ⁻-≤-++ τ⁻₁≤τ⁻₂ ∷ τs⁻-≤-++ τs⁻₁≤τs⁻₂
+
+    σ-≤-++ : ∀ {Δ Δ' σ₁ σ₂} →
+               Δ ⊢ σ₁ ≤ σ₂ →
+               Δ ++ Δ' ⊢ σ₁ ≤σ σ₂
+    σ-≤-++ {Δ' = Δ'} (ρ⁼-≤ l) = ρ⁼-≤ (↓-add-right Δ' l)
+    σ-≤-++ [] = []
+    σ-≤-++ (τ₁≤τ₂ ∷ σ₁≤σ₂) = τ-≤-++ τ₁≤τ₂ ∷ σ-≤-++ σ₁≤σ₂
+
+    Γ-≤-++ : ∀ {Δ Δ' Γ₁ Γ₂} →
+               Δ ⊢ Γ₁ ≤ Γ₂ →
+               Δ ++ Δ' ⊢ Γ₁ ≤Γ Γ₂
+    Γ-≤-++ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) = Γ-≤ (σ-≤-++ sp₁≤sp₂) (regs-≤-++ regs₁≤regs₂)
+
+    regs-≤-++ : ∀ {n Δ Δ'} {τs₁ τs₂ : Vec Type n} →
+                 AllZipᵥ (λ τ₁ τ₂ → Δ ⊢ τ₁ ≤ τ₂) τs₁ τs₂ →
+                 AllZipᵥ (λ τ₁ τ₂ → Δ ++ Δ' ⊢ τ₁ ≤τ τ₂) τs₁ τs₂
+    regs-≤-++ [] = []
+    regs-≤-++ (τ₁≤τ₂ ∷ τs₁≤τs₂) = τ-≤-++ τ₁≤τ₂ ∷ regs-≤-++ τs₁≤τs₂
+
 Vec-Subtype⁺ : ∀ A {T S} {{S⁺ : Subtype⁺ A {{T}} {{S}}}} m →
                  Subtype⁺ (Vec A m) {{Vec-TypeLike A m}} {{Vec-Subtype A m}}
 Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
@@ -383,6 +427,7 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
     valid
     xs-change₁
     xs-change₂
+    xs-++
   where _⊢_≤xs_ : ∀ {m} → TypeAssumptions → Vec A m → Vec A m → Set
         Δ ⊢ xs₁ ≤xs xs₂ = AllZipᵥ (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂
 
@@ -434,6 +479,12 @@ Vec-Subtype⁺ A {T} {S} {{S⁺}} m = subtype⁺
         xs-change₂ (x₁≤x₂ ∷ xs₁≤xs₂) (x₂⋆ ∷ xs₂⋆) =
           ≤-change₂ {{S⁺}} x₁≤x₂ x₂⋆ ∷ xs-change₂ xs₁≤xs₂ xs₂⋆
 
+        xs-++ : ∀ {Δ Δ' n} {xs₁ xs₂ : Vec A n} →
+                  Δ ⊢ xs₁ ≤xs xs₂ →
+                  (Δ ++ Δ') ⊢ xs₁ ≤xs xs₂
+        xs-++ [] = []
+        xs-++ (x₁≤x₂ ∷ xs₁≤xs₂) = ≤-++ {{S⁺}} x₁≤x₂ ∷ xs-++ xs₁≤xs₂
+
 List-Subtype⁺ : ∀ A {T S} {{S⁺ : Subtype⁺ A {{T}} {{S}}}} →
                   Subtype⁺ (List A) {{List-TypeLike A}} {{List-Subtype A}}
 List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
@@ -443,6 +494,7 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
     valid
     xs-change₁
     xs-change₂
+    xs-++
   where _⊢_≤xs_ : TypeAssumptions → List A → List A → Set
         Δ ⊢ xs₁ ≤xs xs₂ = AllZip (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂
 
@@ -496,6 +548,12 @@ List-Subtype⁺ A {T} {S} {{S⁺}}= subtype⁺
         xs-change₂ (x₁≤x₂ ∷ xs₁≤xs₂) (x₂⋆ ∷ xs₂⋆) =
           ≤-change₂ {{S⁺}} x₁≤x₂ x₂⋆ ∷ xs-change₂ xs₁≤xs₂ xs₂⋆
 
+        xs-++ : ∀ {Δ Δ'} {xs₁ xs₂ : List A} →
+                  Δ ⊢ xs₁ ≤xs xs₂ →
+                  (Δ ++ Δ') ⊢ xs₁ ≤xs xs₂
+        xs-++ [] = []
+        xs-++ (x₁≤x₂ ∷ xs₁≤xs₂) = ≤-++ {{S⁺}} x₁≤x₂ ∷ xs-++ xs₁≤xs₂
+
 instance
   InitializationFlag-Subtype⁺ : Subtype⁺ InitializationFlag
   InitializationFlag-Subtype⁺ = subtype⁺
@@ -505,10 +563,11 @@ instance
     (const (tt , tt))
     (λ φ₁≤φ₂ _ → φ₁≤φ₂)
     (λ φ₁≤φ₂ _ → φ₁≤φ₂)
+    id
 
   Type-Subtype⁺ : Subtype⁺ Type
   Type-Subtype⁺ =
-    subtype⁺ _⊢_≤τ?_ τ-refl τ-trans τ-valid τ-change₁ τ-change₂
+    subtype⁺ _⊢_≤τ?_ τ-refl τ-trans τ-valid τ-change₁ τ-change₂ τ-≤-++
 
   TypeVec-Subtype⁺ : ∀ {m} → Subtype⁺ (Vec Type m)
   TypeVec-Subtype⁺ = Vec-Subtype⁺ Type _
@@ -519,7 +578,7 @@ instance
   InitType-Subtype⁺ : Subtype⁺ InitType
   InitType-Subtype⁺ =
     subtype⁺ _⊢_≤τ⁻?_ τ⁻-refl τ⁻-trans τ⁻-valid
-             τ⁻-change₁ τ⁻-change₂
+             τ⁻-change₁ τ⁻-change₂ τ⁻-≤-++
 
   InitTypeVec-Subtype⁺ : ∀ {m} → Subtype⁺ (Vec InitType m)
   InitTypeVec-Subtype⁺ = Vec-Subtype⁺ InitType _
@@ -529,8 +588,8 @@ instance
 
   StackType-Subtype⁺ : Subtype⁺ StackType
   StackType-Subtype⁺ =
-    subtype⁺ _⊢_≤σ?_ σ-refl σ-trans σ-valid σ-change₁ σ-change₂
+    subtype⁺ _⊢_≤σ?_ σ-refl σ-trans σ-valid σ-change₁ σ-change₂ σ-≤-++
 
   RegisterAssignment-Subtype⁺ : Subtype⁺ RegisterAssignment
   RegisterAssignment-Subtype⁺ =
-    subtype⁺ _⊢_≤Γ?_ Γ-refl Γ-trans Γ-valid Γ-change₁ Γ-change₂
+    subtype⁺ _⊢_≤Γ?_ Γ-refl Γ-trans Γ-valid Γ-change₁ Γ-change₂ Γ-≤-++

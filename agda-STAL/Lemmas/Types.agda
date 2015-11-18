@@ -90,6 +90,11 @@ private
     ... | no ¬τ⋆ | _  = no (λ { (τ⋆ ∷ τs⋆) → ¬τ⋆ τ⋆ })
     ... | _ | no ¬τs⋆ = no (λ { (τ⋆ ∷ τs⋆) → ¬τs⋆ τs⋆ })
 
+    infix 3 _⊢?_Instantiation
+    _⊢?_Instantiation : ∀ Δ i → Dec (Δ ⊢ i Instantiation)
+    Δ ⊢? α τ Instantiation = dec-inj valid-α (λ { (valid-α τ⋆) → τ⋆ }) (Δ ⊢? τ Type)
+    Δ ⊢? ρ σ Instantiation = dec-inj valid-ρ (λ { (valid-ρ σ⋆) → σ⋆ }) (Δ ⊢? σ StackType)
+
   mutual
     τ-valid-++ : ∀ {Δ Δ' τ} →
                    Δ ⊢ τ Type →
@@ -97,9 +102,10 @@ private
     τ-valid-++ (valid-α⁼ l) = valid-α⁼ (↓-add-right _ l)
     τ-valid-++ valid-int = valid-int
     τ-valid-++ valid-ns = valid-ns
-    τ-valid-++ {Δ = Δ} {Δ'} (valid-∀ {Δᵥ} {Γ} Γ⋆) =
-      valid-∀ (subst (λ Δ → Δ ⊢ Γ RegisterAssignment)
-              (List-++-assoc Δᵥ Δ Δ') (Γ-valid-++ Γ⋆))
+    τ-valid-++ {Δ = Δ} {Δ'} (valid-∀ {Δᵥ} Γ⋆)
+      with Γ-valid-++ {Δ' = Δ'} Γ⋆
+    ... | Γ⋆'
+      rewrite List-++-assoc Δᵥ Δ Δ' = valid-∀ Γ⋆'
     τ-valid-++ (valid-tuple τs⋆) = valid-tuple (τs⁻-valid-++ τs⋆)
 
     τ⁻-valid-++ : ∀ {Δ Δ' τ⁻} →
@@ -132,6 +138,11 @@ private
     regs-valid-++ [] = []
     regs-valid-++ (τ⋆ ∷ τs⋆) = τ-valid-++ τ⋆ ∷ regs-valid-++ τs⋆
 
+    i-valid-++ : ∀ {Δ Δ' i} →
+                   Δ ⊢ i Instantiation →
+                   Δ ++ Δ' ⊢ i Instantiation
+    i-valid-++ (valid-α τ⋆) = valid-α (τ-valid-++ τ⋆)
+    i-valid-++ (valid-ρ σ⋆) = valid-ρ (σ-valid-++ σ⋆)
 
 
 Vec-TypeLike⁺ : ∀ A {T : TypeLike A} {{T⁺ : TypeLike⁺ A}} {n} →
@@ -184,3 +195,6 @@ instance
 
   RegisterAssignment-TypeLike⁺ : TypeLike⁺ RegisterAssignment
   RegisterAssignment-TypeLike⁺ = typeLike⁺ _⊢?_RegisterAssignment Γ-valid-++
+
+  Instantiation-TypeLike⁺ : TypeLike⁺ Instantiation
+  Instantiation-TypeLike⁺ = typeLike⁺ _⊢?_Instantiation i-valid-++

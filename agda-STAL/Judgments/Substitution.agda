@@ -15,42 +15,59 @@ record Substitution (A : Set) : Set1 where
     weaken : ℕ → ℕ → A → A
     _⟦_/_⟧≡_ : A → Instantiation → ℕ → A → Set
   infix 3 _⟦_/_⟧many≡_
-  _⟦_/_⟧many≡_ : A → Instantiations → ℕ → A → Set
-  v₁ ⟦ [] / n ⟧many≡ v₂ = v₁ ≡ v₂
-  v₁ ⟦ i ∷ is / n ⟧many≡ v₂ = ∃ λ v' → v₁ ⟦ i / n ⟧≡ v' × v' ⟦ is / n ⟧many≡ v₂
+  infixr 5 _∷_
+  data _⟦_/_⟧many≡_ : A → Instantiations → ℕ → A → Set where
+    [] :
+           ∀ {v n} →
+      -------------------
+      v ⟦ [] / n ⟧many≡ v
+
+    _∷_ :
+        ∀ {v v' vₑ i is n} →
+          v ⟦ i / n ⟧≡ v' →
+      v' ⟦ is / n ⟧many≡ vₑ →
+      ------------------------
+      v ⟦ i ∷ is / n ⟧many≡ vₑ
 open Substitution {{...}} public
 
-private
-  mutual
-    weaken-τ : ℕ → ℕ → Type → Type
-    weaken-τ pos inc (α⁼ ι) with pos ≤? ι
-    ... | yes pos≤ι = α⁼ (inc + ι)
-    ... | no pos≰ι = α⁼ ι
-    weaken-τ pos inc int = int
-    weaken-τ pos inc ns = ns
-    weaken-τ pos inc (∀[ Δ ] Γ) = ∀[ Δ ] (weaken-Γ (length Δ + pos) inc Γ)
-    weaken-τ pos inc (tuple τs⁻) = tuple (weaken-τs⁻ pos inc τs⁻)
+data InstantiationMatch : Instantiation → TypeAssumptionValue → Set where
+  match-α : ∀ {τ} → InstantiationMatch (α τ) α
+  match-ρ : ∀ {σ} → InstantiationMatch (ρ σ) ρ
 
-    weaken-τ⁻ : ℕ → ℕ → InitType → InitType
-    weaken-τ⁻ pos inc (τ , φ) = weaken-τ pos inc τ , φ
+mutual
+  weaken-τ : ℕ → ℕ → Type → Type
+  weaken-τ pos inc (α⁼ ι) with pos ≤? ι
+  ... | yes pos≤ι = α⁼ (inc + ι)
+  ... | no pos≰ι = α⁼ ι
+  weaken-τ pos inc int = int
+  weaken-τ pos inc ns = ns
+  weaken-τ pos inc (∀[ Δ ] Γ) = ∀[ Δ ] (weaken-Γ (length Δ + pos) inc Γ)
+  weaken-τ pos inc (tuple τs⁻) = tuple (weaken-τs⁻ pos inc τs⁻)
 
-    weaken-τs⁻ : ℕ → ℕ → List InitType → List InitType
-    weaken-τs⁻ pos inc [] = []
-    weaken-τs⁻ pos inc (τ⁻ ∷ τs⁻) = weaken-τ⁻ pos inc τ⁻ ∷ weaken-τs⁻ pos inc τs⁻
+  weaken-τ⁻ : ℕ → ℕ → InitType → InitType
+  weaken-τ⁻ pos inc (τ , φ) = weaken-τ pos inc τ , φ
 
-    weaken-σ : ℕ → ℕ → StackType → StackType
-    weaken-σ pos inc (ρ⁼ ι) with pos ≤? ι
-    ... | yes pos≤ι = ρ⁼ (inc + ι)
-    ... | no pos≰ι = ρ⁼ ι
-    weaken-σ pos inc [] = []
-    weaken-σ pos inc (τ ∷ σ) = weaken-τ pos inc τ ∷ weaken-σ pos inc σ
+  weaken-τs⁻ : ℕ → ℕ → List InitType → List InitType
+  weaken-τs⁻ pos inc [] = []
+  weaken-τs⁻ pos inc (τ⁻ ∷ τs⁻) = weaken-τ⁻ pos inc τ⁻ ∷ weaken-τs⁻ pos inc τs⁻
 
-    weaken-Γ : ℕ → ℕ → RegisterAssignment → RegisterAssignment
-    weaken-Γ pos inc (registerₐ sp regs) = registerₐ (weaken-σ pos inc sp) (weaken-regs pos inc regs)
+  weaken-σ : ℕ → ℕ → StackType → StackType
+  weaken-σ pos inc (ρ⁼ ι) with pos ≤? ι
+  ... | yes pos≤ι = ρ⁼ (inc + ι)
+  ... | no pos≰ι = ρ⁼ ι
+  weaken-σ pos inc [] = []
+  weaken-σ pos inc (τ ∷ σ) = weaken-τ pos inc τ ∷ weaken-σ pos inc σ
 
-    weaken-regs : ∀ {n} → ℕ → ℕ → Vec Type n → Vec Type n
-    weaken-regs pos inc [] = []
-    weaken-regs pos inc (τ ∷ τs) = weaken-τ pos inc τ ∷ weaken-regs pos inc τs
+  weaken-Γ : ℕ → ℕ → RegisterAssignment → RegisterAssignment
+  weaken-Γ pos inc (registerₐ sp regs) = registerₐ (weaken-σ pos inc sp) (weaken-regs pos inc regs)
+
+  weaken-regs : ∀ {n} → ℕ → ℕ → Vec Type n → Vec Type n
+  weaken-regs pos inc [] = []
+  weaken-regs pos inc (τ ∷ τs) = weaken-τ pos inc τ ∷ weaken-regs pos inc τs
+
+  weaken-i : ℕ → ℕ → Instantiation → Instantiation
+  weaken-i pos inc (α τ) = α (weaken-τ pos inc τ)
+  weaken-i pos inc (ρ σ) = ρ (weaken-σ pos inc σ)
 
 mutual
   infix 3 _⟦_/_⟧τ≡_
@@ -62,7 +79,7 @@ mutual
       α⁼ ι₁ ⟦ i / ι₂ ⟧τ≡ α⁼ (pred ι₁)
 
     subst-α-≡ :
-                 ∀ {τ ι} →
+            ∀ {τ ι} →
       ---------------------------------
       α⁼ ι ⟦ α τ / ι ⟧τ≡ weaken-τ 0 ι τ
 
@@ -84,7 +101,7 @@ mutual
       ns ⟦ i / ι ⟧τ≡ ns
 
     subst-∀ :
-            ∀ {Δ Γ Γ' i ι} →
+              ∀ {Δ Γ Γ' i ι} →
       Γ ⟦ i / length Δ + ι ⟧Γ≡ Γ' →
       ------------------------------
       ∀[ Δ ] Γ ⟦ i / ι ⟧τ≡ ∀[ Δ ] Γ'
@@ -118,7 +135,7 @@ mutual
       ρ⁼ ι₁ ⟦ i / ι₂ ⟧σ≡ ρ⁼ (pred ι₁)
 
     subst-ρ-≡ :
-                 ∀ {σ ι} →
+            ∀ {σ ι} →
       ---------------------------------
       ρ⁼ ι ⟦ ρ σ / ι ⟧σ≡ weaken-σ 0 ι σ
 
@@ -201,9 +218,9 @@ data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → S
     uninit τ ⟦ i / ι ⟧v≡ uninit τ'
 
   subst-Λ :
-    ∀ {Δ v v' is is' i ι} →
-      v ⟦ i / ι ⟧v≡ v' →
-      is ⟦ i / ι ⟧is≡ is' →
+              ∀ {Δ v v' is is' i ι} →
+                v ⟦ i / ι ⟧v≡ v' →
+          is ⟦ i / length Δ + ι ⟧is≡ is' →
     ----------------------------------------------
     (Λ Δ ∙ v ⟦ is ⟧) ⟦ i / ι ⟧v≡ (Λ Δ ∙ v' ⟦ is' ⟧)
 
@@ -326,9 +343,6 @@ instance
 
   Instantiation-Substitution : Substitution Instantiation
   Instantiation-Substitution = substitution weaken-i _⟦_/_⟧i≡_
-    where weaken-i : ℕ → ℕ → Instantiation → Instantiation
-          weaken-i pos inc (α τ) = α (weaken pos inc τ)
-          weaken-i pos inc (ρ σ) = ρ (weaken pos inc σ)
 
   Instantiations-Substitution : Substitution Instantiations
   Instantiations-Substitution = List-Substitution Instantiation
@@ -341,7 +355,7 @@ instance
           weaken-v pos inc (int i) = int i
           weaken-v pos inc ns = ns
           weaken-v pos inc (uninit τ) = uninit (weaken pos inc τ)
-          weaken-v pos inc Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ weaken-v pos inc v ⟦ weaken pos inc is ⟧
+          weaken-v pos inc Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ weaken-v (length Δ + pos) inc v ⟦ weaken (length Δ + pos) inc is ⟧
 
   Instruction-Substitution : Substitution Instruction
   Instruction-Substitution = substitution weaken-ι _⟦_/_⟧ι≡_

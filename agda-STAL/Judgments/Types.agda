@@ -95,6 +95,21 @@ infix 3 ⊢_LabelAssignment
 ⊢ ψ₁ , ψ₂ LabelAssignment =
   (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
 
+infix 3 _⊢_Instantiation
+data _⊢_Instantiation (Δ : TypeAssumptions) :
+                      Instantiation → Set where
+  valid-α :
+           ∀ {τ} →
+        Δ ⊢ τ Type →
+    ---------------------
+    Δ ⊢ α τ Instantiation
+
+  valid-ρ :
+           ∀ {σ} →
+      Δ ⊢ σ StackType →
+    ---------------------
+    Δ ⊢ ρ σ Instantiation
+
 Vec-TypeLike : ∀ A m {{T : TypeLike A}} → TypeLike (Vec A m)
 Vec-TypeLike A m = typeLike (λ Δ xs → Allᵥ (λ x → Δ ⊢ x Valid) xs) tt
 
@@ -131,3 +146,6 @@ instance
 
   RegisterAssignment-TypeLike : TypeLike RegisterAssignment
   RegisterAssignment-TypeLike = typeLike _⊢_RegisterAssignment tt
+
+  Instantiation-TypeLike : TypeLike Instantiation
+  Instantiation-TypeLike = typeLike _⊢_Instantiation tt

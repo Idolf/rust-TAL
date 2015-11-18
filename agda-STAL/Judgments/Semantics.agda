@@ -15,19 +15,19 @@ evalSmallValue regs ns = ns
 evalSmallValue regs (uninit τ) = uninit τ
 evalSmallValue regs Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ evalSmallValue regs v ⟦ is ⟧
 
-data EvalGlobal (G : Globals) : WordValue → InstructionSequence → Set where
+data InstantiateGlobal (G : Globals) : WordValue → InstructionSequence → Set where
   instantiate-globval :
           ∀ {l Δ Γ I} →
      G ↓ l ⇒ (code[ Δ ] Γ ∙ I) →
     -----------------------------
-    EvalGlobal G (globval l) I
+    InstantiateGlobal G (globval l) I
 
   instantiate-Λ :
            ∀ {w I I' Δ is} →
-          EvalGlobal G w I →
-         I ⟦ is / 0 ⟧many≡ I' →
+        InstantiateGlobal G w I →
+          I ⟦ is / 0 ⟧many≡ I' →
     ------------------------------
-    EvalGlobal G (Λ Δ ∙ w ⟦ is ⟧) I'
+    InstantiateGlobal G (Λ Δ ∙ w ⟦ is ⟧) I'
 
 infix 3 _⊢_⇒_
 data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
@@ -109,7 +109,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
     step-beq₀ :
                     ∀ {H sp regs ♯r v I₁ I₂} →
                      lookup ♯r regs ≡ int 0 →
-      EvalGlobal G (evalSmallValue regs v) I₂ →
+      InstantiateGlobal G (evalSmallValue regs v) I₂ →
       ----------------------------------------------------------
              G ⊢ H , register sp regs , beq ♯r v ~> I₁ ⇒
                  H , register sp regs , I₂
@@ -124,7 +124,7 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
 
     step-jmp :
                     ∀ {H sp regs v I} →
-      EvalGlobal G (evalSmallValue regs v) I →
+      InstantiateGlobal G (evalSmallValue regs v) I →
       ---------------------------------------------------------
                G ⊢ H , register sp regs , jmp v ⇒
                    H , register sp regs , I

@@ -152,3 +152,6 @@ data RegisterFile : Set where
 -- P
 ProgramState : Set
 ProgramState = Heap × RegisterFile × InstructionSequence
+
+Program : Set
+Program = Globals × ProgramState

@@ -30,8 +30,8 @@ private
   ... | refl = refl
 
 eval-unique : ∀ {G w I₁ I₂} →
-                EvalGlobal G w I₁ →
-                EvalGlobal G w I₂ →
+                InstantiateGlobal G w I₁ →
+                InstantiateGlobal G w I₂ →
                 I₁ ≡ I₂
 eval-unique (instantiate-globval l₁) (instantiate-globval l₂)
   with ↓-unique l₁ l₂
@@ -96,7 +96,7 @@ exec-unique (step₁ ∷ exec₁) (step₂ ∷ exec₂)
   rewrite step-unique step₁ step₂
         | exec-unique exec₁ exec₂ = refl
 
-eval-dec : ∀ G w → Dec (∃ λ I → EvalGlobal G w I)
+eval-dec : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
 eval-dec G (globval l)
   with ↓-dec G l
 ... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
@@ -112,7 +112,7 @@ eval-dec G (Λ Δ ∙ w ⟦ is ⟧)
   with I ⟦ is / 0 ⟧many?
 ... | yes (Iₑ , subs-I) = yes (Iₑ , instantiate-Λ eval subs-I)
 ... | no ¬subs-I = no help
-  where help : ¬ (∃ λ I → EvalGlobal G (Λ Δ ∙ w ⟦ is ⟧) I)
+  where help : ¬ (∃ λ I → InstantiateGlobal G (Λ Δ ∙ w ⟦ is ⟧) I)
         help (Iₑ , instantiate-Λ {I = I'} eval' subs-I)
           with eval-unique eval eval'
         help (Iₑ , instantiate-Λ {I = .I} eval' subs-I)

@@ -41,9 +41,9 @@ mutual
 
     _∷_ :
            ∀ {ψ₁ ψ₂ w S τ σ} →
-        ψ₁ , ψ₂ ⊢ w of τ wval →
+          ψ₁ , ψ₂ ⊢ w of τ wval →
           ψ₁ , ψ₂ ⊢ S of σ stack →
-      ------------------------
+      ------------------------------
       ψ₁ , ψ₂ ⊢ w ∷ S of τ ∷ σ stack
 
   infix 3 _⊢_of_register
@@ -76,51 +76,44 @@ mutual
       -------------------------------------------------------
              ψ₁ , ψ₂ ⊢ tuple ws of tuple τs⁻ hval
 
-
   infix 3 _⊢_of_instantiation
-  data _⊢_of_instantiation (Δ : TypeAssumptions) :
-                           Instantiation →
-                           TypeAssumptionValue → Set where
+  data _⊢_of_instantiation (Δ : TypeAssumptions) : Instantiation → TypeAssumptionValue → Set where
     of-α :
-               ∀ {τ} →
-            Δ ⊢ τ Valid →
+             ∀ {τ} →
+           Δ ⊢ τ Valid →
       --------------------------
       Δ ⊢ α τ of α instantiation
 
     of-ρ :
-               ∀ {σ} →
-            Δ ⊢ σ Valid →
+             ∀ {σ} →
+           Δ ⊢ σ Valid →
       --------------------------
       Δ ⊢ ρ σ of ρ instantiation
 
-
   infix 3 _⊢_of_instantiations
-  data _⊢_of_instantiations (Δ : TypeAssumptions) :
-                            Instantiations →
-                            TypeAssumptions → Set where
+  data _⊢_of_instantiations (Δ : TypeAssumptions) : Instantiations → TypeAssumptions → Set where
     [] :
-      ---------------------------
       Δ ⊢ [] of [] instantiations
 
     _∷_ :
-               ∀ {i is a Δ'} →
-           Δ ⊢ i of a instantiation →
+              ∀ {i is a Δ'} →
+       Δ' ++ Δ ⊢ i of a instantiation →
          Δ ⊢ is of Δ' instantiations →
-      -------------------------------------
+      -----------------------------------
       Δ ⊢ i ∷ is of a ∷ Δ' instantiations
 
   infix 3 _⊢_of_wval
   data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment →
                     WordValue → Type → Set where
     of-globval :
-          ∀ {ψ₁ ψ₂ l τ₁ τ₂} →
-                ψ₁ ↓ l ⇒ τ₁ →
-               [] ⊢ τ₁ ≤ τ₂ →
-      ---------------------------------
+            ∀ {ψ₁ ψ₂ l τ₁ τ₂} →
+             ψ₁ ↓ l ⇒ τ₁ →
+            [] ⊢ τ₁ ≤ τ₂ →
+      ------------------------------
       ψ₁ , ψ₂ ⊢ globval l of τ₂ wval
 
     of-heapval :
-          ∀ {ψ₁ ψ₂ lₕ τ₁ τ₂} →
+             ∀ {ψ₁ ψ₂ lₕ τ₁ τ₂} →
               ψ₂ ↓ lₕ ⇒ τ₁ →
               [] ⊢ τ₁ ≤ τ₂ →
       -------------------------------
@@ -137,13 +130,13 @@ mutual
       ψ₁ , ψ₂ ⊢ ns of ns wval
 
     of-Λ :
-          ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
-          ψ₁ , ψ₂ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
-          [] ⊢ is of Δ₁ instantiations →
-            Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
-                Δ₂ ⊢ Γ₂ ≤ Γ₃ →
-      -----------------------------------------
-      ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ wval
+             ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
+            ψ₁ , ψ₂ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
+                Δ₂ ⊢ is of Δ₁ instantiations →
+      weaken (length Δ₁) (length Δ₂) Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+                     Δ₂ ⊢ Γ₃ ≤ Γ₂ →
+      ----------------------------------------------------
+          ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ wval
 
   infix 3 _⊢_of_wval⁰
   data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment →
@@ -165,17 +158,15 @@ mutual
                     TypeAssumptions × RegisterAssignment →
                     SmallValue → Type → Set where
     of-reg :
-             ∀ {ψ₁ Δ Γ ♯r τ} →
-       Δ ⊢ lookup-regs ♯r Γ ≤ τ →
-      -----------------------------
-      ψ₁ , Δ , Γ ⊢ reg ♯r of τ vval
+             ∀ {ψ₁ Δ Γ ♯r} →
+      --------------------------------------------
+      ψ₁ , Δ , Γ ⊢ reg ♯r of lookup-regs ♯r Γ vval
 
     of-globval :
-          ∀ {ψ₁ Δ Γ l τ₁ τ₂} →
-                ψ₁ ↓ l ⇒ τ₁ →
-               [] ⊢ τ₁ ≤ τ₂ →
-      ---------------------------------
-      ψ₁ , Δ , Γ ⊢ globval l of τ₂ vval
+               ∀ {ψ₁ Δ Γ l τ} →
+                ψ₁ ↓ l ⇒ τ →
+      --------------------------------
+      ψ₁ , Δ , Γ ⊢ globval l of τ vval
 
     of-int :
              ∀ {ψ₁ Δ Γ n} →
@@ -188,13 +179,12 @@ mutual
       ψ₁ , Δ , Γ ⊢ ns of ns vval
 
     of-Λ :
-          ∀ {ψ₁ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ v is} →
-          ψ₁ , Δ , Γ ⊢ v of ∀[ Δ₁ ] Γ₁ vval →
-          Δ ⊢ is of Δ₁ instantiations →
-            Γ₁ ⟦ is / length Δ ⟧many≡ Γ₂ →
-                 Δ₂ ++ Δ ⊢ Γ₂ ≤ Γ₃ →
-      -----------------------------------------
-      ψ₁ , Δ , Γ ⊢ Λ Δ₂ ∙ v ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ vval
+                ∀ {ψ₁ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ v is} →
+               ψ₁ , Δ , Γ ⊢ v of ∀[ Δ₁ ] Γ₁ vval →
+               Δ₂ ++ Δ ⊢ is of Δ₁ instantiations →
+      weaken (length Δ₁) (length Δ₂) Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+      ------------------------------------------------------
+         ψ₁ , Δ , Γ ⊢ Λ Δ₂ ∙ v ⟦ is ⟧ of ∀[ Δ₂ ] Γ₂ vval
 
   infix 3 _⊢_⇒_instruction
   data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssumptions ×
@@ -246,11 +236,11 @@ mutual
       ψ₁ , Δ , Γ ⊢ ld ♯rd ♯rs i ⇒ update-regs ♯rd τ Γ instruction
 
     of-st :
-                   ∀ {ψ₁ Δ Γ ♯rd i ♯rs τs⁻ τs⁻' τ φ} →
+                   ∀ {ψ₁ Δ Γ ♯rd i ♯rs τ τs⁻ τs⁻' φ} →
                      lookup-regs ♯rd Γ ≡ tuple τs⁻ →
-                       Δ ⊢ lookup-regs ♯rs Γ ≤ τ →
-                            τs⁻ ↓ i ⇒ τ , φ →
-                        τs⁻ ⟦ i ⟧← τ , init ⇒ τs⁻' →
+                         Δ ⊢ lookup-regs ♯rs Γ ≤ τ →
+                           τs⁻ ↓ i ⇒ τ , φ →
+                      τs⁻ ⟦ i ⟧← τ , init ⇒ τs⁻' →
       ----------------------------------------------------------------------
       ψ₁ , Δ , Γ ⊢ st ♯rd i ♯rs ⇒ update-regs ♯rd (tuple τs⁻') Γ instruction
 
@@ -294,13 +284,21 @@ mutual
       --------------------------------------
       ψ₁ , Δ , Γ ⊢ jmp v instructionsequence
 
-  infix 3 _⊢_program
-  data _⊢_program : Globals → ProgramState → Set where
-    of-program :
-              ∀ {ψ₁ ψ₂ Γ G H R I} →
-               ⊢ G of ψ₁ globals →
+  infix 3 _⊢_programstate
+  data _⊢_programstate : GlobalLabelAssignment → ProgramState → Set where
+    of-programstate :
+              ∀ {ψ₁ ψ₂ Γ H R I} →
                ψ₁ ⊢ H of ψ₂ heap →
            ψ₁ , ψ₂ ⊢ R of Γ register →
       ψ₁ , [] , Γ ⊢ I instructionsequence →
       -------------------------------------
-             G ⊢ H , R , I program
+            ψ₁ ⊢ H , R , I programstate
+
+  infix 3 ⊢_program
+  data ⊢_program : Program → Set where
+    of-program :
+           ∀ {G ψ₁ P} →
+       ⊢ G of ψ₁ globals →
+      ψ₁ ⊢ P programstate →
+      ---------------------
+        ⊢ G , P program

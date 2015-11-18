@@ -99,6 +99,11 @@ data _↓_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → Set ℓ where
 ↓-decᵥ xs i v₁ | yes (v₂ , l) | no v₁≢v₂ = no (λ l' → v₁≢v₂ (↓-unique l' l))
 ↓-decᵥ xs i v₁ | no ¬l = no (λ l' → ¬l (v₁ , l'))
 
+↓-length : ∀ {ℓ} {A : Set ℓ} xs (x : A) →
+             xs ∷ʳ x ↓ length xs ⇒ x
+↓-length [] x = here
+↓-length (x' ∷ xs) x = there (↓-length xs x)
+
 ↓-add-right : ∀ {ℓ} {A : Set ℓ} {xs₁} xs₂ {i} {v : A} →
                    xs₁ ↓ i ⇒ v →
                    xs₁ ++ xs₂ ↓ i ⇒ v
@@ -175,6 +180,14 @@ data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → 
 ←-to-< here = s≤s z≤n
 ←-to-< (there l) = s≤s (←-to-< l)
 
+←-to-↓ : ∀ {ℓ} {A : Set ℓ}
+           {i x} →
+           {xs xs' : List A} →
+           xs ⟦ i ⟧← x ⇒ xs' →
+           xs' ↓ i ⇒ x
+←-to-↓ here = here
+←-to-↓ (there up) = there (←-to-↓ up)
+
 allzip-lookup : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
                   {xs : List A} {ys : List B}
                   {i x y} →
@@ -220,6 +233,34 @@ allzip-update : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
 allzip-update here here p (p' ∷ ps) = p ∷ ps
 allzip-update (there up₁) (there up₂) p₁ (p' ∷ ps) =
   p' ∷ allzip-update up₁ up₂ p₁ ps
+
+allzip-update₁ : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {xs xs' : List A} {ys : List B}
+                  {i x y} →
+                  xs ⟦ i ⟧← x ⇒ xs' →
+                  P x y →
+                  AllZip P xs ys →
+                  ∃ λ ys' →
+                    ys ⟦ i ⟧← y ⇒ ys' ×
+                    AllZip P xs' ys'
+allzip-update₁ here p (p' ∷ ps) = _ , here , p ∷ ps
+allzip-update₁ (there up) p (p' ∷ ps)
+  with allzip-update₁ up p ps
+... | ys' , up' , ps' = _ , there up' , p' ∷ ps'
+
+allzip-update₂ : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                  {xs : List A} {ys ys' : List B}
+                  {i x y} →
+                  ys ⟦ i ⟧← y ⇒ ys' →
+                  P x y →
+                  AllZip P xs ys →
+                  ∃ λ xs' →
+                    xs ⟦ i ⟧← x ⇒ xs' ×
+                    AllZip P xs' ys'
+allzip-update₂ here p (p' ∷ ps) = _ , here , p ∷ ps
+allzip-update₂ (there up) p (p' ∷ ps)
+  with allzip-update₂ up p ps
+... | ys' , up' , ps' = _ , there up' , p' ∷ ps'
 
 All-lookup : ∀ {a p} {A : Set a} {P : A → Set p}
                {x} {xs : List A} {i} →
