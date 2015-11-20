@@ -43,11 +43,10 @@ record TypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
           v ⟦ i / length Δ₁ ⟧≡ v' ×
           Δ₁ ++ a ∷ Δ₂ ⊢ v Valid
     weaken-subst :
-      ∀ Δ₁ Δ₂ Δ₃ {i a} →
+      ∀ pos inc {i} →
         {v₁ v₂ : A} →
-        Δ₁ ++ a ∷ Δ₃ ⊢ v₁ Valid →
-        v₁ ⟦ i / length Δ₁ ⟧≡ v₂ →
-        weaken (length Δ₁) (length Δ₂) v₁ ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ weaken (length Δ₁) (length Δ₂) v₂
+        v₁ ⟦ i / pos ⟧≡ v₂ →
+        weaken pos inc v₁ ⟦ i / pos + inc ⟧≡ weaken pos inc v₂
 
   weaken-outside-ctx-0 :
     ∀ {Δ} inc {v : A} →
@@ -112,22 +111,6 @@ record TypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
 open TypeSubstitution {{...}} public
 
 private
-  -- mutual
-  --   subst-substᵗ : ∀ A {{_ : Substitution A}}
-  --                       {{_ : TypeLike A}} → Set
-  --   subst-substᵗ A = ∀ {Δ} {a₁ a₂} Δ₁ Δ₂ {v₁ v₂ v₁' : A} {i₁ i₁' i₂} →
-  --                      Δ₁ ++ a₂ ∷ Δ₂ ⊢ i₁ of a₁ instantiation →
-  --                      Δ₂ ⊢ i₂ of a₂ instantiation →
-  --                      i₁ ⟦ i₂ / length Δ₁ ⟧≡ i₁' →
-  --                      v₁ ⟦ i₂ / length (Δ ++ a₁ ∷ Δ₁) ⟧≡ v₁' →
-  --                      v₁ ⟦ i₁ / length Δ ⟧≡ v₂ →
-  --                      ∃ λ v₂' →
-  --                        v₂  ⟦ i₂ / length (Δ ++ Δ₁) ⟧≡ v₂' ×
-  --                        v₁' ⟦ i₁ / length Δ ⟧≡ v₂'
-
-  --   τ-subst-subst : subst-substᵗ Type
-  --   τ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ v⋆
-
   mutual
     valid-weakenᵗ : ∀ A {{_ : Substitution A}}
                         {{_ : TypeLike A}} → Set
@@ -516,26 +499,16 @@ private
   mutual
     weaken-substᵗ : ∀ A {{S : Substitution A}}
                         {{_ : TypeLike A}} → Set
-    weaken-substᵗ A = ∀ Δ₁ Δ₂ Δ₃ {i a} →
+    weaken-substᵗ A = ∀ pos inc {i} →
                         {v₁ v₂ : A} →
-                        Δ₁ ++ a ∷ Δ₃ ⊢ v₁ Valid →
-                        v₁ ⟦ i / length Δ₁ ⟧≡ v₂ →
-                        weaken (length Δ₁) (length Δ₂) v₁ ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ weaken (length Δ₁) (length Δ₂) v₂
+                        v₁ ⟦ i / pos ⟧≡ v₂ →
+                        weaken pos inc v₁ ⟦ i / pos + inc ⟧≡ weaken pos inc v₂
 
-    >-help₁ : ∀ (Δ₁ Δ₂ : TypeAssumptions) {ι} →
-                ι > length Δ₁ →
-                length Δ₂ + ι > length (Δ₁ ++ Δ₂)
-    >-help₁ Δ₁ Δ₂ ι>len
-      rewrite List-length-++ Δ₁ {Δ₂}
-            | +-comm (suc (length Δ₁)) (length Δ₂) = l+m≤l+n (length Δ₂) ι>len
-
-    <-help₁ : ∀ (Δ₁ Δ₂ : TypeAssumptions) {ι} →
-                ι < length Δ₁ →
-                length Δ₂ + ι < length (Δ₁ ++ Δ₂)
-    <-help₁ [] Δ₂ ()
-    <-help₁ (a ∷ Δ₁) Δ₂ (s≤s ι<len)
-      rewrite List-length-++ (a ∷ Δ₁) {Δ₂}
-            | +-comm (length Δ₁) (length Δ₂) = s≤s (l+m≤l+n (length Δ₂) ι<len)
+    >-help₁ : ∀ inc pos {ι} →
+                ι > inc →
+                pos + ι > inc + pos
+    >-help₁ inc pos ι>inc
+      rewrite +-comm (suc inc) pos = l+m≤l+n pos ι>inc
 
     pred-helper : ∀ a b {n} → b > n → pred (a + b) ≡ a + pred b
     pred-helper a (suc b) (s≤s b>n)
@@ -543,110 +516,203 @@ private
             | +-comm b a = refl
 
     τ-weaken-subst : weaken-substᵗ Type
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = α⁼ ι} (valid-α⁼ l) (subst-α-> ι>len)
-      with length Δ₁ ≤? ι | length Δ₁ ≤? pred ι
-    ... | no len≰ι | _
-      with len≰ι (NP.≤pred⇒≤ (length Δ₁) ι (NP.<⇒≤pred ι>len))
+    τ-weaken-subst pos inc {v₁ = α⁼ ι} (subst-α-> ι>pos)
+      with pos ≤? ι | pos ≤? pred ι
+    ... | no pos≰ι | _
+      with pos≰ι (NP.≤pred⇒≤ pos ι (NP.<⇒≤pred ι>pos))
     ... | ()
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = α⁼ ι} (valid-α⁼ l) (subst-α-> ι>len)
-        | _ | no len≰ι'
-      with len≰ι' (NP.<⇒≤pred ι>len)
+    τ-weaken-subst pos inc {v₁ = α⁼ ι} (subst-α-> ι>pos)
+        | _ | no pos≰ι'
+      with pos≰ι' (NP.<⇒≤pred ι>pos)
     ... | ()
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = α⁼ ι} (valid-α⁼ l) (subst-α-> ι>len)
-        | yes len≤ι | yes len≤ι'
-      with subst-α-> (>-help₁ Δ₁ Δ₂ ι>len)
+    τ-weaken-subst pos inc {i} {v₁ = α⁼ ι} (subst-α-> ι>pos)
+        | yes pos≤ι | yes pos≤ι'
+      with subst-α-> (>-help₁ pos inc ι>pos)
     ... | sub-τ'
-      rewrite pred-helper (length Δ₂) ι ι>len
+      rewrite pred-helper inc ι ι>pos
         = sub-τ'
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ {α τ} (valid-α⁼ l) subst-α-≡
-      rewrite weaken-combine 0 (length Δ₁) (length Δ₂) τ
-            | sym (List-length-++ Δ₁ {Δ₂})
-      with length Δ₁ ≤? length Δ₁
-    ... | yes len≤len
-      rewrite +-comm (length Δ₂) (length Δ₁)
-            | List-length-++ Δ₁ {Δ₂} = subst-α-≡
-    ... | no len≰len
-      with len≰len (NP.n≤m+n 0 (length Δ₁))
+    τ-weaken-subst pos inc {α τ} subst-α-≡
+      rewrite weaken-combine 0 pos inc τ
+      with pos ≤? pos
+    ... | yes pos≤pos
+      rewrite +-comm inc pos
+        = subst-α-≡
+    ... | no pos≰len
+      with pos≰len (NP.n≤m+n 0 pos)
     ... | ()
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = α⁼ ι} (valid-α⁼ l) (subst-α-< ι<len)
-      with length Δ₁ ≤? ι
-    ... | no len≰ι
-      rewrite List-length-++ Δ₁ {Δ₂} = subst-α-< (Nat-≤-trans ι<len (NP.m≤m+n (length Δ₁) (length Δ₂)))
-    ... | yes len≤ι
-      with NP.1+n≰n (Nat-≤-trans ι<len len≤ι)
+    τ-weaken-subst pos inc {v₁ = α⁼ ι} (subst-α-< ι<pos)
+      with pos ≤? ι
+    ... | no pos≰ι
+      = subst-α-< (Nat-≤-trans ι<pos (NP.m≤m+n pos inc))
+    ... | yes pos≤ι
+      with NP.1+n≰n (Nat-≤-trans ι<pos pos≤ι)
     ... | ()
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ valid-int subst-int = subst-int
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ valid-ns subst-ns = subst-ns
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ {a = a} {∀[ Δ ] Γ} (valid-∀ Γ⋆) (subst-∀ sub-Γ)
-      rewrite sym (List-length-++ Δ {Δ₁})
-            | sym (List-++-assoc Δ Δ₁ (a ∷ Δ₃))
-      with Γ-weaken-subst (Δ ++ Δ₁) Δ₂ Δ₃ Γ⋆ sub-Γ
+    τ-weaken-subst pos inc subst-int = subst-int
+    τ-weaken-subst pos inc subst-ns = subst-ns
+    τ-weaken-subst pos inc {v₁ = ∀[ Δ ] Γ} (subst-∀ sub-Γ)
+      with Γ-weaken-subst (length Δ + pos) inc sub-Γ
     ... | sub-Γ'
-      rewrite List-++-assoc Δ Δ₁ Δ₂
-            | List-length-++ Δ {Δ₁ ++ Δ₂} = subst-∀ sub-Γ'
-    τ-weaken-subst Δ₁ Δ₂ Δ₃ (valid-tuple τs⁻⋆) (subst-tuple sub-τs⁻)
-      = subst-tuple (τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ τs⁻⋆ sub-τs⁻)
+      rewrite +-assoc (length Δ) pos inc
+        = subst-∀ sub-Γ'
+    τ-weaken-subst pos inc (subst-tuple sub-τs⁻)
+      = subst-tuple (τs⁻-weaken-subst pos inc sub-τs⁻)
 
     τ⁻-weaken-subst : weaken-substᵗ InitType
-    τ⁻-weaken-subst Δ₁ Δ₂ Δ₃ (valid-τ⁻ τ⋆) (subst-τ⁻ sub-τ)
-      = subst-τ⁻ (τ-weaken-subst Δ₁ Δ₂ Δ₃ τ⋆ sub-τ)
+    τ⁻-weaken-subst pos inc (subst-τ⁻ sub-τ)
+      = subst-τ⁻ (τ-weaken-subst pos inc sub-τ)
 
     τs⁻-weaken-subst : weaken-substᵗ (List InitType)
-    τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ [] [] = []
-    τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ (τ⁻⋆ ∷ τs⁻⋆) (sub-τ⁻ ∷ sub-τs⁻)
-      = τ⁻-weaken-subst Δ₁ Δ₂ Δ₃ τ⁻⋆ sub-τ⁻ ∷ τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ τs⁻⋆ sub-τs⁻
+    τs⁻-weaken-subst pos inc [] = []
+    τs⁻-weaken-subst pos inc (sub-τ⁻ ∷ sub-τs⁻)
+      = τ⁻-weaken-subst pos inc sub-τ⁻ ∷ τs⁻-weaken-subst pos inc sub-τs⁻
 
     σ-weaken-subst : weaken-substᵗ StackType
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-> ι>len)
-      with length Δ₁ ≤? ι | length Δ₁ ≤? pred ι
-    ... | no len≰ι | _
-      with len≰ι (NP.≤pred⇒≤ (length Δ₁) ι (NP.<⇒≤pred ι>len))
+    σ-weaken-subst pos inc {v₁ = ρ⁼ ι} (subst-ρ-> ι>pos)
+      with pos ≤? ι | pos ≤? pred ι
+    ... | no pos≰ι | _
+      with pos≰ι (NP.≤pred⇒≤ pos ι (NP.<⇒≤pred ι>pos))
     ... | ()
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-> ι>len)
-        | _ | no len≰ι'
-      with len≰ι' (NP.<⇒≤pred ι>len)
+    σ-weaken-subst pos inc {v₁ = ρ⁼ ι} (subst-ρ-> ι>pos)
+        | _ | no pos≰ι'
+      with pos≰ι' (NP.<⇒≤pred ι>pos)
     ... | ()
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-> ι>len)
-        | yes len≤ι | yes len≤ι'
-      with subst-ρ-> (>-help₁ Δ₁ Δ₂ ι>len)
+    σ-weaken-subst pos inc {i} {v₁ = ρ⁼ ι} (subst-ρ-> ι>pos)
+        | yes pos≤ι | yes pos≤ι'
+      with subst-ρ-> (>-help₁ pos inc ι>pos)
     ... | sub-σ'
-      rewrite pred-helper (length Δ₂) ι ι>len
+      rewrite pred-helper inc ι ι>pos
         = sub-σ'
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ {ρ σ} (valid-ρ⁼ l) subst-ρ-≡
-      rewrite weaken-combine 0 (length Δ₁) (length Δ₂) σ
-            | sym (List-length-++ Δ₁ {Δ₂})
-      with length Δ₁ ≤? length Δ₁
-    ... | yes len≤len
-      rewrite +-comm (length Δ₂) (length Δ₁)
-            | List-length-++ Δ₁ {Δ₂} = subst-ρ-≡
-    ... | no len≰len
-      with len≰len (NP.n≤m+n 0 (length Δ₁))
+    σ-weaken-subst pos inc {ρ σ} subst-ρ-≡
+      rewrite weaken-combine 0 pos inc σ
+      with pos ≤? pos
+    ... | yes pos≤pos
+      rewrite +-comm inc pos
+        = subst-ρ-≡
+    ... | no pos≰len
+      with pos≰len (NP.n≤m+n 0 pos)
     ... | ()
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ {v₁ = ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-< ι<len)
-      with length Δ₁ ≤? ι
-    ... | no len≰ι
-      rewrite List-length-++ Δ₁ {Δ₂} = subst-ρ-< (Nat-≤-trans ι<len (NP.m≤m+n (length Δ₁) (length Δ₂)))
-    ... | yes len≤ι
-      with NP.1+n≰n (Nat-≤-trans ι<len len≤ι)
+    σ-weaken-subst pos inc {v₁ = ρ⁼ ι} (subst-ρ-< ι<pos)
+      with pos ≤? ι
+    ... | no pos≰ι
+      = subst-ρ-< (Nat-≤-trans ι<pos (NP.m≤m+n pos inc))
+    ... | yes pos≤ι
+      with NP.1+n≰n (Nat-≤-trans ι<pos pos≤ι)
     ... | ()
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ [] [] = []
-    σ-weaken-subst Δ₁ Δ₂ Δ₃ (τ⋆ ∷ τs⋆) (sub-τ ∷ sub-τs)
-      = τ-weaken-subst Δ₁ Δ₂ Δ₃ τ⋆ sub-τ ∷ σ-weaken-subst Δ₁ Δ₂ Δ₃ τs⋆ sub-τs
+    σ-weaken-subst pos inc [] = []
+    σ-weaken-subst pos inc (sub-τ ∷ sub-τs)
+      = τ-weaken-subst pos inc sub-τ ∷ σ-weaken-subst pos inc sub-τs
 
     Γ-weaken-subst : weaken-substᵗ RegisterAssignment
-    Γ-weaken-subst Δ₁ Δ₂ Δ₃ (valid-registerₐ sp⋆ regs⋆) (subst-registerₐ sub-sp sub-regs)
-      = subst-registerₐ (σ-weaken-subst Δ₁ Δ₂ Δ₃ sp⋆ sub-sp) (regs-weaken-subst Δ₁ Δ₂ Δ₃ regs⋆ sub-regs)
+    Γ-weaken-subst pos inc (subst-registerₐ sub-sp sub-regs)
+      = subst-registerₐ (σ-weaken-subst pos inc sub-sp) (regs-weaken-subst pos inc sub-regs)
 
     regs-weaken-subst : ∀ {n} → weaken-substᵗ (Vec Type n)
-    regs-weaken-subst Δ₁ Δ₂ Δ₃ [] [] = []
-    regs-weaken-subst Δ₁ Δ₂ Δ₃ (τ⋆ ∷ τs⋆) (sub-τ ∷ sub-τs)
-      = τ-weaken-subst Δ₁ Δ₂ Δ₃ τ⋆ sub-τ ∷ regs-weaken-subst Δ₁ Δ₂ Δ₃ τs⋆ sub-τs
+    regs-weaken-subst pos inc [] = []
+    regs-weaken-subst pos inc (sub-τ ∷ sub-τs)
+      = τ-weaken-subst pos inc sub-τ ∷ regs-weaken-subst pos inc sub-τs
 
     i-weaken-subst : weaken-substᵗ Instantiation
-    i-weaken-subst Δ₁ Δ₂ Δ₃ (valid-α τ⋆) (subst-α sub-τ) =
-      subst-α (τ-weaken-subst Δ₁ Δ₂ Δ₃ τ⋆ sub-τ)
-    i-weaken-subst Δ₁ Δ₂ Δ₃ (valid-ρ σ⋆) (subst-ρ sub-σ) =
-      subst-ρ (σ-weaken-subst Δ₁ Δ₂ Δ₃ σ⋆ sub-σ)
+    i-weaken-subst pos inc (subst-α sub-τ) =
+      subst-α (τ-weaken-subst pos inc sub-τ)
+    i-weaken-subst pos inc (subst-ρ sub-σ) =
+      subst-ρ (σ-weaken-subst pos inc sub-σ)
+
+  -- mutual
+  --   subst-substᵗ : ∀ A {{_ : Substitution A}}
+  --                       {{_ : TypeLike A}} → Set
+  --   subst-substᵗ A = ∀ {Δ} {a₁ a₂} Δ₁ Δ₂ {i₁ i₁' i₂} →
+  --                      Δ₁ ++ a₂ ∷ Δ₂ ⊢ i₁ of a₁ instantiation →
+  --                      Δ₂ ⊢ i₂ of a₂ instantiation →
+  --                      i₁ ⟦ i₂ / length Δ₁ ⟧≡ i₁' →
+  --                      {v₁ v₂ v₁' : A}  →
+  --                      v₁ ⟦ i₂ / length (Δ ++ a₁ ∷ Δ₁) ⟧≡ v₁' →
+  --                      v₁ ⟦ i₁ / length Δ ⟧≡ v₂ →
+  --                      ∃ λ v₂' →
+  --                        v₂  ⟦ i₂ / length (Δ ++ Δ₁) ⟧≡ v₂' ×
+  --                        v₁' ⟦ i₁ / length Δ ⟧≡ v₂'
+
+  --   >-help : ∀ {n m} →
+  --              n > m →
+  --              ∃ λ n' →
+  --                n ≡ suc n' ×
+  --                n' ≥ m
+  --   >-help (s≤s n>m) = _ , refl , n>m
+
+  --   τ-subst-subst : subst-substᵗ Type
+  --   τ-subst-subst {Δ} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ι} (subst-α-> ι>len) (subst-α-> ι>len')
+  --     with >-help ι>len
+  --   ... | ι' , eq , ι'≥len
+  --     rewrite eq
+  --     with
+  --       begin
+  --         suc (length (Δ ++ Δ₁))
+  --       ≡⟨ cong suc (List-length-++ Δ) ⟩
+  --         suc (length Δ + length Δ₁)
+  --       ≡⟨ cong suc (+-comm (length Δ) (length Δ₁)) ⟩
+  --         suc (length Δ₁ + length Δ)
+  --       ≡⟨ +-comm (suc (length Δ₁)) (length Δ) ⟩
+  --         length Δ + suc (length Δ₁)
+  --       ≡⟨ sym (List-length-++ Δ) ⟩
+  --         length (Δ ++ a₁ ∷ Δ₁)
+  --       ≤⟨ ι'≥len ⟩
+  --         ι'
+  --       ∎
+  --       where open N.≤-Reasoning
+  --   ... | ≤₁
+  --     with
+  --       begin
+  --         suc (length Δ)
+  --       ≤⟨ NP.m≤m+n (suc (length Δ)) (length Δ₁) ⟩
+  --         suc (length Δ) + length Δ₁
+  --       ≡⟨ cong suc (sym (List-length-++ Δ)) ⟩
+  --         suc (length (Δ ++ Δ₁))
+  --       ≤⟨ ≤₁ ⟩
+  --         ι'
+  --       ∎ where open N.≤-Reasoning
+  --   ... | ≤₂
+  --     = _ , subst-α-> ≤₁ , subst-α-> ≤₂
+  --   τ-subst-subst {Δ} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ._} (subst-α-> ι>len) subst-α-≡
+  --     rewrite List-length-++ Δ {a₁ ∷ Δ₁}
+  --     with NP.1+n≰n (Nat-≤-trans ι>len (NP.m≤m+n (length Δ) (suc (length Δ₁))))
+  --   ... | ()
+  --   τ-subst-subst {[]} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ι₁} (subst-α-> ι>len) (subst-α-< ())
+  --   τ-subst-subst {a ∷ Δ} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ι₁} (subst-α-> ι>len) (subst-α-< (s≤s ι<len'))
+  --     rewrite List-length-++ Δ {a₁ ∷ Δ₁}
+  --     with NP.1+n≰n (Nat-≤-trans (Nat-≤-trans (s≤s (NP.≤-step (NP.m≤m+n (length Δ) (length (a₁ ∷ Δ₁))))) ι>len) ι<len')
+  --   ... | ()
+  --   τ-subst-subst {Δ} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ .(length (Δ ++ a₁ ∷ Δ₁))} subst-α-≡ sub-v₁'
+  --     = {!!} , {!!} , {!!}
+  --   τ-subst-subst {Δ} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ (subst-α-< ι<len) (subst-α-> (s≤s {n = n} ι>len'))
+  --     rewrite List-length-++ Δ {a₁ ∷ Δ₁}
+  --           | +-comm (length Δ) (suc (length Δ₁))
+  --           | +-comm (length Δ₁) (length Δ)
+  --     with
+  --       ι<len
+  --   ... | (s≤s ι<len')
+  --     rewrite sym (List-length-++ Δ {Δ₁})
+  --       = _ , subst-α-< ι<len' , subst-α-> (s≤s ι>len')
+  --   τ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ._} (subst-α-< ι<len) subst-α-≡
+  --     = _ , {!!} , subst-α-≡
+  --   τ-subst-subst {[]} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ι₁} (subst-α-< ι<len) (subst-α-< ())
+  --   τ-subst-subst {a ∷ Δ} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {α⁼ ι₁} (subst-α-< (s≤s ι≤len)) (subst-α-< (s≤s ι≤len'))
+  --     rewrite List-length-++ Δ {Δ₁}
+  --       = α⁼ ι₁ , subst-α-< (s≤s (Nat-≤-trans ι≤len' (NP.m≤m+n (length Δ) (length Δ₁)))) , subst-α-< (s≤s ι≤len')
+  --   τ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ subst-int subst-int = int , subst-int , subst-int
+  --   τ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ subst-ns subst-ns = ns , subst-ns , subst-ns
+  --   τ-subst-subst {Δ'} {a₁} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ {∀[ Δ ] Γ₁} (subst-∀ sub-Γ₁) (subst-∀ sub-Γ₁')
+  --     rewrite sym (List-length-++ Δ {Δ' ++ a₁ ∷ Δ₁})
+  --           | sym (List-length-++ Δ {Δ'})
+  --           | sym (List-++-assoc Δ Δ' (a₁ ∷ Δ₁))
+  --     with Γ-subst-subst {Δ ++ Δ'} Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ sub-Γ₁ sub-Γ₁'
+  --   ... | Γ₂' , sub-Γ₂ , sub-Γ₂'
+  --     rewrite List-++-assoc Δ Δ' Δ₁
+  --           | List-length-++ Δ {Δ' ++ Δ₁}
+  --           | List-length-++ Δ {Δ'}
+  --       = ∀[ Δ ] Γ₂' , subst-∀ sub-Γ₂ , subst-∀ sub-Γ₂'
+  --   τ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ (subst-tuple x) (subst-tuple x₁) = {!!}
+
+  --   Γ-subst-subst : subst-substᵗ RegisterAssignment
+  --   Γ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ sub-i₁ sub-Γ₁ sub-Γ₁' = {!!}
 
 Vec-TypeSubstitution :
   ∀ A {S S⁺ T} {{TS : TypeSubstitution A {S} {{S⁺}} {{T}}}} n →
@@ -691,9 +757,9 @@ Vec-TypeSubstitution A {S} {S⁺} {T} {{TS}} n =
           Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-pre-exists Δ₁ i⋆ x⋆) (xs-pre-exists Δ₁ i⋆ xs⋆)
 
         xs-weaken-subst : ∀ {n} → weaken-substᵗ (Vec A n) {{Vec-Substitution A n}} {{Vec-TypeLike A n}}
-        xs-weaken-subst Δ₁ Δ₂ Δ₃ [] [] = []
-        xs-weaken-subst Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) (sub-x ∷ sub-xs)
-          = weaken-subst {{TS}} Δ₁ Δ₂ Δ₃ x⋆ sub-x ∷ xs-weaken-subst Δ₁ Δ₂ Δ₃ xs⋆ sub-xs
+        xs-weaken-subst pos inc [] = []
+        xs-weaken-subst pos inc (sub-x ∷ sub-xs)
+          = weaken-subst {{TS}} pos inc sub-x ∷ xs-weaken-subst pos inc sub-xs
 
 List-TypeSubstitution :
   ∀ A {S S⁺ T} {{TS : TypeSubstitution A {S} {{S⁺}} {{T}}}} →
@@ -738,9 +804,9 @@ List-TypeSubstitution A {S} {S⁺} {T} {{TS}} =
           Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-pre-exists Δ₁ i⋆ x⋆) (xs-pre-exists Δ₁ i⋆ xs⋆)
 
         xs-weaken-subst : weaken-substᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
-        xs-weaken-subst Δ₁ Δ₂ Δ₃ [] [] = []
-        xs-weaken-subst Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) (sub-x ∷ sub-xs)
-          = weaken-subst {{TS}} Δ₁ Δ₂ Δ₃ x⋆ sub-x ∷ xs-weaken-subst Δ₁ Δ₂ Δ₃ xs⋆ sub-xs
+        xs-weaken-subst pos inc [] = []
+        xs-weaken-subst pos inc (sub-x ∷ sub-xs)
+          = weaken-subst {{TS}} pos inc sub-x ∷ xs-weaken-subst pos inc sub-xs
 
 instance
   Type-TypeSubstitution : TypeSubstitution Type
