@@ -142,7 +142,7 @@ subst-helper : ∀ {Δ Δᵢ} Δₒ {Γᵢ Γᵢ' Γₒ Γₒ' : RegisterAssignm
                  weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ is / 0 ⟧many≡ Γₒ →
                  weaken (length Δᵢ) (length Δₒ) Γᵢ' ⟦ is' / 0 ⟧many≡ Γₒ'
 subst-helper {Δ} {Δᵢ} Δₒ {a = a} i⋆ is⋆ Γᵢ⋆ sub-is sub-Γₒ sub-Γᵢ subs-Γ
-  with subst-helper₃ Δₒ i⋆ is⋆ (valid-weaken Δᵢ Δₒ (a ∷ Δ) Γᵢ⋆) sub-is (weaken-subst Δᵢ Δₒ Δ i⋆ Γᵢ⋆ sub-Γᵢ) subs-Γ
+  with subst-helper₃ Δₒ i⋆ is⋆ (valid-weaken Δᵢ Δₒ (a ∷ Δ) Γᵢ⋆) sub-is (weaken-subst Δᵢ Δₒ Δ Γᵢ⋆ sub-Γᵢ) subs-Γ
 ... | Γₒ' , sub-Γₒ' , subs-Γ'
   rewrite subst-unique sub-Γₒ sub-Γₒ' = subs-Γ'
 
