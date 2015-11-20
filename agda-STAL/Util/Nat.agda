@@ -34,6 +34,10 @@ Nat-≤-refl n = B.DecTotalOrder.reflexive N.decTotalOrder refl
 ≤⇒+ z≤n = , refl
 ≤⇒+ (s≤s l) = , cong suc (proj₂ (≤⇒+ l))
 
+l+m≤l+n : ∀ l {m n} → m ≤ n → l + m ≤ l + n
+l+m≤l+n zero m≤n = m≤n
+l+m≤l+n (suc l) m≤n = s≤s (l+m≤l+n l m≤n)
+
 instance
   ℕ-Tree : ToTree ℕ
   ℕ-Tree = tree⋆ (λ { (node n _) → just n }) (λ x → T₀ x , refl)

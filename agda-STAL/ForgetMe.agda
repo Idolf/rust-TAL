@@ -101,7 +101,37 @@ instantiations-subst {Δ} {a = a} Δₒ i⋆ (sub-i ∷ sub-is) (_∷_ {Δ' = Δ
    rewrite List-++-assoc Δ' Δₒ Δ
     = i''⋆ ∷ instantiations-subst Δₒ i⋆ sub-is is⋆
 
-{-# TERMINATING #-}
+subst-helper₂ : ∀ {Δ} Δ₁ Δ₂ {Γ₁ Γ₁' Γ₂ : RegisterAssignment} {i a} {i₁ i₂ a'} →
+                  Δ ⊢ i of a instantiation →
+                  Δ₁ ++ Δ₂ ++ a ∷ Δ ⊢ i₁ of a' instantiation →
+                  a' ∷ Δ₁ ++ Δ₂ ++ a ∷ Δ ⊢ Γ₁ Valid →
+                  i₁ ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ i₂ →
+                  Γ₁ ⟦ i / length (a' ∷ Δ₁ ++ Δ₂) ⟧≡ Γ₁' →
+                  Γ₁ ⟦ i₁ / 0 ⟧≡ Γ₂ →
+                  ∃ λ Γ₂' →
+                    Γ₂  ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ Γ₂' ×
+                    Γ₁' ⟦ i₂ / 0 ⟧≡ Γ₂'
+subst-helper₂ Δ₂ i⋆ i₁⋆ sub-i sub-Γ₁ sub-Γ = {!!}
+
+subst-helper₃ : ∀ {Δ Δ₁} Δ₂ {Γ₁ Γ₁' Γ₂ : RegisterAssignment} {i a} {is is'} →
+                  Δ ⊢ i of a instantiation →
+                  Δ₂ ++ a ∷ Δ ⊢ is of Δ₁ instantiations →
+                  Δ₁ ++ Δ₂ ++ a ∷ Δ ⊢ Γ₁ Valid →
+                  is ⟦ i / length Δ₂ ⟧≡ is' →
+                  Γ₁ ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ Γ₁' →
+                  Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+                  ∃ λ Γ₂' →
+                    Γ₂  ⟦ i / length Δ₂ ⟧≡ Γ₂' ×
+                    Γ₁' ⟦ is' / 0 ⟧many≡ Γ₂'
+subst-helper₃ Δ₂ i⋆ [] Γ₁⋆ [] sub-Γ₁ [] = _ , sub-Γ₁ , []
+subst-helper₃ {Δ} {a' ∷ Δ₁} Δ₂ i⋆ (i₁⋆ ∷ is⋆) Γ₁⋆ (sub-i ∷ sub-is) sub-Γ₁ (sub-Γ ∷ subs-Γ)
+  rewrite instantiations-length is⋆
+        | sym (List-length-++ Δ₁ {Δ₂})
+  with subst-helper₂ Δ₁ Δ₂ i⋆ i₁⋆ Γ₁⋆ sub-i sub-Γ₁ sub-Γ
+... | Γ₂' , sub-Γ₂ , sub-Γ'
+  with subst-helper₃ Δ₂ i⋆ is⋆ (valid-subst {{RegisterAssignment-TypeSubstitution}}  [] i₁⋆ Γ₁⋆ sub-Γ) sub-is sub-Γ₂ subs-Γ
+... | Γₑ , sub-Γₑ , subs-Γ' = Γₑ , sub-Γₑ , sub-Γ' ∷ subs-Γ'
+
 subst-helper : ∀ {Δ Δᵢ} Δₒ {Γᵢ Γᵢ' Γₒ Γₒ' : RegisterAssignment} {i a is is'} →
                  Δ ⊢ i of a instantiation →
                  Δₒ ++ a ∷ Δ ⊢ is of Δᵢ instantiations →
@@ -111,8 +141,10 @@ subst-helper : ∀ {Δ Δᵢ} Δₒ {Γᵢ Γᵢ' Γₒ Γₒ' : RegisterAssignm
                  Γᵢ ⟦ i / length Δᵢ ⟧≡ Γᵢ' →
                  weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ is / 0 ⟧many≡ Γₒ →
                  weaken (length Δᵢ) (length Δₒ) Γᵢ' ⟦ is' / 0 ⟧many≡ Γₒ'
-subst-helper Δₒ i⋆ [] Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ = subst-helper Δₒ i⋆ [] Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ
-subst-helper Δₒ i⋆ (x ∷ is⋆) Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ = subst-helper Δₒ i⋆ (x ∷ is⋆) Γᵢ⋆ sub-is Γₒ₁ Γᵢ₁ subs-Γ
+subst-helper {Δ} {Δᵢ} Δₒ {a = a} i⋆ is⋆ Γᵢ⋆ sub-is sub-Γₒ sub-Γᵢ subs-Γ
+  with subst-helper₃ Δₒ i⋆ is⋆ (valid-weaken Δᵢ Δₒ (a ∷ Δ) Γᵢ⋆) sub-is (weaken-subst Δᵢ Δₒ Δ i⋆ Γᵢ⋆ sub-Γᵢ) subs-Γ
+... | Γₒ' , sub-Γₒ' , subs-Γ'
+  rewrite subst-unique sub-Γₒ sub-Γₒ' = subs-Γ'
 
 vval-subst : ∀ {ψ₁ a Δ i Γ Γ' v v' τ τ'} →
                [] ⊢ ψ₁ Valid →
@@ -223,57 +255,3 @@ heap-length (of-heap τs⋆) = AllZip-length τs⋆
             τ ≡ ∀[ Δ' ] Γ ×
             Δ' ++ Δ ⊢ Γ' ≤ Γ
 ≤∀⇒≡∀ (∀-≤ Γ'≤Γ) = _ , refl , Γ'≤Γ
-
--- wval-strict : ∀ {ψ₁ ψ₂ w τ} →
---                 ψ₁ , ψ₂ ⊢ w of τ wval →
---                 ∃ λ τᵣ →
---                   ψ₁ , ψ₂ ⊢ w of τᵣ wval ×
---                   (∀ {τ} → ψ₁ , ψ₂ ⊢ w of τ wval → [] ⊢ τᵣ ≤ τ)
--- wval-strict {ψ₁} {ψ₂} {globval ♯l} {τ} (of-globval {τ₁ = τᵣ} l τᵣ≤τ) = τᵣ , of-globval l (≤-refl (proj₁ (≤-valid τᵣ≤τ))) , help
---   where help : ∀ {τ} →
---                   ψ₁ , ψ₂ ⊢ globval ♯l of τ wval →
---                   [] ⊢ τᵣ ≤ τ
---         help (of-globval l' τᵣ≤τ')
---           rewrite ↓-unique l' l = τᵣ≤τ'
--- wval-strict {ψ₁} {ψ₂} {heapval ♯l} {τ} (of-heapval {τ₁ = τᵣ} l τᵣ≤τ) = τᵣ , of-heapval l (≤-refl (proj₁ (≤-valid τᵣ≤τ))) , help
---   where help : ∀ {τ} →
---                   ψ₁ , ψ₂ ⊢ heapval ♯l of τ wval →
---                   [] ⊢ τᵣ ≤ τ
---         help (of-heapval l' τᵣ≤τ')
---           rewrite ↓-unique l' l = τᵣ≤τ'
--- wval-strict {ψ₁} {ψ₂} {int i} of-int = int , of-int , help
---   where help : ∀ {τ} →
---                  ψ₁ , ψ₂ ⊢ int i of τ wval →
---                  [] ⊢ int ≤ τ
---         help of-int = int-≤
--- wval-strict {ψ₁} {ψ₂} {ns} of-ns = ns , of-ns , help
---   where help : ∀ {τ} →
---                  ψ₁ , ψ₂ ⊢ ns of τ wval →
---                  [] ⊢ ns ≤ τ
---         help of-ns = ns-≤
--- wval-strict {ψ₁} {ψ₂} {Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ} (of-Λ {Δ₁ = Δ₁} .{Δ₂} w⋆ is⋆ subs-Γ)
---   with wval-strict w⋆
--- ... | τᵣ , τᵣ⋆ , func
---   with func w⋆
--- ... | τᵣ≤∀
---   with ≤∀⇒≡∀ τᵣ≤∀
--- ... | Γᵢᵣ , eq , Γ≤Γᵢᵣ
---   rewrite eq
---         | List-++-right-identity Δ₁
---   with valid-++ {Δ' = Δ₂} (proj₂ (≤-valid Γ≤Γᵢᵣ))
--- ... | Γᵢᵣ⋆
---   with valid-subst-exists-many [] is⋆ (subst₂ _⊢_Valid refl (sym (weaken-outside-ctx-0 (length Δ₂) (proj₂ (≤-valid Γ≤Γᵢᵣ)))) Γᵢᵣ⋆)
--- ... | Γₒᵣ , subs-Γᵣ , Γᵣ⋆
---   = ∀[ Δ₂ ] Γₒᵣ , of-Λ τᵣ⋆ is⋆ subs-Γᵣ , help
---     where help : ∀ {τ} →
---                     ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of τ wval →
---                     [] ⊢ ∀[ Δ₂ ] Γₒᵣ ≤ τ
---           help (of-Λ {Γ₁ = Γ₁} {Γ₂} w⋆' is⋆ subs-Γ)
---             with func w⋆'
---           ... | ∀-≤ Γ₁≤Γᵢᵣ
---             with subtype-weaken Δ₁ Δ₂ [] Γ₁≤Γᵢᵣ
---           ... | Γ₁'≤Γᵢᵣ'
---             rewrite List-++-right-identity Δ₂
---             with subtype-subst-many {{RegisterAssignment-SubtypeSubstitution}} [] is⋆ Γ₁'≤Γᵢᵣ' subs-Γ subs-Γᵣ
---           ... | Γ₂≤Γₒᵣ
---             = ∀-≤ (≤-++ Γ₂≤Γₒᵣ)

@@ -42,6 +42,13 @@ record TypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
         ∃ λ v →
           v ⟦ i / length Δ₁ ⟧≡ v' ×
           Δ₁ ++ a ∷ Δ₂ ⊢ v Valid
+    weaken-subst :
+      ∀ Δ₁ Δ₂ Δ₃ {i a} →
+        Δ₃ ⊢ i of a instantiation →
+        {v₁ v₂ : A} →
+        Δ₁ ++ a ∷ Δ₃ ⊢ v₁ Valid →
+        v₁ ⟦ i / length Δ₁ ⟧≡ v₂ →
+        weaken (length Δ₁) (length Δ₂) v₁ ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ weaken (length Δ₁) (length Δ₂) v₂
 
   weaken-outside-ctx-0 :
     ∀ {Δ} inc {v : A} →
@@ -106,6 +113,22 @@ record TypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
 open TypeSubstitution {{...}} public
 
 private
+  -- mutual
+  --   subst-substᵗ : ∀ A {{_ : Substitution A}}
+  --                       {{_ : TypeLike A}} → Set
+  --   subst-substᵗ A = ∀ {Δ} {a₁ a₂} Δ₁ Δ₂ {v₁ v₂ v₁' : A} {i₁ i₁' i₂} →
+  --                      Δ₁ ++ a₂ ∷ Δ₂ ⊢ i₁ of a₁ instantiation →
+  --                      Δ₂ ⊢ i₂ of a₂ instantiation →
+  --                      i₁ ⟦ i₂ / length Δ₁ ⟧≡ i₁' →
+  --                      v₁ ⟦ i₂ / length (Δ ++ a₁ ∷ Δ₁) ⟧≡ v₁' →
+  --                      v₁ ⟦ i₁ / length Δ ⟧≡ v₂ →
+  --                      ∃ λ v₂' →
+  --                        v₂  ⟦ i₂ / length (Δ ++ Δ₁) ⟧≡ v₂' ×
+  --                        v₁' ⟦ i₁ / length Δ ⟧≡ v₂'
+
+  --   τ-subst-subst : subst-substᵗ Type
+  --   τ-subst-subst Δ₁ Δ₂ i₁⋆ i₂⋆ v⋆
+
   mutual
     valid-weakenᵗ : ∀ A {{_ : Substitution A}}
                         {{_ : TypeLike A}} → Set
@@ -392,6 +415,7 @@ private
     i-subst-outside-ctx : subst-outside-ctxᵗ Instantiation
     i-subst-outside-ctx (valid-α τ⋆) = subst-α (τ-subst-outside-ctx τ⋆)
     i-subst-outside-ctx (valid-ρ σ⋆) = subst-ρ (σ-subst-outside-ctx σ⋆)
+
   mutual
     valid-pre-existsᵗ : ∀ A {{_ : Substitution A}}
                             {{_ : TypeLike A}} → Set
@@ -490,119 +514,265 @@ private
     i-valid-pre-exists Δ₁ i⋆ (valid-α τ'⋆) = Σ-map α (Σ-map subst-α valid-α) (τ-valid-pre-exists Δ₁ i⋆ τ'⋆)
     i-valid-pre-exists Δ₁ i⋆ (valid-ρ σ'⋆) = Σ-map ρ (Σ-map subst-ρ valid-ρ) (σ-valid-pre-exists Δ₁ i⋆ σ'⋆)
 
-Vec-TypeSubstitution :
-  ∀ A {S S⁺ T} {{TS : TypeSubstitution A {S} {{S⁺}} {{T}}}} n →
-    TypeSubstitution (Vec A n) {{Vec-Substitution⁺ A n}} {{Vec-TypeLike A n}}
-Vec-TypeSubstitution A {S} {S⁺} {T} {{TS}} n =
-    typeSubstitution xs-valid-weaken xs-weaken-outside-ctx xs-valid-subst-exists xs-subst-outside-ctx xs-pre-exists
-  where xs-valid-weaken :
-          ∀ {n} (Δ₁ Δ₂ Δ₃ : TypeAssumptions) {xs : Vec A n} →
-            _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ Δ₃) xs →
-            _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ Δ₂ ++ Δ₃)
-              (weaken {{Vec-Substitution A n}} (length Δ₁) (length Δ₂) xs)
-        xs-valid-weaken Δ₁ Δ₂ Δ₃ [] = []
-        xs-valid-weaken Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) =
-          valid-weaken {{TS}} Δ₁ Δ₂ Δ₃ x⋆ ∷ xs-valid-weaken Δ₁ Δ₂ Δ₃ xs⋆
+  mutual
+    weaken-substᵗ : ∀ A {{S : Substitution A}}
+                        {{_ : TypeLike A}} → Set
+    weaken-substᵗ A = ∀ Δ₁ Δ₂ Δ₃ {i a} →
+                        Δ₃ ⊢ i of a instantiation →
+                        {v₁ v₂ : A} →
+                        Δ₁ ++ a ∷ Δ₃ ⊢ v₁ Valid →
+                        v₁ ⟦ i / length Δ₁ ⟧≡ v₂ →
+                        weaken (length Δ₁) (length Δ₂) v₁ ⟦ i / length (Δ₁ ++ Δ₂) ⟧≡ weaken (length Δ₁) (length Δ₂) v₂
 
-        xs-weaken-outside-ctx : ∀ {n} → weaken-outside-ctxᵗ (Vec A n) {{Vec-Substitution A n}} {{Vec-TypeLike A n}}
-        xs-weaken-outside-ctx ι inc [] = refl
-        xs-weaken-outside-ctx ι inc (x⋆ ∷ xs⋆) = cong₂ _∷_ (weaken-outside-ctx {{TS}} ι inc x⋆) (xs-weaken-outside-ctx ι inc xs⋆)
+    >-help₁ : ∀ (Δ₁ Δ₂ : TypeAssumptions) {ι} →
+                ι > length Δ₁ →
+                length Δ₂ + ι > length (Δ₁ ++ Δ₂)
+    >-help₁ Δ₁ Δ₂ ι>len
+      rewrite List-length-++ Δ₁ {Δ₂}
+            | +-comm (suc (length Δ₁)) (length Δ₂) = l+m≤l+n (length Δ₂) ι>len
 
-        xs-valid-subst-exists :
-          ∀ {n} Δ₁ {Δ₂ a i} →
-            Δ₂ ⊢ i of a instantiation →
-            {xs : Vec A n} →
-            _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ a ∷ Δ₂) xs →
-            ∃ λ xs' →
-              _⟦_/_⟧≡_ {{Vec-Substitution A n}} xs i (length Δ₁) xs' ×
-              _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ Δ₂) xs'
-        xs-valid-subst-exists Δ₁ i⋆ [] = [] , [] , []
-        xs-valid-subst-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
-          Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-subst-exists {{TS}} Δ₁ i⋆ x⋆) (xs-valid-subst-exists Δ₁ i⋆ xs⋆)
+    <-help₁ : ∀ (Δ₁ Δ₂ : TypeAssumptions) {ι} →
+                ι < length Δ₁ →
+                length Δ₂ + ι < length (Δ₁ ++ Δ₂)
+    <-help₁ [] Δ₂ ()
+    <-help₁ (a ∷ Δ₁) Δ₂ (s≤s ι<len)
+      rewrite List-length-++ (a ∷ Δ₁) {Δ₂}
+            | +-comm (length Δ₁) (length Δ₂) = s≤s (l+m≤l+n (length Δ₂) ι<len)
 
-        xs-subst-outside-ctx :
-          ∀ {Δ i ι n} {xs : Vec A n} →
-            _⊢_Valid {{Vec-TypeLike A n}} Δ xs →
-            _⟦_/_⟧≡_ {{Vec-Substitution A n}} xs i (length Δ + ι) xs
-        xs-subst-outside-ctx [] = []
-        xs-subst-outside-ctx (x⋆ ∷ xs⋆) = subst-outside-ctx {{TS}} x⋆ ∷ xs-subst-outside-ctx xs⋆
+    pred-helper : ∀ a b {n} → b > n → pred (a + b) ≡ a + pred b
+    pred-helper a (suc b) (s≤s b>n)
+      rewrite +-comm a (suc b)
+            | +-comm b a = refl
 
-        xs-pre-exists : ∀ {n} → valid-pre-existsᵗ (Vec A n) {{Vec-Substitution A n}} {{Vec-TypeLike A n}}
-        xs-pre-exists Δ₁ i⋆ [] = [] , [] , []
-        xs-pre-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
-          Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-pre-exists Δ₁ i⋆ x⋆) (xs-pre-exists Δ₁ i⋆ xs⋆)
+    τ-weaken-subst : weaken-substᵗ Type
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ {i} i⋆ {α⁼ ι} (valid-α⁼ l) (subst-α-> ι>len)
+      with length Δ₁ ≤? ι | length Δ₁ ≤? pred ι
+    ... | no len≰ι | _
+      with len≰ι (NP.≤pred⇒≤ (length Δ₁) ι (NP.<⇒≤pred ι>len))
+    ... | ()
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ {i} i⋆ {α⁼ ι} (valid-α⁼ l) (subst-α-> ι>len)
+        | _ | no len≰ι'
+      with len≰ι' (NP.<⇒≤pred ι>len)
+    ... | ()
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ {i} i⋆ {α⁼ ι} (valid-α⁼ l) (subst-α-> ι>len)
+        | yes len≤ι | yes len≤ι'
+      with subst-α-> {length Δ₂ + ι} {length (Δ₁ ++ Δ₂)} {i} (>-help₁ Δ₁ Δ₂ ι>len)
+    ... | sub-τ'
+      rewrite pred-helper (length Δ₂) ι ι>len
+        = sub-τ'
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ {α τ} i⋆ (valid-α⁼ l) subst-α-≡
+      rewrite weaken-combine 0 (length Δ₁) (length Δ₂) τ
+            | sym (List-length-++ Δ₁ {Δ₂})
+      with length Δ₁ ≤? length Δ₁
+    ... | yes len≤len
+      rewrite +-comm (length Δ₂) (length Δ₁)
+            | List-length-++ Δ₁ {Δ₂} = subst-α-≡
+    ... | no len≰len
+      with len≰len (NP.n≤m+n 0 (length Δ₁))
+    ... | ()
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ {α⁼ ι} (valid-α⁼ l) (subst-α-< ι<len)
+      with length Δ₁ ≤? ι
+    ... | no len≰ι
+      rewrite List-length-++ Δ₁ {Δ₂} = subst-α-< (Nat-≤-trans ι<len (NP.m≤m+n (length Δ₁) (length Δ₂)))
+    ... | yes len≤ι
+      with NP.1+n≰n (Nat-≤-trans ι<len len≤ι)
+    ... | ()
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ valid-int subst-int = subst-int
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ valid-ns subst-ns = subst-ns
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ {a = a} i⋆ {∀[ Δ ] Γ} (valid-∀ Γ⋆) (subst-∀ sub-Γ)
+      rewrite sym (List-length-++ Δ {Δ₁})
+            | sym (List-++-assoc Δ Δ₁ (a ∷ Δ₃))
+      with Γ-weaken-subst (Δ ++ Δ₁) Δ₂ Δ₃ i⋆ Γ⋆ sub-Γ
+    ... | sub-Γ'
+      rewrite List-++-assoc Δ Δ₁ Δ₂
+            | List-length-++ Δ {Δ₁ ++ Δ₂} = subst-∀ sub-Γ'
+    τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (valid-tuple τs⁻⋆) (subst-tuple sub-τs⁻)
+      = subst-tuple (τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τs⁻⋆ sub-τs⁻)
 
-List-TypeSubstitution :
-  ∀ A {S S⁺ T} {{TS : TypeSubstitution A {S} {{S⁺}} {{T}}}} →
-    TypeSubstitution (List A) {{List-Substitution⁺ A}} {{List-TypeLike A}}
-List-TypeSubstitution A {S} {S⁺} {T} {{TS}} =
-    typeSubstitution xs-valid-weaken xs-weaken-outside-ctx xs-valid-subst-exists xs-subst-outside-ctx xs-pre-exists
-  where xs-valid-weaken :
-          ∀ (Δ₁ Δ₂ Δ₃ : TypeAssumptions) {xs : List A} →
-            _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₃) xs →
-            _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₂ ++ Δ₃)
-              (weaken {{List-Substitution A}} (length Δ₁) (length Δ₂) xs)
-        xs-valid-weaken Δ₁ Δ₂ Δ₃ [] = []
-        xs-valid-weaken Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) =
-          valid-weaken {{TS}} Δ₁ Δ₂ Δ₃ x⋆ ∷ xs-valid-weaken Δ₁ Δ₂ Δ₃ xs⋆
+    τ⁻-weaken-subst : weaken-substᵗ InitType
+    τ⁻-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (valid-τ⁻ τ⋆) (subst-τ⁻ sub-τ)
+      = subst-τ⁻ (τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τ⋆ sub-τ)
 
-        xs-weaken-outside-ctx : weaken-outside-ctxᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
-        xs-weaken-outside-ctx ι inc [] = refl
-        xs-weaken-outside-ctx ι inc (x⋆ ∷ xs⋆) = cong₂ _∷_ (weaken-outside-ctx {{TS}} ι inc x⋆) (xs-weaken-outside-ctx ι inc xs⋆)
+    τs⁻-weaken-subst : weaken-substᵗ (List InitType)
+    τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ [] [] = []
+    τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (τ⁻⋆ ∷ τs⁻⋆) (sub-τ⁻ ∷ sub-τs⁻)
+      = τ⁻-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τ⁻⋆ sub-τ⁻ ∷ τs⁻-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τs⁻⋆ sub-τs⁻
 
-        xs-valid-subst-exists :
-          ∀ Δ₁ {Δ₂ a i} →
-            Δ₂ ⊢ i of a instantiation →
-            {xs : List A} →
-            _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ a ∷ Δ₂) xs →
-            ∃ λ xs' →
-              _⟦_/_⟧≡_ {{List-Substitution A}} xs i (length Δ₁) xs' ×
-              _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₂) xs'
-        xs-valid-subst-exists Δ₁ i⋆ [] = [] , [] , []
-        xs-valid-subst-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
-          Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-subst-exists {{TS}} Δ₁ i⋆ x⋆) (xs-valid-subst-exists Δ₁ i⋆ xs⋆)
+    σ-weaken-subst : weaken-substᵗ StackType
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ {i} i⋆ {ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-> ι>len)
+      with length Δ₁ ≤? ι | length Δ₁ ≤? pred ι
+    ... | no len≰ι | _
+      with len≰ι (NP.≤pred⇒≤ (length Δ₁) ι (NP.<⇒≤pred ι>len))
+    ... | ()
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ {i} i⋆ {ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-> ι>len)
+        | _ | no len≰ι'
+      with len≰ι' (NP.<⇒≤pred ι>len)
+    ... | ()
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ {i} i⋆ {ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-> ι>len)
+        | yes len≤ι | yes len≤ι'
+      with subst-ρ-> {length Δ₂ + ι} {length (Δ₁ ++ Δ₂)} {i} (>-help₁ Δ₁ Δ₂ ι>len)
+    ... | sub-σ'
+      rewrite pred-helper (length Δ₂) ι ι>len
+        = sub-σ'
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ {ρ σ} i⋆ (valid-ρ⁼ l) subst-ρ-≡
+      rewrite weaken-combine 0 (length Δ₁) (length Δ₂) σ
+            | sym (List-length-++ Δ₁ {Δ₂})
+      with length Δ₁ ≤? length Δ₁
+    ... | yes len≤len
+      rewrite +-comm (length Δ₂) (length Δ₁)
+            | List-length-++ Δ₁ {Δ₂} = subst-ρ-≡
+    ... | no len≰len
+      with len≰len (NP.n≤m+n 0 (length Δ₁))
+    ... | ()
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ {ρ⁼ ι} (valid-ρ⁼ l) (subst-ρ-< ι<len)
+      with length Δ₁ ≤? ι
+    ... | no len≰ι
+      rewrite List-length-++ Δ₁ {Δ₂} = subst-ρ-< (Nat-≤-trans ι<len (NP.m≤m+n (length Δ₁) (length Δ₂)))
+    ... | yes len≤ι
+      with NP.1+n≰n (Nat-≤-trans ι<len len≤ι)
+    ... | ()
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ [] [] = []
+    σ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (τ⋆ ∷ τs⋆) (sub-τ ∷ sub-τs)
+      = τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τ⋆ sub-τ ∷ σ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τs⋆ sub-τs
 
-        xs-subst-outside-ctx :
-          ∀ {Δ i ι} {xs : List A} →
-            _⊢_Valid {{List-TypeLike A}} Δ xs →
-            _⟦_/_⟧≡_ {{List-Substitution A}} xs i (length Δ + ι) xs
-        xs-subst-outside-ctx [] = []
-        xs-subst-outside-ctx (x⋆ ∷ xs⋆) = subst-outside-ctx {{TS}} x⋆ ∷ xs-subst-outside-ctx xs⋆
+    Γ-weaken-subst : weaken-substᵗ RegisterAssignment
+    Γ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (valid-registerₐ sp⋆ regs⋆) (subst-registerₐ sub-sp sub-regs)
+      = subst-registerₐ (σ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ sp⋆ sub-sp) (regs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ regs⋆ sub-regs)
 
-        xs-pre-exists : valid-pre-existsᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
-        xs-pre-exists Δ₁ i⋆ [] = [] , [] , []
-        xs-pre-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
-          Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-pre-exists Δ₁ i⋆ x⋆) (xs-pre-exists Δ₁ i⋆ xs⋆)
+    regs-weaken-subst : ∀ {n} → weaken-substᵗ (Vec Type n)
+    regs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ [] [] = []
+    regs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (τ⋆ ∷ τs⋆) (sub-τ ∷ sub-τs)
+      = τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τ⋆ sub-τ ∷ regs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τs⋆ sub-τs
 
-instance
-  Type-TypeSubstitution : TypeSubstitution Type
-  Type-TypeSubstitution =
-    typeSubstitution τ-valid-weaken τ-weaken-outside-ctx τ-valid-subst-exists  τ-subst-outside-ctx τ-valid-pre-exists
+    i-weaken-subst : weaken-substᵗ Instantiation
+    i-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (valid-α τ⋆) (subst-α sub-τ) =
+      subst-α (τ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ τ⋆ sub-τ)
+    i-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (valid-ρ σ⋆) (subst-ρ sub-σ) =
+      subst-ρ (σ-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ σ⋆ sub-σ)
 
-  TypeVec-TypeSubstitution : ∀ {m} → TypeSubstitution (Vec Type m)
-  TypeVec-TypeSubstitution = typeSubstitution regs-valid-weaken regs-weaken-outside-ctx regs-valid-subst-exists regs-subst-outside-ctx regs-valid-pre-exists
+-- Vec-TypeSubstitution :
+--   ∀ A {S S⁺ T} {{TS : TypeSubstitution A {S} {{S⁺}} {{T}}}} n →
+--     TypeSubstitution (Vec A n) {{Vec-Substitution⁺ A n}} {{Vec-TypeLike A n}}
+-- Vec-TypeSubstitution A {S} {S⁺} {T} {{TS}} n =
+--     typeSubstitution xs-valid-weaken xs-weaken-outside-ctx xs-valid-subst-exists xs-subst-outside-ctx xs-pre-exists xs-weaken-subst
+--   where xs-valid-weaken :
+--           ∀ {n} (Δ₁ Δ₂ Δ₃ : TypeAssumptions) {xs : Vec A n} →
+--             _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ Δ₃) xs →
+--             _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ Δ₂ ++ Δ₃)
+--               (weaken {{Vec-Substitution A n}} (length Δ₁) (length Δ₂) xs)
+--         xs-valid-weaken Δ₁ Δ₂ Δ₃ [] = []
+--         xs-valid-weaken Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) =
+--           valid-weaken {{TS}} Δ₁ Δ₂ Δ₃ x⋆ ∷ xs-valid-weaken Δ₁ Δ₂ Δ₃ xs⋆
 
-  TypeList-TypeSubstitution : TypeSubstitution (List Type)
-  TypeList-TypeSubstitution = List-TypeSubstitution Type
+--         xs-weaken-outside-ctx : ∀ {n} → weaken-outside-ctxᵗ (Vec A n) {{Vec-Substitution A n}} {{Vec-TypeLike A n}}
+--         xs-weaken-outside-ctx ι inc [] = refl
+--         xs-weaken-outside-ctx ι inc (x⋆ ∷ xs⋆) = cong₂ _∷_ (weaken-outside-ctx {{TS}} ι inc x⋆) (xs-weaken-outside-ctx ι inc xs⋆)
 
-  InitType-TypeSubstitution : TypeSubstitution InitType
-  InitType-TypeSubstitution = typeSubstitution
-    τ⁻-valid-weaken τ⁻-weaken-outside-ctx τ⁻-valid-subst-exists τ⁻-subst-outside-ctx τ⁻-valid-pre-exists
+--         xs-valid-subst-exists :
+--           ∀ {n} Δ₁ {Δ₂ a i} →
+--             Δ₂ ⊢ i of a instantiation →
+--             {xs : Vec A n} →
+--             _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ a ∷ Δ₂) xs →
+--             ∃ λ xs' →
+--               _⟦_/_⟧≡_ {{Vec-Substitution A n}} xs i (length Δ₁) xs' ×
+--               _⊢_Valid {{Vec-TypeLike A n}} (Δ₁ ++ Δ₂) xs'
+--         xs-valid-subst-exists Δ₁ i⋆ [] = [] , [] , []
+--         xs-valid-subst-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
+--           Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-subst-exists {{TS}} Δ₁ i⋆ x⋆) (xs-valid-subst-exists Δ₁ i⋆ xs⋆)
 
-  InitTypeVec-TypeSubstitution : ∀ {m} → TypeSubstitution (Vec InitType m)
-  InitTypeVec-TypeSubstitution = Vec-TypeSubstitution InitType _
+--         xs-subst-outside-ctx :
+--           ∀ {Δ i ι n} {xs : Vec A n} →
+--             _⊢_Valid {{Vec-TypeLike A n}} Δ xs →
+--             _⟦_/_⟧≡_ {{Vec-Substitution A n}} xs i (length Δ + ι) xs
+--         xs-subst-outside-ctx [] = []
+--         xs-subst-outside-ctx (x⋆ ∷ xs⋆) = subst-outside-ctx {{TS}} x⋆ ∷ xs-subst-outside-ctx xs⋆
 
-  InitTypeList-TypeSubstitution : TypeSubstitution (List InitType)
-  InitTypeList-TypeSubstitution = typeSubstitution τs⁻-valid-weaken τs⁻-weaken-outside-ctx τs⁻-valid-subst-exists τs⁻-subst-outside-ctx τs⁻-valid-pre-exists
+--         xs-pre-exists : ∀ {n} → valid-pre-existsᵗ (Vec A n) {{Vec-Substitution A n}} {{Vec-TypeLike A n}}
+--         xs-pre-exists Δ₁ i⋆ [] = [] , [] , []
+--         xs-pre-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
+--           Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-pre-exists Δ₁ i⋆ x⋆) (xs-pre-exists Δ₁ i⋆ xs⋆)
 
-  StackType-TypeSubstitution : TypeSubstitution StackType
-  StackType-TypeSubstitution = typeSubstitution
-    σ-valid-weaken σ-weaken-outside-ctx σ-valid-subst-exists σ-subst-outside-ctx σ-valid-pre-exists
+--         xs-weaken-subst : ∀ {n} → weaken-substᵗ (Vec A n) {{Vec-Substitution A n}} {{Vec-TypeLike A n}}
+--         xs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ [] [] = []
+--         xs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (x⋆ ∷ xs⋆) (sub-x ∷ sub-xs)
+--           = weaken-subst Δ₁ Δ₂ Δ₃ i⋆ x⋆ sub-x ∷ xs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ xs⋆ sub-xs
 
-  RegisterAssignment-TypeSubstitution : TypeSubstitution RegisterAssignment
-  RegisterAssignment-TypeSubstitution = typeSubstitution
-    Γ-valid-weaken Γ-weaken-outside-ctx Γ-valid-subst-exists Γ-subst-outside-ctx Γ-valid-pre-exists
+-- List-TypeSubstitution :
+--   ∀ A {S S⁺ T} {{TS : TypeSubstitution A {S} {{S⁺}} {{T}}}} →
+--     TypeSubstitution (List A) {{List-Substitution⁺ A}} {{List-TypeLike A}}
+-- List-TypeSubstitution A {S} {S⁺} {T} {{TS}} =
+--     typeSubstitution xs-valid-weaken xs-weaken-outside-ctx xs-valid-subst-exists xs-subst-outside-ctx xs-pre-exists xs-weaken-subst
+--   where xs-valid-weaken :
+--           ∀ (Δ₁ Δ₂ Δ₃ : TypeAssumptions) {xs : List A} →
+--             _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₃) xs →
+--             _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₂ ++ Δ₃)
+--               (weaken {{List-Substitution A}} (length Δ₁) (length Δ₂) xs)
+--         xs-valid-weaken Δ₁ Δ₂ Δ₃ [] = []
+--         xs-valid-weaken Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) =
+--           valid-weaken {{TS}} Δ₁ Δ₂ Δ₃ x⋆ ∷ xs-valid-weaken Δ₁ Δ₂ Δ₃ xs⋆
 
-  Instantiation-TypeSubstitution : TypeSubstitution Instantiation
-  Instantiation-TypeSubstitution = typeSubstitution
-    i-valid-weaken i-weaken-outside-ctx i-valid-subst-exists i-subst-outside-ctx i-valid-pre-exists
+--         xs-weaken-outside-ctx : weaken-outside-ctxᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
+--         xs-weaken-outside-ctx ι inc [] = refl
+--         xs-weaken-outside-ctx ι inc (x⋆ ∷ xs⋆) = cong₂ _∷_ (weaken-outside-ctx {{TS}} ι inc x⋆) (xs-weaken-outside-ctx ι inc xs⋆)
+
+--         xs-valid-subst-exists :
+--           ∀ Δ₁ {Δ₂ a i} →
+--             Δ₂ ⊢ i of a instantiation →
+--             {xs : List A} →
+--             _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ a ∷ Δ₂) xs →
+--             ∃ λ xs' →
+--               _⟦_/_⟧≡_ {{List-Substitution A}} xs i (length Δ₁) xs' ×
+--               _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₂) xs'
+--         xs-valid-subst-exists Δ₁ i⋆ [] = [] , [] , []
+--         xs-valid-subst-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
+--           Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-subst-exists {{TS}} Δ₁ i⋆ x⋆) (xs-valid-subst-exists Δ₁ i⋆ xs⋆)
+
+--         xs-subst-outside-ctx :
+--           ∀ {Δ i ι} {xs : List A} →
+--             _⊢_Valid {{List-TypeLike A}} Δ xs →
+--             _⟦_/_⟧≡_ {{List-Substitution A}} xs i (length Δ + ι) xs
+--         xs-subst-outside-ctx [] = []
+--         xs-subst-outside-ctx (x⋆ ∷ xs⋆) = subst-outside-ctx {{TS}} x⋆ ∷ xs-subst-outside-ctx xs⋆
+
+--         xs-pre-exists : valid-pre-existsᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
+--         xs-pre-exists Δ₁ i⋆ [] = [] , [] , []
+--         xs-pre-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
+--           Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-pre-exists Δ₁ i⋆ x⋆) (xs-pre-exists Δ₁ i⋆ xs⋆)
+
+--         xs-weaken-subst : weaken-substᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
+--         xs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ [] [] = []
+--         xs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ (x⋆ ∷ xs⋆) (sub-x ∷ sub-xs)
+--           = weaken-subst Δ₁ Δ₂ Δ₃ i⋆ x⋆ sub-x ∷ xs-weaken-subst Δ₁ Δ₂ Δ₃ i⋆ xs⋆ sub-xs
+
+-- instance
+--   Type-TypeSubstitution : TypeSubstitution Type
+--   Type-TypeSubstitution =
+--     typeSubstitution τ-valid-weaken τ-weaken-outside-ctx τ-valid-subst-exists  τ-subst-outside-ctx τ-valid-pre-exists τ-weaken-subst
+
+--   TypeVec-TypeSubstitution : ∀ {m} → TypeSubstitution (Vec Type m)
+--   TypeVec-TypeSubstitution = typeSubstitution regs-valid-weaken regs-weaken-outside-ctx regs-valid-subst-exists regs-subst-outside-ctx regs-valid-pre-exists regs-weaken-subst
+
+--   TypeList-TypeSubstitution : TypeSubstitution (List Type)
+--   TypeList-TypeSubstitution = List-TypeSubstitution Type
+
+--   InitType-TypeSubstitution : TypeSubstitution InitType
+--   InitType-TypeSubstitution = typeSubstitution
+--     τ⁻-valid-weaken τ⁻-weaken-outside-ctx τ⁻-valid-subst-exists τ⁻-subst-outside-ctx τ⁻-valid-pre-exists τ⁻-weaken-subst
+
+--   InitTypeVec-TypeSubstitution : ∀ {m} → TypeSubstitution (Vec InitType m)
+--   InitTypeVec-TypeSubstitution = Vec-TypeSubstitution InitType _
+
+--   InitTypeList-TypeSubstitution : TypeSubstitution (List InitType)
+--   InitTypeList-TypeSubstitution = typeSubstitution τs⁻-valid-weaken τs⁻-weaken-outside-ctx τs⁻-valid-subst-exists τs⁻-subst-outside-ctx τs⁻-valid-pre-exists τs⁻-weaken-subst
+
+--   StackType-TypeSubstitution : TypeSubstitution StackType
+--   StackType-TypeSubstitution = typeSubstitution
+--     σ-valid-weaken σ-weaken-outside-ctx σ-valid-subst-exists σ-subst-outside-ctx σ-valid-pre-exists σ-weaken-subst
+
+--   RegisterAssignment-TypeSubstitution : TypeSubstitution RegisterAssignment
+--   RegisterAssignment-TypeSubstitution = typeSubstitution
+--     Γ-valid-weaken Γ-weaken-outside-ctx Γ-valid-subst-exists Γ-subst-outside-ctx Γ-valid-pre-exists Γ-weaken-subst
+
+--   Instantiation-TypeSubstitution : TypeSubstitution Instantiation
+--   Instantiation-TypeSubstitution = typeSubstitution
+--     i-valid-weaken i-weaken-outside-ctx i-valid-subst-exists i-subst-outside-ctx i-valid-pre-exists i-weaken-subst

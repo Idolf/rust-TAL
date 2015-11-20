@@ -20,6 +20,11 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
     weaken-0 :
       ∀ pos (v : A) →
         weaken pos 0 v ≡ v
+    weaken-combine :
+      ∀ pos inc₁ inc₂ (v : A) →
+        weaken (pos + inc₁) inc₂ (weaken pos inc₁ v) ≡ weaken pos (inc₁ + inc₂) v
+
+
   subst-unique-many : ∀ {v v₁ v₂ : A} {is ι} →
                         v ⟦ is / ι ⟧many≡ v₁ →
                         v ⟦ is / ι ⟧many≡ v₂ →
@@ -264,12 +269,101 @@ private
       rewrite τ-weaken-0 pos τ
             | regs-weaken-0 pos τs = refl
 
+  mutual
+    weaken-combineᵗ : ∀ A {{_ : Substitution A}} → Set
+    weaken-combineᵗ A = ∀ pos inc₁ inc₂ (v : A) →
+                          weaken (pos + inc₁) inc₂ (weaken pos inc₁ v) ≡ weaken pos (inc₁ + inc₂) v
+
+    τ-weaken-combine : weaken-combineᵗ Type
+    τ-weaken-combine pos inc₁ inc₂ (α⁼ ι)
+      with pos ≤? ι
+    ... | yes pos≤ι
+      with (pos + inc₁) ≤? (inc₁ + ι)
+    ... | yes pos+inc₁≤inc₁+ι
+      rewrite +-comm inc₁ inc₂
+            | +-assoc inc₂ inc₁ ι = refl
+    ... | no pos+inc₁≰inc₁+ι
+      rewrite +-comm pos inc₁
+      with pos+inc₁≰inc₁+ι (l+m≤l+n inc₁ pos≤ι)
+    ... | ()
+    τ-weaken-combine pos inc₁ inc₂ (α⁼ ι)
+        | no pos≰ι
+      with pos + inc₁ ≤? ι
+    ... | no pos+inc₁≰ι = refl
+    ... | yes pos+inc₁≤ι
+      with pos≰ι (Nat-≤-trans (NP.m≤m+n pos inc₁) pos+inc₁≤ι)
+    ... | ()
+    τ-weaken-combine pos inc₁ inc₂ int = refl
+    τ-weaken-combine pos inc₁ inc₂ ns = refl
+    τ-weaken-combine pos inc₁ inc₂ (∀[ Δ ] Γ) =
+      begin
+        weaken (pos + inc₁) inc₂ (weaken pos inc₁ (∀[ Δ ] Γ))
+      ≡⟨ refl ⟩
+        weaken (pos + inc₁) inc₂ (∀[ Δ ] (weaken (length Δ + pos) inc₁ Γ))
+      ≡⟨ refl ⟩
+        ∀[ Δ ] (weaken (length Δ + (pos + inc₁)) inc₂ (weaken (length Δ + pos) inc₁ Γ))
+      ⟨ +-assoc (length Δ) pos inc₁ ∥ (λ v → ∀[ Δ ] (weaken v inc₂ (weaken (length Δ + pos) inc₁ Γ))) ⟩≡
+        ∀[ Δ ] (weaken (length Δ + pos + inc₁) inc₂ (weaken (length Δ + pos) inc₁ Γ))
+      ≡⟨ Γ-weaken-combine (length Δ + pos) inc₁ inc₂ Γ ∥ (λ v → ∀[ Δ ] v) ⟩
+        ∀[ Δ ] (weaken (length Δ + pos) (inc₁ + inc₂) Γ)
+      ≡⟨ refl ⟩
+        weaken pos (inc₁ + inc₂) (∀[ Δ ] Γ)
+      ∎ where open Eq-Reasoning
+    τ-weaken-combine pos inc₁ inc₂ (tuple τs⁻)
+      rewrite τs⁻-weaken-combine pos inc₁ inc₂ τs⁻ = refl
+
+    τ⁻-weaken-combine : weaken-combineᵗ InitType
+    τ⁻-weaken-combine pos inc₁ inc₂ (τ , φ)
+      rewrite τ-weaken-combine pos inc₁ inc₂ τ = refl
+
+    τs⁻-weaken-combine : weaken-combineᵗ (List InitType)
+    τs⁻-weaken-combine pos inc₁ inc₂ [] = refl
+    τs⁻-weaken-combine pos inc₁ inc₂ (τ⁻ ∷ τs⁻)
+      rewrite τ⁻-weaken-combine pos inc₁ inc₂ τ⁻
+            | τs⁻-weaken-combine pos inc₁ inc₂ τs⁻ = refl
+
+    σ-weaken-combine : weaken-combineᵗ StackType
+    σ-weaken-combine pos inc₁ inc₂ (ρ⁼ ι)
+      with pos ≤? ι
+    ... | yes pos≤ι
+      with (pos + inc₁) ≤? (inc₁ + ι)
+    ... | yes pos+inc₁≤inc₁+ι
+      rewrite +-comm inc₁ inc₂
+            | +-assoc inc₂ inc₁ ι = refl
+    ... | no pos+inc₁≰inc₁+ι
+      rewrite +-comm pos inc₁
+      with pos+inc₁≰inc₁+ι (l+m≤l+n inc₁ pos≤ι)
+    ... | ()
+    σ-weaken-combine pos inc₁ inc₂ (ρ⁼ ι)
+        | no pos≰ι
+      with pos + inc₁ ≤? ι
+    ... | no pos+inc₁≰ι = refl
+    ... | yes pos+inc₁≤ι
+      with pos≰ι (Nat-≤-trans (NP.m≤m+n pos inc₁) pos+inc₁≤ι)
+    ... | ()
+    σ-weaken-combine pos inc₁ inc₂ [] = refl
+    σ-weaken-combine pos inc₁ inc₂ (τ ∷ τs)
+      rewrite τ-weaken-combine pos inc₁ inc₂ τ
+            | σ-weaken-combine pos inc₁ inc₂ τs = refl
+
+    Γ-weaken-combine : weaken-combineᵗ RegisterAssignment
+    Γ-weaken-combine pos inc₁ inc₂ (registerₐ sp regs)
+      rewrite σ-weaken-combine pos inc₁ inc₂ sp
+            | regs-weaken-combine pos inc₁ inc₂ regs = refl
+
+    regs-weaken-combine : ∀ {n} → weaken-combineᵗ (Vec Type n)
+    regs-weaken-combine pos inc₁ inc₂ [] = refl
+    regs-weaken-combine pos inc₁ inc₂ (τ ∷ τs)
+      rewrite τ-weaken-combine pos inc₁ inc₂ τ
+            | regs-weaken-combine pos inc₁ inc₂ τs = refl
+
 Vec-Substitution⁺ : ∀ A {S} {{S⁺ : Substitution⁺ A {{S}}}} m →
                       Substitution⁺ (Vec A m) {{Vec-Substitution A m}}
 Vec-Substitution⁺ A {S} {{S⁺}} m = substitution⁺
     unique
     dec
     xs-weaken-0
+    xs-weaken-combine
 
   where _⟦_/_⟧xs≡_ : ∀ {m} → Vec A m → Instantiation → ℕ → Vec A m → Set
         xs ⟦ i / ι ⟧xs≡ xs' =
@@ -298,12 +392,18 @@ Vec-Substitution⁺ A {S} {{S⁺}} m = substitution⁺
         xs-weaken-0 pos [] = refl
         xs-weaken-0 pos (x ∷ xs) = cong₂ _∷_ (weaken-0 {{S⁺}} pos x) (xs-weaken-0 pos xs)
 
+        xs-weaken-combine : ∀ {n} → weaken-combineᵗ (Vec A n) {{Vec-Substitution A n}}
+        xs-weaken-combine pos inc₁ inc₂ [] = refl
+        xs-weaken-combine pos inc₁ inc₂ (x ∷ xs)
+          = cong₂ _∷_ (weaken-combine pos inc₁ inc₂ x) (xs-weaken-combine pos inc₁ inc₂ xs)
+
 List-Substitution⁺ : ∀ A {S} {{S⁺ : Substitution⁺ A {{S}}}} →
                        Substitution⁺ (List A) {{List-Substitution A}}
 List-Substitution⁺ A {S} {{S⁺}} = substitution⁺
     unique
     dec
     xs-weaken-0
+    xs-weaken-combine
 
   where _⟦_/_⟧xs≡_ : List A → Instantiation → ℕ → List A → Set
         xs ⟦ i / ι ⟧xs≡ xs' = AllZip (λ x x' → x ⟦ i / ι ⟧≡ x') xs xs'
@@ -331,37 +431,42 @@ List-Substitution⁺ A {S} {{S⁺}} = substitution⁺
         xs-weaken-0 pos [] = refl
         xs-weaken-0 pos (x ∷ xs) = cong₂ _∷_ (weaken-0 {{S⁺}} pos x) (xs-weaken-0 pos xs)
 
+        xs-weaken-combine : weaken-combineᵗ (List A) {{List-Substitution A}}
+        xs-weaken-combine pos inc₁ inc₂ [] = refl
+        xs-weaken-combine pos inc₁ inc₂ (x ∷ xs)
+          = cong₂ _∷_ (weaken-combine pos inc₁ inc₂ x) (xs-weaken-combine pos inc₁ inc₂ xs)
+
 instance
   Type-Substitution⁺ : Substitution⁺ Type
   Type-Substitution⁺ =
-    substitution⁺ subst-τ-unique _⟦_/_⟧τ? τ-weaken-0
+    substitution⁺ subst-τ-unique _⟦_/_⟧τ? τ-weaken-0 τ-weaken-combine
 
   TypeVec-Substitution⁺ : ∀ {m} → Substitution⁺ (Vec Type m)
-  TypeVec-Substitution⁺ = substitution⁺ subst-regs-unique _⟦_/_⟧regs? regs-weaken-0
+  TypeVec-Substitution⁺ = substitution⁺ subst-regs-unique _⟦_/_⟧regs? regs-weaken-0 regs-weaken-combine
 
   TypeList-Substitution⁺  : Substitution⁺ (List Type)
   TypeList-Substitution⁺ = List-Substitution⁺ Type
 
   InitType-Substitution⁺  : Substitution⁺ InitType
   InitType-Substitution⁺ =
-    substitution⁺ subst-τ⁻-unique  _⟦_/_⟧τ⁻? τ⁻-weaken-0
+    substitution⁺ subst-τ⁻-unique  _⟦_/_⟧τ⁻? τ⁻-weaken-0 τ⁻-weaken-combine
 
   InitTypeVec-Substitution⁺ : ∀ {m} → Substitution⁺ (Vec InitType m)
   InitTypeVec-Substitution⁺ = Vec-Substitution⁺ InitType _
 
   InitTypeList-Substitution⁺  : Substitution⁺ (List InitType)
-  InitTypeList-Substitution⁺ = substitution⁺ subst-τs⁻-unique _⟦_/_⟧τs⁻? τs⁻-weaken-0
+  InitTypeList-Substitution⁺ = substitution⁺ subst-τs⁻-unique _⟦_/_⟧τs⁻? τs⁻-weaken-0 τs⁻-weaken-combine
 
   StackType-Substitution⁺  : Substitution⁺ StackType
   StackType-Substitution⁺ =
-    substitution⁺ subst-σ-unique  _⟦_/_⟧σ? σ-weaken-0
+    substitution⁺ subst-σ-unique  _⟦_/_⟧σ? σ-weaken-0 σ-weaken-combine
 
   RegisterAssignment-Substitution⁺  : Substitution⁺ RegisterAssignment
   RegisterAssignment-Substitution⁺ =
-    substitution⁺ subst-Γ-unique _⟦_/_⟧Γ? Γ-weaken-0
+    substitution⁺ subst-Γ-unique _⟦_/_⟧Γ? Γ-weaken-0 Γ-weaken-combine
 
   Instantiation-Substitution⁺  : Substitution⁺ Instantiation
-  Instantiation-Substitution⁺ = substitution⁺ unique dec i-weaken-0
+  Instantiation-Substitution⁺ = substitution⁺ unique dec i-weaken-0 i-weaken-combine
     where unique : ∀ {iₚ ι} {i i₁ i₂} →
                      i ⟦ iₚ / ι ⟧i≡ i₁ →
                      i ⟦ iₚ / ι ⟧i≡ i₂ →
@@ -387,8 +492,14 @@ instance
           i-weaken-0 pos (ρ σ)
             rewrite σ-weaken-0 pos σ = refl
 
+          i-weaken-combine : weaken-combineᵗ Instantiation
+          i-weaken-combine pos inc₁ inc₂ (α τ)
+            rewrite weaken-combine pos inc₁ inc₂ τ = refl
+          i-weaken-combine pos inc₁ inc₂ (ρ σ)
+            rewrite weaken-combine pos inc₁ inc₂ σ = refl
+
   Instantiations-Substitution⁺ : Substitution⁺ Instantiations
-  Instantiations-Substitution⁺ = substitution⁺ unique dec is-weaken-0
+  Instantiations-Substitution⁺ = substitution⁺ unique dec is-weaken-0 is-weaken-combine
     where unique : ∀ {i ι} {is is₁ is₂} →
                      is ⟦ i / ι ⟧is≡ is₁ →
                      is ⟦ i / ι ⟧is≡ is₂ →
@@ -412,8 +523,21 @@ instance
             rewrite weaken-0 (length is + pos) i
                   | is-weaken-0 pos is = refl
 
+          is-weaken-length : ∀ pos inc is →
+                               length (weaken-is pos inc is) ≡ length is
+          is-weaken-length pos inc [] = refl
+          is-weaken-length pos inc (i ∷ is)
+            rewrite is-weaken-length pos inc is = refl
+
+          is-weaken-combine : weaken-combineᵗ Instantiations
+          is-weaken-combine pos inc₁ inc₂ [] = refl
+          is-weaken-combine pos inc₁ inc₂ (i ∷ is)
+            rewrite is-weaken-length pos inc₁ is
+                  | sym(+-assoc (length is) pos inc₁)
+              = cong₂ _∷_ (weaken-combine (length is + pos) inc₁ inc₂ i) (is-weaken-combine pos inc₁ inc₂ is)
+
   SmallValue-Substitution⁺  : Substitution⁺ SmallValue
-  SmallValue-Substitution⁺ = substitution⁺ unique dec v-weaken-0
+  SmallValue-Substitution⁺ = substitution⁺ unique dec v-weaken-0 v-weaken-combine
     where unique : ∀ {i ι} {v v₁ v₂} →
                      v ⟦ i / ι ⟧v≡ v₁ →
                      v ⟦ i / ι ⟧v≡ v₂ →
@@ -453,8 +577,21 @@ instance
             rewrite v-weaken-0 (length Δ + pos) v
                   | weaken-0 (length Δ + pos) is = refl
 
+          v-weaken-combine : weaken-combineᵗ SmallValue
+          v-weaken-combine pos inc₁ inc₂ (reg ♯r) = refl
+          v-weaken-combine pos inc₁ inc₂ (globval l) = refl
+          v-weaken-combine pos inc₁ inc₂ (int i) = refl
+          v-weaken-combine pos inc₁ inc₂ ns = refl
+          v-weaken-combine pos inc₁ inc₂ (uninit τ)
+            rewrite weaken-combine pos inc₁ inc₂ τ = refl
+          v-weaken-combine pos inc₁ inc₂ Λ Δ ∙ v ⟦ is ⟧
+            rewrite sym (+-assoc (length Δ) pos inc₁)
+                  | v-weaken-combine (length Δ + pos) inc₁ inc₂ v
+                  | weaken-combine (length Δ + pos) inc₁ inc₂ is
+            = refl
+
   Instruction-Substitution⁺  : Substitution⁺ Instruction
-  Instruction-Substitution⁺ = substitution⁺ unique dec ι-weaken-0
+  Instruction-Substitution⁺ = substitution⁺ unique dec ι-weaken-0 ι-weaken-combine
     where unique : ∀ {i ιₚ} {ι ι₁ ι₂} →
                      ι ⟦ i / ιₚ ⟧ι≡ ι₁ →
                      ι ⟦ i / ιₚ ⟧ι≡ ι₂ →
@@ -533,8 +670,26 @@ instance
           ι-weaken-0 pos (beq ♯r v)
             rewrite weaken-0 pos v = refl
 
+          ι-weaken-combine : weaken-combineᵗ Instruction
+          ι-weaken-combine pos inc₁ inc₂ (add ♯rd ♯rs v)
+            rewrite weaken-combine pos inc₁ inc₂ v = refl
+          ι-weaken-combine pos inc₁ inc₂ (sub ♯rd ♯rs v)
+            rewrite weaken-combine pos inc₁ inc₂ v = refl
+          ι-weaken-combine pos inc₁ inc₂ (salloc i) = refl
+          ι-weaken-combine pos inc₁ inc₂ (sfree i) = refl
+          ι-weaken-combine pos inc₁ inc₂ (sld ♯rd i) = refl
+          ι-weaken-combine pos inc₁ inc₂ (sst i ♯rs) = refl
+          ι-weaken-combine pos inc₁ inc₂ (ld ♯rd ♯rs i) = refl
+          ι-weaken-combine pos inc₁ inc₂ (st ♯rd i ♯rs) = refl
+          ι-weaken-combine pos inc₁ inc₂ (malloc ♯rd τs)
+            rewrite weaken-combine pos inc₁ inc₂ τs = refl
+          ι-weaken-combine pos inc₁ inc₂ (mov ♯rd v)
+            rewrite weaken-combine pos inc₁ inc₂ v = refl
+          ι-weaken-combine pos inc₁ inc₂ (beq ♯r v)
+            rewrite weaken-combine pos inc₁ inc₂ v = refl
+
   InstructionSequence-Substitution⁺  : Substitution⁺ InstructionSequence
-  InstructionSequence-Substitution⁺ = substitution⁺ unique dec I-weaken-0
+  InstructionSequence-Substitution⁺ = substitution⁺ unique dec I-weaken-0 I-weaken-combine
     where unique : ∀ {i ι} {I I₁ I₂} →
                      I ⟦ i / ι ⟧I≡ I₁ →
                      I ⟦ i / ι ⟧I≡ I₂ →
@@ -563,3 +718,10 @@ instance
                   | I-weaken-0 pos I = refl
           I-weaken-0 pos (jmp v)
             rewrite weaken-0 pos v = refl
+
+          I-weaken-combine : weaken-combineᵗ InstructionSequence
+          I-weaken-combine pos inc₁ inc₂ (ι ~> I)
+            rewrite weaken-combine pos inc₁ inc₂ ι
+                  | I-weaken-combine pos inc₁ inc₂ I = refl
+          I-weaken-combine pos inc₁ inc₂ (jmp v)
+            rewrite weaken-combine pos inc₁ inc₂ v = refl
