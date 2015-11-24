@@ -1,0 +1,78 @@
+\section{Motivation}
+
+Let us say, that you are a software developer trying to develop er piece of code
+that you would like to distribute to a client. You are considering in what
+format to distribute your code, and as the choices seem overwhelming you decide
+to list a few properties you would like your code to have before you distribute
+it.
+
+\paragraph{Fast startup:} You would like the code to be runnable as fast as
+possible after your client receives it. You might also want to distribute the
+source code through a different channel, but that is not one of the current goal
+criterias.
+
+\paragraph{Low overhead:} You would like your code to use as few resources as
+possible and run as fast as possible.
+
+\paragraph{Reuseability:} While you are not against using a specialized solution
+when called for, you would ideally want to reuse the result of this project in
+other settings. Thus you would prefer solutions that allows general-purpose
+code.
+
+\paragraph{Security:} Ideally you would like to convince your client beyond any
+doubt, that the code serves the intended function. However since your client
+have had problems even giving you a coherent design specification, much less a
+formalized one, you decide to settle for a less ambiguous goal, namely certainty
+that it is at least not \emph{malicious}.
+
+\paragraph{}
+The when you combine the first two requirements, you are left with very few
+remaining options:
+
+\begin{enumerate}
+\item You could distribute raw machine code (inside a suitable container format
+  such as \texttt{PE}).
+\item You could distribute a bytecode format intended to be run through a fast
+  interpreter or JIT-compiler.
+\item You could make a custom interpreter, only able to run specialized code,
+  however not without compromising on \textbf{reuseability}.
+\end{enumerate}
+
+You are now left with the problem of convincing your client that your code is in
+fact not malicious. You decide to do a small real-world survey to see how other
+people have solved the problem.
+
+\begin{itemize}
+\item Do nothing! Use the fact that most people are ignorant of the danger of
+  malicious software.
+\item Run anti-virus software to detect malicious code.
+\item Buy a code-signing certificate, and sign your code. The security of this
+  system is based on the fact that a code-signing certificates are
+  semi-expensive and only issued to entities verified to be non-malicious by a
+  trusted certificate authority.
+\item Run the code inside a sandbox environment, by using e.g. the Java VM,
+  Native Client from the Chromium project or Docker.
+\item Publish your code as open source along with a method for compiling that
+  source into a bitwise identical result.
+\item Some combination of the above.
+\end{itemize}
+
+You notice that none of the real-world solutions are perfect!
+
+\begin{itemize}
+\item Rice's Theorem states that the anti-virus model is inherently flawed. In
+  fact, it is a quite common occurrence for real-world anti-virus sofware to
+  produce both false positives and false negatives.
+\item It is way too easy to either steal a code-signing certificate, create a
+  fake identity to fool the trusted certificate authority, or straight out
+  convince them to give you a certificate in any case.
+\item Every sandbox in existence has either had methods of sandbox escape, or
+  have unreasonable demands on the other properties.
+\item Even open source software with security audits sometimes have bugs or even
+  backdoors.
+\end{itemize}
+
+\later[inline]{A lot of citations.}
+
+Desperately you turn to research: Is there really no solution in sight? It turns
+out there is: Proof-carrying code.

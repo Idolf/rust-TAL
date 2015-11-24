@@ -6,8 +6,11 @@
 \usepackage{mathpartir}
 \usepackage{semantic}
 \usepackage{titling}
+\usepackage[pdftex,dvipsnames]{xcolor}
 \usepackage[lang=en,grid]{kufront}
 
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\newcommand{\later}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
 
 \author{\Large Mathias Svensson \quad {\ttfamily\large tpx783@alumni.ku.dk}}
 \date{\today}

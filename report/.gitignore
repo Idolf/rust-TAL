@@ -7,5 +7,6 @@
 *.blg
 *.fdb_latexmk
 *.fls
+*.tdo
 report.pdf
 auto
