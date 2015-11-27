@@ -1,76 +1,78 @@
 \section{Motivation}
 
-Let us say, that you are a software developer trying to develop er piece of code
-for a client client. You are considering in what format to distribute your code,
-and as the choices seem overwhelming you decide to list a few properties you
-would like your code to have before you distribute it.
+Let us consider a software developer, with the job of developing a piece of code
+for a client. She is considering in what format to distribute her final product.
+As the choices seem overwhelming, she decides to list a few properties she would
+like her final product to have, before she begins developing it.
 
-\paragraph{Fast startup:} You would like the code to be executable as fast as
-possible after your client receives it. You might also want to distribute the
-source code through a different channel, but that is not one of the current goal
-criterias.
+\paragraph{Low overhead:}
+Her product should run as fast as possible while using as few resources as
+possible.
 
-\paragraph{Low overhead:} You would like your code to use as few resources as
-possible and run as fast as possible.
+\paragraph{Low latency:}
+Her product should be executable as soon as possible after her client receives
+it. So while she considers herself an Open Source advocate, she concludes that
+distributing the source code is not a solution to the \emph{current} problem.
 
-\paragraph{Reuseability:} You would ideally want a solution that is reusable for
-other projects. Thus you would prefer solutions that allows general-purpose
-code.
+\paragraph{Reusability:}
+Whatever method she uses to create her product should be reusable for other
+projects. She concludes that her method should support general-purpose code.
 
-\paragraph{Security:} Ideally you would like to convince your client beyond any
-doubt, that the code serves the intended function. However your client have had
-problems even giving you a coherent design specification, much less a formalized
-one; so you decide to settle for a less ambiguous goal, namely certainty that it
-is not \emph{malicious}.
+\paragraph{Security:}
+Ideally she would like to convince her client beyond any doubt, that her product
+serves the intended function. However her client have had problems even settling
+on a consistent design specification, much less a formalized one.
+
+She decides to settle for a slightly less ambiguous goal instead: Absolute
+certainty that it is not \emph{malicious}.
 
 \paragraph{}
-The when you combine the first two requirements, you are left with very few
-options:
+After combining the first three requirements, she is left with very few options:
 
 \begin{enumerate}
-\item You could distribute raw machine code (inside a suitable container format
+\item She could distribute raw machine code (inside a suitable container format
   such as \texttt{PE} or \texttt{ELF}).
-\item You could distribute a bytecode format intended to be run through a fast
+\item She could distribute a bytecode format intended to be run through a fast
   interpreter or JIT-compiler.
-\item You write a custom interpreter, only able to run specialized code, however
-  not without compromising on \textbf{reuseability}.
 \end{enumerate}
 
-You are now left with the problem of convincing your client that your code is in
-fact not malicious. You decide to do a small real-world survey to see how other
-people have solved this problem:
+She are now left with the problem of convincing her client that her code is
+indeed not malicious. She decides to do a small real-world survey to see how
+other people have tried to solve this problem:
 
 \begin{itemize}
-\item Do nothing! Use the fact most people are trustful of code they receive,
-  even though they should not be.
+\item Do nothing! Given that most people are very trusting, many will simply run
+  whatever code they receive.
 \item Expect the client to run anti-virus software to detect malicious code.
-\item Buy a code-signing certificate, and sign your code. The security of this
+\item Buy a code-signing certificate and sign the code. The security of this
   system is based on the fact that a code-signing certificates are
   semi-expensive and only issued to entities verified to be non-malicious by a
-  trusted certificate authority.
-\item Have the client run the code inside a sandbox environment, by using
+  trusted Certificate Authority (CA).
+\item Have the client run the code inside a sandboxed environment, by using
   e.g. the Java VM, Docker or Native Client from the Chromium project.
-\item Publish your code as open source along with a method for compiling that
+\item Publish the code as open source along with a method for compiling that
   source into a bitwise identical result.
 \item Some combination of the above.
 \end{itemize}
 
-You notice that none of the real-world solutions are perfect!
+One notices that none of the real-world solutions actually \emph{solves} the
+security requirement as stated!
 
 \begin{itemize}
-\item Rice's Theorem states that the anti-virus model is inherently flawed. In
-  fact, it is a quite common occurrence for real-world anti-virus software to
-  produce both false positives and false negatives.
-\item It is way too easy to either steal a code-signing certificate, create a
-  fake identity to fool the trusted certificate authority, or straight out
-  convince them to give you a certificate in any case.
-\item Every sandbox in existence has either had methods of sandbox escape, or
-  have unreasonable demands on the other properties.
-\item Even open source software with security audits sometimes have bugs or even
-  backdoors.
+\item Rice's Theorem states that the anti-virus model is inherently
+  imperfect. In fact, it is a quite common occurrence for real-world anti-virus
+  software to produce both false positives and false negatives.
+\item There are multiple examples of code-signing certificate being stolen or
+  created under fake pseudonyms. There have also been examples of CAs being
+  hacked or coerced to create certificates.
+\item None of the sandboxes we might consider have perfect security without
+  placing unreasonable demands on the other properties. In fact many of them
+  have known public exploits for previous versions.
+\item Even open source software with security audits sometimes have bugs -- and
+  even backdoors are not completely unheard of.
 \end{itemize}
 
 \later[inline]{A lot of citations.}
 
-Desperately you turn to research: Is there really no solution in sight? It turns
-out there is: Proof-carrying code.
+Desperately she turns to research: Is there really no solution in sight? It
+turns out there is: Proof-carrying code.
