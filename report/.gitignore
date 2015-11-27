@@ -8,5 +8,6 @@
 *.fdb_latexmk
 *.fls
 *.tdo
+*.ptb
 report.pdf
 auto

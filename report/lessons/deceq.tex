@@ -1,0 +1,76 @@
+\section{Decidable Equality}
+
+It is a common occurrence in Agda to want to prove decidable equality for a
+specific type $T$. Decidable equality is a lemma of the following form:
+
+\begin{lemma}[Decidable Equality]
+  Let $v_1, v_2 \in T$. We can now derive a proof of either $v_1 \equiv v_2$ or
+  $v_1 \not\equiv v_2$.
+\end{lemma}
+
+This lemma is in Agda often written as a dependent function with the signature:
+
+$$\cdot ≟ \cdot\;\;:\;\;(v_1 : T) \to (v_2 : T) \to \mathtt{Dec}(v_1 \equiv v_2)$$
+
+An example from Agda standard library (with slight modifications):
+
+\begin{code}%
+\>\<%
+\\
+\>\AgdaFunction{\_≟\_} \AgdaSymbol{:} \AgdaSymbol{(}\AgdaBound{v₁} \AgdaSymbol{:} \AgdaDatatype{Bool}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaSymbol{(}\AgdaBound{v₂} \AgdaSymbol{:} \AgdaDatatype{Bool}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaDatatype{Dec} \AgdaSymbol{(}\AgdaBound{v₁} \AgdaDatatype{≡} \AgdaBound{v₂}\AgdaSymbol{)}\<%
+\\
+\>\AgdaInductiveConstructor{true} \<[6]%
+\>[6]\AgdaFunction{≟} \AgdaInductiveConstructor{true} \<[14]%
+\>[14]\AgdaSymbol{=} \AgdaInductiveConstructor{yes} \AgdaInductiveConstructor{refl}\<%
+\\
+\>\AgdaInductiveConstructor{false} \AgdaFunction{≟} \AgdaInductiveConstructor{false} \AgdaSymbol{=} \AgdaInductiveConstructor{yes} \AgdaInductiveConstructor{refl}\<%
+\\
+\>\AgdaInductiveConstructor{true} \<[6]%
+\>[6]\AgdaFunction{≟} \AgdaInductiveConstructor{false} \AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{λ()}\<%
+\\
+\>\AgdaInductiveConstructor{false} \AgdaFunction{≟} \AgdaInductiveConstructor{true} \<[14]%
+\>[14]\AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{λ()}\<%
+\end{code}
+
+\paragraph{}
+While these types of lemmas are in principle trivial to generate for most
+datatypes, there is a problem: required number of lines is \emph{quadratic} in
+the number of constructors for the datatype. The reason for this quadratic
+explosion is the need to the proofs for $v_1 \neq v_2$.
+
+I found a solution to the problem in \cite{deceq}, though I generalized his
+solution slightly. The idea is a follows:
+
+\begin{itemize}
+\item Construct an injective function $f$ from the original type $T$ to another
+  type $T'$.
+\item Prove decidable equality for $T'$.
+\item Use this to decide $f(v_1) \equiv f(v_2)$.
+\item We know that $f(v_1) \not\equiv f(v_2)$ implies $v_1 \not\equiv v_2$,
+  since $f$ is a function.
+\item We also know that $f(v_1) \equiv f(v_2)$ implies $v_1 \equiv v_2$, since
+  $f$ is injective.
+\item If we combine these, we get decidable equality for $T$.
+\end{itemize}
+
+By choosing $T'$ to be the same for every $T$, we can reuse a lot code. In
+practice my code does the following:
+
+\begin{itemize}
+\item Define a type \texttt{Tree}, which is the set of rooted, ordered tree with
+  numbers attached to each node. This datatype was chosen since this makes it
+  easy to construct the injective functions.
+\item Prove decidable equality for \texttt{Tree}.
+\item Prove that given $T$ and an injective functions $f : T \to \mathtt{Tree}$,
+  we have decidable equality for $T$.
+\item Prove that given $T$ and a surjective function $g : \mathtt{Tree} \to T$,
+  we can construct an injective function $f : T \to \mathtt{Tree}$, and thus
+  this also implies decidable equality on $T$.
+\end{itemize}
+
+This last step is a slight further optimization, as it in practice takes fewer
+lines of code in Agda to specify a function $g : \mathtt{Tree} \to T$ and prove
+it surjective, than to specify a function $f : T \to \mathtt{Tree}$ and prove it
+injective.
+
+\later[inline]{Insert reference to appendix, where usage of this can be seen.}
