@@ -1,12 +1,11 @@
 \section{Motivation}
 
 Let us say, that you are a software developer trying to develop er piece of code
-that you would like to distribute to a client. You are considering in what
-format to distribute your code, and as the choices seem overwhelming you decide
-to list a few properties you would like your code to have before you distribute
-it.
+for a client client. You are considering in what format to distribute your code,
+and as the choices seem overwhelming you decide to list a few properties you
+would like your code to have before you distribute it.
 
-\paragraph{Fast startup:} You would like the code to be runnable as fast as
+\paragraph{Fast startup:} You would like the code to be executable as fast as
 possible after your client receives it. You might also want to distribute the
 source code through a different channel, but that is not one of the current goal
 criterias.
@@ -14,44 +13,43 @@ criterias.
 \paragraph{Low overhead:} You would like your code to use as few resources as
 possible and run as fast as possible.
 
-\paragraph{Reuseability:} While you are not against using a specialized solution
-when called for, you would ideally want to reuse the result of this project in
-other settings. Thus you would prefer solutions that allows general-purpose
+\paragraph{Reuseability:} You would ideally want a solution that is reusable for
+other projects. Thus you would prefer solutions that allows general-purpose
 code.
 
 \paragraph{Security:} Ideally you would like to convince your client beyond any
-doubt, that the code serves the intended function. However since your client
-have had problems even giving you a coherent design specification, much less a
-formalized one, you decide to settle for a less ambiguous goal, namely certainty
-that it is at least not \emph{malicious}.
+doubt, that the code serves the intended function. However your client have had
+problems even giving you a coherent design specification, much less a formalized
+one; so you decide to settle for a less ambiguous goal, namely certainty that it
+is not \emph{malicious}.
 
 \paragraph{}
 The when you combine the first two requirements, you are left with very few
-remaining options:
+options:
 
 \begin{enumerate}
 \item You could distribute raw machine code (inside a suitable container format
-  such as \texttt{PE}).
+  such as \texttt{PE} or \texttt{ELF}).
 \item You could distribute a bytecode format intended to be run through a fast
   interpreter or JIT-compiler.
-\item You could make a custom interpreter, only able to run specialized code,
-  however not without compromising on \textbf{reuseability}.
+\item You write a custom interpreter, only able to run specialized code, however
+  not without compromising on \textbf{reuseability}.
 \end{enumerate}
 
 You are now left with the problem of convincing your client that your code is in
 fact not malicious. You decide to do a small real-world survey to see how other
-people have solved the problem.
+people have solved this problem:
 
 \begin{itemize}
-\item Do nothing! Use the fact that most people are ignorant of the danger of
-  malicious software.
-\item Run anti-virus software to detect malicious code.
+\item Do nothing! Use the fact most people are trustful of code they receive,
+  even though they should not be.
+\item Expect the client to run anti-virus software to detect malicious code.
 \item Buy a code-signing certificate, and sign your code. The security of this
   system is based on the fact that a code-signing certificates are
   semi-expensive and only issued to entities verified to be non-malicious by a
   trusted certificate authority.
-\item Run the code inside a sandbox environment, by using e.g. the Java VM,
-  Native Client from the Chromium project or Docker.
+\item Have the client run the code inside a sandbox environment, by using
+  e.g. the Java VM, Docker or Native Client from the Chromium project.
 \item Publish your code as open source along with a method for compiling that
   source into a bitwise identical result.
 \item Some combination of the above.
@@ -61,7 +59,7 @@ You notice that none of the real-world solutions are perfect!
 
 \begin{itemize}
 \item Rice's Theorem states that the anti-virus model is inherently flawed. In
-  fact, it is a quite common occurrence for real-world anti-virus sofware to
+  fact, it is a quite common occurrence for real-world anti-virus software to
   produce both false positives and false negatives.
 \item It is way too easy to either steal a code-signing certificate, create a
   fake identity to fool the trusted certificate authority, or straight out
