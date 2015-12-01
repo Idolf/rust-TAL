@@ -73,4 +73,15 @@ lines of code in Agda to specify a function $g : \mathtt{Tree} \to T$ and prove
 it surjective, than to specify a function $f : T \to \mathtt{Tree}$ and prove it
 injective.
 
+For each additional type $T$ for which you want to prove decidable equality, you
+now only need to:
+
+\begin{itemize}
+\item Create a function $g : \mathtt{Tree} \to T$.
+\item Prove that $g$ is surjective.
+\end{itemize}
+
+Unless we do wrapping of long lines, this will only require $2k+3$ lines, where
+$k$ is the number of number of constructors in the definition of $T$.
+
 \later[inline]{Insert reference to appendix, where usage of this can be seen.}
