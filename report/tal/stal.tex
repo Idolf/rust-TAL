@@ -1,0 +1,51 @@
+\section{STAL}
+
+% In this chapter we will introduce the concept of a Typed Assembly Language,
+% specifically how it relates to a pure assembly language, how one designs it, and
+% what it achieves.
+
+% Throughout the section, we will assume that we have been given the task of
+% designing a type-system for the real-world assembly language similar to
+% MIPS. The details of the language does not matter, much and indeed most
+% real-world assembler languages (or even some bytecode languages) could have been
+% chosen instead. We choose MIPS primarily to have an easier comparison with existing
+
+%   choice of language does not matter much, as the same techniques
+% should be applicable to other hardware languages, and likely even to many
+% bytecode languages. However using the choice of MIPS is advantagous, as it is
+% very close to the language used in the next section.
+
+% Before beginning, let us take a step back and look at what we have and we are trying to
+% accomplish. We have been
+
+% As stated previously\later[]{Put in reference}, we want to create a type system
+% for a low-level language.
+
+% In this section we will assume that we are trying to design a type system for a
+% variant of MIPS, specified by an external party. This was chosen, because
+
+%  as a base
+% for our study. The actual chosen language does not matter much for the
+% discussion at hand, as the same techniques should be applicable to other
+% assembler language and likely even to some bytecode languages as well.
+
+% Before we even begin to consider what it would mean to introduce types to an
+% assembly languages, let us take a step back and look at the big-picture view.
+
+% What we have is as design specification for the CPU in question. This design
+% specification consist roughly of the following:
+
+% \begin{itemize}
+% \item Some description of how the state present in the CPU at any given
+%   time. For most CPUs this will include at least the RAM, the register file and
+%   the program counter.
+% \item A partial function mapping the current state to an instruction $\iota$. For most CPUs
+% \item A partial function mapping
+
+% \begin{tabular}{lrcl}
+% $instructions$ & $\iota$ & ::= & $\mathtt{add}\ \mathtt{r}_d, \mathtt{r}_s, v \mid \mathtt{sub}\ \mathtt{r}_d, \mathtt{r}_s, v \mid \dots$ \\
+% \end{tabular}
+
+% \later[inline]{Complete the above and add judgments too}
+
+% It turns out that while the above semantics are very general in

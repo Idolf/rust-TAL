@@ -1,0 +1,91 @@
+\section{Formal Definition}
+
+\begin{definition}
+  A \textbf{simplfied assembly language} is a tuple
+
+  $L = (\mathcal{G}, \mathcal{H}, \mathcal{R}, \mathcal{I}, R_\to)$ such that:
+
+  \begin{itemize}
+  \item $\mathcal{G}$ a set, called the \emph{set of possible global
+      states}. Let the typical member of this set be called $G$.
+  \item $\mathcal{H}$ a set, called the \emph{set of possible heap states}. Let
+    the typical member of this set be called $H$.
+  \item $\mathcal{R}$ a set, called the \emph{set of possible register files}.
+    Let the typical member of this set be called $R$.
+  \item $\mathcal{I}$ a set, called the \emph{set of possible instruction
+      sequences}. Let the typical member of this set be called $I$.
+  \item $R_\to$ a subset of
+    $\mathcal{G} \times (\mathcal{H} \times \mathcal{R} \times \mathcal{I})
+    \times (\mathcal{H} \times \mathcal{R} \times \mathcal{I})$,
+    called the \emph{transition relationtion}.  Write
+    $G |- (H, R, I) \to_L (H', R', I')$ as notation for
+    $(G, (H, R, I), (H', R', I')) \in R_\to$.  When $L$ can be inferred, we will
+    write $G |- S_1 \to S_2$ to mean $G |- S_1 \to_L S_2$.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Let $L = (\mathcal{G}, \mathcal{H}, \mathcal{R}, \mathcal{I}, R_\to)$ be a
+  simplified assembly language. We say that
+  $T = (\mathbf{\Psi}_g, \mathbf{\Psi}_h, \mathbf{\Gamma})$ is a typing scheme
+  for $L$ iff:
+
+  \begin{itemize}
+  \item $\mathbf{\Psi}_g$ is a set, called the \emph{set of global state
+      types}. Let $\Psi_g$ be the typical member of this set.
+  \item $\mathbf{\Psi}_h$ is a set, called the \emph{set of heap state
+      types}. Let $\Psi_h$ be the typical member of this set.
+  \item $\mathbf{\Gamma}$ is a set, called the \emph{set of register types}. Let
+    $\Gamma$ be the typical member of this set.
+  \item There is a judgment of the form $|- G : \Psi_g$.
+  \item There is a judgment of the form $\Psi_g |- H : \Psi_h$.
+  \item There is a judgment of the form $\Psi_g , \Psi_h |- R : \Gamma$.
+  \item There is a judgment of the form $\Psi_g , \Psi_h , \Gamma |- I\ \mathbf{Valid}$.
+  \end{itemize}
+
+  We call $(L, T)$ for a \emph{typed assembly language}.
+\end{definition}
+
+\begin{definition}
+  Given the following:
+  \begin{itemize}
+  \item
+    $L_1 = (\mathcal{G}_1, \mathcal{H}_1, \mathcal{R}_1, \mathcal{I}_1,
+    R_{1\to})$ is a simplified assembly language.
+
+  \item
+    $L_2 = (\mathcal{G}_2, \mathcal{H}_2, \mathcal{R}_2, \mathcal{I}_2,
+    R_{2\to})$ is a simplified assembly language.
+
+  \item $E = (f_G, f_H, f_R, f_I)$ is a tuple of total functions. The functions
+    should be defined for $\mathcal{G}_1 \to \mathcal{G}_2$,
+    $\mathcal{H}_1 \to \mathcal{H}_2$, $\mathcal{R}_1 \to \mathcal{R}_2$ and
+    $\mathcal{I}_1 \to \mathcal{I}_2$ respectively.
+  \end{itemize}
+
+  Let $E(H, R, I)$ be shorthand for $(f_H(H), f_R(R), f_I(I))$.
+
+  We say that $E$ is an \emph{embedding} of $L_1$ into $L_2$ iff
+  $G |- (H, R, I) \to (H', R', I')$ implies
+  $f_G(G) |- E(H, R, I) \to E(H', R', I')$.
+\end{definition}
+
+
+% \begin{definition}
+%   A \textbf{native language} is a tuple $L_N = (S_N, \to_N)$, where $S_N$ is the
+%   set of possible states and
+%   $\to_N\ \subseteq S_N \times (S_N \cup \{\mathbf{halt}\})$ is multi-valued
+%   function called the \textbf{transition relation}. We write $p \to_N q$ as a
+%   shorthand for $(p, q) \in\ \to_N$.
+% \end{definition}
+
+% \begin{definition}
+%   Assume the following:
+
+%   \begin{itemize}
+%   \item
+%   Let $L$ be a simplified assembly language and let $M$ be a machine. We say
+%   that $L$ can be implemented on a machine $M$ iff  a \textbf{simplified language based on $M$} iff $\dots$.
+%   \todo[inline]{Finish definition of machine and simplified language. Do we even
+%     need it?}.
+% \end{definition}

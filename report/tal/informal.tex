@@ -1,0 +1,64 @@
+\section{Informal definition}
+\paragraph{The native language} is the language on which the rest of the work is
+based, typically a real-world assembler language. It comes with a notion of a
+\textbf{native semantics}, defined by an external party. This means that we can
+model the language as a non-deterministic state machine. Note that in this
+semantics, a program can \emph{always} progress, however sometimes this progress
+results termination for running invalid code.
+
+In practice this native language can be a lot of different things. Some of these
+are:
+
+\begin{itemize}
+\item The set of possible states a specific Pentium 4 can be in. The semantics
+  are mostly those defined in the Intel Specification\cite{intelsys}, however
+  the specific CPU might deviate slightly from this specification because of
+  bugs or unspecified behavior.
+\item The set of possible states of a process running on Linux version 4.2.0-18
+  on a specific Mips-CPU. While the semantics will obviously be mostly
+  equivalent to those defined in the Mips Specification\cite{mipssys} and in the
+  Posix Standard\cite{posix}, there are a lot of undefined Linux-specific
+  behavior that will depend heavily on the kernel version.
+\end{itemize}
+
+
+\paragraph{The simplified language} is a simplification of the raw language
+along with \emph{simplified semantics} to match it. While the native language
+typically deal with a complicated memory model, where there is no real
+difference between code and data, pointers and numbers, this is not the case in
+the simplified semantics. This simplification serves multiple purposes:
+
+\begin{itemize}
+\item The native semantics are typically not written as a formal
+  specification. This means that they might contain both under-specified
+  behavior in certain corner cases and very complicated behavior in others.
+
+  By simplifying we avoid both of these problems.
+\item Similarly we might be interested in talking about multiple different
+  native languages, that only differ very slightly in their behavior. By
+  simplifying the semantics, we are able to talk about multiple similarly
+  machines are the same time.
+\item The native semantics might contain semantics that are undesirable. For
+  instance it might halt or crash when certain actions occur. In our
+  simplification we purposefully avoid undesirable in our semantics, and instead
+  leave these behaviors undefined.
+
+  \textbf{Note:} This means that the semantic relation is no longer a total
+  left-total.
+\end{itemize}
+
+\paragraph{The typed language} is an extension of this simplified language, with
+the purpose of introducing typing judgments. Specifically it differs from the
+simplified semantics in the following ways:
+
+\begin{itemize}
+\item The typed language contains annotations not present in this simplified
+  language. If these annotations are thrown away, then we arrive at the
+  simplified language.
+
+\item The typed semantics might be more restrictive than the simplified
+  semantics, however they are still in a certain sense ``compatible'' with the
+  simplified semantics.
+
+\item The typed language also comes with a number of typing judgments.
+\end{itemize}

@@ -16,7 +16,19 @@
 \input{introduction/problem-statement}
 
 \chapter{Typed Assembly Language}
-\input{tal/introduction}
+This chapter has three parts. First we will formally introduce the concepts of
+Typed Assembly Language in an informal setting. We will first give a formal
+definition of the same concepts. Finally we will introduce the specific instance
+of Typed Assembly Language used in \cite{STAL}.
+
+Note that I have chosen a specific way of presenting Typed Assembly Language,
+that lends itself well to formalization. While this approach is not completely
+similar to the approach used in \cite{STAL}, I expect that the concepts should
+be fairly recognizable.
+
+\input{tal/informal}
+\input{tal/formal}
+\input{tal/stal}
 
 \chapter{Lessons Learned: Tips for doing formalizations in Agda}
 \input{lessons/deceq}
