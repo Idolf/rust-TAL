@@ -1,51 +1,60 @@
-\section{STAL}
+\clearpage
+\section{The goal of STAL}
 
-% In this chapter we will introduce the concept of a Typed Assembly Language,
-% specifically how it relates to a pure assembly language, how one designs it, and
-% what it achieves.
+Given the newly introduced terminology, it is possible to succinctly state the
+goals of STAL\footnote{The original goals of STAL\cite{STAL} were less explicit,
+  as they assumed a certain amount of reader familiarity. While the I am not
+  able to speak for the original authors, I hope that they would consider this a
+  fair rewording.}:
 
-% Throughout the section, we will assume that we have been given the task of
-% designing a type-system for the real-world assembly language similar to
-% MIPS. The details of the language does not matter, much and indeed most
-% real-world assembler languages (or even some bytecode languages) could have been
-% chosen instead. We choose MIPS primarily to have an easier comparison with existing
+\begin{enumerate}
+\item Design a RISC-like simplified assembly language $\mathtt{STAL}_S$.
+\item Design a typed assembly language $\mathtt{STAL}$.
+\item Prove that the type-system of $\mathtt{STAL}$ is sound.
+\item Prove that type-checking for $\mathtt{STAL}$ is decidable.
+\item Create a translation from $\mathtt{STAL}$ to $\mathtt{STAL}_S$ and show
+  that this translation is a bisimulation when restricted to the well-typed
+  fragment of $\mathtt{STAL}$.
+\item Create a translation from $\mathtt{STAL}_S$ to a real machine. Ideally one
+  would prove that this translation is a bisimulation, however this is not
+  possible:
+  \begin{itemize}
+  \item $\mathtt{STAL}_S$ has unlimited memory, while an actual machine does
+    not.
+  \item Real machines includes non-deterministic not present in
+    $\mathtt{STAL}_S$, as it might receive an interrupt from the world at any
+    time.
+  \item While $\mathtt{STAL}_S$ exists in a vacuum, the corresponding real-world
+    programs will depend on a run-time, and this run-time is typically very hard
+    to reason about.
+  \item Real-world processors are too complex to model without simplifying
+    assumptions, which would have to be quantified.
+  \end{itemize}
+  So instead of trying to \emph{prove} the existence of a bismulation, we are
+  left with \emph{arguing} a weaker form of relation.
+\item Show that the type-checking from point 4 is \emph{fast} in practice.
+\item Show that the translation from point 5 is \emph{fast} in practice.
+\item Show that the translation from point 6 is \emph{fast} in practice.
+\item Show that the generated programs are \emph{fast}.
+\item Show that $\mathtt{STAL}$ is general enough to allow useful,
+  general-purpose code to type-check. In particular, it should be possible to
+  translate high-level code into $\mathtt{STAL}$.
+\item Show that the translation produces non-malicious code.
+\end{enumerate}
 
-%   choice of language does not matter much, as the same techniques
-% should be applicable to other hardware languages, and likely even to many
-% bytecode languages. However using the choice of MIPS is advantagous, as it is
-% very close to the language used in the next section.
+There original papers\cite{TAL}\cite{STAL} dealt directly with the design (point
+2 and indirectly point 1) and compilation (points 10 and 11). However they
+mention most of the remaining points too:
 
-% Before beginning, let us take a step back and look at what we have and we are trying to
-% accomplish. We have been
+\begin{itemize}
+\item Point 3 is postulated and a proof idea is included.
+\item The translation of point 5 is simply to drop some annotations.
+\item The translation of point 6 includes running an assembler and linking
+  against a run-time library.
+\item Point 8 is trivial by design.
+\item Point 9 is easily achievable assuming a suitable binary representation.
+\item Point 12 mostly follows from point 5 and 6, however one would still need
+  to show that it is not possible to write malicious code in $\mathtt{STAL}$.
+\end{itemize}
 
-% As stated previously\later[]{Put in reference}, we want to create a type system
-% for a low-level language.
-
-% In this section we will assume that we are trying to design a type system for a
-% variant of MIPS, specified by an external party. This was chosen, because
-
-%  as a base
-% for our study. The actual chosen language does not matter much for the
-% discussion at hand, as the same techniques should be applicable to other
-% assembler language and likely even to some bytecode languages as well.
-
-% Before we even begin to consider what it would mean to introduce types to an
-% assembly languages, let us take a step back and look at the big-picture view.
-
-% What we have is as design specification for the CPU in question. This design
-% specification consist roughly of the following:
-
-% \begin{itemize}
-% \item Some description of how the state present in the CPU at any given
-%   time. For most CPUs this will include at least the RAM, the register file and
-%   the program counter.
-% \item A partial function mapping the current state to an instruction $\iota$. For most CPUs
-% \item A partial function mapping
-
-% \begin{tabular}{lrcl}
-% $instructions$ & $\iota$ & ::= & $\mathtt{add}\ \mathtt{r}_d, \mathtt{r}_s, v \mid \mathtt{sub}\ \mathtt{r}_d, \mathtt{r}_s, v \mid \dots$ \\
-% \end{tabular}
-
-% \later[inline]{Complete the above and add judgments too}
-
-% It turns out that while the above semantics are very general in
+In the next chapter, we will address the proofs of 3-5.

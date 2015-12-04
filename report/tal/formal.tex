@@ -3,32 +3,37 @@
 \begin{definition}
   A \textbf{simplfied assembly language} is a tuple
 
-  $L = (\mathcal{G}, \mathcal{H}, \mathcal{R}, \mathcal{I}, R_\to)$ such that:
+  $L = (\mathcal{G}, \mathcal{H}, \mathcal{R}, \mathcal{I}, \mathcal{T}, R_\to)$
+  such that:
 
   \begin{itemize}
-  \item $\mathcal{G}$ a set, called the \emph{set of possible global
-      states}. Let the typical member of this set be called $G$.
-  \item $\mathcal{H}$ a set, called the \emph{set of possible heap states}. Let
-    the typical member of this set be called $H$.
+  \item $\mathcal{G}$ a set, called the \emph{set of possible global states}.
+  \item $\mathcal{H}$ a set, called the \emph{set of possible heap states}.
   \item $\mathcal{R}$ a set, called the \emph{set of possible register files}.
-    Let the typical member of this set be called $R$.
   \item $\mathcal{I}$ a set, called the \emph{set of possible instruction
-      sequences}. Let the typical member of this set be called $I$.
-  \item $R_\to$ a subset of
-    $\mathcal{G} \times (\mathcal{H} \times \mathcal{R} \times \mathcal{I})
-    \times (\mathcal{H} \times \mathcal{R} \times \mathcal{I})$,
-    called the \emph{transition relationtion}.  Write
-    $G |- (H, R, I) \to_L (H', R', I')$ as notation for
-    $(G, (H, R, I), (H', R', I')) \in R_\to$.  When $L$ can be inferred, we will
-    write $G |- S_1 \to S_2$ to mean $G |- S_1 \to_L S_2$.
+      sequences}.
+  \item $\mathcal{T}$ a set, called the \emph{set of possible termination
+      states}.
+  \item Write as $\mathcal{S}$ short hand for
+    $\mathcal{H} \times \mathcal{R} \times \mathcal{I}$ and $\mathcal{S}^T$ as
+    shorthand for $\mathcal{S} \cup \mathcal{T}$.
+  \item $\mathcal{S} \cap \mathcal{T} = \emptyset$.
+  \item $R_\to$ is a partial function
+    $\mathcal{G} \times \mathcal{S} \to \mathcal{S}^T$,
+    called the \emph{transition relationtion}.
+  \item Write $R_\to^\ast$ for the transitive closure of $R_\to$.
   \end{itemize}
+
+  Assume $S_1 \in \mathcal{S}$ and $S_2 \in \mathcal{S}^T$. We will write
+  $G |- S_1 \to_L S_2$ as shorthand for $(G, S_1, S_2) \in R_\to$.  When $L$ can
+  be inferred without ambiguity, we will leave it out. We will use similar
+  notation with $\to^\ast$ and $R_\to^\ast$.
 \end{definition}
 
 \begin{definition}
-  Let $L = (\mathcal{G}, \mathcal{H}, \mathcal{R}, \mathcal{I}, R_\to)$ be a
-  simplified assembly language. We say that
-  $T = (\mathbf{\Psi}_g, \mathbf{\Psi}_h, \mathbf{\Gamma})$ is a typing scheme
-  for $L$ iff:
+  Let $L$ be a simplified assembly language. We say that
+  $(\mathbf{\Psi}_g, \mathbf{\Psi}_h, \mathbf{\Gamma})$ is a \emph{typing
+    scheme} for $L$ iff:
 
   \begin{itemize}
   \item $\mathbf{\Psi}_g$ is a set, called the \emph{set of global state
@@ -40,52 +45,123 @@
   \item There is a judgment of the form $|- G : \Psi_g$.
   \item There is a judgment of the form $\Psi_g |- H : \Psi_h$.
   \item There is a judgment of the form $\Psi_g , \Psi_h |- R : \Gamma$.
-  \item There is a judgment of the form $\Psi_g , \Psi_h , \Gamma |- I\ \mathbf{Valid}$.
+  \item There is a judgment of the form
+    $\Psi_g , \Psi_h , \Gamma |- I\ \mathbf{Valid}$.
   \end{itemize}
 
-  We call $(L, T)$ for a \emph{typed assembly language}.
+  We define $G |- S\ \mathbf{Valid}$ as a judgment only one rule:
+  \begin{mathpar}
+    \infer{
+      |- G : \Psi_g \and
+      \Psi_g |- H : \Psi_h \and
+      \Psi_g , \Psi_h |- R : \Gamma \and
+      \Psi_g , \Psi_h , \Gamma |- I\ \mathbf{Valid}
+    }{
+      G |- (H, R, I)\ \mathbf{Valid}
+    }
+  \end{mathpar}
+
+  We call $L$ for a \emph{typed assembly language}, if it has a typing scheme.
 \end{definition}
 
 \begin{definition}
-  Given the following:
+  Let $L$ be a typed assembly language. We say that it is \emph{progressing} iff
+  for any given $G \in \mathcal{G}, S \in \mathcal{S}$ with
+
+  \begin{itemize}
+  \item $G |- S\ \mathbf{Valid}$
+  \end{itemize}
+
+  we can conclude that there is some $S' \in \mathcal{S}^T$ such that
+
+  \begin{itemize}
+  \item $G |- S \to S'$.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Let $L$ be a typed assembly language. We say that it is \emph{reducing} iff
+  for any given $G \in \mathcal{G}, S, S' \in \mathcal{S}$ with
+
+  \begin{itemize}
+  \item $G |- S\ \mathbf{Valid}$
+  \item $G |- S \to S'$.
+  \end{itemize}
+
+  we can conclude that:
+
+  \begin{itemize}
+  \item $G |- S'\ \mathbf{Valid}$
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Let $L$ be a typed assembly language. We say that it is \emph{sound} iff it is
+  both progressing and reducing.
+\end{definition}
+
+\begin{theorem}[Soundness]
+  Let $L$ be a sound typed assembly language. Let $G \in \mathcal{G}$ and
+  $S, S' \in \mathcal{S}$ and assume $G |- S\ \mathbf{Valid}$ along with
+  $G |- S \to\^ast S'$. We now conclude that there exists some
+  $S'' \in \mathcal{S}^T$ with $G |- S' \to S''$.
+\end{theorem}
+
+\begin{proof}
+  We first conclude that $G |- S'\ \mathbf{Valid}$. This can be shown by
+  induction over the derivation of $G |- S \to^\ast S'$ along with the fact that
+  $L$ is reducing.
+
+  Since $L$ is also progressing, this implies the result.
+\end{proof}
+
+\subsection{Bisimulation}
+
+\begin{definition}
+  Assume the following:
   \begin{itemize}
   \item
     $L_1 = (\mathcal{G}_1, \mathcal{H}_1, \mathcal{R}_1, \mathcal{I}_1,
-    R_{1\to})$ is a simplified assembly language.
-
+    \mathcal{T}, R_\to)$.
   \item
     $L_2 = (\mathcal{G}_2, \mathcal{H}_2, \mathcal{R}_2, \mathcal{I}_2,
-    R_{2\to})$ is a simplified assembly language.
-
-  \item $E = (f_G, f_H, f_R, f_I)$ is a tuple of total functions. The functions
-    should be defined for $\mathcal{G}_1 \to \mathcal{G}_2$,
-    $\mathcal{H}_1 \to \mathcal{H}_2$, $\mathcal{R}_1 \to \mathcal{R}_2$ and
-    $\mathcal{I}_1 \to \mathcal{I}_2$ respectively.
+    \mathcal{T}, R_\to)$.
+  \item Let $E = (f_G, f_H, f_R, f_I, f_T)$ be tuple of total functions. The
+    functions should be defined over $\mathcal{G}_1 \to \mathcal{G}_2$,
+    $\mathcal{H}_1 \to \mathcal{H}_2$, $\mathcal{R}_1 \to \mathcal{R}_2$,
+    $\mathcal{I}_1 \to \mathcal{I}_2$ and $\mathcal{T}_1 \to \mathcal{T}_2$
+    respectively.
   \end{itemize}
 
-  Let $E(H, R, I)$ be shorthand for $(f_H(H), f_R(R), f_I(I))$.
+  Define $f_S : \mathcal{S}_1 \to \mathcal{S}_2$ and
+  $f_{S^T} : \mathcal{S}_1^T \to \mathcal{S}_1^T$ as:
 
-  We say that $E$ is an \emph{embedding} of $L_1$ into $L_2$ iff
-  $G |- (H, R, I) \to (H', R', I')$ implies
-  $f_G(G) |- E(H, R, I) \to E(H', R', I')$.
+  \begin{align*}
+    f_S(H, R, I) &= (f_H(H), f_R(R), f_I(I)) \\
+    f_{S^T}(v) &=
+                 \begin{cases}
+                   f_S(v) & \text{if $v \in \mathcal{S}_1$} \\
+                   f_T(v) & \text{if $v \in \mathcal{T}_1$} \\
+                 \end{cases}
+  \end{align*}
+
+  We say that $E$ is a bisimulation between $L_1$ and $L_2$ iff the following
+  holds:
+
+  \begin{itemize}
+  \item Assume
+    $G \in \mathcal{G}, S_1 \in \mathcal{S}_1, S_1' \in \mathcal{S}_1^T, S_2 \in
+    \mathcal{S}_2, S_2' \in \mathcal{S}_2^T$.
+  \item Assume we have a derivationIf $\alpha$ is a derivation $\alpha$ of $G |- S_1 \to S_1'$, then we can
+    find a derivation $\beta$ of $f_G(G) |- S_2 \to S_2'$ such that the diagram
+    below commutes.
+  \item The converse also holds: If $\beta$ is a derivation of
+    $f_G(G) |- S_2 \to S_2'$, then we can find a derivation $\alpha$ of
+    $G |- S_1 \to S_1'$ such that the diagram below commutes.
+  \end{itemize}
 \end{definition}
 
-
-% \begin{definition}
-%   A \textbf{native language} is a tuple $L_N = (S_N, \to_N)$, where $S_N$ is the
-%   set of possible states and
-%   $\to_N\ \subseteq S_N \times (S_N \cup \{\mathbf{halt}\})$ is multi-valued
-%   function called the \textbf{transition relation}. We write $p \to_N q$ as a
-%   shorthand for $(p, q) \in\ \to_N$.
-% \end{definition}
-
-% \begin{definition}
-%   Assume the following:
-
-%   \begin{itemize}
-%   \item
-%   Let $L$ be a simplified assembly language and let $M$ be a machine. We say
-%   that $L$ can be implemented on a machine $M$ iff  a \textbf{simplified language based on $M$} iff $\dots$.
-%   \todo[inline]{Finish definition of machine and simplified language. Do we even
-%     need it?}.
-% \end{definition}
+% Define $f : \mathcal{S}^T \to \mathcal{S}
+% \begin{theorem}[Soundness of embeddings]
+%   Let $L_1$ by a sound typed assembly language and $L_2$ be a simplified
+%   assembly language. Assume there
