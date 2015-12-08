@@ -1,4 +1,7 @@
 \mathlig{|-}{\vdash}
+\mathlig{|->}{\mapsto}
+\mathlig{!}{\downarrow}
+\mathlig{>>}{\gg}
 
 \newcommand \valid[2] {{#1} |- {#2}\ \mathbf{Valid}}
 \newcommand \subtype[3] {{#1} |- {#2} \le {#3}}
@@ -19,6 +22,7 @@
 \newcommand \ofinstruction[3] {{#1} |- {#2}\ => {#3}}
 \newcommand \ofprogram[2] {{#1} |- {#2}}
 
+\newcommand \evalbig[3] {{#1} |- {#2} ! {#3}}
 \newcommand \evalsmall[3] {{#1} |- \mathbf{eval}\ ({#2}) = {#3}}
 \newcommand \evalword[3] {{#1} |- \mathbf{inst}\ ({#2}) = {#3}}
-\newcommand \execinstruction[3] {{#1} |- \mathbf{exec}\ ({#2}) = {#3}}
+\newcommand \execinstruction[3] {{#1} |- {#2} => {#3}}

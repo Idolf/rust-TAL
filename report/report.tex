@@ -17,7 +17,7 @@
 
 \chapter{Typed Assembly Language}
 This chapter has three parts. First we will formally introduce the concepts of
-Typed Assembly Language in an informal setting. We will first give a formal
+Typed Assembly Language in an informal setting. We will then give a formal
 definition of the same concepts. Finally we will introduce the specific instance
 of Typed Assembly Language used in \cite{STAL}.
 
@@ -29,6 +29,16 @@ be fairly recognizable.
 \input{tal/informal}
 \input{tal/formal}
 \input{tal/stal}
+
+\chapter{Stack-Based Typed Assembly Language}
+This chapter will define the two languages $STAL$ and $STAL_S$. The design bla
+bla previous section.
+
+For the most part $STAL$ is equivalent to the one defined in \cite{STAL},
+however a few changes have been made to simplify the proofs. It is our opinion
+that the resulting language is morally equivalent to the original one.
+
+\input{stal/simple}
 
 \chapter{Lessons Learned: Tips for doing formalizations in Agda}
 \input{lessons/deceq}
