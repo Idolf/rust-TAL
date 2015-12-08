@@ -23,7 +23,7 @@ Variables: \\
 \textit{heap values}        & $h$ & ::= & $\langle w, \dots, w \rangle$ \\
 \textit{heap collections}   & $H$ & ::= & $\{\ell_h |-> h, \dots, \ell_h |-> h\}$ \\
 \textit{stacks}             & $S$ & ::= & $\mathtt{nil} \mid w :: S$ \\
-\textit{register files}     & $R$ & ::= & $\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w_1, \dots, \mathtt{r}_{r_{max}} |-> w_{r_{max}}\}$ \\
+\textit{register files}     & $R$ & ::= & $\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w, \dots, \mathtt{r}_{r_{max}} |-> w\}$ \\
 \\
 \textit{instructions} & $\iota$ & ::= & $\mathtt{add}\ r_d, r_s, v \mid \mathtt{sub}\ r_d, r_s, v \mid$ \\
         &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
@@ -258,5 +258,14 @@ We are now able to implement the semantics for our language: \\
   \execinstruction{G}
     {H, R, \mathtt{jmp}\ v}
     {H, R, I'}
+}
+\end{mathpar}
+
+\fbox{$(G, H, R, I) -> (G', H', R', I')$}
+\begin{mathpar}
+\infer{
+  \execinstruction{G}{H, R, I}{H', R', I'}
+}{
+  (G, H, R, I) -> (G, H', R', I')
 }
 \end{mathpar}
