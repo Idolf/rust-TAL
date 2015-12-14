@@ -8,23 +8,24 @@ Variables: \\
 \textit{integer}            & $n$ & ::= & $0, 1, \dots$ \\
 \textit{machine integers}   & $i$ & ::= & $0, 1, \dots, 2^{w}-1$ \\
 \textit{registers}          & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{r_{max}}$ \\
-\textit{word values}        & $w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
-\textit{small values}       & $v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
-\textit{global values}      & $g$ & ::= & $\mathtt{code}\ I$ \\
-\textit{global collections} & $G$ & ::= & $\{\ell_g |-> g, \dots, \ell_g |-> g\}$ \\
-\textit{heap values}        & $h$ & ::= & $\langle w, \dots, w \rangle$ \\
-\textit{heap collections}   & $H$ & ::= & $\{\ell_h |-> h, \dots, \ell_h |-> h\}$ \\
-\textit{stacks}             & $S$ & ::= & $\mathtt{nil} \mid w :: S$ \\
-\textit{register files}     & $R$ & ::= & $\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w, \dots, \mathtt{r}_{r_{max}} |-> w\}$ \\
+\textit{word values}        & $w^\circ$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
+\textit{small values}       & $v^\circ$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
+\textit{global values}      & $g^\circ$ & ::= & $\mathtt{code}\ I^\circ$ \\
+\textit{global collections} & $G^\circ$ & ::= & $\{\ell_g |-> g^\circ, \dots, \ell_g |-> g^\circ\}$ \\
+\textit{heap values}        & $h^\circ$ & ::= & $\langle w^\circ, \dots, w^\circ \rangle$ \\
+\textit{heap collections}   & $H^\circ$ & ::= & $\{\ell_h |-> h^\circ, \dots, \ell_h |-> h^\circ\}$ \\
+\textit{stacks}             & $S^\circ$ & ::= & $\mathtt{nil} \mid w^\circ :: S^\circ$ \\
+\textit{register files}     & $R^\circ$ & ::= & $\{\mathtt{sp} |-> S^\circ, \mathtt{r}_1 |-> w^\circ, \dots, \mathtt{r}_{r_{max}} |-> w^\circ\}$ \\
 \\
-\textit{instructions} & $\iota$ & ::= & $\mathtt{add}\ r_d, r_s, v \mid \mathtt{sub}\ r_d, r_s, v \mid$ \\
+\textit{instructions} & $\iota^\circ$ & ::= & $\mathtt{add}\ r, r, v^\circ \mid \mathtt{sub}\ r, r, v^\circ \mid$ \\
         &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
-        &&& $\mathtt{ld}\ r_d, \mathtt{sp}(n) \mid \mathtt{st}\ \mathtt{sp}(n), r_s \mid$\\
-        &&& $\mathtt{ld}\ r_d, r_s(n) \mid \mathtt{st}\ r_d(n), r_s \mid$\\
-        &&& $\mathtt{malloc}\ r_d,\ n \mid $ \\
-        &&& $\mathtt{mov}\ r_d, r_s \mid \mathtt{beq}\ r, v$ \\
-\textit{instruction sequences} & $I$ & ::= & $\iota ; I \mid \mathtt{jmp}\ v$ \\
-\textit{programs} & $P$ & ::= & $(G, H, R, I)$ \\
+        &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{st}\ \mathtt{sp}(n), r \mid$\\
+        &&& $\mathtt{ld}\ r, r(n) \mid \mathtt{st}\ r(n), r \mid$\\
+        &&& $\mathtt{malloc}\ r,\ n \mid $ \\
+        &&& $\mathtt{mov}\ r, r \mid \mathtt{beq}\ r, v^\circ$ \\
+        &&& $\mathtt{halt}$ \\
+\textit{instruction sequences} & $I^\circ$ & ::= & $\iota^\circ ; I^\circ \mid \mathtt{jmp}\ v^\circ$ \\
+\textit{programs} & $P^\circ$ & ::= & $(G^\circ, H^\circ, R^\circ, I^\circ)$ \\
 \end{tabular}
 
 \paragraph{}

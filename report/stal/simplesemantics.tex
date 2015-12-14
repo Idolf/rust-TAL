@@ -2,153 +2,160 @@
 
 We are now able to implement the semantics for our language: \\
 
-\fbox{$\evalbig{R}{v}{w}$}
+\fbox{$\evalregs{R^\circ}{v^\circ}{w^\circ}$}
 \begin{mathpar}
 \infer{ }{
-  \evalbig{R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+  \evalregs{R^\circ}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
 } \and
 \infer{
-  (r \mapsto w) \in R
+  (r \mapsto w^\circ) \in R^\circ
 }{
-  \evalbig{R}{\mathtt{reg}\ r}{w}
+  \evalregs{R^\circ}{\mathtt{reg}\ r}{w^\circ}
 } \and
 \infer{ }{
-  \evalbig{R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+  \evalregs{R^\circ}{\mathtt{int}\ i}{\mathtt{int}\ i}
 } \and
 \infer{ }{
-  \evalbig{R}{\mathtt{ns}}{\mathtt{ns}}
+  \evalregs{R^\circ}{\mathtt{ns}}{\mathtt{ns}}
 } \and
 \infer{ }{
-  \evalbig{R}{\mathtt{uninit}}{\mathtt{uninit}}
+  \evalregs{R^\circ}{\mathtt{uninit}}{\mathtt{uninit}}
 }
 \end{mathpar}
 
-\fbox{$\execinstruction{G}{H, R, I}{H', R', I'}$}
+\fbox{$\execis{G^\circ}{H^\circ, R^\circ, I^\circ}{H^\circ{}', R^\circ{}', I^\circ{}'}$}
 \begin{mathpar}
 \infer{
-  \evalbig{R}{v}{\mathtt{int}\ i_1} \and
-  (\mathtt{r}_s \mapsto \mathtt{int}\ i_2) \in R
+  \evalregs{R^\circ}{v^\circ}{\mathtt{int}\ i_1} \and
+  (\mathtt{r}_s \mapsto \mathtt{int}\ i_2) \in R^\circ
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{add}\ r_d, r_s, v) ; I}
-    {H, R\{r_d \mapsto \mathtt{int}\ (i_1 + i_2)\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{add}\ r_d, r_s, v^\circ) ; I^\circ}
+    {H^\circ, R^\circ\{r_d \mapsto \mathtt{int}\ (i_1 + i_2)\}, I^\circ}
 } \and
 \infer{
-  \evalbig{R}{v}{\mathtt{int}\ i_1} \and
-  (r_s \mapsto \mathtt{int}\ i_2) \in R
+  \evalregs{R^\circ}{v^\circ}{\mathtt{int}\ i_1} \and
+  (r_s \mapsto \mathtt{int}\ i_2) \in R^\circ
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{sub}\ r_d, r_s, v) ; I}
-    {H, R\{r_d |-> \mathtt{int}\ (i_1 - i_2)\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{sub}\ r_d, r_s, v^\circ) ; I^\circ}
+    {H^\circ, R^\circ\{r_d |-> \mathtt{int}\ (i_1 - i_2)\}, I^\circ}
 } \and
 \infer{
-  (\mathtt{sp} |-> S) \in R \and
-  S' = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: S
+  (\mathtt{sp} |-> S^\circ) \in R^\circ \and
+  S^\circ{}' = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: S^\circ
 }{
-  \execinstruction{G}
-    {H, R, \mathtt{salloc}\ n ; I}
-    {H, R\{\mathtt{sp} |-> S'\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, \mathtt{salloc}\ n ; I^\circ}
+    {H^\circ, R^\circ\{\mathtt{sp} |-> S^\circ{}'\}, I^\circ}
 } \and
 \infer{
-  (\mathtt{sp} |-> S) \in R \and
-  S = \overbrace{w_1 :: \dots :: w_n}^n :: S'
+  (\mathtt{sp} |-> S^\circ) \in R^\circ \and
+  S^\circ = \overbrace{w^\circ_1 :: \dots :: w^\circ_n}^n :: S^\circ{}'
 }{
-  \execinstruction{G}
-    {H, R, \mathtt{sfree}\ n ; I}
-    {H, R\{\mathtt{sp} |-> S'\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, \mathtt{sfree}\ n ; I^\circ}
+    {H^\circ, R^\circ\{\mathtt{sp} |-> S^\circ{}'\}, I^\circ}
 } \and
 \infer{
-  (\mathtt{sp} |-> S) \in R \and
-  S ! n => w
+  (\mathtt{sp} |-> S^\circ) \in R^\circ \and
+  \lookup{S^\circ}{n}{w^\circ}
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{ld}\ r_d, \mathtt{sp}(n)) ; I}
-    {H, R\{r_d |-> w\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{ld}\ r_d, \mathtt{sp}(n)) ; I^\circ}
+    {H^\circ, R^\circ\{r_d |-> w^\circ\}, I^\circ}
 } \and
 \infer{
-  (r_s |-> \mathtt{heapval}\ \ell_h) \in R \and
-  (\ell_h |-> h) \in H \and
-  h ! n => w
+  (r_s |-> \mathtt{heapval}\ \ell_h) \in R^\circ \and
+  (\ell_h |-> h^\circ) \in H \and
+  \lookup{h^\circ}{n}{w^\circ}
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{ld}\ r_d, r_s(n)) ; I}
-    {H, R\{r_d |-> w\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{ld}\ r_d, r_s(n)) ; I^\circ}
+    {H^\circ, R^\circ\{r_d |-> w^\circ\}, I^\circ}
 } \and
 \infer{
-  (r_s |-> w) \in R \and
-  (\mathtt{sp} |-> S) \in R \and
-  S[n] <- w => S'
+  (r_s |-> w^\circ) \in R^\circ \and
+  (\mathtt{sp} |-> S^\circ) \in R^\circ \and
+  \update{S^\circ}{n}{w^\circ}{S^\circ{}'}
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{st}\ \mathtt{sp}(n), r_s) ; I}
-    {H, R\{\mathtt{sp} |-> S'\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{st}\ \mathtt{sp}(n), r_s) ; I^\circ}
+    {H^\circ, R^\circ\{\mathtt{sp} |-> S^\circ{}'\}, I^\circ}
 } \and
 \infer{
-  (r_s |-> w) \in R \and
-  (r_d |-> \mathtt{heapval}\ \ell_h) \in R \and
-  (\ell_h |-> h) \in H \and
-  h[n] <- w => h'
+  (r_s |-> w^\circ) \in R^\circ \and
+  (r_d |-> \mathtt{heapval}\ \ell_h) \in R^\circ \and
+  (\ell_h |-> h^\circ) \in H^\circ \and
+  \update{h^\circ}{n}{w^\circ}{h^\circ{}'}
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{st}\ r_d(n), r_s) ; I}
-    {H\{\ell_h |-> h'\}, R, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{st}\ r_d(n), r^\circ) ; I^\circ}
+    {H^\circ\{\ell_h |-> h^\circ{}'\}, R^\circ, I^\circ}
 } \and
 \infer{
   \ell_h \not\in \mathbf{Keys}(H) \and
-  h = \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
+  h^\circ = \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{malloc}\ r_d, n) ; I}
-    {H \cup \{\ell_h |-> h\}, R\{r_d |-> \mathtt{heapval}\ \ell_h\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{malloc}\ r_d, n) ; I^\circ}
+    {H^\circ \cup \{\ell_h |-> h^\circ\}, R\{r_d |-> \mathtt{heapval}\ \ell_h\}, I^\circ}
 } \and
 \infer{
-  \evalbig{R}{v}{w}
+  \evalregs{R^\circ}{v^\circ}{w^\circ}
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{mov}\ r_d, v) ; I}
-    {H, R\{r_d |-> w\}, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{mov}\ r_d, v^\circ) ; I^\circ}
+    {H^\circ, R^\circ\{r_d |-> w^\circ\}, I^\circ}
 } \and
 \infer{
-  (r |-> \mathtt{int}\ 0) \in R \and
-  \evalbig{R}{v}{\mathtt{globval}\ \ell_g} \and
-  G ! \ell_g => \mathtt{code}\ I'
+  (r |-> \mathtt{int}\ 0) \in R^\circ \and
+  \evalregs{R^\circ}{v^\circ}{\mathtt{globval}\ \ell_g} \and
+  \lookup{G^\circ}{\ell_g}{\mathtt{code}\ I^\circ{}'}
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{beq}\ r, v) ; I}
-    {H, R, I'}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{beq}\ r, v^\circ) ; I^\circ}
+    {H^\circ, R^\circ, I^\circ{}'}
 } \and
 \infer{
-  (r |-> \mathtt{int}\ i) \in R \and
+  (r |-> \mathtt{int}\ i) \in R^\circ \and
   i \neq 0
 }{
-  \execinstruction{G}
-    {H, R, (\mathtt{beq}\ r, v) ; I}
-    {H, R, I}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, (\mathtt{beq}\ r, v^\circ) ; I^\circ}
+    {H^\circ, R^\circ, I^\circ}
 } \and
 \infer{
-  \evalbig{R}{v}{\mathtt{globval}\ \ell_g} \and
-  G ! \ell_g => \mathtt{code}\ I'
+  \evalregs{R^\circ}{v^\circ}{\mathtt{globval}\ \ell_g} \and
+  \lookup{G^\circ}{\ell_g}{\mathtt{code}\ I^\circ{}'}
 }{
-  \execinstruction{G}
-    {H, R, \mathtt{jmp}\ v}
-    {H, R, I'}
+  \execis{G^\circ}
+    {H^\circ, R^\circ, \mathtt{jmp}\ v^\circ}
+    {H^\circ, R^\circ, I^\circ{}'}
 }
 \end{mathpar}
 
-\fbox{$(G, H, R, I) -> (G', H', R', I')$}
+\fbox{$P^\circ -> P^\circ{}'$}
 \begin{mathpar}
 \infer{
-  \execinstruction{G}{H, R, I}{H', R', I'}
+  \execis{G^\circ}{H^\circ, R^\circ, I^\circ}{H^\circ{}', R^\circ{}', I^\circ{}'}
 }{
-  (G, H, R, I) -> (G, H', R', I')
+  (G^\circ, H^\circ, R^\circ, I^\circ) -> (G^\circ, H^\circ{}', R^\circ{}', I^\circ{}')
+}
+\end{mathpar}
+
+\fbox{$\done{P^\circ}$}
+\begin{mathpar}
+\infer{ }{
+  \done{(G^\circ, H^\circ, R^\circ, \mathtt{halt})}
 }
 \end{mathpar}
 
 \begin{lemma}[Determinism]
-  \label{thm:determinism-simple}
-  Assume $P, P_1, P_2$ are programs in the simplified language. Assume
-  $P -> P_1$ and $P -> P_2$. We can conclude that $P_1 = P_2$.
+  \label{thm:determinism}
+  Assume $P^\circ, P^\circ_1, P^\circ_2$ are programs in the simplified language. Assume
+  $P^\circ -> P^\circ_1$ and $P^\circ -> P^\circ_2$. We can conclude that $P^\circ_1 = P^\circ_2$.
 \end{lemma}
 \begin{proof}
-  By induction over the structure of $P -> P_1$.
+  By induction over the structure of $P^\circ -> P^\circ_1$.
 \end{proof}

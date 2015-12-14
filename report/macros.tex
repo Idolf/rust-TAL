@@ -28,3 +28,9 @@
 \newcommand \execinstruction[3] {{#1} |- {#2} => {#3}}
 \newcommand \drop[2] {\mathbf{Drop}_{{#1}}({#2})}
 \newcommand \lookup[3] {{#1} ! {#2} => {#3}}
+\newcommand \update[4] {{#1}[{#2}] <- {#3} => {#4}}
+\newcommand \done[1] {{#1}\ \mathbf{done}}
+
+% Simple judgments
+\newcommand \evalregs[3] {{#1} |- {#2} ! {#3}}
+\newcommand \execis[3] {{#1} |- {#2} => {#3}}

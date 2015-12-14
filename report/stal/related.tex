@@ -29,7 +29,7 @@ register files.
 \subsubsection{List-like objects}
 A set $S$ is \textbf{list-like} iff there is a meaningful way to interpret the
 elements of $S$ as ordered lists of elements drawn from a base-set $S_B$. In
-other words, there should exist a injective function
+other words iff there exist an injective function
 $f : S \to \mathbf{List}\ S_B$, where $f$ may only depend on the superficial
 syntax of the elements.
 
@@ -46,7 +46,7 @@ Define $\mathbf{Length}(L_1) = n$.
 Define $L_1 >> L_2$ be the element $L_3 \in S$ such that
 $f(L_3) = [x_1, \dots, x_n, y_1, \dots, y_m]$, if such an element exists.
 
-By $L_1 ! k => v$ we mean a judgment asserting $x_k = v$.
+By $\lookup{L_1}{k}{v}$ we mean a judgment asserting $x_k = v$.
 
-By $L_1[k]<- v => L_2$ we mean a judgment asserting that $n=m$, $y_k=v$ and
-$x_i = y_i$ if $i \neq k$.
+By $\update{L_1}{k}{v}{L_2}$ we mean a judgment asserting that $n=m$, $y_k=v$
+and $x_i = y_i$ if $i \neq k$.

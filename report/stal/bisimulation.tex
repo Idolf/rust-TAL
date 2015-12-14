@@ -2,8 +2,8 @@
 
 \begin{lemma}
   \label{thm:regeval-drop}
-  Let $R$ be an annotated register file and assume that $\evalbig{R}{v}{w}$. Then
-  $\evalbig{\drop{R}{R}}{\drop{v}{v}}{\drop{w}{w}}$.
+  Let $R$ be an annotated register file and assume that
+  $\evalbig{R}{v}{w}$. Then $\evalbig{\drop{R}{R}}{\drop{v}{v}}{\drop{w}{w}}$.
 \end{lemma}
 \begin{proof}
   By structural induction over the derivation of $\evalbig{R}{v}{w}$.
@@ -51,20 +51,19 @@
 
 \begin{corollary}[Simulation]
   \label{thm:simulation}
-  Let
-  $\mathcal{R} \subseteq \{(P, \drop{P}{P}) : P \in \text{annotated
+  Let $\mathcal{R} = \{(P, \drop{P}{P}) : P \in \text{annotated
     programs}\}$. $\mathcal{R}$ is a simulation.
 \end{corollary}
 
 \begin{theorem}[Bisimulation]
   \label{thm:bisimulation}
   Let
-  $\mathcal{R} \subseteq \{(P, \drop{P}{P}) : P \in \text{annotated programs},
-  \exists P' : P -> P'\}$. $\mathcal{R}$ is a bisimulation.
+  $\mathcal{R} = \{(P, \drop{P}{P}) : P \in \text{annotated programs}, \exists
+  P' : P -> P'\}$. $\mathcal{R}$ is a bisimulation.
 \end{theorem}
 \begin{proof}
   We need to show that $\mathcal{R}$ and $\mathcal{R}^{-1}$ are simulations. The
-  first part follows from \autoref{thm:simulation}.
+  first part follows from \autoref{thm:exec-drop}.
 
   For the second part, assume that $(P_A, P_S) \in \mathcal{R}$ and
   $P_S -> P_S'$ for some $P_S'$. We need to show that there is a $P_A'$ such
@@ -77,5 +76,6 @@
   By \autoref{thm:exec-drop} we can get a derivation of
   $\drop{P}{P_A} -> \drop{P}{P_A'}$. By the definition of $\mathcal{R}$ we have
   $P_S = \drop{P}{P_A}$, so by an earlier assumption, we also have a derivation
-  of $\drop{P}{P_A} -> P_S'$. By \autoref{thm:determinism-simple}, this implies that $\drop{P}{P_A'} = P_S'$.
+  of $\drop{P}{P_A} -> P_S'$. By \autoref{thm:determinism}, this implies
+  that $\drop{P}{P_A'} = P_S'$.
 \end{proof}
