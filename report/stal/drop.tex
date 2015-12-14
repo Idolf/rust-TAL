@@ -6,7 +6,7 @@ from the annotated language to equivalent constructs of the simple language.
 {\footnotesize
 \[\begin{array}{l}
 \begin{array}{ll}
-\rlap{$\mathbf{Drop}_w : w -> w^\circ$} \\
+\rlap{$\mathbf{drop}_w : w -> w^\circ$} \\
 \drop{w}{\mathtt{globval}\ \ell_g} &= \mathtt{globval}\ \ell_g \\
 \drop{w}{\mathtt{heapval}\ \ell_h} &= \mathtt{heapval}\ \ell_h \\
 \drop{w}{\mathtt{int}\ i} &= \mathtt{int}\ i \\
@@ -14,7 +14,7 @@ from the annotated language to equivalent constructs of the simple language.
 \drop{w}{\mathtt{uninit}\ \tau} &= \mathtt{uninit} \\
 \drop{w}{\Lambda\ \Delta.w[i_1, \dots, i_n]} &= \drop{w}{w} \\\\
 
-\rlap{$\mathbf{Drop}_v : v -> v^\circ$} \\
+\rlap{$\mathbf{drop}_v : v -> v^\circ$} \\
 \drop{v}{\mathtt{globval}\ \ell_g} &= \mathtt{globval}\ \ell_g \\
 \drop{v}{\mathtt{reg}\ r} &= \mathtt{reg}\ r \\
 \drop{v}{\mathtt{int}\ i} &= \mathtt{int}\ i \\
@@ -24,35 +24,35 @@ from the annotated language to equivalent constructs of the simple language.
 \end{array} \\\\
 
 \begin{array}{l}
-\mathbf{Drop}_g : g -> g^\circ \\
-\drop{g}{\mathtt{code}\ \forall[\Delta]\Gamma.I} = \mathtt{code}\ \drop{I}{I} \\\\
+\mathbf{drop}_g : g -> g^\circ \\
+\drop{g}{\mathtt{code}\ \forall[\Delta]\Gamma.I} = \mathtt{code}\ (\drop{I}{I}) \\\\
 
-\mathbf{Drop}_G : G -> G^\circ \\
+\mathbf{drop}_G : G -> G^\circ \\
 \drop{G}{\{\ell_{g,1} |-> g_1, \dots, \ell_{g,n} |-> g_n\}} = \{\ell_{g,1} |-> \drop{g}{g_1}, \dots, \ell_{g,n} |-> \drop{g}{g_n}\} \\\\
 
-\mathbf{Drop}_h : h -> h^\circ \\
+\mathbf{drop}_h : h -> h^\circ \\
 \drop{h}{\langle w_1, \dots, w_n \rangle} = \langle \drop{w}{w_1}, \dots \drop{w}{w_n}\rangle \\\\
 
-\mathbf{Drop}_H : H -> H^\circ \\
+\mathbf{drop}_H : H -> H^\circ \\
 \drop{H}{\{\ell_{h,1} |-> h_1, \dots, \ell_{h,n} |-> h_n\}} = \{\ell_{h,1} |-> \drop{h}{h_1}, \dots, \ell_{h,n} |-> \drop{h}{h_n}\}
 \end{array} \\\\
 
 \begin{array}{ll}
-\rlap{$\mathbf{Drop}_S : S -> S^\circ$} \\
+\rlap{$\mathbf{drop}_S : S -> S^\circ$} \\
 \drop{S}{\mathtt{nil}} &= \mathtt{nil} \\
 \drop{S}{w :: S} &= \drop{w}{w} :: \drop{S}{S} \\
 \end{array} \\\\
 
 \begin{array}{l}
-\mathbf{Drop}_R : R -> R^\circ \\
+\mathbf{drop}_R : R -> R^\circ \\
 \drop{R}{\{\mathtt{sp} |-> S, \mathbf{r}_1 |-> w_1, \dots, \mathbf{r}_{r_{max}} |-> w_{r_{max}}\}}\\
 \quad\quad\quad\quad = \{\mathtt{sp} |-> \drop{S}{S}, \mathbf{r}_1 |-> \drop{w}{w_1}, \dots, \mathbf{r}_{r_{max}} |-> \drop{w}{w_{r_{max}}}\}
 \end{array} \\\\
 
 \begin{array}{ll}
-\rlap{$\mathbf{Drop}_\iota : \iota -> \iota^\circ$} \\
-\drop{\iota}{\mathtt{add}\ r_d, r_s, v} &= \mathtt{add}\ r_d, r_s, \drop{v}{v} \\
-\drop{\iota}{\mathtt{sub}\ r_d, r_s, v} &= \mathtt{sub}\ r_d, r_s, \drop{v}{v} \\
+\rlap{$\mathbf{drop}_\iota : \iota -> \iota^\circ$} \\
+\drop{\iota}{\mathtt{add}\ r_d, r_s, v} &= \mathtt{add}\ r_d, r_s, (\drop{v}{v}) \\
+\drop{\iota}{\mathtt{sub}\ r_d, r_s, v} &= \mathtt{sub}\ r_d, r_s, (\drop{v}{v}) \\
 \drop{\iota}{\mathtt{salloc}\ n} &= \mathtt{salloc}\ n \\
 \drop{\iota}{\mathtt{sfree}\ n} &= \mathtt{sfree}\ n \\
 \drop{\iota}{\mathtt{ld}\ r_d, \mathbf{sp}(n)} &= \mathtt{ld}\ r_d, \mathbf{sp}(n) \\
@@ -61,18 +61,20 @@ from the annotated language to equivalent constructs of the simple language.
 \drop{\iota}{\mathtt{st}\ r_d(n), r_s} &= \mathtt{st}\ r_d(n), r_s \\
 \drop{\iota}{\mathtt{malloc}\ r_d, \langle \tau_1, \dots, \tau_n \rangle} &= \mathtt{malloc}\ r_d, n \\
 \drop{\iota}{\mathtt{mov}\ r_d, r_s} &= \mathtt{mov}\ r_d, r_s \\
-\drop{\iota}{\mathtt{beq}\ r, v} &= \mathtt{beq}\ r, \drop{v}{v} \\
+\drop{\iota}{\mathtt{beq}\ r, v} &= \mathtt{beq}\ r, (\drop{v}{v}) \\
+\end{array} \\\\
+
+\begin{array}{ll}
+\mathbf{drop}_I : I -> I^\circ \\
+\drop{I}{\iota ; I} &= (\drop{\iota}{\iota}) ; (\drop{I}{I}) \\
+\drop{I}{\mathtt{jmp}\ v} &= \mathtt{jmp}\ (\drop{v}{v})
 \end{array} \\\\
 
 \begin{array}{l}
-\mathbf{Drop}_I : I -> I^\circ \\
-\drop{I}{\iota ; I} = \drop{\iota}{\iota} ; \drop{I}{I} \\
-\drop{I}{\mathtt{jmp}\ v} = \mathtt{jmp}\ \drop{v}{v} \\\\
+\mathbf{drop}_C : C -> C^\circ \\
+\drop{C}{(H, R, I)} = (\drop{H}{H}, \drop{R}{R}, \drop{I}{I}) \\\\
 
-\mathbf{Drop}_C : C -> C^\circ \\
-\drop{C}{(H, R, I)} = (\drop{H}{H}, \drop{R}{R}, \drop{I}{I})
-
-\mathbf{Drop}_P : P -> P^\circ \\
+\mathbf{drop}_P : P -> P^\circ \\
 \drop{P}{(G, H, R, I)} = (\drop{G}{G}, \drop{H}{H}, \drop{R}{R}, \drop{I}{I})
 \end{array} \\\\
 
