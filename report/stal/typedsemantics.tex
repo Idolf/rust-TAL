@@ -1,0 +1,179 @@
+\subsection{Semantics}
+
+We have three judgments:
+
+\begin{itemize}
+\item \fbox{$\evalbig{R}{v}{w}$}
+\item \fbox{$\evalbig{G}{w}{I}$}
+\item \fbox{$\evalbig{G}{w}{I}$}
+\item \fbox{$\execinstruction{G}{H, R, I}{H', R', I'}$}
+\end{itemize}
+
+The first and last one are similar to those for of the untyped language. The
+third one is an introduction, which evaluates a wordvalue to an instruction
+sequence.
+
+\paragraph{}
+\fbox{$\evalbig{R}{v}{w}$}
+\begin{mathpar}
+\infer{ }{
+  \evalbig{R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+} \and
+\infer{
+  (r \mapsto w) \in R
+}{
+  \evalbig{R}{\mathtt{reg}\ r}{w}
+} \and
+\infer{ }{
+  \evalbig{R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+} \and
+\infer{ }{
+  \evalbig{R}{\mathtt{ns}}{\mathtt{ns}}
+} \and
+\infer{ }{
+  \evalbig{R}{\mathtt{uninit}\ \tau}{\mathtt{uninit}\ \tau}
+} \and
+\infer{
+  \evalbig{R}{v}{w}
+}{
+  \evalbig{R}{\Lambda\ \Delta.v[i_1, \dots, i_n]}{\Lambda\ \Delta.w[i_1, \dots, i_n]}
+}
+\end{mathpar}
+
+\fbox{$\evalbig{G}{w}{I}$}
+\begin{mathpar}
+\infer{
+  G ! \ell_g => \mathtt{code}\ \forall[\Delta]\Gamma \cdot I
+}{
+  \evalbig{G}{\mathtt{globval}\ \ell_g}{I}
+} \and
+\infer{
+  \evalbig{G}{w}{I} \and
+  I_1 = I[v_1 / x_1] \and
+  \dots \and
+  I_n = I_{n-1}[v_n / x_n]
+}{
+  \evalbig{G}{\Lambda\ \Delta . w[x_1 / y_1, \dots, x_n / y_n]}{I_n}
+}
+\end{mathpar}
+
+\fbox{$\execinstruction{G}{H, R, I}{H', R', I'}$}
+\begin{mathpar}
+\infer{
+  \evalbig{R}{v}{\mathtt{int}\ i_1} \and
+  (\mathtt{r}_s \mapsto \mathtt{int}\ i_2) \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{add}\ r_d, r_s, v) ; I}
+    {H, R\{r_d \mapsto \mathtt{int}\ (i_1 + i_2)\}, I}
+} \and
+\infer{
+  \evalbig{R}{v}{\mathtt{int}\ i_1} \and
+  (r_s \mapsto \mathtt{int}\ i_2) \in R
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{sub}\ r_d, r_s, v) ; I}
+    {H, R\{r_d |-> \mathtt{int}\ (i_1 - i_2)\}, I}
+} \and
+\infer{
+  (\mathtt{sp} |-> S) \in R \and
+  S' = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: S
+}{
+  \execinstruction{G}
+    {H, R, \mathtt{salloc}\ n ; I}
+    {H, R\{\mathtt{sp} |-> S'\}, I}
+} \and
+\infer{
+  (\mathtt{sp} |-> S) \in R \and
+  S = \overbrace{w_1 :: \dots :: w_n}^n :: S'
+}{
+  \execinstruction{G}
+    {H, R, \mathtt{sfree}\ n ; I}
+    {H, R\{\mathtt{sp} |-> S'\}, I}
+} \and
+\infer{
+  (\mathtt{sp} |-> S) \in R \and
+  S ! n => w
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{ld}\ r_d, \mathtt{sp}(n)) ; I}
+    {H, R\{r_d |-> w\}, I}
+} \and
+\infer{
+  (r_s |-> \mathtt{heapval}\ \ell_h) \in R \and
+  (\ell_h |-> h) \in H \and
+  h ! n => w
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{ld}\ r_d, r_s(n)) ; I}
+    {H, R\{r_d |-> w\}, I}
+} \and
+\infer{
+  (r_s |-> w) \in R \and
+  (\mathtt{sp} |-> S) \in R \and
+  S[n] <- w => S'
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{st}\ \mathtt{sp}(n), r_s) ; I}
+    {H, R\{\mathtt{sp} |-> S'\}, I}
+} \and
+\infer{
+  (r_s |-> w) \in R \and
+  (r_d |-> \mathtt{heapval}\ \ell_h) \in R \and
+  (\ell_h |-> h) \in H \and
+  h[n] <- w => h'
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{st}\ r_d(n), r_s) ; I}
+    {H\{\ell_h |-> h'\}, R, I}
+} \and
+\infer{
+  \ell_h \not\in \mathbf{Keys}(H) \and
+  h = \overbrace{\langle \mathtt{uninit}\ \tau_1, \dots, \mathtt{uninit}\ \tau_n \rangle}^n
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{malloc}\ r_d, \langle \tau_1, \dots, \tau_n \rangle) ; I}
+    {H \cup \{\ell_h |-> h\}, R\{r_d |-> \mathtt{heapval}\ \ell_h\}, I}
+} \and
+\infer{
+  \evalbig{R}{v}{w}
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{mov}\ r_d, v) ; I}
+    {H, R\{r_d |-> w\}, I}
+} \and
+\infer{
+  (r |-> \mathtt{int}\ 0) \in R \and
+  \evalbig{R}{v}{w} \and
+  \evalbig{G}{w}{I'}
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{beq}\ r, v) ; I}
+    {H, R, I'}
+} \and
+\infer{
+  (r |-> \mathtt{int}\ i) \in R \and
+  i \neq 0
+}{
+  \execinstruction{G}
+    {H, R, (\mathtt{beq}\ r, v) ; I}
+    {H, R, I}
+} \and
+\infer{
+  \evalbig{R}{v}{w} \and
+  \evalbig{G}{w}{I'}
+}{
+  \execinstruction{G}
+    {H, R, \mathtt{jmp}\ v}
+    {H, R, I'}
+}
+\end{mathpar}
+
+\fbox{$(G, H, R, I) -> (G', H', R', I')$}
+\begin{mathpar}
+\infer{
+  \execinstruction{G}{H, R, I}{H', R', I'}
+}{
+  (G, H, R, I) -> (G, H', R', I')
+}
+\end{mathpar}

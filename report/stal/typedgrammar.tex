@@ -1,0 +1,43 @@
+\subsection{Grammar}
+
+\begin{tabular}{lrcl}
+Variables: \\
+\textit{global pointers}          & $\ell_g$ \\
+\textit{heap pointers}            & $\ell_h$ \\
+\textit{type assumption}          & $\alpha$ \\
+\textit{stack assumption}         & $\rho$ \\
+\\
+\textit{integer}                  & $n$ & ::= & $0, 1, \dots$ \\
+\textit{machine integers}         & $i$ & ::= & $0, 1, \dots, 2^{w}-1$ \\
+\textit{registers}                & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{r_{max}}$ \\
+\\
+\textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
+\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \mathtt{nil} \mid \tau :: \sigma$ \\
+\textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
+\textit{type assignments}         & $\Delta$ & ::= & $\mathtt{nil} \mid a :: \Delta$ \\
+\textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
+\textit{global label assignments} & $\Psi_g$ & ::= & $\{\ell_g |-> \tau, \dots, \ell_g |-> \tau\}$ \\
+\textit{heap label assignmentss}  & $\Psi_h$ & ::= & $\{\ell_h |-> \tau, \dots, \ell_h |-> \tau\}$ \\
+\textit{label assignments}        & $\Psi$ & ::= & $(\Psi_g , \Psi_h)$ \\
+\textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{r_{max}} |-> \tau\}$ \\
+\\
+\textit{instantiation}            & $i$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\
+\textit{word values}              & $w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta.w[i, \dots, i]$ \\
+\textit{small values}             & $v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta.v[i, \dots, i]$ \\
+\textit{global values}            & $g$ & ::= & $\mathtt{code}\ \forall[ \Delta ] \Gamma \cdot I$ \\
+\textit{global collections}       & $G$ & ::= & $\{\ell_g |-> g, \dots, \ell_g |-> g\}$ \\
+\textit{heap values}              & $h$ & ::= & $\langle w, \dots, w \rangle$ \\
+\textit{heap collections}         & $H$ & ::= & $\{\ell_h |-> h, \dots, \ell_h |-> h\}$ \\
+\textit{stacks}                   & $S$ & ::= & $\mathtt{nil} \mid w :: S$ \\
+\textit{register files}           & $R$ & ::= & $\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w, \dots, \mathtt{r}_{r_{max}} |-> w\}$ \\
+\\
+\textit{instructions} & $\iota$ & ::= & $\mathtt{add}\ r_d, r_s, v \mid \mathtt{sub}\ r_d, r_s, v \mid$ \\
+        &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
+        &&& $\mathtt{ld}\ r_d, \mathtt{sp}(n) \mid \mathtt{st}\ \mathtt{sp}(n), r_s \mid$\\
+        &&& $\mathtt{ld}\ r_d, r_s(n) \mid \mathtt{st}\ r_d(n), r_s \mid$\\
+        &&& $\mathtt{malloc}\ r_d,\ \langle \tau_1, \dots, \tau_n \rangle \mid $ \\
+        &&& $\mathtt{mov}\ r_d, r_s \mid \mathtt{beq}\ r, v$ \\
+\textit{instruction sequences} & $I$ & ::= & $\iota ; I \mid \mathtt{jmp}\ v$ \\
+\textit{programs} & $P$ & ::= & $(G, H, R, I)$ \\
+
+\end{tabular}

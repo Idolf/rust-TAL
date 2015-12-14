@@ -1,0 +1,79 @@
+\subsection{Drop relation}
+
+Relation between simple and annotated language. The function maps constructs
+from the annotated language to equivalent constructs of the simple language.
+
+{\footnotesize
+\[\begin{array}{l}
+\begin{array}{ll}
+\rlap{$\mathbf{Drop}_w : \text{annotated word values} -> \text{simple word values}$} \\
+\drop{w}{\mathtt{globval}\ \ell_g} &= \mathtt{globval}\ \ell_g \\
+\drop{w}{\mathtt{heapval}\ \ell_h} &= \mathtt{heapval}\ \ell_h \\
+\drop{w}{\mathtt{int}\ i} &= \mathtt{int}\ i \\
+\drop{w}{\mathtt{ns}} &= \mathtt{ns} \\
+\drop{w}{\mathtt{uninit}\ \tau} &= \mathtt{uninit} \\
+\drop{w}{\Lambda\ \Delta.w[i_1, \dots, i_n]} &= \drop{w}{w} \\\\
+
+\rlap{$\mathbf{Drop}_v : \text{annotated small values} -> \text{simple small values}$} \\
+\drop{v}{\mathtt{globval}\ \ell_g} &= \mathtt{globval}\ \ell_g \\
+\drop{v}{\mathtt{reg}\ r} &= \mathtt{reg}\ r \\
+\drop{v}{\mathtt{int}\ i} &= \mathtt{int}\ i \\
+\drop{v}{\mathtt{ns}} &= \mathtt{ns} \\
+\drop{v}{\mathtt{uninit}\ \tau} &= \mathtt{uninit} \\
+\drop{v}{\Lambda\ \Delta.v[i_1, \dots, i_n]} &= \drop{v}{v}
+\end{array} \\\\
+
+\begin{array}{l}
+\mathbf{Drop}_g : \text{annotated global values} -> \text{simple global values} \\
+\drop{g}{\mathtt{code}\ \forall[\Delta]\Gamma.I} = \mathtt{code}\ \drop{I}{I} \\\\
+
+\mathbf{Drop}_G : \text{annotated global collections} -> \text{simple global collections} \\
+\drop{G}{\{\ell_{g,1} |-> g_1, \dots, \ell_{g,n} |-> g_n\}} = \{\ell_{g,1} |-> \drop{g}{g_1}, \dots, \ell_{g,n} |-> \drop{g}{g_n}\} \\\\
+
+\mathbf{Drop}_h : \text{annotated heap values} -> \text{simple heap values} \\
+\drop{h}{\langle w_1, \dots, w_n \rangle} = \langle \drop{w}{w_1}, \dots \drop{w}{w_n}\rangle \\\\
+
+\mathbf{Drop}_H : \text{annotated heap collections} -> \text{simple heap collections} \\
+\drop{H}{\{\ell_{h,1} |-> h_1, \dots, \ell_{h,n} |-> h_n\}} = \{\ell_{h,1} |-> \drop{h}{h_1}, \dots, \ell_{h,n} |-> \drop{h}{h_n}\}
+\end{array} \\\\
+
+\begin{array}{ll}
+\rlap{$\mathbf{Drop}_S : \text{annotated stacks} -> \text{simple stacks}$} \\
+\drop{S}{\mathtt{nil}} &= \mathtt{nil} \\
+\drop{S}{w :: S} &= \drop{w}{w} :: \drop{S}{S} \\
+\end{array} \\\\
+
+\begin{array}{l}
+\rlap{$\mathbf{Drop}_R : \text{annotated register files} -> \text{simple register files}$} \\
+\drop{R}{\{\mathtt{sp} |-> S, \mathbf{r}_1 |-> w_1, \dots, \mathbf{r}_{r_{max}} |-> w_{r_{max}}\}}\\
+\quad\quad\quad\quad = \{\mathtt{sp} |-> \drop{S}{S}, \mathbf{r}_1 |-> \drop{w}{w_1}, \dots, \mathbf{r}_{r_{max}} |-> \drop{w}{w_{r_{max}}}\}
+\end{array} \\\\
+
+\begin{array}{ll}
+\rlap{$\mathbf{Drop}_\iota : \text{annotated instructions} -> \text{simple instructions}$} \\
+\drop{\iota}{\mathtt{add}\ r_d, r_s, v} &= \mathtt{add}\ r_d, r_s, \drop{v}{v} \\
+\drop{\iota}{\mathtt{sub}\ r_d, r_s, v} &= \mathtt{sub}\ r_d, r_s, \drop{v}{v} \\
+\drop{\iota}{\mathtt{salloc}\ n} &= \mathtt{salloc}\ n \\
+\drop{\iota}{\mathtt{sfree}\ n} &= \mathtt{sfree}\ n \\
+\drop{\iota}{\mathtt{ld}\ r_d, \mathbf{sp}(n)} &= \mathtt{ld}\ r_d, \mathbf{sp}(n) \\
+\drop{\iota}{\mathtt{st}\ \mathbf{sp}(n), r_s} &= \mathtt{st}\ \mathbf{sp}(n), r_s \\
+\drop{\iota}{\mathtt{ld}\ r_d, r_s(n)} &= \mathtt{ld}\ r_d, r_s(n) \\
+\drop{\iota}{\mathtt{st}\ r_d(n), r_s} &= \mathtt{st}\ r_d(n), r_s \\
+\drop{\iota}{\mathtt{malloc}\ r_d, \langle \tau_1, \dots, \tau_n \rangle} &= \mathtt{malloc}\ r_d, n \\
+\drop{\iota}{\mathtt{mov}\ r_d, r_s} &= \mathtt{mov}\ r_d, r_s \\
+\drop{\iota}{\mathtt{beq}\ r, v} &= \mathtt{beq}\ r, \drop{v}{v} \\
+\end{array} \\\\
+
+\begin{array}{l}
+\rlap{$\mathbf{Drop}_I : \text{annotated instruction sequences} -> \text{simple instruction sequences}$} \\
+\drop{I}{\iota ; I} = \drop{\iota}{\iota} ; \drop{I}{I} \\
+\drop{I}{\mathtt{jmp}\ v} = \mathtt{jmp}\ \drop{v}{v}
+\end{array} \\\\
+
+\begin{array}{l}
+\rlap{$\mathbf{Drop}_P : \text{annotated instruction programs} -> \text{simple instruction programs}$} \\
+\drop{P}{(G, H, R, I)} = (\drop{G}{G}, \drop{H}{H}, \drop{R}{R}, \drop{I}{I})
+\end{array} \\\\
+
+\end{array}\]
+}

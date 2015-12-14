@@ -1,0 +1,81 @@
+\subsection{Bisimulation}
+
+\begin{lemma}
+  \label{thm:regeval-drop}
+  Let $R$ be an annotated register file and assume that $\evalbig{R}{v}{w}$. Then
+  $\evalbig{\drop{R}{R}}{\drop{v}{v}}{\drop{w}{w}}$.
+\end{lemma}
+\begin{proof}
+  By structural induction over the derivation of $\evalbig{R}{v}{w}$.
+\end{proof}
+
+\begin{lemma}
+  Let $f$ be one of the drop-functions (i.e.
+  $\mathbf{Drop}_w, \mathbf{Drop}_v, \dots$). Assume
+  $x_1, x_2 \in \mathrm{dom}(f)$ and that $x_1 = x_2[y / z]$. Then
+  $f(x_1) = f(x_2)$.
+\end{lemma}
+\begin{proof}
+  By structural induction over $x_1$.
+\end{proof}
+
+\begin{corollary}
+  \label{thm:inst-drop}
+  Let $I, I_1, \dots, I_n$ by annotated instruction sequences such that
+  $I_1 = I[x_1 / y_1], \dots, I_n = I_{n-1}[x_n, y_n]$. Then
+  $\drop{I}{I} = \drop{I}{I_n}$.
+\end{corollary}
+
+\begin{lemma}
+  \label{thm:codeeval-drop}
+  Assume $G$ is an annotated global collection and $\evalbig{G}{w}{I}$. Then
+  there exists some $\ell_g$ such that $\drop{w}{w} = \mathtt{globval}\ \ell_g$
+  and $\lookup{\drop{G}{G}}{\ell_g}{\mathtt{code}\ \drop{I}{I}}$.
+\end{lemma}
+\begin{proof}
+  By structural induction over the $w$ using \autoref{thm:inst-drop}.
+\end{proof}
+
+\begin{lemma}
+  \label{thm:exec-drop}
+  Assume $G, H, \dots$ are annotated values such that
+  $\execinstruction{G}{H, R, I}{H', R', I'}$. Then
+  $\execinstruction{\drop{G}{G}}{\drop{H}{H}, \drop{R}{R},
+    \drop{I}{I}}{\drop{H}{H'}, \drop{R}{R'}, \drop{I}{I'}}$
+\end{lemma}
+\begin{proof}
+  By structural induction over the derivation of
+  $\execinstruction{G}{H, R, I}{H', R', I'}$ using \autoref{thm:regeval-drop}
+  and \autoref{thm:codeeval-drop}.
+\end{proof}
+
+\begin{corollary}[Simulation]
+  \label{thm:simulation}
+  Let
+  $\mathcal{R} \subseteq \{(P, \drop{P}{P}) : P \in \text{annotated
+    programs}\}$. $\mathcal{R}$ is a simulation.
+\end{corollary}
+
+\begin{theorem}[Bisimulation]
+  \label{thm:bisimulation}
+  Let
+  $\mathcal{R} \subseteq \{(P, \drop{P}{P}) : P \in \text{annotated programs},
+  \exists P' : P -> P'\}$. $\mathcal{R}$ is a bisimulation.
+\end{theorem}
+\begin{proof}
+  We need to show that $\mathcal{R}$ and $\mathcal{R}^{-1}$ are simulations. The
+  first part follows from \autoref{thm:simulation}.
+
+  For the second part, assume that $(P_A, P_S) \in \mathcal{R}$ and
+  $P_S -> P_S'$ for some $P_S'$. We need to show that there is a $P_A'$ such
+  that $P_A -> P_A'$ and $(P_A', P_S') \in \mathcal{R}$.
+
+  Let $P_A'$ be the witness of $\exists P' : P -> P'$ from the definition of
+  $\mathcal{R}$. It remains to be shown that $(P_A', P_S') \in \mathcal{R}$,
+  i.e. $\drop{P}{P_A'} = P_S'$.
+
+  By \autoref{thm:exec-drop} we can get a derivation of
+  $\drop{P}{P_A} -> \drop{P}{P_A'}$. By the definition of $\mathcal{R}$ we have
+  $P_S = \drop{P}{P_A}$, so by an earlier assumption, we also have a derivation
+  of $\drop{P}{P_A} -> P_S'$. By \autoref{thm:determinism-simple}, this implies that $\drop{P}{P_A'} = P_S'$.
+\end{proof}

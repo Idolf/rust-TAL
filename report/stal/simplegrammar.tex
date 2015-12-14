@@ -1,0 +1,66 @@
+\subsection{Grammar}
+
+\begin{tabular}{lrcl}
+Variables: \\
+\textit{global pointers}    & $\ell_g$ \\
+\textit{heap pointers}      & $\ell_h$ \\
+\\
+\textit{integer}            & $n$ & ::= & $0, 1, \dots$ \\
+\textit{machine integers}   & $i$ & ::= & $0, 1, \dots, 2^{w}-1$ \\
+\textit{registers}          & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{r_{max}}$ \\
+\textit{word values}        & $w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
+\textit{small values}       & $v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
+\textit{global values}      & $g$ & ::= & $\mathtt{code}\ I$ \\
+\textit{global collections} & $G$ & ::= & $\{\ell_g |-> g, \dots, \ell_g |-> g\}$ \\
+\textit{heap values}        & $h$ & ::= & $\langle w, \dots, w \rangle$ \\
+\textit{heap collections}   & $H$ & ::= & $\{\ell_h |-> h, \dots, \ell_h |-> h\}$ \\
+\textit{stacks}             & $S$ & ::= & $\mathtt{nil} \mid w :: S$ \\
+\textit{register files}     & $R$ & ::= & $\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w, \dots, \mathtt{r}_{r_{max}} |-> w\}$ \\
+\\
+\textit{instructions} & $\iota$ & ::= & $\mathtt{add}\ r_d, r_s, v \mid \mathtt{sub}\ r_d, r_s, v \mid$ \\
+        &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
+        &&& $\mathtt{ld}\ r_d, \mathtt{sp}(n) \mid \mathtt{st}\ \mathtt{sp}(n), r_s \mid$\\
+        &&& $\mathtt{ld}\ r_d, r_s(n) \mid \mathtt{st}\ r_d(n), r_s \mid$\\
+        &&& $\mathtt{malloc}\ r_d,\ n \mid $ \\
+        &&& $\mathtt{mov}\ r_d, r_s \mid \mathtt{beq}\ r, v$ \\
+\textit{instruction sequences} & $I$ & ::= & $\iota ; I \mid \mathtt{jmp}\ v$ \\
+\textit{programs} & $P$ & ::= & $(G, H, R, I)$ \\
+\end{tabular}
+
+\paragraph{}
+The mappings of the form $\{x |-> y, \dots\}$ are unordered and do not have
+repeating keys. In the Agda-implementation, these maps are mostly implemented as
+ordered lists with implicit keys, however we can ignore this fact when using
+paper-notation.
+
+We will occasionally refer to a specific heap collection as a \textbf{heap} or
+perhaps \textbf{the heap} for a specific program state. Similarly a specific
+global collection might be referred to as \textbf{the globals} of a program. We
+will however not use the term ``global'' without qualification, to avoid
+ambiguity between global collections and global values.
+
+The fundamental assumption of this language is that the state of a program is
+totally defined by a collection of immutable global values, the current state of
+the heap, the current stack, the current registers and the current instruction
+pointer. This is represented in our language as:
+
+\begin{itemize}
+\item The immutable global values are places in a global collection
+  consisting of individual global items.
+\item The mutable global values are places in a heap collection
+  consisting of individual heap items.
+\item The current stack is encoded as a stack consisting and placed inside a
+  register file.
+\item The value of the current registers are encoded in a register file together
+  with the stack.
+\item The instruction pointer is not encoded directly as a pointer, it is
+  instead represented as the instructions to be run until the next block.
+\end{itemize}
+
+While this representation is enough for many programs, it also excludes many
+programs by design. For instance it excludes mutable global variables not stored
+on the heap and self-modifying code (such as just-in-time compilers).
+
+It should be possible to expand the language to allow more programs, however
+some sacrifice will always be needed, as we are not able to exclude malicious
+programs from our semantics without also excluding some valid programs.
