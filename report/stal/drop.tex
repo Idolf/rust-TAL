@@ -69,6 +69,9 @@ from the annotated language to equivalent constructs of the simple language.
 \drop{I}{\iota ; I} = \drop{\iota}{\iota} ; \drop{I}{I} \\
 \drop{I}{\mathtt{jmp}\ v} = \mathtt{jmp}\ \drop{v}{v} \\\\
 
+\mathbf{Drop}_C : C -> C^\circ \\
+\drop{C}{(H, R, I)} = (\drop{H}{H}, \drop{R}{R}, \drop{I}{I})
+
 \mathbf{Drop}_P : P -> P^\circ \\
 \drop{P}{(G, H, R, I)} = (\drop{G}{G}, \drop{H}{H}, \drop{R}{R}, \drop{I}{I})
 \end{array} \\\\

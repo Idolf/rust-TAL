@@ -22,15 +22,20 @@
 \newcommand \ofinstruction[3] {{#1} |- {#2}\ => {#3}}
 \newcommand \ofprogram[2] {{#1} |- {#2}}
 
-\newcommand \evalbig[3] {{#1} |- {#2} ! {#3}}
-\newcommand \evalsmall[3] {{#1} |- \mathbf{eval}\ ({#2}) = {#3}}
-\newcommand \evalword[3] {{#1} |- \mathbf{inst}\ ({#2}) = {#3}}
-\newcommand \execinstruction[3] {{#1} |- {#2} => {#3}}
+% Judgments
 \newcommand \drop[2] {\mathbf{Drop}_{{#1}}({#2})}
 \newcommand \lookup[3] {{#1} ! {#2} => {#3}}
 \newcommand \update[4] {{#1}[{#2}] <- {#3} => {#4}}
-\newcommand \done[1] {{#1}\ \mathbf{done}}
 
 % Simple judgments
 \newcommand \evalregs[3] {{#1} |- {#2} ! {#3}}
 \newcommand \execis[3] {{#1} |- {#2} => {#3}}
+\newcommand \steps[2] {{#1} -> {#2}}
+\newcommand \dones[1] {{#1}\ \mathbf{done}}
+
+% Annotated judgments
+\newcommand \evalrega[3] {{#1} |- {#2} ! {#3}}
+\newcommand \evalcodea[3] {{#1} |- {#2} ! {#3}}
+\newcommand \execia[3] {{#1} |- {#2} => {#3}}
+\newcommand \stepa[2] {{#1} -> {#2}}
+\newcommand \donea[1] {{#1}\ \mathbf{done}}

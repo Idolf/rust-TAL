@@ -23,7 +23,7 @@ We are now able to implement the semantics for our language: \\
 }
 \end{mathpar}
 
-\fbox{$\execis{G^\circ}{H^\circ, R^\circ, I^\circ}{H^\circ{}', R^\circ{}', I^\circ{}'}$}
+\fbox{$\execis{G^\circ}{C^\circ}{C^\circ}$}
 \begin{mathpar}
 \infer{
   \evalregs{R^\circ}{v^\circ}{\mathtt{int}\ i_1} \and
@@ -135,27 +135,28 @@ We are now able to implement the semantics for our language: \\
 }
 \end{mathpar}
 
-\fbox{$P^\circ -> P^\circ{}'$}
+\fbox{$\steps{P^\circ}{P^\circ{}'}$}
 \begin{mathpar}
 \infer{
   \execis{G^\circ}{H^\circ, R^\circ, I^\circ}{H^\circ{}', R^\circ{}', I^\circ{}'}
 }{
-  (G^\circ, H^\circ, R^\circ, I^\circ) -> (G^\circ, H^\circ{}', R^\circ{}', I^\circ{}')
+  \steps{(G^\circ, H^\circ, R^\circ, I^\circ)}{(G^\circ, H^\circ{}', R^\circ{}', I^\circ{}')}
 }
 \end{mathpar}
 
-\fbox{$\done{P^\circ}$}
+\fbox{$\dones{P^\circ}$}
 \begin{mathpar}
 \infer{ }{
-  \done{(G^\circ, H^\circ, R^\circ, \mathtt{halt})}
+  \dones{(G^\circ, H^\circ, R^\circ, \mathtt{halt})}
 }
 \end{mathpar}
 
 \begin{lemma}[Determinism]
   \label{thm:determinism}
-  Assume $P^\circ, P^\circ_1, P^\circ_2$ are programs in the simplified language. Assume
-  $P^\circ -> P^\circ_1$ and $P^\circ -> P^\circ_2$. We can conclude that $P^\circ_1 = P^\circ_2$.
+  Assume $P^\circ, P^\circ_1, P^\circ_2$ are programs in the simplified
+  language. Assume $\steps{P^\circ}{P^\circ_1}$ and
+  $\steps{P^\circ}{P^\circ_2}$. We can conclude that $P^\circ_1 = P^\circ_2$.
 \end{lemma}
 \begin{proof}
-  By induction over the structure of $P^\circ -> P^\circ_1$.
+  By induction over the structure of $\steps{P^\circ}{P^\circ_1}$.
 \end{proof}

@@ -1,12 +1,12 @@
-\subsection{Related judgments}
+\section{Related judgments}
 
 \todo[inline]{This is a few syntax definitions. While they might be introduced
   here, they should be defined more formally elsewhere.}
 
 \subsubsection{Dictionaries}
 A \textbf{dictionary} is an unordered set of the form
-$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ with the restriction that $x_i \neq x_j$
-whenever $i \neq j$.
+$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ with the restriction $x_i = x_j$ iff
+$i = j$.
 
 Assume that $D_1$ and $D_2$ are arbitrary dictionaries of the form
 $\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ and
@@ -23,8 +23,12 @@ restriction that $y_k' = y$ whenever $x_k = x$ and $y_k' = y_k$ otherwise.
 
 By $(x |-> y) \in D$ we mean a judgment asserting that $D$ is of the form
 $\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ and that there exists some $k$ such that
-$x = x_k$ and $y = y_k$. This syntax is meaning for e.g. global collections and
-register files.
+$x = x_k$ and $y = y_k$.
+
+\paragraph{}
+Note: In the Agda-implementation, these maps are mostly implemented as ordered
+lists with implicit keys, however we can ignore this fact when using
+paper-notation.
 
 \subsubsection{List-like objects}
 A set $S$ is \textbf{list-like} iff there is a meaningful way to interpret the
@@ -42,9 +46,6 @@ elements of the same list-like set $S$. Further assume that
 $f(L_1) = [x_1, \dots, x_n]$ and $f(L_2) = [y_1, \dots, y_m]$.
 
 Define $\mathbf{Length}(L_1) = n$.
-
-Define $L_1 >> L_2$ be the element $L_3 \in S$ such that
-$f(L_3) = [x_1, \dots, x_n, y_1, \dots, y_m]$, if such an element exists.
 
 By $\lookup{L_1}{k}{v}$ we mean a judgment asserting $x_k = v$.
 

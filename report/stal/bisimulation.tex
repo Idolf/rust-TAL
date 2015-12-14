@@ -2,11 +2,11 @@
 
 \begin{lemma}
   \label{thm:regeval-drop}
-  Let $R$ be an annotated register file and assume that
-  $\evalbig{R}{v}{w}$. Then $\evalbig{\drop{R}{R}}{\drop{v}{v}}{\drop{w}{w}}$.
+  Let $R, v, w$ are annotated values such that $\evalrega{R}{v}{w}$. Then
+  $\evalregs{\drop{R}{R}}{\drop{v}{v}}{\drop{w}{w}}$.
 \end{lemma}
 \begin{proof}
-  By structural induction over the derivation of $\evalbig{R}{v}{w}$.
+  By structural induction over the derivation of $\evalrega{R}{v}{w}$.
 \end{proof}
 
 \begin{lemma}
@@ -16,66 +16,45 @@
   $f(x_1) = f(x_2)$.
 \end{lemma}
 \begin{proof}
-  By structural induction over $x_1$.
+  The lemma is proven for all the functions simultaneously using mutual
+  induction over the structure of $x_1$.
 \end{proof}
 
 \begin{corollary}
   \label{thm:inst-drop}
-  Let $I, I_1, \dots, I_n$ by annotated instruction sequences such that
+  Let $I, I_1, \dots, I_n$ be annotated instruction sequences such that
   $I_1 = I[x_1 / y_1], \dots, I_n = I_{n-1}[x_n, y_n]$. Then
   $\drop{I}{I} = \drop{I}{I_n}$.
 \end{corollary}
 
 \begin{lemma}
   \label{thm:codeeval-drop}
-  Assume $G$ is an annotated global collection and $\evalbig{G}{w}{I}$. Then
-  there exists some $\ell_g$ such that $\drop{w}{w} = \mathtt{globval}\ \ell_g$
-  and $\lookup{\drop{G}{G}}{\ell_g}{\mathtt{code}\ \drop{I}{I}}$.
+  Assume $G, w, I$ be annotated values with $\evalcodea{G}{w}{I}$. Then there
+  exists some $\ell_g$ such that $\drop{w}{w} = \mathtt{globval}\ \ell_g$ and
+  $\lookup{\drop{G}{G}}{\ell_g}{\mathtt{code}\ \drop{I}{I}}$.
 \end{lemma}
 \begin{proof}
-  By structural induction over the $w$ using \autoref{thm:inst-drop}.
+  By structural induction over the $w$ using \autoref{thm:inst-drop} in the
+  induction step.
 \end{proof}
 
 \begin{lemma}
   \label{thm:exec-drop}
-  Assume $G, H, \dots$ are annotated values such that
-  $\execinstruction{G}{H, R, I}{H', R', I'}$. Then
-  $\execinstruction{\drop{G}{G}}{\drop{H}{H}, \drop{R}{R},
-    \drop{I}{I}}{\drop{H}{H'}, \drop{R}{R'}, \drop{I}{I'}}$
+  Assume $G, C_1, C_2$ are annotated values such that
+  $\execia{G}{C_1}{C_2}$. Then
+  $\execis{\drop{G}{G}}{\drop{C}{C_1}}{\drop{C}{C_2}}$.
 \end{lemma}
 \begin{proof}
-  By structural induction over the derivation of
-  $\execinstruction{G}{H, R, I}{H', R', I'}$ using \autoref{thm:regeval-drop}
-  and \autoref{thm:codeeval-drop}.
+  By structural induction over the derivation of $\execia{G}{C_1}{C_2}$
+  using \autoref{thm:regeval-drop} and \autoref{thm:codeeval-drop} in some of
+  the cases.
 \end{proof}
 
 \begin{corollary}[Simulation]
   \label{thm:simulation}
-  Let $\mathcal{R} = \{(P, \drop{P}{P}) : P \in \text{annotated
-    programs}\}$. $\mathcal{R}$ is a simulation.
+  Let $\mathcal{R}_S =
+  \{(P, \drop{P}{P}) : P\text{ is an annotated program}\}$.
+  $\mathcal{R}_S$ is a simulation.
 \end{corollary}
 
-\begin{theorem}[Bisimulation]
-  \label{thm:bisimulation}
-  Let
-  $\mathcal{R} = \{(P, \drop{P}{P}) : P \in \text{annotated programs}, \exists
-  P' : P -> P'\}$. $\mathcal{R}$ is a bisimulation.
-\end{theorem}
-\begin{proof}
-  We need to show that $\mathcal{R}$ and $\mathcal{R}^{-1}$ are simulations. The
-  first part follows from \autoref{thm:exec-drop}.
-
-  For the second part, assume that $(P_A, P_S) \in \mathcal{R}$ and
-  $P_S -> P_S'$ for some $P_S'$. We need to show that there is a $P_A'$ such
-  that $P_A -> P_A'$ and $(P_A', P_S') \in \mathcal{R}$.
-
-  Let $P_A'$ be the witness of $\exists P' : P -> P'$ from the definition of
-  $\mathcal{R}$. It remains to be shown that $(P_A', P_S') \in \mathcal{R}$,
-  i.e. $\drop{P}{P_A'} = P_S'$.
-
-  By \autoref{thm:exec-drop} we can get a derivation of
-  $\drop{P}{P_A} -> \drop{P}{P_A'}$. By the definition of $\mathcal{R}$ we have
-  $P_S = \drop{P}{P_A}$, so by an earlier assumption, we also have a derivation
-  of $\drop{P}{P_A} -> P_S'$. By \autoref{thm:determinism}, this implies
-  that $\drop{P}{P_A'} = P_S'$.
-\end{proof}
+Note: The it is \emph{not} a bisimulation.

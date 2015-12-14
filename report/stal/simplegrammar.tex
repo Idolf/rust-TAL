@@ -25,14 +25,9 @@ Variables: \\
         &&& $\mathtt{mov}\ r, r \mid \mathtt{beq}\ r, v^\circ$ \\
         &&& $\mathtt{halt}$ \\
 \textit{instruction sequences} & $I^\circ$ & ::= & $\iota^\circ ; I^\circ \mid \mathtt{jmp}\ v^\circ$ \\
+\textit{program states} & $C^\circ$ & ::= & $(H^\circ, R^\circ, I^\circ)$ \\
 \textit{programs} & $P^\circ$ & ::= & $(G^\circ, H^\circ, R^\circ, I^\circ)$ \\
 \end{tabular}
-
-\paragraph{}
-The mappings of the form $\{x |-> y, \dots\}$ are unordered and do not have
-repeating keys. In the Agda-implementation, these maps are mostly implemented as
-ordered lists with implicit keys, however we can ignore this fact when using
-paper-notation.
 
 We will occasionally refer to a specific heap collection as a \textbf{heap} or
 perhaps \textbf{the heap} for a specific program state. Similarly a specific

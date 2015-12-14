@@ -1,113 +1,112 @@
+\subsection{Soundness (annotated)}
+
 \begin{lemma}[Progress]
   \label{thm:progress}
   Assume $P_1$ is an annotated program such that $|- P_1$.
-  Then we can either get a derivation of $\done{P_1}$ or there exists
-  a $P_2$ such that $P_1 -> P_2$.
+  Then we can either get a derivation of $\donea{P_1}$ or there exists
+  a $P_2$ such that $\stepa{P_1}{P_2}$.
 \end{lemma}
+\begin{proof}
+  TODO
+\end{proof}
 
 \begin{lemma}[Preservation]
   \label{thm:reduction}
-  Assume $P_1, P_2$ are annotated programs such that $|- P_1$ and $P_1 ->
-  P_2$. Then $|- P_2$.
+  Assume $P_1, P_2$ are annotated programs such that $|- P_1$ and
+  $\stepa{P_1}{P_2}$. Then $|- P_2$.
 \end{lemma}
+\begin{proof}
+  TODO
+\end{proof}
 
 \begin{lemma}[Soundness]
   \label{thm:soundness}
   Assume $P_1, \dots, P_n$ are annotated programs such that $|- P_1$ and
-  $P_1 -> P_2, \dots, P_{n-1} -> P_n$. Then we can either get a derivation of
-  $\done{P_n}$ or there exists a $P_{n+1}$ such that $P_n -> P_{n+1}$.
+  $\stepa{P_1}{P_2}, \dots, \stepa{P_{n-1}}{P_n}$. Then we can either get a
+  derivation of $\donea{P_n}$ or there exists a $P_{n+1}$ such that
+  $\stepa{P_n}{P_{n+1}}$.
 \end{lemma}
 \begin{proof}
-  Let $V(k)$ be the statement ``$k > n$ or there exists a derivation of
+  Let $V(k)$ be the statement ``either $k > n$ or there exists a derivation of
   $|- P_k$''. We use natural induction to show $V(k)$:
 
   \begin{itemize}
-  \item $V(1)$: We have an assumption stating $|- P_1$, so we are done.
+  \item $V(1)$: We have the result as an assumption.
   \item $V(k) => V(k+1)$: If $k+1 > n$ we are done, so assume $k+1 \le n$. In
     that case $V(k)$ implies that we have a derivation of $|- P_k$. We also have
-    a derivation of $P_k => P_{k+1}$ by assumption. We can now use the
+    a derivation of $\stepa{P_k}{P_{k+1}}$ by assumption. We can now use the
     preservation lemma to get a derivation of $|- P_k$.
   \end{itemize}
 
-  We can thus conclude that $|- P_n$. We use this on the progress lemma and are
-  done.
+  We can thus conclude $|- P_n$. We use this on the progress lemma and conclude
+  the desired result.
 \end{proof}
 
-\begin{lemma}[Progress (simplified)]
-  \label{thm:progress-simple}
-  Let $P_1$ be an annotated program with $|- P_1$ and
-  $P^\circ_1 = \drop{P}{P_1}$. Then we can either get a derivation of
-  $\done{P^\circ_1}$ or there exists a $P^\circ_2$ such that
-  $P^\circ_1 -> P^\circ_2$.
+\subsection{Soundness (simplified)}
+\begin{lemma}[Bisimulation]
+  \label{thm:bisimulation}
+  Define:
+
+  $$\mathcal{R}_B =\{(P, \drop{P}{P}) : \text{there exists a judgment of } |-
+  P\}$$
+
+  $\mathcal{R}_B$ is a bisimulation.
 \end{lemma}
 \begin{proof}
-  We use the progress lemma on $|- P_1$, which results in two cases:
+  We need to show that $\mathcal{R}_B$ and $\mathcal{R}_B^{-1}$ are
+  simulations. First assume $(P_1, P^\circ_1) \in \mathcal{R}_B$, which implies
+  that $P^\circ_1 = \drop{P}{P_1}$.
 
-  \begin{itemize}
-  \item Either we have a derivation of $\done{P_1}$. In that case
-    $P_1 = (G, H, R, \mathtt{halt})$, so
-    $P^\circ_1 = (\drop{G}{G}, \drop{H}{H}, \drop{R}{R}, \mathtt{halt})$. Thus
-    we can construct a derivation of $\done{P^\circ_1}$.
-  \item Alternatively we have a derivation of $P_1 -> P_2$ for some $P_2$. We
-    see that $(P_1, P^\circ_1) = (P_1, \drop{P}{P_1}) \in \mathcal{R}$ from
-    \autoref{thm:simulation}. Since $\mathcal{R}$ is a simulation, we have the
-    desired result.
-  \end{itemize}
-\end{proof}
+  For the first part, assume that $\stepa{P_1}{P_2}$ for some $P_2$. We need to
+  find an $P^\circ_2$ such that $\steps{P^\circ_1}{P^\circ_2}$ and
+  $(P_2, P^\circ_2) \in \mathcal{R}_B$. If we let $P^\circ_2 = \drop{P}{P_2}$,
+  then it remains to be shown that $\steps{\drop{P}{P_1}}{\drop{P}{P_2}}$ and
+  $|- P_2$. However these follow directly from \autoref{thm:exec-drop} and
+  preservation lemma respectively.
 
-\begin{lemma}[Preservation (simplified)]
-  \label{thm:reduction-simple}
-  Let $P_1$ be an annotated program with $|- P_1$ and $P^\circ_1 = \drop{P}{P}$.
-  Assume that $P^\circ_1 -> P^\circ_2$. Then there is some annotated program
-  $P_2$ with $|- P_2$ and $P^\circ_2 = \drop{P}{P_2}$.
-\end{lemma}
-\begin{proof}
-  We use the progress lemma on $|- P_1$, which results in two cases.
+  For the second part, assume that $\steps{P^\circ_1}{P^\circ_2}$ for some
+  $P^\circ_2$. We find an $P_2$ such that $\stepa{P_1}{P_2}$ and
+  $(P_2, P^\circ_2) \in \mathcal{R}_B$. Since
+  $(P_1, P^\circ_1) \in \mathcal{R}_B$ we know $|- P_1$. We use the progress
+  lemma on this, which results in two cases.
 
-  We cannot have a derivation of $\done{P_1}$, as this would imply a
-  contraction. The derivation would imply that $P_1 = (G, H, R, \mathtt{halt})$,
-  which means that
-  $P^\circ_1 = (\drop{G}{G}, \drop{H}{H}, \drop{R}{R}, \mathtt{halt})$. However
-  this is not possible since $P^\circ_1 -> P^\circ_2$.
+  We cannot have a derivation of $\donea{P_1}$, as this would imply a
+  contradiction: We have $P_1 = (\dots, \mathtt{halt})$, which means that
+  $P^\circ_1 = (\dots, \mathtt{halt})$. However this is not possible since
+  $\steps{P^\circ_1}{P^\circ_2}$.
 
-  So we conclude that there is some $P_t$ such that $P_1 -> P__t$. This means
-  that $(P_1, P^\circ_1) = (P_1, \drop{P}{P_1}) \in \mathcal{R}$ from
-  \autoref{thm:simulation}, by using $P_t$ as the witness. Since $\mathcal{R}$
-  is a bisimulation, we there is a $P_2$ such that $P_1 -> P_2$ and
-  $(P_2, P^\circ_2) \in \mathcal{R}$, which implies that
-  $P^\circ_2 = \drop{P}{P_2}$.\footnote{It happens to be the case that
-    $P_2 = P_t$ because both languages are deterministic, but our proof does not
-    depend on this fact directly.}
-
-  It just remains to be shown that $|- P_2$, however this follows directly from
-  the preservation lemma.
-  \end{itemize}
+  So we instead conclude there is some $P_t$ such that $\stepa{P_1}{P_t}$. If we let
+  $P_2 = P_t$, then it remains to be shown that $P^\circ_2 = \drop{P}{P_2}$ and
+  $|- P_2$. The first part follows from \autoref{thm:exec-drop} and
+  \autoref{thm:determinism}. The second part follows from the preservation
+  lemma.
 \end{proof}
 
 \begin{theorem}[Soundness (simplified)]
   \label{thm:soundness-simple}
   Let $P_1$ be an annotated program with $|- P_1$ and let
   $P^\circ_1, \dots, P^\circ_n$ be simplified program such that
-  $P^\circ_1 = \drop{P}{P_1}, P^\circ_1 -> P^\circ_2, \dots, P^\circ_{n-1} ->
-  P^\circ_n$.
-  Then we can either get a derivation of $\done{P^\circ_n}$ or there is some
-  $P^\circ_{n+1}$ such that $P^\circ_n -> P^\circ_{n+1}$.
+  $P^\circ_1 = \drop{P}{P_1}$ and
+  $\steps{P^\circ_1}{P^\circ_2}, \dots, \steps{P^\circ_{n-1}}{P^\circ_n}$.
+  Then we can either get a derivation of $\dones{P^\circ_n}$ or there is some
+  $P^\circ_{n+1}$ such that $\steps{P^\circ_n}{P^\circ_{n+1}}$.
 \end{theorem}
 \begin{proof}
-  Let $V(k)$ be the statement ``$k > n$ or there exists a $P_k$ such with
-  $P^\circ_k = \drop{P}{P_k}$ and $|- P_k$''. We use natural induction to show
-  $V(k)$:
+  We see that $(P_1, P^\circ_1) \in \mathcal{R}_B$ from the bisimulation
+  lemma. By repeatedly using the fact that $\mathcal{R}_B$ is a bisimulation we
+  get annotated programs $P_2, \dots, P_n$ where $\stepa{P_i}{P_{i+1}}$ and
+  $(P_{i+1}, P^\circ_{i+1}) \in \mathcal{R}_B$ for all $1 \le i < n$.
+
+  Specifically we have $P^\circ_n = \drop{P}{P_n}$ and $|- P_n$. We apply the
+  progress lemma on $|- P_n$, which results in two cases:
 
   \begin{itemize}
-  \item $V(1)$: Let $P = P_1$ and the result follows from the assumptions.
-  \item $V(k) => V(k+1)$: If $k+1>n$ we are done, so assume $k \le n$. $V(k)$
-    now implies that there is some $P_k$ such that $|- P_k$ and
-    $P^\circ_k = \drop{P}{P_k}$. We also have a derivation of
-    $P^\circ_k -> P^\circ_{k+1}$ by assumption. By applying the simplified
-    preservation lemma, we get the result.
+  \item Either we have a derivation of $\donea{P_n}$, so
+    $P_n = (\dots, \mathtt{halt})$. This implies
+    $P^\circ_n = (\dots, \mathtt{halt})$, so we
+    get a derivation of $\dones{P^\circ_n}$.
+  \item Alternatively we have a derivation of $\stepa{P_n}{P_{n+1}}$ for some
+    value of $P_{n+1}$. Since $\mathcal{R}_B$ is a bisimulation, this implies we
+    have some $P^\circ_{n+1}$ such that $\steps{P^\circ_n}{P^\circ_{n+1}}$.
   \end{itemize}
-
-  By $V(n)$ we can thus conclude that we have $P^\circ_n = \drop{P}{P_n}$ and
-  $|- P_n$ for some $P_n$. We use this on the simplified progress lemma and get
-  the desired result.
 \end{proof}

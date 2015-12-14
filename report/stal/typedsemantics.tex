@@ -1,77 +1,64 @@
 \subsection{Semantics}
 
-We have three judgments:
-
-\begin{itemize}
-\item \fbox{$\evalbig{R}{v}{w}$}
-\item \fbox{$\evalbig{G}{w}{I}$}
-\item \fbox{$\evalbig{G}{w}{I}$}
-\item \fbox{$\execinstruction{G}{H, R, I}{H', R', I'}$}
-\end{itemize}
-
-The first and last one are similar to those for of the untyped language. The
-third one is an introduction, which evaluates a wordvalue to an instruction
-sequence.
-
 \paragraph{}
-\fbox{$\evalbig{R}{v}{w}$}
+\fbox{$\evalrega{R}{v}{w}$}
 \begin{mathpar}
 \infer{ }{
-  \evalbig{R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+  \evalrega{R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
 } \and
 \infer{
   (r \mapsto w) \in R
 }{
-  \evalbig{R}{\mathtt{reg}\ r}{w}
+  \evalrega{R}{\mathtt{reg}\ r}{w}
 } \and
 \infer{ }{
-  \evalbig{R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+  \evalrega{R}{\mathtt{int}\ i}{\mathtt{int}\ i}
 } \and
 \infer{ }{
-  \evalbig{R}{\mathtt{ns}}{\mathtt{ns}}
+  \evalrega{R}{\mathtt{ns}}{\mathtt{ns}}
 } \and
 \infer{ }{
-  \evalbig{R}{\mathtt{uninit}\ \tau}{\mathtt{uninit}\ \tau}
+  \evalrega{R}{\mathtt{uninit}\ \tau}{\mathtt{uninit}\ \tau}
 } \and
 \infer{
-  \evalbig{R}{v}{w}
+  \evalrega{R}{v}{w}
 }{
-  \evalbig{R}{\Lambda\ \Delta.v[i_1, \dots, i_n]}{\Lambda\ \Delta.w[i_1, \dots, i_n]}
+  \evalrega{R}{\Lambda\ \Delta.v[i_1, \dots, i_n]}{\Lambda\ \Delta.w[i_1, \dots, i_n]}
 }
 \end{mathpar}
 
-\fbox{$\evalbig{G}{w}{I}$}
+\fbox{$\evalcodea{G}{w}{I}$}
 \begin{mathpar}
 \infer{
   \lookup{G}{\ell_g}{\mathtt{code}\ \forall[\Delta]\Gamma \cdot I}
 }{
-  \evalbig{G}{\mathtt{globval}\ \ell_g}{I}
+  \evalcodea{G}{\mathtt{globval}\ \ell_g}{I}
 } \and
 \infer{
-  \evalbig{G}{w}{I} \and
+  \evalcodea{G}{w}{I} \and
   I_1 = I[v_1 / x_1] \and
   \dots \and
   I_n = I_{n-1}[v_n / x_n]
 }{
-  \evalbig{G}{\Lambda\ \Delta . w[x_1 / y_1, \dots, x_n / y_n]}{I_n}
+  \evalcodea{G}{\Lambda\ \Delta . w[x_1 / y_1, \dots, x_n / y_n]}{I_n}
 }
 \end{mathpar}
 
-\fbox{$\execinstruction{G}{H, R, I}{H', R', I'}$}
+\fbox{$\execia{G}{C}{C}$}
 \begin{mathpar}
 \infer{
-  \evalbig{R}{v}{\mathtt{int}\ i_1} \and
+  \evalrega{R}{v}{\mathtt{int}\ i_1} \and
   (\mathtt{r}_s \mapsto \mathtt{int}\ i_2) \in R
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{add}\ r_d, r_s, v) ; I}
     {H, R\{r_d \mapsto \mathtt{int}\ (i_1 + i_2)\}, I}
 } \and
 \infer{
-  \evalbig{R}{v}{\mathtt{int}\ i_1} \and
+  \evalrega{R}{v}{\mathtt{int}\ i_1} \and
   (r_s \mapsto \mathtt{int}\ i_2) \in R
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{sub}\ r_d, r_s, v) ; I}
     {H, R\{r_d |-> \mathtt{int}\ (i_1 - i_2)\}, I}
 } \and
@@ -79,7 +66,7 @@ sequence.
   (\mathtt{sp} |-> S) \in R \and
   S' = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: S
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, \mathtt{salloc}\ n ; I}
     {H, R\{\mathtt{sp} |-> S'\}, I}
 } \and
@@ -87,7 +74,7 @@ sequence.
   (\mathtt{sp} |-> S) \in R \and
   S = \overbrace{w_1 :: \dots :: w_n}^n :: S'
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, \mathtt{sfree}\ n ; I}
     {H, R\{\mathtt{sp} |-> S'\}, I}
 } \and
@@ -95,7 +82,7 @@ sequence.
   (\mathtt{sp} |-> S) \in R \and
   \lookup{S}{n}{w}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{ld}\ r_d, \mathtt{sp}(n)) ; I}
     {H, R\{r_d |-> w\}, I}
 } \and
@@ -104,7 +91,7 @@ sequence.
   (\ell_h |-> h) \in H \and
   \lookup{h}{n}{w}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{ld}\ r_d, r_s(n)) ; I}
     {H, R\{r_d |-> w\}, I}
 } \and
@@ -113,7 +100,7 @@ sequence.
   (\mathtt{sp} |-> S) \in R \and
   \update{S}{n}{w}{S'}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{st}\ \mathtt{sp}(n), r_s) ; I}
     {H, R\{\mathtt{sp} |-> S'\}, I}
 } \and
@@ -123,7 +110,7 @@ sequence.
   (\ell_h |-> h) \in H \and
   \update{h}{n}{w}{h'}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{st}\ r_d(n), r_s) ; I}
     {H\{\ell_h |-> h'\}, R, I}
 } \and
@@ -131,23 +118,23 @@ sequence.
   \ell_h \not\in \mathbf{Keys}(H) \and
   h = \overbrace{\langle \mathtt{uninit}\ \tau_1, \dots, \mathtt{uninit}\ \tau_n \rangle}^n
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{malloc}\ r_d, \langle \tau_1, \dots, \tau_n \rangle) ; I}
     {H \cup \{\ell_h |-> h\}, R\{r_d |-> \mathtt{heapval}\ \ell_h\}, I}
 } \and
 \infer{
-  \evalbig{R}{v}{w}
+  \evalrega{R}{v}{w}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{mov}\ r_d, v) ; I}
     {H, R\{r_d |-> w\}, I}
 } \and
 \infer{
   (r |-> \mathtt{int}\ 0) \in R \and
-  \evalbig{R}{v}{w} \and
-  \evalbig{G}{w}{I'}
+  \evalrega{R}{v}{w} \and
+  \evalcodea{G}{w}{I'}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{beq}\ r, v) ; I}
     {H, R, I'}
 } \and
@@ -155,32 +142,32 @@ sequence.
   (r |-> \mathtt{int}\ i) \in R \and
   i \neq 0
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, (\mathtt{beq}\ r, v) ; I}
     {H, R, I}
 } \and
 \infer{
-  \evalbig{R}{v}{w} \and
-  \evalbig{G}{w}{I'}
+  \evalrega{R}{v}{w} \and
+  \evalcodea{G}{w}{I'}
 }{
-  \execinstruction{G}
+  \execia{G}
     {H, R, \mathtt{jmp}\ v}
     {H, R, I'}
 }
 \end{mathpar}
 
-\fbox{$P -> P'$}
+\fbox{$\stepa{P}{P'}$}
 \begin{mathpar}
 \infer{
-  \execinstruction{G}{H, R, I}{H', R', I'}
+  \execia{G}{H, R, I}{H', R', I'}
 }{
   (G, H, R, I) -> (G, H', R', I')
 }
 \end{mathpar}
 
-\fbox{$\done{P}$}
+\fbox{$\donea{P}$}
 \begin{mathpar}
 \infer{ }{
-  \done{(G, H, R, \mathtt{halt})}
+  \donea{(G, H, R, \mathtt{halt})}
 }
 \end{mathpar}
