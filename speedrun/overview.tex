@@ -1,126 +1,181 @@
-
 The purpose of this chapter is to introduce our typed assembly language along
-with our proof of soundness. Before we do so, we will give a brief overview of
-the stuff to come.
+with our proof of soundness. To give some context, we will first give a quick
+run-through of our strategy.
 
-In the chapter we will first introduce three languages:
+\paragraph{Step 1:} Define three languages:
 
 \begin{itemize}
-\item \native\lang -- this is MIPS as defined in \cite{mipssys}.
-\item \simple\lang -- this is a simplification of \native\lang. The exact
-  details of this simplification will be presented later, however the basic idea
-  is that we will restrict the evaluation model to only permit benevolent
-  programs.
-\item \high\lang -- this is an extension of \simple\lang, which will
+\item \nativelang is a real-world language, e.g. MIPS as defined by
+  \cite{mipssys}.
+\item \simplelang is a simplification of \nativelang. The purpose of
+  this simplification is to restrict the evaluation model. Our restricted model
+  will only to only permit benevolent programs.
+\item \highlang is an extension of \simplelang, which will
   introduce types.
 \end{itemize}
 
-We will introduce a translation between the languages:
-
+To avoid dealing with halting semantics, we introduce the following states:
 \begin{itemize}
-\item $\simple\embed : \simple\lang -> \native\lang$.
-\item $\high\embed : \high\lang -> \simple\lang$.
+\item $\malicious, \nhalt \in \nativelang$
+\item $\shalt \in \simplelang$
+\item $\hhalt \in \highlang$
 \end{itemize}
 
-For each of these languages, we will introduce introduce a relation for
-small-step evaluation:
+$\halt$ represents every program that has halted in a non-malicious way (such as
+intentional exiting or properly handled out-of-memory exceptions). $\malicious$
+represents every any malicious state.
+
+\paragraph{Step 2:} Define two translation functions and a relation:
 
 \begin{itemize}
-\item $\native{->} \subset \native\lang \times \native\lang$.
-\item $\simple{->} \subset \simple\lang \times \simple\lang$.
-\item $\high{->} \subset \high\lang \times \high\lang$.
+\item $\high\embed : \highlang -> \simplelang$. Intuition: Simply drop the type
+  annotations.
+\item $\simple\embed : \simplelang -> \nativelang$. Intuition: An assembler
+  along with a code generator to construct the heap.
+\item $\simple\embedp \subset \simplelang \times \nativelang$. Intuition:
+  Multiple equivalent run-time equivalents of a single problem might exist. We
+  use this relate multiple native programs to the same simplified program.
 \end{itemize}
 
-Define
-$p_1 \native{->} p_2 \native{->} \dots \native{->} p_{n-1} \native{->} p_n$ as
-shorthand for $(p_1, p_2), \dots, (p_{n-1}, p_n) \in \native{->}$. Similarly for
-\simple{->} and \high{->}.
-
-\subsection{A small sidestep}
-\label{sidestep}
-Ideally one would at this point want to prove the following theorems:
-
-(Extend \native\lang with a state $\mathbf{halt}$, which represents all
-gracefully terminated programs. Require
-$\mathbf{halt} \native{->} \mathbf{halt}$ to be its only forward-transition.)
+We observe that:
 
 \begin{itemize}
-\item \textbf{Benevolence}: Assume $p \simple{->} p'$ and assume $S$ to be some
-  sequence $$\simple\embed(p) \native{->} \dots \native{->}
-  \simple\embed(p')$$ The sequence $S$ will not contain malicious behavior,
-  where malicious behavior is defined as stack overflows, heap overflows, memory
-  faults, execution of data written by the user, etc.
-
-\item \textbf{Stutter bisimulation of \simple\embed}: Let
-  $$R = \{(p, \mathbf{halt}) \mid p \in \simple\lang\} \cup \{(p,
-  \simple\embed(p)) \mid p \in \simple\lang\} \subset \simple\lang \times
-  \native\lang$$ We see that $R$ is a stutter bisimulation between \simple{->}
-  and \high{->}. More specifically there exists a function
-  $bound : \simple\lang \times \native\lang \to \mathbb{N}$ such
-  that:\footnote{This definition is a somewhat specialized version of stutter
-    bisimulation, that does not capture all the details of the more general
-    definition. For a more general definition see TODO.}:
-
-  \begin{itemize}
-  \item Assume $(p, p_1) \in R$ and $p \simple{->} p'$. Then there exists a
-    sequence $$p_1 \native{->} p_2 \native{->} \dots \native{->} p_n$$ of length
-    at most $bound(p, p_1)$ such that $(p', p_n) \in R$.
-  \item Assume $(p, p_1) \in R$ and let
-    $p_1 \native{->} p_2 \native{->} \dots \native{->} p_n$ be any sequence of
-    length at least $bound(p, p_1)$. Then there exists a $p'$ such that
-    $p \simple{->} p'$ and $\simple\embed(p) = p_k$ for some $k \leq n$.
-  \end{itemize}
+\item $\high\embed(\hhalt) = \shalt$
+\item $\simple\embedp(\shalt) = \{\nhalt\}$
+\item $\malicious \notin \simple\embedp(p)$ for all p
+\item $\simple\embed(p) \in \simple\embedp(p)$ for all p
 \end{itemize}
 
-However these are both beyond the scope of this thesis.
-
-\subsection{Continuation on track}
-
-We will then introduce a typing judgment for our high-level language, and a
-restriction of the language to those terms that are valid.
+\paragraph{Step 3:} For each of these languages, define a small-step relation:
 
 \begin{itemize}
-\item If $p \in \high\lang$, then $\valid{}{p}$ is a judgment (for which there
+\item $\nativeo{->} \subset \nativelang \times \nativelang$.
+\item $\simpleo{->} \subset \simplelang \times \simplelang$.
+\item $\higho{->} \subset \highlang \times \highlang$.
+\end{itemize}
+
+Use $p_1 \nativeo{->} p_2 \nativeo{->} \dots \nativeo{->} p_{n-1} \nativeo{->} p_n$
+as shorthand for $(p_1, p_2), \dots, (p_{n-1}, p_n) \in \nativeo{->}$. Similarly
+for \simpleo{->} and \higho{->}.
+
+We observe that:
+
+\begin{itemize}
+\item If $p \in \nativelang$ is halting for non-malicious reasons, then
+  $p \nativeo{->} \nhalt$.
+\item $\nhalt \nativeo{->} p \iff p = \nhalt$.
+\item (Similarly for \simplelang and \highlang).
+\item If $p \in \nativelang$ can transition in a malicious or undefined way,
+  then $p \nativeo{->} \malicious$.
+\item $\malicious \nativeo{->} p \iff p = \malicious$
+\end{itemize}
+
+\paragraph{Note:} This implies \nativelang will always progress (i.e. if
+$p \in \nativelang$, then $p \nativeo{->} p'$ for some $p'$). This is \emph{not}
+true for \simplelang or \highlang.
+
+\paragraph{Step 4:} Define a typing judgment for \highlang and a sub-language:
+
+\begin{itemize}
+\item If $p \in \highlang$, then $\valid{}{p}$ is a judgment (for which there
   might or might not exist a derivation).
-\item $\typed\lang = \{p \in \high\lang \mid \text{there exists a derivation of $\valid{}{p}$}\} \subset \high\lang$.
+\item
+  $\typedlang = \{p \in \highlang \mid \text{there exists a derivation of\ }
+    \valid{}{p}\} \subset \highlang$.
 \end{itemize}
 
-We will then prove the following theorems:
+\paragraph{Step 5:} Prove these theorems about \highlang:
 
 \begin{itemize}
-\item \textbf{Progress}: Assume $p \in \typed\lang$. In that case there exists
-  some $p' \in \high\lang$ such that $p \high{->} p'$.
-\item \textbf{Preservation}: Assume $p \high{->} p'$ and $p \in \typed\lang$. In that
-  case $p' \in \typed\lang$.
-\item \textbf{Bisimulation of \high\embed}: Let
-  $$R = \{(p, \high\embed(p)) \mid p \in \typed\lang\} \subset \high\lang \times
-  \simple\lang$$ We see that $R$ is a bisimulation between \high{->} and
-  \simple{->}. More specifically\footnote{A more general definition of
-    bisimulation exists, however introducing it serves no real purpose here,
-    since only this one bisimulation is proved.}:
+\item \textbf{Progress}: Assume $p \in \typedlang$. In that case there exists
+  some $p' \in \highlang$ such that $p \higho{->} p'$.
+\item \textbf{Preservation}: Assume $p \higho{->} p'$ and $p \in \typedlang$. In
+  that case $p' \in \typedlang$.
+\item \textbf{Soundness for \highlang}: If $p_1 \in \typedlang$ and
+  $p_1 \higho{->} \dots \higho{->} p_n$, then there exists some $p_{n+1}$ such that
+  $p_n \higho{->} p_{n+1}$. This follows directly from the two previous
+  theorems.
+\end{itemize}
+
+\paragraph{Step 6:} Prove the following theorems about the relationship between
+\highlang and \simplelang:
+
+\begin{itemize}
+\item \textbf{Bisimulation}: Define the following predicate on
+  programs in \highlang:
+
+  $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor (\not\exists p': p \higho{->} p')$$
+
+  Define the relation $R$ as:
+
+  $$R = \{(p, \high\embed(p)) \mid \neg\Stuck(p)\} \subset \highlang \times
+  \simplelang$$
+
+  We see that $R$ is bisimulation between \higho{->} and \simpleo{->}. More
+  specifically:\footnote{A more general definition of bisimulation exists,
+    however introducing the generalization serves no real purpose in this
+    instance.}
   \begin{itemize}
-  \item Assume $(p_1, p_1') \in R$ and $p_1 \high{->} p_2$. Then there exists
-    some $p_2'$ such that $(p_2, p_2') \in R$ and $p_1' \simple{->} p_2'$.
-  \item Assume $(p_1, p_1') \in R$ and $p_1' \simple{->} p_2'$. Then there
+  \item Assume $(p_1, p_1') \in R$ and $p_1 \higho{->} p_2$. Then there exists
+    some $p_2'$ such that $(p_2, p_2') \in R$ and $p_1' \simpleo{->} p_2'$.
+  \item Assume $(p_1, p_1') \in R$ and $p_1' \simpleo{->} p_2'$. Then there
     exists some $p_2$ such that $(p_2, p_2') \in R$ and
-    $p_1 \high{->} p_2$.
+    $p_1 \higho{->} p_2$.
   \end{itemize}
+\item \textbf{Soundness for \simplelang}: Assume $p_1 \in \typedlang$ and
+  $\high\embed(p_1) \simpleo{->} \dots \simpleo{->} p_2$. In that case there
+  exists some $p_3$ such that $p_2 \simpleo{->} p_3$. This follows
+  directly from the previous two theorems.
 \end{itemize}
 
-By combining these three theorems we get:
+\paragraph{Step 7:} Prove the following theorem about the relationship between
+\simplelang and \nativelang:
 
 \begin{itemize}
-\item \textbf{Soundness of \simple\lang}: Assume $p_1 \in \typed\lang$ and
-  $\high\embed(p_1) \simple{->} \dots \simple{->} p_2$. In that case there
-  exists some $p_3$ such that $p_2 \simple{->} p_3$.
+\item \textbf{Stuttering bisimulation}: Define the following predicate on
+  programs in \simplelang:
+
+  $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor (\not\exists p': p \simpleo{->} p')$$
+
+  Note specifically that $\neg\Stuck(\shalt)$. Now define a relation $R$
+  by:
+
+  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simple\embedp(p_1) \cup \{\nhalt\}\}$$
+
+  This relation is a stuttering bisimulation of $\simpleo{->}$ and
+  $\nativeo{->}$. More specifically there is a function
+  $f : \simplelang \times \nativelang \to \mathbb{N}$ such that:\footnote{This is
+    again a somewhat specialized definition of a much more general concept.}
+
+  \begin{itemize}
+  \item Assume $(p, p_1) \in R$ and $p \simpleo{->} p'$. Then there exists
+    $1 \leq n \leq f(p, p_1)$ and a sequence
+    $p_1 \nativeo{->} p_2 \nativeo{->} \dots \nativeo{->} p_n$ such that
+    $(p', p_n) \in R$.
+  \item Assume $(p, p_1) \in R$, assume $n \geq f(p, p_1)$ and that there is
+    some sequence $p_1 \nativeo{->} \dots \nativeo{->} p_n$. Then there is some
+    $1 \leq k \leq f(p, p_1)$ and a $p'$ such that $(p', p_k) \in R$.
+  \end{itemize}
+
+  (Note that since no programs are stuck in \nativelang, we can show a slightly
+  different statement regarding sequences of any length.)
 \end{itemize}
 
-\subsection{Conclusion}
-
-By combining the soundness theorem with the theorems postulation in
-\autoref{sidestep}, we arrive that the following theorems:
-
+\paragraph{Step 8:} We finally prove the desired theorems:
 \begin{itemize}
-\item \textbf{Safety}: Let $p \in \typed\lang$. Then executing
-  $\simple\embed(\high\embed(p))$ will not cause malicious behavior.
+\item \textbf{Safety}: Assume $p \in \typedlang$,
+  $p' \in \simple\embedp(\high\embed(p))$. There exists no path such that
+  $p \nativeo{->} \dots \native{\malicious}$. In particular it is safe to
+  execute $\simple\embed(\high\embed(p))$.
+
+  This theorem follows directly from the two previous theorems.
+
+\item \textbf{Correctness}: Assume $p_1 \in \typedlang$,
+  $p_1' \in \simple\embedp(\high\embed(p_1))$ and assume
+  $p_1 \higho{->} \dots \higho{->} p_n$. There now exists a finite sequence
+  $p_1' \nativeo{->} \dots \nativeo{->} p_m'$ such that
+  $p_m' \in \simple\embedp(\high\embed(p_n)) \cup \{\nhalt\}$.
+
+\item \textbf{Decidability}: If $p \in \highlang$, then it is decidable to check
+  if $p$ is a member of $\typedlang$.
 \end{itemize}

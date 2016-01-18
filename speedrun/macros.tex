@@ -3,14 +3,30 @@
 \mathlig{!}{\downarrow}
 \mathlig{>>}{\gg}
 
-\newcommand \lang {{\ensuremath{\mathcal{L}}}}
 \newcommand \embed {{\ensuremath{\mathbf{embed}}}}
-\newcommand \native[1] {{\ensuremath{{#1}^N}}}
-\newcommand \simple[1] {{\ensuremath{{#1}^S}}}
-\newcommand \high[1] {{\ensuremath{{#1}^H}}}
-\newcommand \typed[1] {{\ensuremath{{#1}^T}}}
-\newcommand \Valid {{\ensuremath{\mathbf{Valid}}}}
+\newcommand \embedp {\ensuremath{\mathbf{embed}^\ast}}
 
+\newcommand \native[1] {{\ensuremath{#1_N}}}
+\newcommand \simple[1] {{\ensuremath{#1_S}}}
+\newcommand \high[1] {{\ensuremath{#1_H}}}
+\newcommand \typed[1] {{\ensuremath{#1_T}}}
+
+\newcommand \nativeo[1] {{{}\ensuremath{\stackrel{N}{#1}}{}}}
+\newcommand \simpleo[1] {{{}\ensuremath{\stackrel{S}{#1}}{}}}
+\newcommand \higho[1] {{{}\ensuremath{\stackrel{H}{#1}}{}}}
+
+\newcommand \lang {\ensuremath{\mathcal{L}}}
+\newcommand \Stuck {\ensuremath{\mathbf{Stuck}}}
+
+\newcommand \nativelang {\ensuremath{\lang_N}\xspace}
+\newcommand \simplelang {\ensuremath{\lang_S}\xspace}
+\newcommand \highlang {\ensuremath{\lang_H}\xspace}
+\newcommand \typedlang {\ensuremath{\lang_T}\xspace}
+\newcommand \halt {{\ensuremath{\mathbf{halt}}}}
+\newcommand \malicious {{\ensuremath{\mathbf{malicious}}}}
+\newcommand \nhalt {{\ensuremath{\mathbf{halt}_N}}}
+\newcommand \hhalt {{\ensuremath{\mathbf{halt}_H}}}
+\newcommand \shalt {{\ensuremath{\mathbf{halt}_S}}}
 
 \newcommand \valid[2] {{#1} |- {#2}\ \mathbf{Valid}}
 \newcommand \subtype[3] {{#1} |- {#2} \le {#3}}
