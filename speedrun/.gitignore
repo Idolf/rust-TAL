@@ -1,0 +1,14 @@
+*.aux
+*.log
+*.toc
+*.log
+*.out
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.tdo
+*.ptb
+*.agdai
+report.pdf
+auto

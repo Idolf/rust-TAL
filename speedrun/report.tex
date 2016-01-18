@@ -1,0 +1,80 @@
+\input{preamble}
+\input{macros}
+
+\begin{document}
+
+\begin{titlepage}
+\maketitle
+\end{titlepage}
+\tableofcontents
+
+\input{abstract}
+
+% \chapter{Introduction}
+% \input{introduction/motivation}
+% \input{introduction/proof-carrying-code}
+% \input{introduction/problem-statement}
+
+
+\chapter{Typed Assembly Language}
+\input{overview}
+
+% Each of these languages has an associated small-step semantic. For
+% \native{\lang}, this semantic is as defined in the user manual, while the exact semantics of the
+
+% This chapter has three parts. First we will formally introduce the concepts of
+% Typed Assembly Language in an informal setting. We will then give a formal
+% definition of the same concepts. Finally we will introduce the specific instance
+% of Typed Assembly Language used in \cite{STAL}.
+
+% Note that I have chosen a specific way of presenting Typed Assembly Language,
+% that lends itself well to formalization. While this approach is not completely
+% similar to the approach used in \cite{STAL}, I expect that the concepts should
+% be fairly recognizable.
+
+% \input{tal/informal}
+% \input{tal/formal}
+% \input{tal/stal}
+
+% \chapter{Stack-Based Typed Assembly Language}
+% This chapter will define the two languages $STAL$ and $STAL_S$. The design bla
+% bla previous section.
+
+% For the most part $STAL$ is equivalent to the one defined in \cite{STAL},
+% however a few changes have been made to simplify the proofs. It is our opinion
+% that the resulting language is morally equivalent to the original one.
+
+% \input{stal/related}
+% \input{stal/simple}
+% \input{stal/typed}
+% \input{stal/drop}
+% \input{stal/bisimulation}
+% \input{stal/soundness}
+
+% \chapter{Lessons Learned: Tips for doing formalizations in Agda}
+% \input{lessons/deceq}
+% \input{lessons/eqhelp}
+% \input{lessons/substitutions}
+
+% \chapter{Judgments}
+% \input{judgments/grammar}
+% \input{judgments/types}
+% \input{judgments/subtypes}
+% \input{judgments/substitution}
+% \input{judgments/run}
+% \input{judgments/terms}
+% \input{judgments/semantics}
+
+% \chapter{Lemmas}
+% \input{lemmas/misc}
+% \input{lemmas/eq}
+% \input{lemmas/types}
+% \input{lemmas/subtypes}
+% \input{lemmas/substitution}
+% \input{lemmas/run}
+
+\listoftodos[Notes]
+
+\bibliographystyle{plain}
+\bibliography{report}
+\end{document}

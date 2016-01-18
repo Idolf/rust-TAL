@@ -1,0 +1,50 @@
+\mathlig{|-}{\vdash}
+\mathlig{|->}{\mapsto}
+\mathlig{!}{\downarrow}
+\mathlig{>>}{\gg}
+
+\newcommand \lang {{\ensuremath{\mathcal{L}}}}
+\newcommand \embed {{\ensuremath{\mathbf{embed}}}}
+\newcommand \native[1] {{\ensuremath{{#1}^N}}}
+\newcommand \simple[1] {{\ensuremath{{#1}^S}}}
+\newcommand \high[1] {{\ensuremath{{#1}^H}}}
+\newcommand \typed[1] {{\ensuremath{{#1}^T}}}
+\newcommand \Valid {{\ensuremath{\mathbf{Valid}}}}
+
+
+\newcommand \valid[2] {{#1} |- {#2}\ \mathbf{Valid}}
+\newcommand \subtype[3] {{#1} |- {#2} \le {#3}}
+\newcommand \substitution[3] {{#1} \llbracket {#2} \rrbracket \equiv {#3}}
+\newcommand \run[3] {\mathtt{Run}\ {#1} \llbracket {#2} \rrbracket \equiv {#3}}
+
+\newcommand \ofglobs[2] {|- {#1} : {#2}}
+\newcommand \ofheap[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofgval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofhval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofwval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofwvaln[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofvval[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofstack[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofword[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofregister[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofinstructions[2] {{#1} |- {#2}\ \mathbf{instruction\ sequence}}
+\newcommand \ofinstruction[3] {{#1} |- {#2}\ => {#3}}
+\newcommand \ofprogram[2] {{#1} |- {#2}}
+
+% Judgments
+\newcommand \drop[2] {\mathbf{drop}_{{#1}}({#2})}
+\newcommand \lookup[3] {{#1} ! {#2} => {#3}}
+\newcommand \update[4] {{#1}[{#2}] <- {#3} => {#4}}
+
+% Simple judgments
+\newcommand \evalregs[3] {{#1} |- {#2} ! {#3}}
+\newcommand \execis[3] {{#1} |- {#2} => {#3}}
+\newcommand \steps[2] {{#1} -> {#2}}
+\newcommand \dones[1] {{#1}\ \mathbf{done}}
+
+% Annotated judgments
+\newcommand \evalrega[3] {{#1} |- {#2} ! {#3}}
+\newcommand \evalcodea[3] {{#1} |- {#2} ! {#3}}
+\newcommand \execia[3] {{#1} |- {#2} => {#3}}
+\newcommand \stepa[2] {{#1} -> {#2}}
+\newcommand \donea[1] {{#1}\ \mathbf{done}}

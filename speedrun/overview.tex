@@ -1,0 +1,126 @@
+
+The purpose of this chapter is to introduce our typed assembly language along
+with our proof of soundness. Before we do so, we will give a brief overview of
+the stuff to come.
+
+In the chapter we will first introduce three languages:
+
+\begin{itemize}
+\item \native\lang -- this is MIPS as defined in \cite{mipssys}.
+\item \simple\lang -- this is a simplification of \native\lang. The exact
+  details of this simplification will be presented later, however the basic idea
+  is that we will restrict the evaluation model to only permit benevolent
+  programs.
+\item \high\lang -- this is an extension of \simple\lang, which will
+  introduce types.
+\end{itemize}
+
+We will introduce a translation between the languages:
+
+\begin{itemize}
+\item $\simple\embed : \simple\lang -> \native\lang$.
+\item $\high\embed : \high\lang -> \simple\lang$.
+\end{itemize}
+
+For each of these languages, we will introduce introduce a relation for
+small-step evaluation:
+
+\begin{itemize}
+\item $\native{->} \subset \native\lang \times \native\lang$.
+\item $\simple{->} \subset \simple\lang \times \simple\lang$.
+\item $\high{->} \subset \high\lang \times \high\lang$.
+\end{itemize}
+
+Define
+$p_1 \native{->} p_2 \native{->} \dots \native{->} p_{n-1} \native{->} p_n$ as
+shorthand for $(p_1, p_2), \dots, (p_{n-1}, p_n) \in \native{->}$. Similarly for
+\simple{->} and \high{->}.
+
+\subsection{A small sidestep}
+\label{sidestep}
+Ideally one would at this point want to prove the following theorems:
+
+(Extend \native\lang with a state $\mathbf{halt}$, which represents all
+gracefully terminated programs. Require
+$\mathbf{halt} \native{->} \mathbf{halt}$ to be its only forward-transition.)
+
+\begin{itemize}
+\item \textbf{Benevolence}: Assume $p \simple{->} p'$ and assume $S$ to be some
+  sequence $$\simple\embed(p) \native{->} \dots \native{->}
+  \simple\embed(p')$$ The sequence $S$ will not contain malicious behavior,
+  where malicious behavior is defined as stack overflows, heap overflows, memory
+  faults, execution of data written by the user, etc.
+
+\item \textbf{Stutter bisimulation of \simple\embed}: Let
+  $$R = \{(p, \mathbf{halt}) \mid p \in \simple\lang\} \cup \{(p,
+  \simple\embed(p)) \mid p \in \simple\lang\} \subset \simple\lang \times
+  \native\lang$$ We see that $R$ is a stutter bisimulation between \simple{->}
+  and \high{->}. More specifically there exists a function
+  $bound : \simple\lang \times \native\lang \to \mathbb{N}$ such
+  that:\footnote{This definition is a somewhat specialized version of stutter
+    bisimulation, that does not capture all the details of the more general
+    definition. For a more general definition see TODO.}:
+
+  \begin{itemize}
+  \item Assume $(p, p_1) \in R$ and $p \simple{->} p'$. Then there exists a
+    sequence $$p_1 \native{->} p_2 \native{->} \dots \native{->} p_n$$ of length
+    at most $bound(p, p_1)$ such that $(p', p_n) \in R$.
+  \item Assume $(p, p_1) \in R$ and let
+    $p_1 \native{->} p_2 \native{->} \dots \native{->} p_n$ be any sequence of
+    length at least $bound(p, p_1)$. Then there exists a $p'$ such that
+    $p \simple{->} p'$ and $\simple\embed(p) = p_k$ for some $k \leq n$.
+  \end{itemize}
+\end{itemize}
+
+However these are both beyond the scope of this thesis.
+
+\subsection{Continuation on track}
+
+We will then introduce a typing judgment for our high-level language, and a
+restriction of the language to those terms that are valid.
+
+\begin{itemize}
+\item If $p \in \high\lang$, then $\valid{}{p}$ is a judgment (for which there
+  might or might not exist a derivation).
+\item $\typed\lang = \{p \in \high\lang \mid \text{there exists a derivation of $\valid{}{p}$}\} \subset \high\lang$.
+\end{itemize}
+
+We will then prove the following theorems:
+
+\begin{itemize}
+\item \textbf{Progress}: Assume $p \in \typed\lang$. In that case there exists
+  some $p' \in \high\lang$ such that $p \high{->} p'$.
+\item \textbf{Preservation}: Assume $p \high{->} p'$ and $p \in \typed\lang$. In that
+  case $p' \in \typed\lang$.
+\item \textbf{Bisimulation of \high\embed}: Let
+  $$R = \{(p, \high\embed(p)) \mid p \in \typed\lang\} \subset \high\lang \times
+  \simple\lang$$ We see that $R$ is a bisimulation between \high{->} and
+  \simple{->}. More specifically\footnote{A more general definition of
+    bisimulation exists, however introducing it serves no real purpose here,
+    since only this one bisimulation is proved.}:
+  \begin{itemize}
+  \item Assume $(p_1, p_1') \in R$ and $p_1 \high{->} p_2$. Then there exists
+    some $p_2'$ such that $(p_2, p_2') \in R$ and $p_1' \simple{->} p_2'$.
+  \item Assume $(p_1, p_1') \in R$ and $p_1' \simple{->} p_2'$. Then there
+    exists some $p_2$ such that $(p_2, p_2') \in R$ and
+    $p_1 \high{->} p_2$.
+  \end{itemize}
+\end{itemize}
+
+By combining these three theorems we get:
+
+\begin{itemize}
+\item \textbf{Soundness of \simple\lang}: Assume $p_1 \in \typed\lang$ and
+  $\high\embed(p_1) \simple{->} \dots \simple{->} p_2$. In that case there
+  exists some $p_3$ such that $p_2 \simple{->} p_3$.
+\end{itemize}
+
+\subsection{Conclusion}
+
+By combining the soundness theorem with the theorems postulation in
+\autoref{sidestep}, we arrive that the following theorems:
+
+\begin{itemize}
+\item \textbf{Safety}: Let $p \in \typed\lang$. Then executing
+  $\simple\embed(\high\embed(p))$ will not cause malicious behavior.
+\end{itemize}
