@@ -55,8 +55,8 @@ of this thesis. Finally \high\embed is this function:
 
 \begin{array}{l}
 \drop{R} : \high R -> \simple{R} \\
-\drop{R}(\{\mathtt{sp} |-> S, \mathbf{r}_1 |-> w_1, \dots, \mathbf{r}_{r_{max}} |-> w_{r_{max}}\})\\
-\quad\quad\quad\quad = \{\mathtt{sp} |-> \drop{S}(S), \mathbf{r}_1 |-> \drop{w}(w_1), \dots, \mathbf{r}_{r_{max}} |-> \drop{w}(w_{r_{max}})\}
+\drop{R}(\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w_1, \dots, \mathtt{r}_{r_{max}} |-> w_{r_{max}}\})\\
+\quad\quad\quad\quad = \{\mathtt{sp} |-> \drop{S}(S), \mathtt{r}_1 |-> \drop{w}(w_1), \dots, \mathtt{r}_{r_{max}} |-> \drop{w}(w_{r_{max}})\}
 \end{array} \\\\
 
 \begin{array}{ll}
@@ -65,8 +65,8 @@ of this thesis. Finally \high\embed is this function:
 \drop{\iota}(\mathtt{sub}\ r, r, v) &= \mathtt{sub}\ r, r, \drop{v}(v) \\
 \drop{\iota}(\mathtt{salloc}\ n) &= \mathtt{salloc}\ n \\
 \drop{\iota}(\mathtt{sfree}\ n) &= \mathtt{sfree}\ n \\
-\drop{\iota}(\mathtt{ld}\ r, \mathbf{sp}(n)) &= \mathtt{ld}\ r, \mathbf{sp}(n) \\
-\drop{\iota}(\mathtt{st}\ \mathbf{sp}(n), r) &= \mathtt{st}\ \mathbf{sp}(n), r \\
+\drop{\iota}(\mathtt{ld}\ r, \mathtt{sp}(n)) &= \mathtt{ld}\ r, \mathtt{sp}(n) \\
+\drop{\iota}(\mathtt{st}\ \mathtt{sp}(n), r) &= \mathtt{st}\ \mathtt{sp}(n), r \\
 \drop{\iota}(\mathtt{ld}\ r, r(n)) &= \mathtt{ld}\ r, r(n) \\
 \drop{\iota}(\mathtt{st}\ r(n), r) &= \mathtt{st}\ r(n), r \\
 \drop{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
