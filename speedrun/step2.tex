@@ -61,8 +61,8 @@ of this thesis. Finally \high\embed is this function:
 
 \begin{array}{ll}
 \rlap{$\drop{\iota} : \high\iota -> \simple\iota$} \\
-\drop{\iota}(\mathtt{add}\ r, r, v) &= \mathtt{add}\ r, r, (\drop{v}(v)) \\
-\drop{\iota}(\mathtt{sub}\ r, r, v) &= \mathtt{sub}\ r, r, (\drop{v}(v)) \\
+\drop{\iota}(\mathtt{add}\ r, r, v) &= \mathtt{add}\ r, r, \drop{v}(v) \\
+\drop{\iota}(\mathtt{sub}\ r, r, v) &= \mathtt{sub}\ r, r, \drop{v}(v) \\
 \drop{\iota}(\mathtt{salloc}\ n) &= \mathtt{salloc}\ n \\
 \drop{\iota}(\mathtt{sfree}\ n) &= \mathtt{sfree}\ n \\
 \drop{\iota}(\mathtt{ld}\ r, \mathbf{sp}(n)) &= \mathtt{ld}\ r, \mathbf{sp}(n) \\
@@ -71,13 +71,13 @@ of this thesis. Finally \high\embed is this function:
 \drop{\iota}(\mathtt{st}\ r(n), r) &= \mathtt{st}\ r(n), r \\
 \drop{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
 \drop{\iota}(\mathtt{mov}\ r, r) &= \mathtt{mov}\ r, r \\
-\drop{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, (\drop{v}(v)) \\
+\drop{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, \drop{v}(v) \\
 \drop{\iota}(\mathtt{halt}) &= \mathtt{halt} \\
 \end{array} \\\\
 
 \begin{array}{ll}
 \drop{I} : \high I -> \simple{I} \\
-\drop{I}(\iota ; I) &= (\drop{\iota}(\iota) ; (\drop{I}(I)) \\
+\drop{I}(\iota ; I) &= \drop{\iota}(\iota) ; \drop{I}(I) \\
 \drop{I}(\mathtt{jmp}\ v) &= \mathtt{jmp}\ (\drop{v}(v))
 \end{array} \\\\
 
