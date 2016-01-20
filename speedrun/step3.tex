@@ -22,7 +22,7 @@ The semantics for \nativelang are as in the manual.
 \end{mathpar}
 
 \begin{mathpar}
-\fbox{$\steps{\simple P}{\simple P}$} \\
+\fbox{$\simple\lang \simpleo{->} \simple\lang$} \\
 \infer{
   \execis{\simple G}{\simple H, \simple R, \simple I}{\simple H', \simple R', \simple I'}
 }{
@@ -62,7 +62,7 @@ The semantics for \nativelang are as in the manual.
 \end{mathpar}
 
 \begin{mathpar}
-\fbox{$\steps{\high P}{\high P}$} \\
+\fbox{$\high\lang \higho{->} \high\lang$} \\
 \infer{
   \execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}
 }{
@@ -91,8 +91,10 @@ The semantics for \nativelang are as in the manual.
 } \and
 \infer{
   \evalcode{\high G}{w}{\mathtt{code}\ \forall[ a_1, \dots, a_n ] \Gamma \cdot \high I} \\
-  \high I_1 = \high I[x_1 / a_1] \and \Gamma_1 = \Gamma[x_1 / a_1] \\
-  \phantom{WWWWWWWWWWWWWWWW}\vdots\phantom{WWWWWWWWWWWWWWWW} \\
+  \phantom{WWW}\high I_1 = \high I[x_1 / a_1] \and \Gamma_1 = \Gamma[x_1 / a_1]\phantom{WWW} \\
+  \phantom{WWWWWWWWW}\vdots\phantom{WWWWWWWWW} \\
+  \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
+  \phantom{WWWWWWWWW}\vdots\phantom{WWWWWWWWW} \\
   \high I_n = \high I_{n-1}[x_n / a_n] \and \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
 }{
   \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\mathtt{code}\ \forall[ \Delta ] \Gamma_n \cdot I_n}
