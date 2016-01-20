@@ -23,14 +23,14 @@ of this thesis. Finally \high\embed is this function:
 \drop{w}(\mathtt{int}\ i) &= \mathtt{int}\ i \\
 \drop{w}(\mathtt{ns}) &= \mathtt{ns} \\
 \drop{w}(\mathtt{uninit}\ \tau) &= \mathtt{uninit} \\
-\drop{w}(\Lambda\ \Delta.w[i_1, \dots, i_n]) &= \drop{w}(w) \\\\
+\drop{w}(\Lambda\ \Delta.w[\theta_1, \dots, \theta_n]) &= \drop{w}(w) \\\\
 
 \rlap{$\drop{v} : \high v -> \simple{v}$} \\
 \drop{v}(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
 \drop{v}(\mathtt{reg}\ r) &= \mathtt{reg}\ r \\
 \drop{v}(\mathtt{int}\ i) &= \mathtt{int}\ i \\
 \drop{v}(\mathtt{uninit}\ \tau) &= \mathtt{uninit} \\
-\drop{v}(\Lambda\ \Delta.v[i_1, \dots, i_n]) &= \drop{v}(v)
+\drop{v}(\Lambda\ \Delta \cdot v[\theta_1, \dots, \theta_n]) &= \drop{v}(v)
 \end{array} \\\\
 
 \begin{array}{l}
@@ -70,7 +70,7 @@ of this thesis. Finally \high\embed is this function:
 \drop{\iota}(\mathtt{ld}\ r, r(n)) &= \mathtt{ld}\ r, r(n) \\
 \drop{\iota}(\mathtt{st}\ r(n), r) &= \mathtt{st}\ r(n), r \\
 \drop{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
-\drop{\iota}(\mathtt{mov}\ r, r) &= \mathtt{mov}\ r, r \\
+\drop{\iota}(\mathtt{mov}\ r, v) &= \mathtt{mov}\ r, \drop{v}(v) \\
 \drop{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, \drop{v}(v) \\
 \drop{\iota}(\mathtt{halt}) &= \mathtt{halt} \\
 \end{array} \\\\
@@ -90,7 +90,7 @@ of this thesis. Finally \high\embed is this function:
 
 \high\embed : \high P -> \simple{P} \\
 \high\embed(P) = \drop{P}(P) \\
-\high\embed(\hhalt) = \shalt \\
+\high\embed(\high\halt) = \simple\halt \\
 \end{array} \\\\
 
 \end{array}\]

@@ -1,0 +1,312 @@
+\section{Step 3: Semantics}
+
+The semantics for \nativelang are as in the manual.
+
+\begin{minipage}{0.48\textwidth}
+\begin{mathpar}
+\fbox{$\evalregs{\simple R}{\simple v}{\simple w}$} \\
+\infer{ }{
+  \evalregs{\simple R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+} \and
+\infer{
+  \simple R[r] = \simple w
+}{
+  \evalregs{\simple R}{\mathtt{reg}\ r}{\simple w}
+} \and
+\infer{ }{
+  \evalregs{\simple R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+} \and
+\infer{ }{
+  \evalregs{\simple R}{\mathtt{uninit}}{\mathtt{uninit}}
+}
+\end{mathpar}
+
+\begin{mathpar}
+\fbox{$\steps{\simple P}{\simple P}$} \\
+\infer{
+  \execis{\simple G}{\simple H, \simple R, \simple I}{\simple H', \simple R', \simple I'}
+}{
+  \steps{(\simple G, \simple H, \simple R, \simple I)}{(\simple G, \simple H', \simple R', \simple I')}
+} \and
+\infer{ }{
+  \steps{(\simple G, \simple H, \simple R, \mathtt{halt})}{\simple\halt}
+} \and
+\infer{ }{
+  \steps{\simple\halt}{\simple\halt}
+}
+\end{mathpar}
+
+\end{minipage}\hspace{0.3cm}
+\begin{minipage}{0.48\textwidth}
+\begin{mathpar}
+\fbox{$\evalregs{\high R}{\high v}{\high w}$} \\
+\infer{ }{
+  \evalregs{\high R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+} \and
+\infer{
+  \high R[r] = \high w
+}{
+  \evalregs{\high R}{\mathtt{reg}\ r}{\high w}
+} \and
+\infer{ }{
+  \evalregs{\high R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+} \and
+\infer{ }{
+  \evalregs{\high R}{\mathtt{uninit}\ \tau}{\mathtt{uninit}\ \tau}
+} \and
+\infer{
+  \evalregs{\high R}{\high v}{\high w}
+}{
+  \evalregs{\high R}{\Lambda\ \Delta \cdot \high{v}[\theta_1, \dots, \theta_n]}{\Lambda\ \Delta \cdot \high{w}[\theta_1, \dots, \theta_n]}
+}
+\end{mathpar}
+
+\begin{mathpar}
+\fbox{$\steps{\high P}{\high P}$} \\
+\infer{
+  \execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}
+}{
+  \steps{(\high G, \high H, \high R, \high I)}{(\high G, \high H', \high R', \high I')}
+} \and
+\infer{ }{
+  \steps{(\high G, \high H, \high R, \mathtt{halt})}{\high\halt}
+} \and
+\infer{ }{
+  \steps{\high\halt}{\high\halt}
+}
+\end{mathpar}
+\end{minipage}
+
+\begin{mathpar}
+\fbox{$\evalcode{\simple G}{\simple w}{\simple g}$} \\
+\infer{ }{
+  \evalcode{\simple G}{\mathtt{globval}\ \ell_g}{\simple G[\ell_g]}
+}
+\end{mathpar}
+
+\begin{mathpar}
+\fbox{$\evalcode{\high G}{\high w}{I}$} \\
+\infer{ }{
+  \evalcode{\high G}{\mathtt{globval}\ \ell_g}{G[\ell_g]}
+} \and
+\infer{
+  \evalcode{\high G}{w}{\mathtt{code}\ \forall[ a_1, \dots, a_n ] \Gamma \cdot \high I} \\
+  \high I_1 = \high I[x_1 / a_1] \and \Gamma_1 = \Gamma[x_1 / a_1] \\
+  \phantom{WWWWWWWWWWWWWWWW}\vdots\phantom{WWWWWWWWWWWWWWWW} \\
+  \high I_n = \high I_{n-1}[x_n / a_n] \and \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
+}{
+  \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\mathtt{code}\ \forall[ \Delta ] \Gamma_n \cdot I_n}
+}
+\end{mathpar}
+
+\begin{mathpar}
+\fbox{$\execis{\simple G}{\simple C}{\simple C}$} \\
+\infer{
+  \simple R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\simple R}{\simple v}{\mathtt{int}\ i_2}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{add}\ r_a, r_b, \simple v) ; \simple I}
+    {\simple H, \simple R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \simple I}
+} \and
+\infer{
+  \simple R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\simple R}{\simple v}{\mathtt{int}\ i_2}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{sub}\ r_a, r_b, \simple v) ; \simple I}
+    {\simple H, \simple R[r_1 \mapsto \mathtt{int}\ (i_1 - i_2)], \simple I}
+} \and
+\infer{
+  \simple S = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: \simple R[\mathtt{sp}]
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{salloc}\ n) ; \simple I}
+    {\simple H, \simple R[\mathtt{sp} |-> \simple S], \simple I}
+} \and
+\infer{
+  \simple R[\mathtt{sp}] = \overbrace{\simple w_1 :: \dots :: \simple w_n}^n :: \simple S
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{sfree}\ n) ; \simple I}
+    {\simple H, \simple R[\mathtt{sp} |-> \simple S], \simple I}
+} \and
+\infer{
+  \simple R[\mathtt{sp}] = \simple S
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{ld}\ r, \mathtt{sp}(n)) ; \simple I}
+    {\simple H, \simple R[r |-> \simple S[n]], \simple I}
+} \and
+\infer{
+  \simple R[r_b] = \mathtt{heapval}\ \ell_h \and
+  \simple H[\ell_h] = \simple h
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{ld}\ r_a, r_b(n)) ; \simple I}
+    {\simple H, \simple R[r_a |-> h[n]], \simple I}
+} \and
+\infer{
+  R[r] = \simple w \and
+  R[\mathtt{sp}] = \simple S
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{st}\ \mathtt{sp}(n), r) ; \simple I}
+    {\simple H, \simple R[\mathtt{sp} |-> \simple S[n |-> \simple w]], \simple I}
+} \and
+\infer{
+  \simple R[r_a] = \mathtt{heapval}\ \ell_h \and
+  \simple R[r_b] = \simple w \and
+  \simple H[\ell_h] = \simple h
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{st}\ r_a(n), r_b) ; \simple I}
+    {\simple H[\ell_h |-> \simple h[n |-> \simple w]], \simple R, \simple I}
+} \and
+\infer{
+  \text{$\ell_h$ is a fresh variable} \and
+  \simple h = \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{malloc}\ r, n) ; \simple I}
+    {\simple H \cup \{\ell_h |-> \simple h\}, R[r |-> \mathtt{heapval}\ \ell_h], \simple I}
+} \and
+\infer{
+  \evalregs{\simple R}{\simple v}{\simple w}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{mov}\ r, \simple v) ; \simple I}
+    {\simple H, \simple R[r |-> \simple w], \simple I}
+} \and
+\infer{
+  \simple R[r] = \mathtt{int}\ 0 \and
+  \evalregs{\simple R}{\simple v}{\simple w} \and
+  \evalcode{\simple G}{\simple w}{\mathtt{code}\ \simple I'}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{beq}\ r, \simple v) ; \simple I}
+    {\simple H, \simple R, \simple I'}
+} \and
+\infer{
+  \simple R[r] = \mathtt{int}\ i \and
+  i \neq 0
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{beq}\ r, \simple v) ; \simple I}
+    {\simple H, \simple R, \simple I}
+} \and
+\infer{
+  \evalregs{\simple R}{\simple v}{\simple w} \and
+  \evalcode{\simple G}{\simple w}{\mathtt{code}\ \simple I'}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, \mathtt{jmp}\ \simple v}
+    {\simple H, \simple R, \simple I'}
+}
+\end{mathpar}
+
+\begin{mathpar}
+\fbox{$\execis{\high G}{\high C}{\high C}$} \\
+\infer{
+  \high R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\high R}{\high v}{\mathtt{int}\ i_2}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{add}\ r_a, r_b, \high v) ; \high I}
+    {\high H, \high R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \high I}
+} \and
+\infer{
+  \high R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\high R}{\high v}{\mathtt{int}\ i_2}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{sub}\ r_a, r_b, \high v) ; \high I}
+    {\high H, \high R[r_1 \mapsto \mathtt{int}\ (i_1 - i_2)], \high I}
+} \and
+\infer{
+  \high S = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: \high R[\mathtt{sp}]
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{salloc}\ n) ; \high I}
+    {\high H, \high R[\mathtt{sp} |-> \high S], \high I}
+} \and
+\infer{
+  \high R[\mathtt{sp}] = \overbrace{\high w_1 :: \dots :: \high w_n}^n :: \high S
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{sfree}\ n) ; \high I}
+    {\high H, \high R[\mathtt{sp} |-> \high S], \high I}
+} \and
+\infer{
+  \high R[\mathtt{sp}] = \high S
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{ld}\ r, \mathtt{sp}(n)) ; \high I}
+    {\high H, \high R[r |-> \high S[n]], \high I}
+} \and
+\infer{
+  \high R[r_b] = \mathtt{heapval}\ \ell_h \and
+  \high H[\ell_h] = \high h
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{ld}\ r_a, r_b(n)) ; \high I}
+    {\high H, \high R[r_a |-> h[n]], \high I}
+} \and
+\infer{
+  R[r] = \high w \and
+  R[\mathtt{sp}] = \high S
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{st}\ \mathtt{sp}(n), r) ; \high I}
+    {\high H, \high R[\mathtt{sp} |-> \high S[n |-> \high w]], \high I}
+} \and
+\infer{
+  \high R[r_a] = \mathtt{heapval}\ \ell_h \and
+  \high R[r_b] = \high w \and
+  \high H[\ell_h] = \high h
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{st}\ r_a(n), r_b) ; \high I}
+    {\high H[\ell_h |-> \high h[n |-> \high w]], \high R, \high I}
+} \and
+\infer{
+  \text{$\ell_h$ is a fresh variable} \and
+  \high h = \langle \mathtt{uninit}\ \tau_1, \dots, \mathtt{uninit}\ \tau_n \rangle
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) ; \high I}
+    {\high H \cup \{\ell_h |-> \high h\}, R[r |-> \mathtt{heapval}\ \ell_h], \high I}
+} \and
+\infer{
+  \evalregs{\high R}{\high v}{\high w}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{mov}\ r, \high v) ; \high I}
+    {\high H, \high R[r |-> \high w], \high I}
+} \and
+\infer{
+  \high R[r] = \mathtt{int}\ 0 \and
+  \evalregs{\high R}{\high v}{\high w} \and
+  \evalcode{\high G}{\high w}{\mathtt{code}\ [ \mathtt{nil} ] \Gamma \cdot I'}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{beq}\ r, \high v) ; \high I}
+    {\high H, \high R, \high I'}
+} \and
+\infer{
+  \high R[r] = \mathtt{int}\ i \and
+  i \neq 0
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{beq}\ r, \high v) ; \high I}
+    {\high H, \high R, \high I}
+} \and
+\infer{
+  \evalregs{\high R}{\high v}{\high w} \and
+  \evalcode{\high G}{\high w}{\mathtt{code}\ [ \mathtt{nil} ] \Gamma \cdot \high I'}
+}{
+  \execis{\high G}
+    {\high H, \high R, \mathtt{jmp}\ \high v}
+    {\high H, \high R, \high I'}
+}
+\end{mathpar}

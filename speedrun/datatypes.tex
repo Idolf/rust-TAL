@@ -2,25 +2,19 @@
 
 \subsubsection{Dictionaries}
 A \textbf{dictionary} is an unordered set of the form
-$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ with the restriction $x_i = x_j$ iff
-$i = j$.
+$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ such that $x_i \neq x_j$ whenever
+$i \neq j$. By unordered we mean that e.g.
+$\{x_1 |-> y_1, x_2 |-> y_2\} = \{x_2 |-> y_2, x_1 |-> y_1\}$.
 
-Assume that $D_1$ and $D_2$ are arbitrary dictionaries of the form
-$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ and
-$\{x_1' |-> y_1', \dots, x_m' |-> y_m'\}$ respectively.
+Assume $D$ is some dictionary $\{x_1 |-> y_1, \dots, x_n |-> y_n\}$. In that
+case $\mathbf{Keys}(D) = \{x_1, \dots, x_n\}$. We define as $D[x_k] = y_k$ and
+$D[x_k |-> y_{new}] = \{x_1 |-> y_1, \dots x_k |-> y_{new}, \dots, x_n |->
+y_n\}$.
 
-Define $\mathbf{Keys}(D_1)$ to be the set $\{x_1, \dots, x_n\}$. Whenever
-$\mathbf{Keys}(D_1) \cap \mathbf{Keys}(D_2) = \emptyset$, then the expression
-$D_1 \cup D_2$ denotes the the dictionary
+Now let $D'$ be another dictionary $\{x_1' |-> y_1', \dots, x_m' |-> y_m'\}$
+such that $\mathbf{Keys}(D_1) \cap \mathbf{Keys}(D_2) = \emptyset$. In this case
+$D_1 \cup D_2$ is the dictionary
 $\{x_1 |-> y_1, \dots, x_n |-> y_n, x_1' |-> y_1', \dots, x_m' |-> y_m'\}$.
-
-We define $D_1\{x |-> y\}$ whenever $x \in \mathbf{Keys}(D_1)$. This expression
-is the dictionary $\{x_1 |-> y_1', \dots, x_n |-> y_n'\}$ subject to the
-restriction that $y_k' = y$ whenever $x_k = x$ and $y_k' = y_k$ otherwise.
-
-By $(x |-> y) \in D$ we mean a judgment asserting that $D$ is of the form
-$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ and that there exists some $k$ such that
-$x = x_k$ and $y = y_k$.
 
 \paragraph{}
 Note: In the Agda-implementation, these maps are mostly implemented as ordered
@@ -38,13 +32,10 @@ For instance heap values and stacks are list-like, as they are written
 $\langle w_1, \dots, w_n \rangle$ and $w_1 :: \dots :: w_n :: \mathtt{nil}$
 respectively.
 
-For the remainder of this subsection, assume $L_1$ and $L_2$ are typical
-elements of the same list-like set $S$. Further assume that
-$f(L_1) = [x_1, \dots, x_n]$ and $f(L_2) = [y_1, \dots, y_m]$.
+Let $S$ be a list-like set and assume that $L$ is a typical member of this set
+such that $f(L) = [x_1, \dots, x_n]$. In that case $\mathbf{Length}(L) = n$,
+i.e. the number of elements in $L$.
 
-Define $\mathbf{Length}(L_1) = n$.
-
-By $\lookup{L_1}{k}{v}$ we mean a judgment asserting $x_k = v$.
-
-By $\update{L_1}{k}{v}{L_2}$ we mean a judgment asserting that $n=m$, $y_k=v$
-and $x_i = y_i$ if $i \neq k$.
+We further define $L[i] = x_i$ and $L[i |-> x_{new}]$ to be the list-like member
+of $S$ such that
+$f(L[i |-> x_{new}]) = [x_1, \dots, x_{i-1}, x_{new}, \dots, x_n]$.

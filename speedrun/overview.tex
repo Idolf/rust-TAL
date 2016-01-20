@@ -18,9 +18,9 @@ run-through of our strategy.
 
 To avoid dealing with halting semantics, we introduce the following states:
 \begin{itemize}
-\item $\malicious, \nhalt \in \nativelang$
-\item $\shalt \in \simplelang$
-\item $\hhalt \in \highlang$
+\item $\malicious, \native\halt \in \nativelang$
+\item $\simple\halt \in \simplelang$
+\item $\high\halt \in \highlang$
 \end{itemize}
 
 $\halt$ represents every program that has halted in a non-malicious way (such as
@@ -42,8 +42,8 @@ represents every any malicious state.
 We observe that:
 
 \begin{itemize}
-\item $\high\embed(\hhalt) = \shalt$
-\item $\simple\embedp(\shalt) = \{\nhalt\}$
+\item $\high\embed(\high\halt) = \simple\halt$
+\item $\simple\embedp(\simple\halt) = \{\native\halt\}$
 \item $\malicious \notin \simple\embedp(p)$ for all p
 \item $\simple\embed(p) \in \simple\embedp(p)$ for all p
 \end{itemize}
@@ -64,8 +64,8 @@ We observe that:
 
 \begin{itemize}
 \item If $p \in \nativelang$ is halting for non-malicious reasons, then
-  $p \nativeo{->} \nhalt$.
-\item $\nhalt \nativeo{->} p \iff p = \nhalt$.
+  $p \nativeo{->} \native\halt$.
+\item $\native\halt \nativeo{->} p \iff p = \native\halt$.
 \item (Similarly for \simplelang and \highlang).
 \item If $p \in \nativelang$ can transition in a malicious or undefined way,
   then $p \nativeo{->} \malicious$.
@@ -139,10 +139,10 @@ true for \simplelang or \highlang.
 
   $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor (\not\exists p': p \simpleo{->} p')$$
 
-  Note specifically that $\neg\Stuck(\shalt)$. Now define a relation $R$
+  Note specifically that $\neg\Stuck(\simple\halt)$. Now define a relation $R$
   by:
 
-  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simple\embedp(p_1) \cup \{\nhalt\}\}$$
+  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simple\embedp(p_1) \cup \{\native\halt\}\}$$
 
   This relation is a stuttering bisimulation of $\simpleo{->}$ and
   $\nativeo{->}$. More specifically there is a function
@@ -176,7 +176,7 @@ true for \simplelang or \highlang.
   $p_1' \in \simple\embedp(\high\embed(p_1))$ and assume
   $p_1 \higho{->} \dots \higho{->} p_n$. There now exists a finite sequence
   $p_1' \nativeo{->} \dots \nativeo{->} p_m'$ such that
-  $p_m' \in \simple\embedp(\high\embed(p_n)) \cup \{\nhalt\}$.
+  $p_m' \in \simple\embedp(\high\embed(p_n)) \cup \{\native\halt\}$.
 
 \item \textbf{Decidability}: If $p \in \highlang$, then it is decidable to check
   if $p$ is a member of $\typedlang$.

@@ -1,6 +1,6 @@
 \section{Step 1: Defining the languages}
 
-\nativelang iscuss MIPS. \simplelang and \highlang are defined inductively by
+\nativelang is MIPS. \simplelang and \highlang are defined inductively by
 these grammars. In the definitions, we use $wordsize$ and $max$ as CPU-specific
 constants. They are concrete, low constants such as 32, however their exact
 values are irrelevant for the later discussions.
@@ -37,7 +37,7 @@ The grammar for \simplelang: \\
         &&& $\mathtt{halt}$ \\
 \textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v$ \\
 \textit{program states} & $\simple C$ & ::= & $(\simple H, \simple R, \simple I)$ \\
-\textit{programs} & $\simplelang$ & ::= & $(\simple G, \simple H, \simple R, \simple I) \mid \shalt$ \\\\
+\textit{programs} & $\simplelang$ & ::= & $(\simple G, \simple H, \simple R, \simple I) \mid \simple\halt$ \\\\
 
 The type system for \highlang: \\
 \textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
@@ -49,11 +49,11 @@ The type system for \highlang: \\
 \textit{heap label assignmentss}  & $\Psi_h$ & ::= & $\{\ell_h |-> \tau, \dots, \ell_h |-> \tau\}$ \\
 \textit{label assignments}        & $\Psi$ & ::= & $(\Psi_g , \Psi_h)$ \\
 \textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{r_{max}} |-> \tau\}$ \\
-\textit{instantiation}            & $i$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\\\
+\textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\\\
 
 The grammar for \highlang:
-\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta.\high{w}[i, \dots, i]$ \\
-\textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta.\high{v}[i, \dots, i]$ \\
+\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta \cdot \high{w}[\theta, \dots, \theta]$ \\
+\textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta \cdot \high{v}[\theta, \dots, \theta]$ \\
 \textit{global values}            & $\high g$ & ::= & $\mathtt{code}\ \forall[ \Delta ] \Gamma \cdot \high I$ \\
 \textit{global collections}       & $\high G$ & ::= & $\{\ell_g |-> \high{g}, \dots, \ell_g |-> \high{g}\}$ \\
 \textit{heap values}              & $\high h$ & ::= & $\langle \high w, \dots, \high w \rangle$ \\
@@ -70,7 +70,7 @@ The grammar for \highlang:
         &&& $\mathtt{halt}$ \\
 \textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v$ \\
 \textit{program states} & $\high C$ & ::= & $(\high H, \high R, \high I)$ \\
-\textit{programs} & $\highlang$ & ::= & $(\high G, \high H, \high R, \high I) \mid \hhalt$ \\
+\textit{programs} & $\highlang$ & ::= & $(\high G, \high H, \high R, \high I) \mid \high\halt$ \\
 \end{tabular}
 }
 
