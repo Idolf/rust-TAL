@@ -1,0 +1,50 @@
+\section{Datatypes}
+
+\subsubsection{Dictionaries}
+A \textbf{dictionary} is an unordered set of the form
+$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ with the restriction $x_i = x_j$ iff
+$i = j$.
+
+Assume that $D_1$ and $D_2$ are arbitrary dictionaries of the form
+$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ and
+$\{x_1' |-> y_1', \dots, x_m' |-> y_m'\}$ respectively.
+
+Define $\mathbf{Keys}(D_1)$ to be the set $\{x_1, \dots, x_n\}$. Whenever
+$\mathbf{Keys}(D_1) \cap \mathbf{Keys}(D_2) = \emptyset$, then the expression
+$D_1 \cup D_2$ denotes the the dictionary
+$\{x_1 |-> y_1, \dots, x_n |-> y_n, x_1' |-> y_1', \dots, x_m' |-> y_m'\}$.
+
+We define $D_1\{x |-> y\}$ whenever $x \in \mathbf{Keys}(D_1)$. This expression
+is the dictionary $\{x_1 |-> y_1', \dots, x_n |-> y_n'\}$ subject to the
+restriction that $y_k' = y$ whenever $x_k = x$ and $y_k' = y_k$ otherwise.
+
+By $(x |-> y) \in D$ we mean a judgment asserting that $D$ is of the form
+$\{x_1 |-> y_1, \dots, x_n |-> y_n\}$ and that there exists some $k$ such that
+$x = x_k$ and $y = y_k$.
+
+\paragraph{}
+Note: In the Agda-implementation, these maps are mostly implemented as ordered
+lists with implicit keys, however we can ignore this fact when using
+paper-notation.
+
+\subsubsection{List-like objects}
+A set $S$ is \textbf{list-like} iff there is a meaningful way to interpret the
+elements of $S$ as ordered lists of elements drawn from a base-set $S_B$. In
+other words iff there exist an injective function
+$f : S \to \mathbf{List}\ S_B$, where $f$ may only depend on the superficial
+syntax of the elements.
+
+For instance heap values and stacks are list-like, as they are written
+$\langle w_1, \dots, w_n \rangle$ and $w_1 :: \dots :: w_n :: \mathtt{nil}$
+respectively.
+
+For the remainder of this subsection, assume $L_1$ and $L_2$ are typical
+elements of the same list-like set $S$. Further assume that
+$f(L_1) = [x_1, \dots, x_n]$ and $f(L_2) = [y_1, \dots, y_m]$.
+
+Define $\mathbf{Length}(L_1) = n$.
+
+By $\lookup{L_1}{k}{v}$ we mean a judgment asserting $x_k = v$.
+
+By $\update{L_1}{k}{v}{L_2}$ we mean a judgment asserting that $n=m$, $y_k=v$
+and $x_i = y_i$ if $i \neq k$.
