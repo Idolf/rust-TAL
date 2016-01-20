@@ -36,8 +36,8 @@ The grammar for \simplelang: \\
         &&& $\mathtt{mov}\ r, \simple v \mid \mathtt{beq}\ r, \simple v$ \\
         &&& $\mathtt{halt}$ \\
 \textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v$ \\
-\textit{program states} & $\simple C$ & ::= & $(\simple h, \simple R, \simple I)$ \\
-\textit{programs} & $\simplelang$ & ::= & $(\simple g, \simple h, \simple R, \simple I)$ \\\\
+\textit{program states} & $\simple C$ & ::= & $(\simple H, \simple R, \simple I)$ \\
+\textit{programs} & $\simplelang$ & ::= & $(\simple G, \simple H, \simple R, \simple I) \mid \shalt$ \\\\
 
 The type system for \highlang: \\
 \textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
@@ -70,7 +70,7 @@ The grammar for \highlang:
         &&& $\mathtt{halt}$ \\
 \textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v$ \\
 \textit{program states} & $\high C$ & ::= & $(\high H, \high R, \high I)$ \\
-\textit{programs} & $\highlang$ & ::= & $(\high G, \high H, \high R, \high I)$ \\
+\textit{programs} & $\highlang$ & ::= & $(\high G, \high H, \high R, \high I) \mid \hhalt$ \\
 \end{tabular}
 }
 

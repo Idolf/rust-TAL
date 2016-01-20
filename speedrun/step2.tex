@@ -72,6 +72,7 @@ of this thesis. Finally \high\embed is this function:
 \drop{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
 \drop{\iota}(\mathtt{mov}\ r, r) &= \mathtt{mov}\ r, r \\
 \drop{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, (\drop{v}(v)) \\
+\drop{\iota}(\mathtt{halt}) &= \mathtt{halt} \\
 \end{array} \\\\
 
 \begin{array}{ll}
@@ -89,6 +90,7 @@ of this thesis. Finally \high\embed is this function:
 
 \high\embed : \high P -> \simple{P} \\
 \high\embed(P) = \drop{P}(P) \\
+\high\embed(\hhalt) = \shalt \\
 \end{array} \\\\
 
 \end{array}\]
