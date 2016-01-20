@@ -176,10 +176,29 @@ true for \simplelang or \highlang.
   $p_1' \in \simple\embedp(\high\embed(p_1))$ and assume
   $p_1 \higho{->} \dots \higho{->} p_n$. There now exists a finite sequence
   $p_1' \nativeo{->} \dots \nativeo{->} p_m'$ such that
-  $p_m' \in \simple\embedp(\high\embed(p_n)) \cup \{\native\halt\}$.
+  $p_m' \in \simple\embedp(\high\embed(p_n)) \cup \{\native\halt\}$. In
+  particular this holds if $p_1' = \simple\embed(\high\embed(p_1)$.
 
 \item \textbf{Decidability}: If $p \in \highlang$, then it is decidable to check
   if $p$ is a member of $\typedlang$.
+\end{itemize}
+
+\paragraph{Step 9: Performance} In practice one would also like to show that
+these statements hold in the practical implementation:
+
+\begin{itemize}
+\item The implementation of the decision procedure from the previous theorem
+  should be reasonably efficient and not have any pathological cases that would
+  permit denial-of-service attacks.
+\item It is possible to compile from a high-level language into
+  $\typedlang$. This compiler should not be significantly worse in the relevant
+  metrics than compilers that translate directly into assembler language.
+\item The function $\simple\embedp(\high\embed(\cdot))$ does not degrade
+  performance seriously.
+\item None of our theorems restrict in what situations the programs in
+  \nativelang could halt. In principle we could have $\simple\embed(p) = \nhalt$
+  for all $p$. Ideally one would prove some guarantees about the conditions in
+  which the translated programs could halt.
 \end{itemize}
 
 \paragraph{Scoping limitations} To limit the scope of this thesis, none of the
