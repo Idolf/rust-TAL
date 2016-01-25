@@ -91,11 +91,10 @@ The semantics for \nativelang are as in the manual.
 } \and
 \infer{
   \evalcode{\high G}{w}{\mathtt{code}\ \forall[ a_1, \dots, a_n ] \Gamma \cdot \high I} \\
-  \phantom{WWW}\high I_1 = \high I[x_1 / a_1] \and \Gamma_1 = \Gamma[x_1 / a_1]\phantom{WWW} \\
-  \phantom{WWWWWWWWW}\vdots\phantom{WWWWWWWWW} \\
+  \high I_1 = \high I[x_1 / a_1] \and \dots \and \high I_n = \high I_{n-1}[x_n / a_n] \\
+  \Gamma_1  = \Gamma[x_1 / a_1]  \and \dots \and \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
   \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
-  \phantom{WWWWWWWWW}\vdots\phantom{WWWWWWWWW} \\
-  \high I_n = \high I_{n-1}[x_n / a_n] \and \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
+  \\
 }{
   \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\mathtt{code}\ \forall[ \Delta ] \Gamma_n \cdot I_n}
 }

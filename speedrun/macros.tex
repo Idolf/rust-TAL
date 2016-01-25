@@ -41,9 +41,12 @@
 \newcommand \ofstack[3] {{#1} |- {#2} : {#3}}
 \newcommand \ofword[3] {{#1} |- {#2} : {#3}}
 \newcommand \ofregister[3] {{#1} |- {#2} : {#3}}
-\newcommand \ofinstructions[2] {{#1} |- {#2}\ \mathbf{instruction\ sequence}}
-\newcommand \ofinstruction[3] {{#1} |- {#2}\ -> {#3}}
+\newcommand \ofinstructions[2] {{#1} |- {#2}\ \mathbf{Valid}}
+\newcommand \ofinstruction[3] {{#1} |- {#2} : {#3}}
 \newcommand \ofprogram[2] {{#1} |- {#2}}
+\newcommand \oflang[1] {|- {#1}}
+\newcommand \ofinstantiation[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofinstantiations[3] {{#1} |- {#2} : {#3}}
 
 % Simple judgments
 \newcommand \evalregs[3] {{#1} |- {#2} ! {#3}}

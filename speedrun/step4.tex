@@ -1,0 +1,382 @@
+\section{Step 4: Typing judgments}
+\subsection{Judgments for type-like objects}
+
+Some notes for judgments:
+
+\begin{itemize}
+\item $|- \dots$: Valid without assumption (duh).
+\item $\Delta |- \dots$: The ``normal'' interpretation: If
+  $\Delta = a_1 :: \dots :: \mathtt{nil}$, then right-hand side is allowed to
+  use the variable $a_1, \dots$.
+\item $\Psi_g |- \dots$: The right-hand side is allowed to have references
+  inside some global collection of type $\Psi_g$.
+\item $\Psi_g, \Psi_h |- \dots$: The right-hand side is allowed have references
+  inside some global collection of type $\Psi_g$ and some heap collection of
+  type $\Psi_h$.
+\item $\Psi_g, \Delta, \Gamma |- \dots$: If
+  $\Delta = a_1 :: \dots :: \mathtt{nil}$, then right-hand side along with
+  $\Gamma$ is allowed to use the variable $a_1, \dots$. Furthermore the
+  right-hand side is allowed to have references inside some global collection of
+  type $\Psi_g$.
+\item Most judgments of the form $A : T$ means that $A$ could naturally be
+  interpreted as some object of type $T$. Exceptions:
+  \begin{itemize}
+  \item $\theta : a$ means that $\theta$ is a replacement for the variable $a$
+    (i.e. it is of the form $x / a$ for some suitable $x$).
+  \item $[\theta_1, \dots, \theta_n] : \Delta$ means are replacements for all
+    the variables inside $\Delta$ (in the same order). Furthermore the first
+    replacement is allowed to use the variables present in later replacements.
+  \item $\Psi_g, \Delta, \Gamma |- \high{\iota} : \Gamma'$. This means that if
+    we run the instruction $\high \iota$ with registers of type $\Gamma$ and
+    globals of type $\Psi_g$, then we can be certain that the registers will be
+    of type $\Gamma'$ afterwards (though this might not be the most specific
+    type). Furthermore both $\Gamma, \Gamma'$ and $\high \iota$ are allowed to
+    use the variables in $\Delta$ (though these will of course have to be
+    replaced before it is actually possible to run the instruction).
+  \end{itemize}
+\end{itemize}
+
+\fbox{$\valid{\Delta}{\tau}$}
+\begin{mathpar}
+\infer{\alpha \in \Delta}{\valid{\Delta}{\alpha}} \and
+\infer{ }{\valid{\Delta}{\mathtt{int}}} \and
+\infer{ }{\valid{\Delta}{\mathtt{ns}}} \and
+\infer{\valid{\Delta', \Delta}{\Gamma}}{\valid{\Delta}{\forall[ \Delta' ] \Gamma}} \and
+\infer{\valid{\Delta}{\tau_1^{\phi_1}} \and \dots \and \valid{\Delta}{\tau_n^{\phi_n}}}
+      {\valid{\Delta}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\sigma}$}
+\begin{mathpar}
+\infer{\rho \in \Delta}{\valid{\Delta}{\rho}} \and
+\infer{ }{\valid{\Delta}{\mathtt{nil}}} \and
+\infer{\valid{\Delta}{\tau} \and \valid{\Delta}{\sigma}}{\valid{\Delta}{\tau :: \sigma}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\Gamma}$}
+\begin{mathpar}
+\infer{\valid{\Delta}{\sigma} \and \valid{\Delta}{\tau_1} \and \dots \and \valid{\Delta}{\tau_{max}}}{\valid{\Delta}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{max} |-> \tau_{max}\}}}
+\end{mathpar}
+
+\fbox{$\valid{}{\Psi_g}$}
+\begin{mathpar}
+\infer
+  {\valid{\mathtt{nil}}{\tau_1} \and
+    \dots \and
+    \valid{\mathtt{nil}}{\tau_n}}
+  {\valid{}{\{\ell_{g,1} |-> \tau_1, \dots, \ell_{g,n} |-> \tau_{n}\}}}
+\end{mathpar}
+
+\fbox{$\valid{}{\Psi_h}$}
+\begin{mathpar}
+\infer
+  {\valid{\mathtt{nil}}{\tau_1} \and
+  \dots \and
+  \valid{\mathtt{nil}}{\tau_n}}
+  {\valid{}{\{\ell_{h,1} |-> \tau_1, \dots, \ell_{h,n} |-> \tau_{n}\}}}
+\end{mathpar}
+
+\fbox{$\ofinstantiation{\Delta}{\theta}{a}$}
+\begin{mathpar}
+\infer{
+  \valid{\Delta}{\tau}
+}{
+  \ofinstantiation{\Delta}{\tau/\alpha}{\alpha}
+} \and
+\infer{
+  \valid{\Delta}{\sigma}
+}{
+  \ofinstantiation{\Delta}{\sigma/\rho}{\rho}
+}
+\end{mathpar}
+
+\fbox{$\ofinstantiations{\Delta}{[\theta, \dots, \theta]}{\Delta}$}
+\begin{mathpar}
+\infer{
+}{
+  \ofinstantiation{\Delta}{[]}{\mathtt{nil}}
+} \and
+\infer{
+  \ofinstantiation{\Delta}{[\theta_2, \dots]}{\Delta'} \and
+  \ofinstantiation{\Delta', \Delta}{\theta_1}{a} \and
+}{
+  \ofinstantiation{\Delta}{[\theta_1, \theta_2, \dots]}{a :: \Delta'}
+}
+\end{mathpar}
+
+\subsection{Subtype-judgments for type-like objects}
+
+\todo{Insert them}
+
+\subsection{Judgments for value-like objects}
+
+\fbox{$\ofwval{\Psi_g,\Psi_h}{\high w}{\tau}$}
+\begin{mathpar}
+\infer{
+  \Psi_g[\ell_g] = \tau_1 \and
+  \subtype{\mathtt{nil}}{\tau_1}{\tau_2}
+}{
+  \ofwval{\Psi_g,\Psi_h}{\mathtt{globval}\ \ell_g}{\tau_2}
+}\and
+\infer{
+  \Psi_h[\ell_h] = \tau_1 \and
+  \subtype{\mathtt{nil}}{\tau_1}{\tau_2}
+}{
+  \ofwval{\Psi_g,\Psi_h}{\mathtt{heapval}\ \ell_h}{\tau_2}
+}\and
+\infer{ }{\ofwval{\Psi_g,\Psi_h}{\mathtt{int}\ i}{\mathtt{int}}} \and
+\infer{ }{\ofwval{\Psi_g,\Psi_h}{\mathtt{ns}}{\mathtt{ns}}} \and
+\infer{
+  \ofwval{\Psi_g,\Psi_h}{\high w}{\forall[\Delta']\Gamma_0} \and
+  \ofinstantiations{\Delta}{[x_1 / a_1, \dots, x_n / a_n]}{\Delta'} \\
+  \Gamma_1 = \Gamma_0[x_1 / a_1] \and
+  \dots \and
+  \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
+  \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
+  \subtype{\Delta}{\Gamma}{\Gamma_n}
+}{
+  \ofwval{\Psi_g,\Psi_h}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\forall[\Delta]\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofwvaln{\Psi_g,\Psi_h}{\high w}{\tau^\phi}$}
+\begin{mathpar}
+\infer{
+  \valid{\mathtt{nil}}{\tau}
+}{
+  \ofwvaln{\Psi_g,\Psi_h}{\mathtt{uninit}\ \tau}{\tau^{\mathtt{uninit}}}
+} \and
+\infer{
+  \ofwval{\Psi_g,\Psi_h}{\high w}{\tau}
+}{
+  \ofwvaln{\Psi_g,\Psi_h}{\high w}{\tau^{\mathtt{init}}}
+}
+\end{mathpar}
+
+\fbox{$\ofvval{\Psi_g,\Delta,\Gamma}{\high v}{\tau}$}
+\begin{mathpar}
+\infer{
+  \Psi_g[\ell_g] = \tau_1 \and
+  \subtype{\Delta}{\tau_1}{\tau_2}
+}{
+  \ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{globval}\ \ell_g}{\tau_2}
+}\and
+\infer{
+  \Gamma[r] = \tau_1 \and
+  \subtype{\Delta}{\tau_1}{\tau_2}
+}{
+  \ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{reg}\ r}{\tau_2}
+}\and
+\infer{ }{\ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{int}\ i}{\mathtt{int}}} \and
+\infer{
+  \ofvval{\Psi_g,\Delta^\ast,\Gamma^\ast}{\high v}{\forall[\Delta']\Gamma_0} \and
+  \ofinstantiations{\Delta, \Delta^\ast}{[x_1 / a_1, \dots, x_n / a_n]}{\Delta'} \\
+  \Gamma_1 = \Gamma_0[x_1 / a_1] \and
+  \dots \and
+  \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
+  \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
+  \subtype{\Delta, \Delta^\ast}{\Gamma}{\Gamma_n}
+}{
+  \ofvval{\Psi_g,\Delta^\ast,\Gamma^\ast}{\Lambda\ \Delta \cdot \high v[x_1 / a_1, \dots, x_n / a_n]}{\forall[\Delta]\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofgval{\Psi_g}{\high g}{\tau}$}
+\begin{mathpar}
+\infer{
+  \valid{\Delta}{\Gamma} \and
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\high I}
+}{
+  \ofgval{\Psi_g}{\mathtt{code}[\Delta]\Gamma \cdot \high I}{\forall[\Delta]\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofglobs{\high G}{\Psi_g}$}
+\begin{mathpar}
+\infer{
+  \ofgval{\Psi_g}{\high g_1}{\tau_1} \and
+  \dots \and
+  \ofgval{\Psi_g}{\high g_n}{\tau_n} \and
+  \Psi_g = \{\ell_{g,1} |-> \tau_1, \dots, \ell_{g,n} |-> \tau_n\}
+}{
+  \ofglobs{\{\ell_{g,1} |->  \high g_1, \dots, \ell_{g,n}  |->  \high g_n\}}{\Psi_g}
+}
+\end{mathpar}
+
+\fbox{$\ofhval{\Psi_g,\Psi_h}{\high h}{\tau}$}
+\begin{mathpar}
+\infer{
+  \ofwvaln{\Psi_g,\Psi_h}{\high w_1}{\tau_1^{\phi_1}} \and
+  \dots \and
+  \ofwvaln{\Psi_g,\Psi_h}{\high w_n}{\tau_n^{\phi_n}}
+}{
+  \ofgval{\Psi_g,\Psi_h}{\langle \high w_1, \dots, \high w_n \rangle}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n}\rangle}
+}
+\end{mathpar}
+
+\fbox{$\ofheap{\Psi_g}{H}{\Psi_h}$}
+\begin{mathpar}
+\infer{
+  \ofhval{\Psi_g,\Psi_h}{\high h_1}{\tau_1} \and
+  \dots \and
+  \ofhval{\Psi_g,\Psi_h}{\high h_n}{\tau_n} \and
+  \Psi_h = \{\ell_{h,1} |-> \tau_1, \dots, \ell_{h,n} |-> \tau_n\}
+}{
+  \ofheap{\Psi_g}{\{\ell_{h,1} |->  \high h_1, \dots, \ell_{h,n}  |->  \high h_n\}}{\Psi_h}
+}
+\end{mathpar}
+
+\fbox{$\ofstack{\Psi_g,\Psi_h}{\high S}{\sigma}$}
+\begin{mathpar}
+\infer{ }{\ofstack{\Psi_g,\Psi_h}{\mathtt{nil}}{\mathtt{nil}}} \and
+\infer{
+  \ofword{\Psi_g,\Psi_h}{\high w}{\tau} \and
+  \ofstack{\Psi_g,\Psi_h}{\high S}{\sigma}
+}{
+  \ofstack{\Psi_g,\Psi_h}{\high w :: \high S}{\tau :: \sigma}
+}
+\end{mathpar}
+
+\fbox{$\ofregister{\Psi_g,\Psi_h}{\high R}{\Gamma}$}
+\begin{mathpar}
+\infer{
+  \ofstack{\Psi_g,\Psi_h}{\high S}{\sigma} \and
+  \ofwval{\Psi_g,\Psi_h}{\high w_1}{\tau_1} \and
+  \dots
+  \ofwval{\Psi_g,\Psi_h}{\high w_{max}}{\tau_{max}} \and
+}{
+  \ofregister{\Psi_g,\Psi_h}{\{\mathtt{sp} |->  \high S, \mathtt{r}_1 |->  \high w_1, \dots, \mathtt{r}_{max} |->  \high w_{max}\}}{\{\mathtt{sp}:\sigma, \mathtt{r}_1:\tau_1, \dots, \mathtt{r}_{max}:\tau_{max}\}}
+}
+\end{mathpar}
+
+\fbox{$\ofinstruction{\Psi_g, \Delta, \Gamma}{\high \iota}{\Gamma'}$}
+\begin{mathpar}
+\infer{
+  \Gamma[r_b] = \mathtt{int} \and
+  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\mathtt{int}}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{add}\ r_a, r_b, \high v}
+    {\Gamma[r_a |-> \mathtt{int}]}
+} \and
+\infer{
+  \Gamma[r_b] = \mathtt{int} \and
+  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\mathtt{int}}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{sub}\ r_a, r_b, \high v}
+    {\Gamma[r_a |-> \mathtt{int}]}
+} \\
+\infer{
+  \sigma = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: \Gamma[\mathtt{sp}]
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{salloc}\ n}
+    {\Gamma[\mathtt{sp} |-> \sigma]}
+} \and
+\infer{
+  \Gamma[\mathtt{sp}] = \overbrace{\tau_1 :: \dots :: \tau_n}^n :: \sigma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{sfree}\ n}
+    {\Gamma[\mathtt{sp} |-> \sigma]}
+} \and
+\infer{
+  \Gamma[\mathtt{sp}] = \sigma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{ld}\ r, \mathtt{sp}(n)}
+    {\Gamma[r |-> \sigma[n]]}
+} \and
+\infer{
+  \Gamma[r_b] = \langle \tau_1^{\phi_1}, \dots, \tau_n^{\mathtt{init}}, \dots\rangle \and
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{ld}\ r_a, r_b(n)}
+    {\Gamma[r_a |-> \tau_n]}
+} \and
+\infer{
+  \Gamma[r] = \tau \and
+  \Gamma[\mathtt{sp}] = \sigma
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{st}\ \mathtt{sp}(n), r}
+    {\Gamma[\mathtt{sp} |-> \sigma[n |-> \tau]]}
+} \and
+\infer{
+  \Gamma[r_a] = \langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_i}, \dots \rangle \and
+  \Gamma[r_b] = \tau_n' \and
+  \subtype{\Delta}{\tau_n'}{\tau_n}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{st}\ r_a(n), r_b}
+    {\Gamma[r_a |-> \langle \tau_1^{\phi_1}, \dots, \tau_n^{\mathtt{init}}, \dots, \rangle]}
+} \and
+\infer{
+  \valid{\Delta}{\tau_1} \and
+  \dots \and
+  \valid{\Delta}{\tau_n}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle}
+    {\Gamma[r |-> \langle \tau_1^{\mathtt{uninit}}, \dots, \tau_n^{\mathtt{uninit}}\rangle]}
+} \and
+\infer{
+  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\tau}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{mov}\ r, \high v}
+    {\Gamma[r |-> \tau]}
+} \and
+\infer{
+  \Gamma[r] = \mathtt{int} \and
+  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\forall[ \mathtt{nil} ] \Gamma'} \and
+  \subtype{\Delta}{\Gamma}{\Gamma'}
+}{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}
+    {\mathtt{beq}\ r, \high v}
+    {\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofinstructions{\Psi_g, \Delta, \Gamma}{\high I}$}
+\begin{mathpar}
+\infer{
+  \ofinstruction{\Psi_g, \Delta, \Gamma}{\high \iota}{\Gamma'} \and
+  \ofinstructions{\Psi_g, \Delta, \Gamma'}{\high I}
+}{
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\high \iota ; \high I}
+} \and
+\infer{
+  \ofvval{\Psi_1, \Delta, \Gamma}{\high v}{\forall[ \mathtt{nil} ]\Gamma'} \and
+  \subtype{\Delta}{\Gamma}{\Gamma'}
+}{
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\mathtt{jmp}\ \high v}
+} \and
+\infer{
+}{
+  \ofinstructions{\Psi_g, \Delta, \Gamma}{\mathtt{halt}}
+}
+\end{mathpar}
+
+\fbox{$\ofprogram{\high G}{\high P}$}
+\begin{mathpar}
+\infer{
+  \ofglobs{\high G}{\Psi_g} \and
+  \ofheap{\Psi_g}{\high H}{\Psi_h} \\
+  \ofregister{\Psi_g,\Psi_h}{\high R}{\Gamma} \and
+  \ofinstructions{\Psi_g,\mathtt{nil},\Gamma}{\high I}
+}{
+  \ofprogram{\high G}{(\high H,\high R,\high I)}
+}
+\end{mathpar}
+
+\fbox{$|- \highlang$}
+\begin{mathpar}
+\infer{
+  \ofprogram{\high G}{(\high H,\high R,\high I)}
+}{
+  \oflang{(\high G,\high H,\high R,\high I)}
+} \and
+\infer{ }{\oflang{\high\halt}}
+\end{mathpar}
