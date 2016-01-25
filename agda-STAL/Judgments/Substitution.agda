@@ -23,11 +23,11 @@ record Substitution (A : Set) : Set1 where
       v ⟦ [] / n ⟧many≡ v
 
     _∷_ :
-        ∀ {v v' vₑ i is n} →
-          v ⟦ i / n ⟧≡ v' →
-      v' ⟦ is / n ⟧many≡ vₑ →
-      ------------------------
-      v ⟦ i ∷ is / n ⟧many≡ vₑ
+         ∀ {v v' vₑ i is n} →
+          v' ⟦ i / n ⟧≡ vₑ →
+      v ⟦ is / suc n ⟧many≡ v' →
+      --------------------------
+        v ⟦ i ∷ is / n ⟧many≡ vₑ
 open Substitution {{...}} public
 
 data InstantiationMatch : Instantiation → TypeAssumptionValue → Set where
@@ -71,7 +71,7 @@ mutual
 
   weaken-is : ℕ → ℕ → Instantiations → Instantiations
   weaken-is pos inc [] = []
-  weaken-is pos inc (i ∷ is) = weaken-i (length is + pos) inc i ∷ weaken-is pos inc is
+  weaken-is pos inc (i ∷ is) = weaken-i pos inc i ∷ weaken-is pos inc is
 
 mutual
   infix 3 _⟦_/_⟧τ≡_
@@ -197,11 +197,11 @@ data _⟦_/_⟧is≡_ : Instantiations → Instantiation → ℕ → Instantiati
     [] ⟦ i / ι ⟧is≡ []
 
   _∷_ :
-         ∀ {i ι i₁ i₂ is₁ is₂} →
-    i₁  ⟦ i / length is₁ + ι ⟧i≡ i₂ →
+        ∀ {i ι i₁ i₂ is₁ is₂} →
+         i₁  ⟦ i / ι ⟧i≡  i₂  →
          is₁ ⟦ i / ι ⟧is≡ is₂ →
-    ---------------------------------
-     i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
+    ------------------------------
+    i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
 
 infix 3 _⟦_/_⟧v≡_
 data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → Set where
@@ -232,9 +232,9 @@ data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → S
     uninit τ ⟦ i / ι ⟧v≡ uninit τ'
 
   subst-Λ :
-              ∀ {Δ v v' is is' i ι} →
-                v ⟦ i / ι ⟧v≡ v' →
-          is ⟦ i / length Δ + ι ⟧is≡ is' →
+                ∀ {Δ v v' is is' i ι} →
+             v ⟦ i / length Δ + ι ⟧v≡ v' →
+                 is ⟦ i / ι ⟧is≡ is' →
     ----------------------------------------------
     (Λ Δ ∙ v ⟦ is ⟧) ⟦ i / ι ⟧v≡ (Λ Δ ∙ v' ⟦ is' ⟧)
 
@@ -369,7 +369,7 @@ instance
           weaken-v pos inc (int i) = int i
           weaken-v pos inc ns = ns
           weaken-v pos inc (uninit τ) = uninit (weaken pos inc τ)
-          weaken-v pos inc Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ weaken-v (length Δ + pos) inc v ⟦ weaken (length Δ + pos) inc is ⟧
+          weaken-v pos inc Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ weaken-v (length Δ + pos) inc v ⟦ weaken pos inc is ⟧
 
   Instruction-Substitution : Substitution Instruction
   Instruction-Substitution = substitution weaken-ι _⟦_/_⟧ι≡_
