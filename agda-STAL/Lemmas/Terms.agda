@@ -232,22 +232,36 @@ is-subst Δ₁ Δ₂ {a = aᵥ} i⋆ {Δ = a ∷ Δ} (i₁⋆ ∷ is₁⋆)
         | List-++-assoc Δ Δ₁ Δ₂
   = i₂ ∷ is₂ , sub-i ∷ sub-is , i₂⋆ ∷ is₂⋆
 
-Γ-subst-subst-many : ∀ {Γₘ₁ Γₘ₂ Γₒ₁ : RegisterAssignment}
+Γ-subst-subst-many : ∀ {Γᵢ₁ Γᵢ₂ Γₒ₁ : RegisterAssignment}
                        {i is₁ is₂ pos₁ pos₂} →
                        pos₂ ≤ pos₁ →
                        is₁ ⟦ i / pos₁ ⟧≡ is₂ →
-                       Γₘ₁ ⟦ i / length is₁ + pos₁ ⟧≡ Γₘ₂ →
-                       Γₘ₁ ⟦ is₁ / pos₂ ⟧many≡ Γₒ₁ →
+                       Γᵢ₁ ⟦ i / pos₂ + length is₁ + pos₁ ⟧≡ Γᵢ₂ →
+                       Γᵢ₁ ⟦ is₁ / pos₂ ⟧many≡ Γₒ₁ →
                        ∃ λ Γₒ₂ →
-                         Γₒ₁ ⟦ i / pos₁ ⟧≡ Γₒ₂ ×
-                         Γₘ₂ ⟦ is₂ / pos₂ ⟧many≡ Γₒ₂
-Γ-subst-subst-many pos₂≤pos₁ [] sub-Γₘ []
-  = _ , sub-Γₘ , []
-Γ-subst-subst-many pos₂≤pos₁ (sub-i ∷ sub-is) sub-Γₘ (sub₁-Γ ∷ subs₁-Γ)
-  = {!!}
---   with Γ-subst-subst-many ? sub-is sub-Γₘ subs₁-Γ
--- ... | wut
---   = {!!}
+                         Γₒ₁ ⟦ i / pos₂ + pos₁ ⟧≡ Γₒ₂ ×
+                         Γᵢ₂ ⟦ is₂ / pos₂ ⟧many≡ Γₒ₂
+Γ-subst-subst-many {pos₂ = pos₂} pos₂≤pos₁ [] sub-Γᵢ []
+  rewrite +-comm pos₂ 0
+  = _ , sub-Γᵢ , []
+Γ-subst-subst-many {is₁ = i₁ ∷ is₁} {is₂ = i₂ ∷ is₂} {pos₁} {pos₂} pos₂≤pos₁ (sub-i ∷ sub-is) sub-Γᵢ (sub₁-Γ ∷ subs₁-Γ)
+  with begin
+    (pos₂ + suc (length is₁)) + pos₁
+  ≡⟨ +-comm pos₂ (suc (length is₁)) ∥ (λ v → v + pos₁) ⟩
+    (suc (length is₁) + pos₂) + pos₁
+  ≡⟨ +-comm (length is₁) pos₂ ∥ (λ v → suc v + pos₁) ⟩
+    (suc pos₂ + length is₁) + pos₁
+  ≡⟨ +-assoc (suc pos₂) (length is₁) pos₁ ⟩
+    suc pos₂ + (length is₁ + pos₁)
+  ∎ where open Eq-Reasoning
+... | eq
+  rewrite eq
+  with subst-subst {pos₁ = pos₂} {pos₂ = length is₁ + pos₁}  sub-i sub-Γᵢ sub₁-Γ
+... | Γₘ₂ , sub-Γₘ , sub₂-Γ
+  rewrite sym (+-assoc pos₂ (length is₁) pos₁)
+  with Γ-subst-subst-many pos₂≤pos₁ sub-is sub-Γₘ subs₁-Γ
+... | Γₒ₂ , sub-Γₒ , subs₂-Γ
+  = Γₒ₂ , sub-Γₒ , sub₂-Γ ∷ subs₂-Γ
 
 vval-subst : ∀ {ψ₁} →
                [] ⊢ ψ₁ Valid →
