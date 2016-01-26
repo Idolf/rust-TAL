@@ -64,12 +64,15 @@ vval-weaken Δ₁ Δ₂ Δ₃ {ψ₁} ψ₁⋆ Γ⋆ {globval lab} (of-globval l
 ... | eq = of-globval (subst (λ τ → ψ₁ ↓ lab ⇒ τ) (sym eq) l)
 vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ of-int = of-int
 vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ of-ns = of-ns
-vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ {Λ Δₒ ∙ v ⟦ is ⟧} (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} v⋆ is⋆ subs-Γ)
+vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ {Γ} Γ⋆ {Λ Δₒ ∙ v ⟦ is ⟧} (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} {Γᵢ} {Γₒ} v⋆ is⋆ subs-Γ)
   rewrite sym (List-++-assoc Δₒ Δ₁ Δ₃)
   with is-weaken (Δₒ ++ Δ₁) Δ₂ Δ₃ is⋆
 ... | is⋆'
   rewrite List-length-++ Δₒ {Δ₁}
         | List-++-assoc Δₒ Δ₁ (Δ₂ ++ Δ₃)
   with vval-valid-type ψ₁⋆ Γ⋆ v⋆
-... | valid-∀ wut
-        = of-Λ (vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ v⋆) is⋆' {!wut!}
+... | valid-∀ Γᵢ⋆
+  rewrite sym (List-++-assoc Δᵢ Δ₁ Δ₃)
+  with valid-weaken (Δᵢ ++ Δ₁) Δ₂ Δ₃ Γᵢ⋆
+... | Γᵢ⋆w
+        = of-Λ (vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ v⋆) is⋆' {!Γᵢ⋆w!}

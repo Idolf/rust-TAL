@@ -42,6 +42,10 @@ l+m<l+n : ∀ l {m n} → m < n → l + m < l + n
 l+m<l+n zero m≤n = m≤n
 l+m<l+n (suc l) m≤n = s≤s (l+m<l+n l m≤n)
 
+l+m≤l+n⁻¹ : ∀ l {m n} → l + m ≤ l + n → m ≤ n
+l+m≤l+n⁻¹ zero m≤n = m≤n
+l+m≤l+n⁻¹ (suc l) (s≤s m≤n) = l+m≤l+n⁻¹ l m≤n
+
 instance
   ℕ-Tree : ToTree ℕ
   ℕ-Tree = tree⋆ (λ { (node n _) → just n }) (λ x → T₀ x , refl)
