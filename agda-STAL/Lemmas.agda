@@ -37,3 +37,5 @@ open import Lemmas.SubtypeSubstitution public
 -- Lemmas about determinism and decidibility of evaluation
 -- of smallvalues along with stepping+execution of instructions.
 open import Lemmas.Semantics public
+
+open import Lemmas.Terms public
