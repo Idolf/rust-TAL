@@ -106,6 +106,17 @@ vval-valid-type ψ₁⋆ Γ⋆ (of-Λ {Δ = Δ} {Δ₁ = Δ₁} {Δ₂} v⋆ is�
 ... | Γ⋆'''
   = valid-∀ Γ⋆'''
 
+Γ-weaken-inner : ∀ pos inc {Γ₁ Γ₂ : RegisterAssignment} {is} →
+                   Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+                   weaken (length is + pos) inc Γ₁ ⟦ weaken pos inc is / 0 ⟧many≡ weaken pos inc Γ₂
+Γ-weaken-inner = {!!}
+
+is-length : ∀ {Δ₁ Δ₂ is} →
+              Δ₁ ⊢ is of Δ₂ instantiations →
+              length is ≡ length Δ₂
+is-length [] = refl
+is-length (i⋆ ∷ is⋆) = cong suc (is-length is⋆)
+
 i-weaken : ∀ Δ₁ Δ₂ Δ₃ {i a} →
              Δ₁ ++ Δ₃ ⊢ i of a instantiation →
              Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) i of a instantiation
@@ -138,9 +149,18 @@ vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ {Γ} Γ⋆ {Λ Δₒ ∙ v ⟦ is ⟧} (o
 ... | is⋆'
   rewrite List-length-++ Δₒ {Δ₁}
         | List-++-assoc Δₒ Δ₁ (Δ₂ ++ Δ₃)
-  with vval-valid-type ψ₁⋆ Γ⋆ v⋆
-... | valid-∀ Γᵢ⋆
-  rewrite sym (List-++-assoc Δᵢ Δ₁ Δ₃)
-  with valid-weaken (Δᵢ ++ Δ₁) Δ₂ Δ₃ Γᵢ⋆
-... | Γᵢ⋆w
-  = of-Λ (vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ v⋆) is⋆' (subst (λ lhs → lhs ⟦ weaken (length Δₒ + length Δ₁) (length Δ₂) is / 0 ⟧many≡ weaken (length Δₒ + length Δ₁) (length Δ₂) Γₒ) (sym (weaken-exchange (length Δ₂) (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) Γᵢ)) {!!} )
+  with Γ-weaken-inner (length Δₒ + length Δ₁) (length Δ₂) subs-Γ
+... | subs-Γ'
+  rewrite is-length is⋆
+  with begin
+    length Δᵢ + (length Δₒ + length Δ₁)
+  ⟨ +-assoc (length Δᵢ) (length Δₒ) (length Δ₁) ⟩≡
+    (length Δᵢ + length Δₒ) + length Δ₁
+  ≡⟨ +-comm (length Δᵢ) (length Δₒ) ∥ (λ v → v + length Δ₁) ⟩
+    (length Δₒ + length Δᵢ) + length Δ₁
+  ≡⟨ +-assoc (length Δₒ) (length Δᵢ) (length Δ₁) ⟩
+    length Δₒ + (length Δᵢ + length Δ₁)
+  ∎ where open Eq-Reasoning
+... | eq
+  rewrite eq
+  = of-Λ (vval-weaken Δ₁ Δ₂ Δ₃ ψ₁⋆ Γ⋆ v⋆) is⋆' (subst (λ lhs → lhs ⟦ weaken (length Δₒ + length Δ₁) (length Δ₂) is / 0 ⟧many≡ weaken (length Δₒ + length Δ₁) (length Δ₂) Γₒ) (sym (weaken-exchange (length Δ₂) (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) Γᵢ)) subs-Γ' )
