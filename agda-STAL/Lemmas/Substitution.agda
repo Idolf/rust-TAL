@@ -82,6 +82,37 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
             with subst-unique sub-v sub-v'
           help (vₑ , sub-v' ∷ subs-v)
               | refl = ¬subs-v (vₑ , subs-v)
+
+  subst-subst-many : ∀ {vᵢ₁ vᵢ₂ vₒ₁ : A}
+                       {i is₁ is₂ pos₁ pos₂} →
+                       is₁ ⟦ i / pos₁ ⟧≡ is₂ →
+                       vᵢ₁ ⟦ i / pos₂ + length is₁ + pos₁ ⟧≡ vᵢ₂ →
+                       vᵢ₁ ⟦ is₁ / pos₂ ⟧many≡ vₒ₁ →
+                       ∃ λ vₒ₂ →
+                         vₒ₁ ⟦ i / pos₂ + pos₁ ⟧≡ vₒ₂ ×
+                         vᵢ₂ ⟦ is₂ / pos₂ ⟧many≡ vₒ₂
+  subst-subst-many {pos₂ = pos₂} [] sub-vᵢ []
+    rewrite +-comm pos₂ 0
+    = _ , sub-vᵢ , []
+  subst-subst-many {is₁ = i₁ ∷ is₁} {is₂ = i₂ ∷ is₂} {pos₁} {pos₂} (sub-i ∷ sub-is) sub-vᵢ (sub₁-v ∷ subs₁-v)
+    with begin
+      (pos₂ + suc (length is₁)) + pos₁
+    ≡⟨ +-comm pos₂ (suc (length is₁)) ∥ (λ v → v + pos₁) ⟩
+      (suc (length is₁) + pos₂) + pos₁
+    ≡⟨ +-comm (length is₁) pos₂ ∥ (λ v → suc v + pos₁) ⟩
+      (suc pos₂ + length is₁) + pos₁
+    ≡⟨ +-assoc (suc pos₂) (length is₁) pos₁ ⟩
+      suc pos₂ + (length is₁ + pos₁)
+    ∎ where open Eq-Reasoning
+  ... | eq
+    rewrite eq
+    with subst-subst {pos₁ = pos₂} {pos₂ = length is₁ + pos₁}  sub-i sub-vᵢ sub₁-v
+  ... | vₘ₂ , sub-vₘ , sub₂-v
+    rewrite sym (+-assoc pos₂ (length is₁) pos₁)
+    with subst-subst-many sub-is sub-vₘ subs₁-v
+  ... | vₒ₂ , sub-vₒ , subs₂-v
+    = vₒ₂ , sub-vₒ , sub₂-v ∷ subs₂-v
+
 open Substitution⁺ {{...}} public
 
 match-weaken : ∀ {i a} pos inc → InstantiationMatch i a → InstantiationMatch (weaken pos inc i) a

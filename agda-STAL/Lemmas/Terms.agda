@@ -232,67 +232,32 @@ is-subst Δ₁ Δ₂ {a = aᵥ} i⋆ {Δ = a ∷ Δ} (i₁⋆ ∷ is₁⋆)
         | List-++-assoc Δ Δ₁ Δ₂
   = i₂ ∷ is₂ , sub-i ∷ sub-is , i₂⋆ ∷ is₂⋆
 
-Γ-subst-subst-many : ∀ {Γᵢ₁ Γᵢ₂ Γₒ₁ : RegisterAssignment}
-                       {i is₁ is₂ pos₁ pos₂} →
-                       pos₂ ≤ pos₁ →
-                       is₁ ⟦ i / pos₁ ⟧≡ is₂ →
-                       Γᵢ₁ ⟦ i / pos₂ + length is₁ + pos₁ ⟧≡ Γᵢ₂ →
-                       Γᵢ₁ ⟦ is₁ / pos₂ ⟧many≡ Γₒ₁ →
-                       ∃ λ Γₒ₂ →
-                         Γₒ₁ ⟦ i / pos₂ + pos₁ ⟧≡ Γₒ₂ ×
-                         Γᵢ₂ ⟦ is₂ / pos₂ ⟧many≡ Γₒ₂
-Γ-subst-subst-many {pos₂ = pos₂} pos₂≤pos₁ [] sub-Γᵢ []
-  rewrite +-comm pos₂ 0
-  = _ , sub-Γᵢ , []
-Γ-subst-subst-many {is₁ = i₁ ∷ is₁} {is₂ = i₂ ∷ is₂} {pos₁} {pos₂} pos₂≤pos₁ (sub-i ∷ sub-is) sub-Γᵢ (sub₁-Γ ∷ subs₁-Γ)
-  with begin
-    (pos₂ + suc (length is₁)) + pos₁
-  ≡⟨ +-comm pos₂ (suc (length is₁)) ∥ (λ v → v + pos₁) ⟩
-    (suc (length is₁) + pos₂) + pos₁
-  ≡⟨ +-comm (length is₁) pos₂ ∥ (λ v → suc v + pos₁) ⟩
-    (suc pos₂ + length is₁) + pos₁
-  ≡⟨ +-assoc (suc pos₂) (length is₁) pos₁ ⟩
-    suc pos₂ + (length is₁ + pos₁)
-  ∎ where open Eq-Reasoning
-... | eq
-  rewrite eq
-  with subst-subst {pos₁ = pos₂} {pos₂ = length is₁ + pos₁}  sub-i sub-Γᵢ sub₁-Γ
-... | Γₘ₂ , sub-Γₘ , sub₂-Γ
-  rewrite sym (+-assoc pos₂ (length is₁) pos₁)
-  with Γ-subst-subst-many pos₂≤pos₁ sub-is sub-Γₘ subs₁-Γ
-... | Γₒ₂ , sub-Γₒ , subs₂-Γ
-  = Γₒ₂ , sub-Γₒ , sub₂-Γ ∷ subs₂-Γ
-
-vval-subst : ∀ {ψ₁} →
+vval-subst : ∀ {ψ₁} Δ₁ Δ₂ {i a Γ₁ Γ₂ v₁ τ₁} →
                [] ⊢ ψ₁ Valid →
-               ∀ Δ₁ Δ₂ →
-               ∀ {i a} →
                Δ₂ ⊢ i of a instantiation →
-               ∀ {Γ₁ Γ₂} →
                Γ₁ ⟦ i / length Δ₁ ⟧≡ Γ₂ →
-               ∀ {v₁ τ₁} →
                ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ v₁ of τ₁ vval →
                ∃₂ λ v₂ τ₂ →
                  v₁ ⟦ i / length Δ₁ ⟧≡ v₂ ×
                  τ₁ ⟦ i / length Δ₁ ⟧≡ τ₂ ×
                  ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ v₂ of τ₂ vval
-vval-subst ψ₁⋆ Δ₁ Δ₂ i⋆ sub-Γ {reg ♯r} of-reg
+vval-subst Δ₁ Δ₂ {v₁ = reg ♯r}  ψ₁⋆ i⋆ sub-Γ of-reg
   = _ , _ , subst-reg , subst-register-helper ♯r sub-Γ , of-reg
-vval-subst ψ₁⋆ Δ₁ Δ₂ i⋆ sub-Γ (of-globval l)
+vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ (of-globval l)
   = _ , _ , subst-globval , subst-outside-ctx (All-lookup l ψ₁⋆)  , of-globval l
-vval-subst ψ₁⋆ Δ₁ Δ₂ i⋆ sub-Γ of-int
+vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-int
   = _ , _ , subst-int , subst-int , of-int
-vval-subst ψ₁⋆ Δ₁ Δ₂ i⋆ sub-Γ of-ns
+vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-ns
   = _ , _ , subst-ns , subst-ns , of-ns
-vval-subst ψ₁⋆ Δ₁ Δ₂ {i} {a} i⋆ sub-Γ {v₁ = Λ Δₒ ∙ v₁ ⟦ is₁ ⟧} (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} {Γ₁ = Γᵢ₁} {Γ₂ = Γₒ₁} v₁⋆ is₁⋆ subs₁-Γ)
+vval-subst Δ₁ Δ₂ {a = a} {v₁ = Λ Δₒ ∙ v₁ ⟦ is₁ ⟧}  ψ₁⋆ i⋆ sub-Γ (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} {Γ₁ = Γᵢ₁} {Γ₂ = Γₒ₁} v₁⋆ is₁⋆ subs₁-Γ)
   rewrite sym (List-++-assoc Δₒ Δ₁ (a ∷ Δ₂))
   with is-subst (Δₒ ++ Δ₁) Δ₂ i⋆ {is₁} {Δᵢ} is₁⋆
 ... | is₂ , sub-is , is₂⋆
   rewrite List-length-++ Δₒ {Δ₁}
         | List-++-assoc Δₒ Δ₁ Δ₂
-  with vval-subst ψ₁⋆ Δ₁ Δ₂ i⋆ sub-Γ v₁⋆
+  with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v₁⋆
 ... | v₂ , ∀[ .Δᵢ ] Γᵢ₂ , sub-v , subst-∀ sub-Γᵢ , v₂⋆
-  with weaken-subst {pos₁ = length Δᵢ + length Δ₁} {length Δᵢ} (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) sub-Γᵢ
+  with weaken-subst (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) sub-Γᵢ
 ... | sub-Γₘ
   with begin
     (length Δᵢ + length Δ₁) + length Δₒ
@@ -305,6 +270,6 @@ vval-subst ψ₁⋆ Δ₁ Δ₂ {i} {a} i⋆ sub-Γ {v₁ = Λ Δₒ ∙ v₁ �
   ∎ where open Eq-Reasoning
 ... | eq
   rewrite eq
-  with Γ-subst-subst-many z≤n sub-is sub-Γₘ subs₁-Γ
+  with subst-subst-many sub-is sub-Γₘ subs₁-Γ
 ... | Γₒ₂ , sub-Γₒ , subs₂-Γ
-  = Λ Δₒ ∙ v₂ ⟦ is₂ ⟧ , ∀[ Δₒ ] Γₒ₂ , subst-Λ sub-v sub-is , subst-∀ sub-Γₒ , of-Λ {Δ₁ = Δᵢ} {Δₒ} {Γ₁ = Γᵢ₂} {Γ₂ = Γₒ₂} v₂⋆ is₂⋆ subs₂-Γ
+  = Λ Δₒ ∙ v₂ ⟦ is₂ ⟧ , ∀[ Δₒ ] Γₒ₂ , subst-Λ sub-v sub-is , subst-∀ sub-Γₒ , of-Λ v₂⋆ is₂⋆ subs₂-Γ
