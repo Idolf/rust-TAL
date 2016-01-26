@@ -233,8 +233,8 @@ data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → S
 
   subst-Λ :
                 ∀ {Δ v v' is is' i ι} →
-             v ⟦ i / length Δ + ι ⟧v≡ v' →
-                 is ⟦ i / ι ⟧is≡ is' →
+                  v ⟦ i / ι ⟧v≡ v' →
+           is ⟦ i / length Δ + ι ⟧is≡ is' →
     ----------------------------------------------
     (Λ Δ ∙ v ⟦ is ⟧) ⟦ i / ι ⟧v≡ (Λ Δ ∙ v' ⟦ is' ⟧)
 
@@ -369,7 +369,7 @@ instance
           weaken-v pos inc (int i) = int i
           weaken-v pos inc ns = ns
           weaken-v pos inc (uninit τ) = uninit (weaken pos inc τ)
-          weaken-v pos inc Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ weaken-v (length Δ + pos) inc v ⟦ weaken pos inc is ⟧
+          weaken-v pos inc (Λ Δ ∙ v ⟦ is ⟧) = Λ Δ ∙ weaken-v pos inc v ⟦ weaken (length Δ + pos) inc is ⟧
 
   Instruction-Substitution : Substitution Instruction
   Instruction-Substitution = substitution weaken-ι _⟦_/_⟧ι≡_

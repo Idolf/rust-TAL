@@ -244,27 +244,24 @@ instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
                     {ι = sst i ♯rs} (of-sst up)
   with stack-update-≤ sp₁≤sp₂ (allzipᵥ-lookup ♯rs regs₁≤regs₂) up
 ... | sp₂' , up' , sp₂'≤sp₁' = _ , of-sst up' , Γ-≤ sp₂'≤sp₁' regs₁≤regs₂
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+instruction-subtype {Δ = Δ} ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
                     {ι = ld ♯rd ♯rs i} (of-ld eq l)
   with allzipᵥ-lookup ♯rs regs₁≤regs₂
 ... | lookup₁≤lookup₂
-  rewrite eq
-  with ≤tuple⇒≡tuple lookup₁≤lookup₂
+  with ≤tuple⇒≡tuple (subst₂ (_⊢_≤_ Δ) refl eq lookup₁≤lookup₂)
 ... | τs⁻ , eq₁
-  rewrite eq₁
-  with lookup₁≤lookup₂
+  with subst₂ (_⊢_≤_ Δ) eq₁ eq lookup₁≤lookup₂
 ... | tuple-≤ τs₁≤τs₂
   with allzip-lookup₂ l τs₁≤τs₂
-... | (τ , init) , l' , τ⁻-≤ τ⋆ φ-≤-init = _ , of-ld eq₁ l' , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ (≤-refl τ⋆))
-instruction-subtype {Γ₁ = registerₐ sp₁ regs₁} {Γ₂ = registerₐ sp₂ regs₂} ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+... | (τ , init) , l' , τ⁻-≤ τ⋆ φ-≤-init
+  = _ , of-ld eq₁ l' , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ (≤-refl τ⋆))
+instruction-subtype {Δ = Δ} {Γ₁ = registerₐ sp₁ regs₁} {Γ₂ = registerₐ sp₂ regs₂} ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
                     {ι = st ♯rd i ♯rs} (of-st eq lookup≤τ l₁ up₁)
   with allzipᵥ-lookup ♯rd regs₁≤regs₂ | allzipᵥ-lookup ♯rs regs₁≤regs₂
 ... | lookup-rd₁≤lookup-rd₂ | lookup-rs₁≤lookup-rs₁
-  rewrite eq
-  with ≤tuple⇒≡tuple lookup-rd₁≤lookup-rd₂
+  with ≤tuple⇒≡tuple (subst₂ (_⊢_≤_ Δ) refl eq lookup-rd₁≤lookup-rd₂)
 ... | τs⁻₂ , eq₁
-  rewrite eq₁
-  with lookup-rd₁≤lookup-rd₂
+  with subst₂ (_⊢_≤_ Δ) eq₁ eq lookup-rd₁≤lookup-rd₂
 ... | tuple-≤ τs⁻₁≤τs⁻₂
   with allzip-lookup₂ l₁ τs⁻₁≤τs⁻₂
 ... | (τ , φ) , l₂ , τ⁻-≤ τ⋆ φ₁≤φ₂

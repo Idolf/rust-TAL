@@ -97,7 +97,7 @@ mutual
 
     _∷_ :
               ∀ {i is a Δ'} →
-       Δ' ++ Δ ⊢ i of a instantiation →
+         Δ ⊢ i of a instantiation →
          Δ ⊢ is of Δ' instantiations →
       -----------------------------------
       Δ ⊢ i ∷ is of a ∷ Δ' instantiations
@@ -130,13 +130,13 @@ mutual
       ψ₁ , ψ₂ ⊢ ns of ns wval
 
     of-Λ :
-             ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
-            ψ₁ , ψ₂ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
-                Δ₂ ⊢ is of Δ₁ instantiations →
-      weaken (length Δ₁) (length Δ₂) Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
-                     Δ₂ ⊢ Γ₃ ≤ Γ₂ →
-      ----------------------------------------------------
-          ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ wval
+            ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
+           ψ₁ , ψ₂ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
+             Δ₂ ⊢ is of Δ₁ instantiations →
+                  Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+                    Δ₂ ⊢ Γ₃ ≤ Γ₂ →
+      --------------------------------------------
+      ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ wval
 
   infix 3 _⊢_of_wval⁰
   data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment →

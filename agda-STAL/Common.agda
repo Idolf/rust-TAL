@@ -10,8 +10,8 @@ open import Judgments
 -- Most lemmas are in this directory
 open import Lemmas
 
--- A lot of junk
-open import ForgetMe
+-- -- A lot of junk
+-- open import ForgetMe
 open import HeapPush
 open import TermSubtyping
 open import TermSubstitution

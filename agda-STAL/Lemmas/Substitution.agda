@@ -984,7 +984,7 @@ instance
           ... | yes (τ' , sub-τ) = yes (uninit τ' , subst-uninit sub-τ)
           ... | no ¬sub-τ = no (λ { (._ , subst-uninit sub-τ) → ¬sub-τ (_ , sub-τ)})
           dec Λ Δ ∙ v ⟦ is ⟧ i ι
-            with dec v i (length Δ + ι) | is ⟦ i / ι ⟧?
+            with dec v i ι | is ⟦ i / length Δ + ι ⟧?
           ... | yes (v' , sub-v) | yes (is' , sub-is) = yes (Λ Δ ∙ v' ⟦ is' ⟧ , subst-Λ sub-v sub-is)
           ... | no ¬sub-v | _ = no (λ { (._ , subst-Λ sub-v sub-is) → ¬sub-v (_ , sub-v) })
           ... | _ | no ¬sub-is = no (λ { (._ , subst-Λ sub-v sub-is) → ¬sub-is (_ , sub-is) })
@@ -996,8 +996,8 @@ instance
           v-weaken-0 pos ns = refl
           v-weaken-0 pos (uninit τs) rewrite weaken-0 pos τs = refl
           v-weaken-0 pos Λ Δ ∙ v ⟦ is ⟧
-            rewrite v-weaken-0 (length Δ + pos) v
-                  | weaken-0 pos is = refl
+            rewrite v-weaken-0 pos v
+                  | weaken-0 (length Δ + pos) is = refl
 
           v-weaken-weaken : weaken-weakenᵗ SmallValue
           v-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (reg ♯r) = refl
@@ -1006,12 +1006,12 @@ instance
           v-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ ns = refl
           v-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (uninit τ)
             rewrite weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ τ = refl
-          v-weaken-weaken {pos₁} inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ Λ Δ ∙ v ⟦ is ⟧
+          v-weaken-weaken {pos₁} inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (Λ Δ ∙ v ⟦ is ⟧)
             with l+m≤l+n (length Δ) pos₂≤pos₁+inc₁
           ... | pos≤pos
             rewrite sym (+-assoc (length Δ) pos₁ inc₁)
-                  | v-weaken-weaken inc₁ inc₂ (l+m≤l+n (length Δ) pos₁≤pos₂) pos≤pos v
-                  | weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ is
+                  | v-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ v
+                  | weaken-weaken inc₁ inc₂ (l+m≤l+n (length Δ) pos₁≤pos₂) pos≤pos is
             = refl
 
           v-weaken-subst : weaken-substᵗ SmallValue
@@ -1020,12 +1020,11 @@ instance
           v-weaken-subst inc pos₂≤pos₁ subst-int = subst-int
           v-weaken-subst inc pos₂≤pos₁ subst-ns = subst-ns
           v-weaken-subst inc pos₂≤pos₁ (subst-uninit sub-τ) = subst-uninit (weaken-subst inc pos₂≤pos₁ sub-τ)
-          v-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v sub-is)
-            with v-weaken-subst inc (l+m≤l+n (length Δ) pos₂≤pos₁) sub-v
-               | weaken-subst inc pos₂≤pos₁ sub-is
-          ... | sub-v' | sub-is'
+          v-weaken-subst {pos₁} inc pos₂≤pos₁ {v₁ = Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v sub-is)
+            with weaken-subst inc (l+m≤l+n (length Δ) pos₂≤pos₁) sub-is
+          ... | sub-is'
             rewrite +-assoc (length Δ) pos₁ inc
-            = subst-Λ sub-v' sub-is'
+            = subst-Λ (v-weaken-subst inc pos₂≤pos₁ sub-v) sub-is'
 
           v-subst-weaken : subst-weakenᵗ SmallValue
           v-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (reg ♯r) = subst-reg
@@ -1034,22 +1033,21 @@ instance
           v-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ ns = subst-ns
           v-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (uninit τ)
             = subst-uninit (subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ τ)
-          v-subst-weaken {pos₁} {pos₂} inc pos₁≤pos₂ pos₂≤inc+pos₁ Λ Δ ∙ v ⟦ is ⟧
-            with
-              begin
-                length Δ + pos₂
-              ≤⟨ l+m≤l+n (length Δ) pos₂≤inc+pos₁ ⟩
-                length Δ + (inc + pos₁)
-              ≡⟨ +-comm (length Δ) (inc + pos₁) ⟩
-                (inc + pos₁) + length Δ
-              ≡⟨ +-assoc inc pos₁ (length Δ) ⟩
-                inc + (pos₁ + length Δ)
-              ≡⟨ cong (λ v → inc + v) (+-comm pos₁ (length Δ)) ⟩
-                inc + (length Δ + pos₁)
-              ∎ where open N.≤-Reasoning
-          ... | pos≤pos
-            = subst-Λ (v-subst-weaken inc (l+m≤l+n (length Δ) pos₁≤pos₂) pos≤pos v)
-                      (subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ is)
+          v-subst-weaken {pos₁} {pos₂} inc pos₁≤pos₂ pos₂≤inc+pos₁ (Λ Δ ∙ v ⟦ is ⟧)
+            with begin
+              length Δ + pos₂
+            ≤⟨ l+m≤l+n (length Δ) pos₂≤inc+pos₁ ⟩
+              length Δ + (inc + pos₁)
+            ≡⟨ sym (+-assoc (length Δ) inc pos₁) ⟩
+              (length Δ + inc) + pos₁
+            ≡⟨ cong (λ v → v + pos₁) (+-comm (length Δ) inc) ⟩
+              (inc + length Δ) + pos₁
+            ≡⟨ +-assoc inc (length Δ) pos₁ ⟩
+              inc + (length Δ + pos₁)
+            ∎ where open N.≤-Reasoning
+          ... | pos-≤
+            = subst-Λ (v-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ v)
+                      (subst-weaken inc (l+m≤l+n (length Δ) pos₁≤pos₂) pos-≤ is)
 
           v-subst-subst : subst-substᵗ SmallValue
           v-subst-subst sub-i subst-reg subst-reg = _ , subst-reg , subst-reg
@@ -1060,23 +1058,21 @@ instance
             with subst-subst sub-i sub-τ₁ sub-τ₁'
           ... | τ₂ , sub-τ₂ , sub-τ₂'
             = _ , subst-uninit sub-τ₂ , subst-uninit sub-τ₂'
-          v-subst-subst {pos₁} {pos₂} sub-i {v₁ = Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₁' sub-is₁')
+          v-subst-subst {pos₁} {pos₂} sub-i {Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₁' sub-is₁')
+            with v-subst-subst sub-i  sub-v₁ sub-v₁'
+          ... | v₂ , sub-v₂ , sub-v₂'
             with begin
               length Δ + suc (pos₁ + pos₂)
-            ⟨ +-assoc (length Δ) (suc pos₁) pos₂ ⟩≡
-              (length Δ + suc pos₁) + pos₂
-            ≡⟨ +-comm (length Δ) (suc pos₁) ∥ (λ v → v + pos₂) ⟩
-              (suc pos₁ + length Δ) + pos₂
-            ≡⟨ refl ⟩
-              suc (pos₁ + length Δ) + pos₂
-            ≡⟨ +-comm pos₁ (length Δ) ∥ (λ v → suc v + pos₂) ⟩
-              suc (length Δ + pos₁) + pos₂
+            ⟨ +-assoc (length Δ) 1 (pos₁ + pos₂) ⟩≡
+              (length Δ + 1) + (pos₁ + pos₂)
+            ≡⟨ +-comm (length Δ) 1 ∥ (λ v → v + (pos₁ + pos₂)) ⟩
+              suc (length Δ) + (pos₁ + pos₂)
+            ⟨ cong suc (+-assoc (length Δ) pos₁ pos₂) ⟩≡
+              suc (length Δ + pos₁ + pos₂)
             ∎ where open Eq-Reasoning
           ... | eq
             rewrite eq
-            with v-subst-subst sub-i  sub-v₁ sub-v₁'
-          ... | v₂ , sub-v₂ , sub-v₂'
-            with subst-subst sub-i sub-is₁ sub-is₁'
+            with subst-subst {{Instantiations-Substitution⁺}} {length Δ + pos₁} {pos₂} sub-i sub-is₁ sub-is₁'
           ... | is₂ , sub-is₂ , sub-is₂'
             rewrite +-assoc (length Δ) pos₁ pos₂
             = _ , subst-Λ sub-v₂ sub-is₂ , subst-Λ sub-v₂' sub-is₂'
