@@ -1020,28 +1020,28 @@ instance
   TypeVec-Substitution⁺ : ∀ {m} → Substitution⁺ (Vec Type m)
   TypeVec-Substitution⁺ = substitution⁺ subst-regs-unique _⟦_/_⟧regs? regs-weaken-0 regs-weaken-weaken regs-weaken-subst regs-subst-weaken regs-subst-subst regs-weaken-exchange
 
-  TypeList-Substitution⁺  : Substitution⁺ (List Type)
+  TypeList-Substitution⁺ : Substitution⁺ (List Type)
   TypeList-Substitution⁺ = List-Substitution⁺ Type
 
-  InitType-Substitution⁺  : Substitution⁺ InitType
+  InitType-Substitution⁺ : Substitution⁺ InitType
   InitType-Substitution⁺ =
     substitution⁺ subst-τ⁻-unique  _⟦_/_⟧τ⁻? τ⁻-weaken-0 τ⁻-weaken-weaken τ⁻-weaken-subst τ⁻-subst-weaken τ⁻-subst-subst τ⁻-weaken-exchange
 
   InitTypeVec-Substitution⁺ : ∀ {m} → Substitution⁺ (Vec InitType m)
   InitTypeVec-Substitution⁺ = Vec-Substitution⁺ InitType _
 
-  InitTypeList-Substitution⁺  : Substitution⁺ (List InitType)
+  InitTypeList-Substitution⁺ : Substitution⁺ (List InitType)
   InitTypeList-Substitution⁺ = substitution⁺ subst-τs⁻-unique _⟦_/_⟧τs⁻? τs⁻-weaken-0 τs⁻-weaken-weaken τs⁻-weaken-subst τs⁻-subst-weaken τs⁻-subst-subst τs⁻-weaken-exchange
 
-  StackType-Substitution⁺  : Substitution⁺ StackType
+  StackType-Substitution⁺ : Substitution⁺ StackType
   StackType-Substitution⁺ =
     substitution⁺ subst-σ-unique  _⟦_/_⟧σ? σ-weaken-0 σ-weaken-weaken σ-weaken-subst σ-subst-weaken σ-subst-subst σ-weaken-exchange
 
-  RegisterAssignment-Substitution⁺  : Substitution⁺ RegisterAssignment
+  RegisterAssignment-Substitution⁺ : Substitution⁺ RegisterAssignment
   RegisterAssignment-Substitution⁺ =
     substitution⁺ subst-Γ-unique _⟦_/_⟧Γ? Γ-weaken-0 Γ-weaken-weaken Γ-weaken-subst Γ-subst-weaken Γ-subst-subst Γ-weaken-exchange
 
-  Instantiation-Substitution⁺  : Substitution⁺ Instantiation
+  Instantiation-Substitution⁺ : Substitution⁺ Instantiation
   Instantiation-Substitution⁺ = substitution⁺ unique dec i-weaken-0 i-weaken-weaken i-weaken-subst i-subst-weaken i-subst-subst i-weaken-exchange
     where unique : ∀ {iₚ ι} {i i₁ i₂} →
                      i ⟦ iₚ / ι ⟧i≡ i₁ →
@@ -1153,7 +1153,7 @@ instance
           is-weaken-subst : weaken-substᵗ Instantiations
           is-weaken-subst inc pos₂≤pos₁ [] = []
           is-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = i₁ ∷ is₁} {v₂ = i₂ ∷ is₂} (sub-i ∷ sub-is)
-            with weaken-subst {pos₁ = length is₁ + pos₁} {pos₂ = length is₁ + pos₂} inc (l+m≤l+n (length is₁) pos₂≤pos₁) sub-i
+            with weaken-subst inc (l+m≤l+n (length is₁) pos₂≤pos₁) sub-i
           ... | sub-i'
             with begin
               length is₁ + pos₂
@@ -1172,27 +1172,88 @@ instance
 
           is-subst-weaken : subst-weakenᵗ Instantiations
           is-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ [] = []
-          is-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (i ∷ is)
-            = subst-weaken inc {!!} {!!} i ∷ is-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ is
+          is-subst-weaken {pos₁} {pos₂} inc pos₁≤pos₂ pos₂≤inc+pos₁ (i ∷ is)
+            with begin
+              length is + pos₁
+            ≤⟨ l+m≤l+n (length is) pos₁≤pos₂ ⟩
+              length is + pos₂
+            ≡⟨ cong (λ v → v + pos₂) (sym (is-weaken-length pos₁ (suc inc) is)) ⟩
+              length (weaken pos₁ (suc inc) is) + pos₂
+            ∎ | begin
+              length (weaken pos₁ (suc inc) is) + pos₂
+            ≡⟨ cong (λ v → v + pos₂) (is-weaken-length pos₁ (suc inc) is) ⟩
+              length is + pos₂
+            ≤⟨ l+m≤l+n (length is) pos₂≤inc+pos₁ ⟩
+              length is + (inc + pos₁)
+            ≡⟨ sym (+-assoc (length is) inc pos₁) ⟩
+              (length is + inc) + pos₁
+            ≡⟨ cong (λ v → v + pos₁) (+-comm (length is) inc) ⟩
+              (inc + length is) + pos₁
+            ≡⟨ +-assoc inc (length is) pos₁ ⟩
+              inc + (length is + pos₁)
+            ∎ where open N.≤-Reasoning
+          ... | ≤₁ | ≤₂
+            = subst-weaken inc ≤₁ ≤₂ i ∷ is-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ is
 
           is-subst-subst : subst-substᵗ Instantiations
           is-subst-subst sub-i [] [] = [] , [] , []
-          is-subst-subst sub-i (sub-i₁ ∷ sub-is₁) (sub-i₁' ∷ sub-is₁')
-            = {!!}
-          --   with subst-subst sub-i sub-i₁ sub-i₁'
-          -- ... | i₂ , sub-i₂ , sub-i₂'
-          --   with is-subst-subst sub-i sub-is₁ sub-is₁'
-          -- ... | is₂ , sub-is₂ , sub-is₂'
-          --   = _ , sub-i₂ ∷ sub-is₂ , sub-i₂' ∷ sub-is₂'
+          is-subst-subst {pos₁} {pos₂} sub-i {v₁ = i₁ ∷ is₁} {i₂ ∷ is₂} {i₁' ∷ is₁'} (sub-i₁ ∷ sub-is₁) (sub-i₁' ∷ sub-is₁')
+            with begin
+              length is₁ + suc (pos₁ + pos₂)
+            ⟨ +-assoc (length is₁) (suc pos₁) pos₂ ⟩≡
+              (length is₁ + suc pos₁) + pos₂
+            ≡⟨ +-comm (length is₁) (suc pos₁) ∥ (λ v → v + pos₂) ⟩
+              (suc pos₁ + length is₁) + pos₂
+            ≡⟨ +-comm pos₁ (length is₁) ∥ (λ v → suc v + pos₂) ⟩
+              (suc (length is₁ + pos₁)) + pos₂
+            ≡⟨ refl ⟩
+              suc ((length is₁ + pos₁) + pos₂)
+            ∎ | begin
+              (length is₁ + pos₁) + pos₂
+            ≡⟨ +-assoc (length is₁) pos₁ pos₂ ⟩
+              length is₁ + (pos₁ + pos₂)
+            ≡⟨ is-subst-length sub-is₁' ∥ (λ v → v + (pos₁ + pos₂))  ⟩
+              length is₂ + (pos₁ + pos₂)
+            ∎ | begin
+              length is₁ + pos₁
+            ≡⟨ is-subst-length sub-is₁ ∥ (λ v → v + pos₁) ⟩
+              length is₁' + pos₁
+            ∎ where open Eq-Reasoning
+          ... | eq₁ | eq₂ | eq₃
+            rewrite eq₁
+            with subst-subst sub-i sub-i₁ sub-i₁'
+          ... | i₂' , sub-i₂ , sub-i₂'
+            with is-subst-subst sub-i sub-is₁ sub-is₁'
+          ... | is₂' , sub-is₂ , sub-is₂'
+            rewrite eq₂ | eq₃
+            = i₂' ∷ is₂' , sub-i₂ ∷ sub-is₂ , sub-i₂' ∷ sub-is₂'
 
           is-weaken-exchange : weaken-exchangeᵗ Instantiations
           is-weaken-exchange inc₁ inc₂ pos₂≤pos₁ [] = refl
-          is-weaken-exchange inc₁ inc₂ pos₂≤pos₁ (i ∷ is)
-            = {!!}
-            -- = cong₂ _∷_ (weaken-exchange inc₁ inc₂ ? i)
-            --             (is-weaken-exchange inc₁ inc₂ pos₂≤pos₁ is)
+          is-weaken-exchange {pos₁} {pos₂} inc₁ inc₂ pos₂≤pos₁ (i ∷ is)
+            with weaken-exchange {pos₁ = length is + pos₁} {length is + pos₂} inc₁ inc₂ (l+m≤l+n (length is) pos₂≤pos₁) i
+          ... | eq₁
+            with begin
+              length is + pos₂
+            ⟨ is-weaken-length pos₁ inc₁ is ∥ (λ v → v + pos₂) ⟩≡
+              length (weaken-is pos₁ inc₁ is) + pos₂
+            ∎ | begin
+              inc₂ + (length is + pos₁)
+            ⟨ +-assoc inc₂ (length is) pos₁ ⟩≡
+              (inc₂ + length is) + pos₁
+            ≡⟨ +-comm inc₂ (length is) ∥ (λ v → v + pos₁) ⟩
+              (length is + inc₂) + pos₁
+            ≡⟨ +-assoc (length is) inc₂ pos₁ ⟩
+              length is + (inc₂ + pos₁)
+            ⟨ is-weaken-length pos₂ inc₂ is ∥ (λ v → v + (inc₂ + pos₁)) ⟩≡
+              length (weaken pos₂ inc₂ is) + (inc₂ + pos₁)
+            ∎ where open Eq-Reasoning
+          ... | eq₂ | eq₃
+            rewrite eq₂ | eq₃
+            = cong₂ _∷_ eq₁
+                        (is-weaken-exchange inc₁ inc₂ pos₂≤pos₁ is)
 
-  SmallValue-Substitution⁺  : Substitution⁺ SmallValue
+  SmallValue-Substitution⁺ : Substitution⁺ SmallValue
   SmallValue-Substitution⁺ = substitution⁺ unique dec v-weaken-0 v-weaken-weaken v-weaken-subst v-subst-weaken v-subst-subst v-weaken-exchange
     where unique : ∀ {i ι} {v v₁ v₂} →
                      v ⟦ i / ι ⟧v≡ v₁ →
@@ -1334,7 +1395,7 @@ instance
           ... | eq₂
             rewrite eq₂ | eq₁ = refl
 
-  Instruction-Substitution⁺  : Substitution⁺ Instruction
+  Instruction-Substitution⁺ : Substitution⁺ Instruction
   Instruction-Substitution⁺ = substitution⁺ unique dec ι-weaken-0 ι-weaken-weaken ι-weaken-subst ι-subst-weaken ι-subst-subst ι-weaken-exchange
     where unique : ∀ {i ιₚ} {ι ι₁ ι₂} →
                      ι ⟦ i / ιₚ ⟧ι≡ ι₁ →
@@ -1504,7 +1565,7 @@ instance
           ι-weaken-exchange inc₁ inc₂ pos₂≤pos₁ (beq ♯r v)
             rewrite weaken-exchange inc₁ inc₂ pos₂≤pos₁ v = refl
 
-  InstructionSequence-Substitution⁺  : Substitution⁺ InstructionSequence
+  InstructionSequence-Substitution⁺ : Substitution⁺ InstructionSequence
   InstructionSequence-Substitution⁺ = substitution⁺ unique dec I-weaken-0 I-weaken-weaken I-weaken-subst I-subst-weaken I-subst-subst I-weaken-exchange
     where unique : ∀ {i ι} {I I₁ I₂} →
                      I ⟦ i / ι ⟧I≡ I₁ →

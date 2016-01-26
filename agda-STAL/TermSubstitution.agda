@@ -59,52 +59,52 @@ lookup-helper (suc ♯r) pos inc (τ ∷ τs) = lookup-helper ♯r pos inc τs
 -- of-vval-subst {Γ = Γ} {Γ'} i⋆ m sub-Γ sub-τ {Λ Δ₂ ∙ v ⟦ is ⟧} v⋆
 --   = of-vval-subst i⋆ m sub-Γ sub-τ v⋆
 
-subst-many-registerₐ-split :
-  ∀ {sp sp' regs regs' is ι} →
-    registerₐ sp regs ⟦ is / ι ⟧many≡ registerₐ sp' regs' →
-    sp ⟦ is / ι ⟧many≡ sp' ×
-    regs ⟦ is / ι ⟧many≡ regs'
-subst-many-registerₐ-split [] = [] , []
-subst-many-registerₐ-split (subst-registerₐ sub-sp sub-regs ∷ subs-Γ)
-  with subst-many-registerₐ-split subs-Γ
-... | subs-sp , subs-regs = sub-sp ∷ subs-sp , sub-regs ∷ subs-regs
+-- subst-many-registerₐ-split :
+--   ∀ {sp sp' regs regs' is ι} →
+--     registerₐ sp regs ⟦ is / ι ⟧many≡ registerₐ sp' regs' →
+--     sp ⟦ is / ι ⟧many≡ sp' ×
+--     regs ⟦ is / ι ⟧many≡ regs'
+-- subst-many-registerₐ-split [] = [] , []
+-- subst-many-registerₐ-split (subst-registerₐ sub-sp sub-regs ∷ subs-Γ)
+--   with subst-many-registerₐ-split subs-Γ
+-- ... | subs-sp , subs-regs = sub-sp ∷ subs-sp , sub-regs ∷ subs-regs
 
-subst-many-lookup :
-  ∀ {n} {regs regs' : Vec Type n} {is ι} ♯r →
-    regs ⟦ is / ι ⟧many≡ regs' →
-    lookup ♯r regs ⟦ is / ι ⟧many≡ lookup ♯r regs'
-subst-many-lookup ♯r [] = []
-subst-many-lookup ♯r (sub-regs ∷ subs-regs) = allzipᵥ-lookup ♯r sub-regs ∷ subst-many-lookup ♯r subs-regs
+-- subst-many-lookup :
+--   ∀ {n} {regs regs' : Vec Type n} {is ι} ♯r →
+--     regs ⟦ is / ι ⟧many≡ regs' →
+--     lookup ♯r regs ⟦ is / ι ⟧many≡ lookup ♯r regs'
+-- subst-many-lookup ♯r [] = []
+-- subst-many-lookup ♯r (sub-regs ∷ subs-regs) = allzipᵥ-lookup ♯r sub-regs ∷ subst-many-lookup ♯r subs-regs
 
-subst-reg-many : ∀ ♯r is ι →
-                   reg ♯r ⟦ is / ι ⟧many≡ reg ♯r
-subst-reg-many ♯r [] ι = []
-subst-reg-many ♯r (i ∷ is) ι = subst-reg ∷ subst-reg-many ♯r is (suc ι)
+-- subst-reg-many : ∀ ♯r is ι →
+--                    reg ♯r ⟦ is / ι ⟧many≡ reg ♯r
+-- subst-reg-many ♯r [] ι = []
+-- subst-reg-many ♯r (i ∷ is) ι = subst-reg ∷ subst-reg-many ♯r is (suc ι)
 
-subst-globval-many : ∀ (♯l : ℕ) is ι →
-                       _⟦_/_⟧many≡_ {A = SmallValue} (globval ♯l) is ι (globval ♯l)
-subst-globval-many ♯l [] ι = []
-subst-globval-many ♯l (i ∷ is) ι = subst-globval ∷ subst-globval-many ♯l is (suc ι)
+-- subst-globval-many : ∀ (♯l : ℕ) is ι →
+--                        _⟦_/_⟧many≡_ {A = SmallValue} (globval ♯l) is ι (globval ♯l)
+-- subst-globval-many ♯l [] ι = []
+-- subst-globval-many ♯l (i ∷ is) ι = subst-globval ∷ subst-globval-many ♯l is (suc ι)
 
-subst-many-int-type : ∀ is ι →
-                        _⟦_/_⟧many≡_ {A = Type} int is ι int
-subst-many-int-type [] ι = []
-subst-many-int-type (i ∷ is) ι = subst-int ∷ subst-many-int-type is (suc ι)
+-- subst-many-int-type : ∀ is ι →
+--                         _⟦_/_⟧many≡_ {A = Type} int is ι int
+-- subst-many-int-type [] ι = []
+-- subst-many-int-type (i ∷ is) ι = subst-int ∷ subst-many-int-type is (suc ι)
 
-subst-many-ns-type : ∀ is ι →
-                       _⟦_/_⟧many≡_ {A = Type} ns is ι ns
-subst-many-ns-type [] ι = []
-subst-many-ns-type (i ∷ is) ι = subst-ns ∷ subst-many-ns-type is (suc ι)
+-- subst-many-ns-type : ∀ is ι →
+--                        _⟦_/_⟧many≡_ {A = Type} ns is ι ns
+-- subst-many-ns-type [] ι = []
+-- subst-many-ns-type (i ∷ is) ι = subst-ns ∷ subst-many-ns-type is (suc ι)
 
-subst-many-int : ∀ i is ι →
-                   _⟦_/_⟧many≡_ {A = SmallValue} (int i) is ι (int i)
-subst-many-int i [] ι = []
-subst-many-int i (_ ∷ is) ι = subst-int ∷ subst-many-int i is (suc ι)
+-- subst-many-int : ∀ i is ι →
+--                    _⟦_/_⟧many≡_ {A = SmallValue} (int i) is ι (int i)
+-- subst-many-int i [] ι = []
+-- subst-many-int i (_ ∷ is) ι = subst-int ∷ subst-many-int i is (suc ι)
 
-subst-many-ns : ∀ is ι →
-                  _⟦_/_⟧many≡_ {A = SmallValue} ns is ι ns
-subst-many-ns [] ι = []
-subst-many-ns (_ ∷ is) ι = subst-ns ∷ subst-many-ns is (suc ι)
+-- subst-many-ns : ∀ is ι →
+--                   _⟦_/_⟧many≡_ {A = SmallValue} ns is ι ns
+-- subst-many-ns [] ι = []
+-- subst-many-ns (_ ∷ is) ι = subst-ns ∷ subst-many-ns is (suc ι)
 
 -- of-vval-subst :
 --   ∀ {ψ₁ Δ₁ Δ₂ Γ Γ' τ τ' is} →

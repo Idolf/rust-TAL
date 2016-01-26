@@ -1,0 +1,26 @@
+Have:
+Γᵢ₁ ⟦ i / length Δᵢ + length Δ₁ ⟧Γ≡ Γᵢ₂
+weaken (length Δᵢ) (length Δₒ) Γᵢ₁ ⟦ is₁ / 0 ⟧many≡ Γₒ₁
+weaken (length Δᵢ) (length Δₒ) Γᵢ₁ ⟦ i / length Δᵢ + length Δ₁ + length Δₒ ⟧≡ weaken (length Δᵢ) (length Δₒ) Γᵢ₂
+is₁ ⟦ i / length Δₒ + length Δ₁ ⟧is≡ is₂
+
+Want:
+
+
+Γₒ₁ ⟦ i / length Δₒ + length Δ₁ ⟧Γ≡ Γₒ₂
+weaken (length Δᵢ) (length Δₒ) Γᵢ₂ ⟦ is₂ / 0 ⟧many≡ Γₒ₂
+
+
+         i1      =>weaken (len i) (len o)=>        m1             =>subst is1/0=>           o1
+         
+         ||                                        ||                                       ||
+         \/                                        \/                                       \/
+         
+subst i/(len i + len 1)          subst i / (len i + len 1 + len o)            subst i /(len o + len 1)
+         
+         ||                                        ||                                       ||
+         \/                                        \/                                       \/
+         
+         i2     =>weaken (len i) (len o)=>        *m2             =>subst is2/0=>           *o2
+
+

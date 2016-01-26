@@ -140,8 +140,6 @@ vval-valid-type ψ₁⋆ Γ⋆ (of-Λ {Δ = Δ} {Δ₁ = Δ₁} {Δ₂} v⋆ is�
                    weaken (length is + pos) inc Γ₁ ⟦ weaken pos inc is / 0 ⟧many≡ weaken pos inc Γ₂
 Γ-weaken-inner = {!!}
 
--- Γ-subst-inner : ∀
-
 i-weaken : ∀ Δ₁ Δ₂ Δ₃ {i a} →
              Δ₁ ++ Δ₃ ⊢ i of a instantiation →
              Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) i of a instantiation
@@ -152,7 +150,14 @@ is-weaken : ∀ Δ₁ Δ₂ Δ₃ {is Δ} →
               Δ₁ ++ Δ₃ ⊢ is of Δ instantiations →
               Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) is of Δ instantiations
 is-weaken Δ₁ Δ₂ Δ₃ [] = []
-is-weaken Δ₁ Δ₂ Δ₃ (i⋆ ∷ is⋆) = i-weaken Δ₁ Δ₂ Δ₃ i⋆ ∷ is-weaken Δ₁ Δ₂ Δ₃ is⋆
+is-weaken Δ₁ Δ₂ Δ₃ {Δ = a ∷ Δ} (i⋆ ∷ is⋆)
+  rewrite sym (List-++-assoc Δ Δ₁ Δ₃)
+  with i-weaken (Δ ++ Δ₁) Δ₂ Δ₃ i⋆
+... | i⋆'
+  rewrite List-++-assoc Δ Δ₁ (Δ₂ ++ Δ₃)
+        | is-length is⋆
+        | List-length-++ Δ {Δ₁}
+  = i⋆' ∷ is-weaken Δ₁ Δ₂ Δ₃ is⋆
 
 vval-weaken : ∀ {ψ₁} →
                 [] ⊢ ψ₁ Valid →
@@ -216,11 +221,15 @@ is-subst : ∀ Δ₁ Δ₂ →
                is₁ ⟦ i / length Δ₁ ⟧≡ is₂ ×
                Δ₁ ++ Δ₂ ⊢ is₂ of Δ instantiations
 is-subst Δ₁ Δ₂ i⋆ [] = [] , [] , []
-is-subst Δ₁ Δ₂ i⋆ (i₁⋆ ∷ is₁⋆)
-  with i-subst Δ₁ Δ₂ i⋆ i₁⋆
+is-subst Δ₁ Δ₂ {a = aᵥ} i⋆ {Δ = a ∷ Δ} (i₁⋆ ∷ is₁⋆)
+  rewrite sym (List-++-assoc Δ Δ₁ (aᵥ ∷ Δ₂))
+  with i-subst (Δ ++ Δ₁) Δ₂ i⋆ i₁⋆
 ... | i₂ , sub-i , i₂⋆
   with is-subst Δ₁ Δ₂ i⋆ is₁⋆
 ... | is₂ , sub-is , is₂⋆
+  rewrite List-length-++ Δ {Δ₁}
+        | sym (is-length is₁⋆)
+        | List-++-assoc Δ Δ₁ Δ₂
   = i₂ ∷ is₂ , sub-i ∷ sub-is , i₂⋆ ∷ is₂⋆
 
 Γ-subst-subst-many : ∀ {Γₘ₁ Γₘ₂ Γₒ₁ : RegisterAssignment}
@@ -235,9 +244,10 @@ is-subst Δ₁ Δ₂ i⋆ (i₁⋆ ∷ is₁⋆)
 Γ-subst-subst-many pos₂≤pos₁ [] sub-Γₘ []
   = _ , sub-Γₘ , []
 Γ-subst-subst-many pos₂≤pos₁ (sub-i ∷ sub-is) sub-Γₘ (sub₁-Γ ∷ subs₁-Γ)
-  with Γ-subst-subst-many ? sub-is sub-Γₘ subs₁-Γ
-... | wut
   = {!!}
+--   with Γ-subst-subst-many ? sub-is sub-Γₘ subs₁-Γ
+-- ... | wut
+--   = {!!}
 
 vval-subst : ∀ {ψ₁} →
                [] ⊢ ψ₁ Valid →
@@ -271,12 +281,16 @@ vval-subst ψ₁⋆ Δ₁ Δ₂ {i} {a} i⋆ sub-Γ {v₁ = Λ Δₒ ∙ v₁ �
   with weaken-subst {pos₁ = length Δᵢ + length Δ₁} {length Δᵢ} (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) sub-Γᵢ
 ... | sub-Γₘ
   with begin
-    length Δᵢ + length Δ₁ + length Δₒ
-  ≡⟨ {!!} ⟩
+    (length Δᵢ + length Δ₁) + length Δₒ
+  ≡⟨ +-assoc (length Δᵢ) (length Δ₁) (length Δₒ) ⟩
+    length Δᵢ + (length Δ₁ + length Δₒ)
+  ≡⟨ +-comm (length Δ₁) (length Δₒ) ∥ (λ v → length Δᵢ + v) ⟩
+    length Δᵢ + (length Δₒ + length Δ₁)
+  ⟨ is-length is₁⋆ ∥ (λ v → v + (length Δₒ + length Δ₁)) ⟩≡
     length is₁ + (length Δₒ + length Δ₁)
   ∎ where open Eq-Reasoning
 ... | eq
   rewrite eq
-  with Γ-subst-subst-many {weaken (length Δᵢ) (length Δₒ) Γᵢ₁} {weaken (length Δᵢ) (length Δₒ) Γᵢ₂} {Γₒ₁} {i} {is₁} {is₂} {length Δₒ + length Δ₁} sub-is sub-Γₘ subs₁-Γ
+  with Γ-subst-subst-many z≤n sub-is sub-Γₘ subs₁-Γ
 ... | Γₒ₂ , sub-Γₒ , subs₂-Γ
   = Λ Δₒ ∙ v₂ ⟦ is₂ ⟧ , ∀[ Δₒ ] Γₒ₂ , subst-Λ sub-v sub-is , subst-∀ sub-Γₒ , of-Λ {Δ₁ = Δᵢ} {Δₒ} {Γ₁ = Γᵢ₂} {Γ₂ = Γₒ₂} v₂⋆ is₂⋆ subs₂-Γ
