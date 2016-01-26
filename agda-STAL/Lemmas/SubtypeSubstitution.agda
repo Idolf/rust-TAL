@@ -47,17 +47,14 @@ record SubtypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
         v₁ ⟦ is / length Δ₁ ⟧many≡ v₁' ×
         v₂ ⟦ is / length Δ₁ ⟧many≡ v₂' ×
         Δ₁ ++ Δ₃ ⊢ v₁' ≤ v₂'
+
   subtype-subst-exists-many Δ₁ [] v₁≤v₂ = _ , _ , [] , [] , v₁≤v₂
   subtype-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} (i⋆ ∷ is⋆) v₁≤v₂
-    rewrite sym (List-++-assoc Δ₁ ([ a ]) (Δ₂ ++ Δ₃))
-    with subtype-subst-exists-many (Δ₁ ++ [ a ]) {Δ₂} {Δ₃} is⋆ v₁≤v₂
-  ... | v₁' , v₂' , subs-v₁ , subs-v₂ , v₁'≤v₂'
-    rewrite List-++-assoc Δ₁ ([ a ]) Δ₃
-    with subtype-subst-exists Δ₁ i⋆ v₁'≤v₂'
-  ... | v₁ₑ , v₂ₑ , sub-v₁ , sub-v₂ , v₁ₑ≤v₂ₑ
-    rewrite List-length-++ Δ₁ {[ a ]}
-          | +-comm (length Δ₁) 1
-    = v₁ₑ , v₂ₑ , sub-v₁ ∷ subs-v₁ , sub-v₂ ∷ subs-v₂ , v₁ₑ≤v₂ₑ
+    with subtype-subst-exists Δ₁ i⋆ v₁≤v₂
+  ... | v₁' , v₂' , sub-v₁ , sub-v₂ , v₁'≤v₂'
+    with subtype-subst-exists-many Δ₁ is⋆ v₁'≤v₂'
+  ... | v₁ₑ , v₂ₑ , subs-v₁ , subs-v₂ , v₁ₑ≤v₂ₑ
+    = _ , _ , sub-v₁ ∷ subs-v₁ , sub-v₂ ∷ subs-v₂ , v₁ₑ≤v₂ₑ
 
   subtype-pre-exists-many :
     ∀ Δ₁ {Δ₂ Δ₃ is} →
@@ -69,15 +66,11 @@ record SubtypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
         v₂ ⟦ is / length Δ₁ ⟧many≡ v₂' ×
         Δ₁ ++ Δ₂ ++ Δ₃ ⊢ v₁ ≤ v₂
   subtype-pre-exists-many Δ₁ [] v₁ₑ≤v₂ₑ = _ , _ , [] , [] , v₁ₑ≤v₂ₑ
-  subtype-pre-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} (i⋆ ∷ is⋆) v₁ₑ≤v₂ₑ
-    with subtype-pre-exists Δ₁ i⋆ v₁ₑ≤v₂ₑ
-  ... | v₁' , v₂' , sub-v₁ , sub-v₂ , v₁'≤v₂'
-    rewrite sym (List-++-assoc Δ₁ ([ a ]) Δ₃)
-    with subtype-pre-exists-many (Δ₁ ++ [ a ]) {Δ₂} {Δ₃} is⋆ v₁'≤v₂'
-  ... | v₁ , v₂ , subs-v₁ , subs-v₂ , v₁≤v₂
-    rewrite List-length-++ Δ₁ {[ a ]}
-          | +-comm (length Δ₁) 1
-          | List-++-assoc Δ₁ ([ a ]) (Δ₂ ++ Δ₃)
+  subtype-pre-exists-many Δ₁ (i⋆ ∷ is⋆) v₁ₑ≤v₂ₑ
+    with subtype-pre-exists-many Δ₁ is⋆ v₁ₑ≤v₂ₑ
+  ... | v₁' , v₂' , subs-v₁ , subs-v₂ , v₁'≤v₂'
+    with subtype-pre-exists Δ₁ i⋆ v₁'≤v₂'
+  ... | v₁ , v₂ , sub-v₁ , sub-v₂ , v₁≤v₂
     = v₁ , v₂ , sub-v₁ ∷ subs-v₁ , sub-v₂ ∷ subs-v₂ , v₁≤v₂
 
   subtype-subst :
@@ -103,15 +96,8 @@ record SubtypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
         v₂ ⟦ is / length Δ₁ ⟧many≡ v₂' →
         Δ₁ ++ Δ₃ ⊢ v₁' ≤ v₂'
   subtype-subst-many Δ₁ [] v₁≤v₂ [] [] = v₁≤v₂
-  subtype-subst-many Δ₁ {a ∷ Δ₂} {Δ₃} (i⋆ ∷ is⋆) v₁≤v₂ (sub-v₁ ∷ subs-v₁) (sub-v₂ ∷ subs-v₂)
-    rewrite sym (List-++-assoc Δ₁ ([ a ]) (Δ₂ ++ Δ₃))
-          | +-comm 1 (length Δ₁)
-          | sym (List-length-++ Δ₁ {[ a ]})
-    with subtype-subst-many (Δ₁ ++ [ a ]) {Δ₂} {Δ₃} is⋆ v₁≤v₂ subs-v₁ subs-v₂
-  ... | v₁'≤v₂'
-    rewrite List-++-assoc Δ₁ ([ a ]) Δ₃
-    = subtype-subst Δ₁ i⋆ v₁'≤v₂' sub-v₁ sub-v₂
-
+  subtype-subst-many Δ₁ (i⋆ ∷ is⋆) v₁≤v₂ (sub-v₁ ∷ subs-v₁) (sub-v₂ ∷ subs-v₂)
+    = subtype-subst-many Δ₁ is⋆ (subtype-subst Δ₁ i⋆ v₁≤v₂ sub-v₁ sub-v₂) subs-v₁ subs-v₂
 open SubtypeSubstitution {{...}} public
 
 private

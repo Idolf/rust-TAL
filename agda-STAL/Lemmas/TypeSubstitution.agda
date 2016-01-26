@@ -67,15 +67,11 @@ record TypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
         Δ₁ ++ Δ₃ ⊢ v' Valid
   valid-subst-exists-many Δ₁ [] v⋆ = _ , [] , v⋆
   valid-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} {i ∷ is}(i⋆ ∷ is⋆) v⋆
-    rewrite sym (List-++-assoc Δ₁ ([ a ]) (Δ₂ ++ Δ₃))
-    with valid-subst-exists-many (Δ₁ ++ [ a ]) {Δ₂} {Δ₃} is⋆ v⋆
-  ... | v' , subs-v , v'⋆
-    rewrite List-++-assoc Δ₁ ([ a ]) Δ₃
-    with valid-subst-exists Δ₁ i⋆ v'⋆
-  ... | vₑ , sub-v , vₑ⋆
-    rewrite List-length-++ Δ₁ {[ a ]}
-          | +-comm (length Δ₁) 1
-    = vₑ , sub-v ∷ subs-v , vₑ⋆
+    with valid-subst-exists Δ₁ i⋆ v⋆
+  ... | v' , sub-v , v'⋆
+    with valid-subst-exists-many Δ₁ is⋆ v'⋆
+  ... | vₑ , subs-v , vₑ⋆
+    = _ , sub-v ∷ subs-v , vₑ⋆
 
   valid-subst :
       ∀ Δ₁ {Δ₂ a i} →
@@ -106,19 +102,8 @@ record TypeSubstitution (A : Set) {S} {{S⁺ : Substitution⁺ A {{S}}}}
         Δ ⊢ v Valid →
         v ⟦ is / length Δ + ι ⟧many≡ v
   subst-outside-ctx-many {is = []} v⋆ = []
-  subst-outside-ctx-many {Δ} {is = i ∷ is} {ι} v⋆
-    with subst-outside-ctx-many {is = is} {suc ι} v⋆
-  ... | subs-v
-    with begin
-      length Δ + suc ι
-    ≡⟨ +-comm (length Δ) (suc ι) ⟩
-      suc ι + length Δ
-    ≡⟨ cong suc (+-comm ι (length Δ)) ⟩
-      suc (length Δ + ι)
-    ∎ where open Eq-Reasoning
-  ... | eq
-    rewrite eq
-    = subst-outside-ctx v⋆ ∷ subs-v
+  subst-outside-ctx-many {is = i ∷ is} v⋆
+    = subst-outside-ctx v⋆ ∷ subst-outside-ctx-many v⋆
 
 open TypeSubstitution {{...}} public
 

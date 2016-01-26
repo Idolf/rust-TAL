@@ -96,9 +96,9 @@ mutual
       Δ ⊢ [] of [] instantiations
 
     _∷_ :
-              ∀ {i is a Δ'} →
-         Δ ⊢ i of a instantiation →
-         Δ ⊢ is of Δ' instantiations →
+               ∀ {i is a Δ'} →
+        Δ' ++ Δ ⊢ i of a instantiation →
+          Δ ⊢ is of Δ' instantiations →
       -----------------------------------
       Δ ⊢ i ∷ is of a ∷ Δ' instantiations
 
