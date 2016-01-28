@@ -6,10 +6,10 @@ open import Lemmas
 open import TermSubtyping
 open import Data.List.Base
 
-lookup-helper : ∀ {n} ♯r pos inc (regs : Vec Type n) →
-                  lookup ♯r (weaken pos inc regs) ≡ weaken pos inc (lookup ♯r regs)
-lookup-helper zero pos inc (τ ∷ τs) = refl
-lookup-helper (suc ♯r) pos inc (τ ∷ τs) = lookup-helper ♯r pos inc τs
+-- lookup-helper : ∀ {n} ♯r pos inc (regs : Vec Type n) →
+--                   lookup ♯r (weaken pos inc regs) ≡ weaken pos inc (lookup ♯r regs)
+-- lookup-helper zero pos inc (τ ∷ τs) = refl
+-- lookup-helper (suc ♯r) pos inc (τ ∷ τs) = lookup-helper ♯r pos inc τs
 
 -- {-# TERMINATING #-}
 -- of-vval-weaken :

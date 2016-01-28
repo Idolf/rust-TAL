@@ -1,4 +1,4 @@
-module ForgetMe where
+module WeakenRight where
 
 open import Util
 open import Judgments
@@ -6,78 +6,85 @@ open import Lemmas
 open import TermSubtyping
 open import TermSubstitution
 
-instantiation-weaken : ∀ {Δ₁} Δ₂ {i a} →
+instantiation-weaken-right : ∀ Δ₁ Δ₂ {i a} →
                          Δ₁ ⊢ i of a instantiation →
                          Δ₁ ++ Δ₂ ⊢ i of a instantiation
-instantiation-weaken Δ₂ (of-α τ⋆) = of-α (valid-++ τ⋆)
-instantiation-weaken Δ₂ (of-ρ σ⋆) = of-ρ (valid-++ σ⋆)
+instantiation-weaken-right Δ₁ Δ₂ (of-α τ⋆) = of-α (valid-++ τ⋆)
+instantiation-weaken-right Δ₁ Δ₂ (of-ρ σ⋆) = of-ρ (valid-++ σ⋆)
 
-instantiations-weaken : ∀ {Δ₁} Δ₂ {is Δ} →
+instantiations-weaken-right : ∀ Δ₁ Δ₂ {is Δ} →
                           Δ₁ ⊢ is of Δ instantiations →
                           Δ₁ ++ Δ₂ ⊢ is of Δ instantiations
-instantiations-weaken Δ₂ [] = []
-instantiations-weaken {Δ₁} Δ₂ (_∷_ {Δ' = Δ'} i⋆ is⋆)
-  with instantiation-weaken Δ₂ i⋆
+instantiations-weaken-right Δ₁ Δ₂ [] = []
+instantiations-weaken-right Δ₁ Δ₂ (_∷_ {Δ' = Δ'} i⋆ is⋆)
+  with instantiation-weaken-right (Δ' ++ Δ₁) Δ₂ i⋆
 ... | i⋆'
   rewrite List-++-assoc Δ' Δ₁ Δ₂
-    = i⋆' ∷ instantiations-weaken Δ₂ is⋆
+    = i⋆' ∷ instantiations-weaken-right Δ₁ Δ₂ is⋆
 
--- instruction-weaken : ∀ {ψ₁ Δ₁} Δ₂ {ι Γ Γ'} →
---                        ψ₁ , Δ₁ , Γ ⊢ ι ⇒ Γ' instruction →
---                        ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ ι ⇒ Γ' instruction
--- instruction-weaken Δ₂ (of-add eq v⋆) = of-add eq (vval-weaken Δ₂ v⋆)
--- instruction-weaken Δ₂ (of-sub eq v⋆) = of-sub eq (vval-weaken Δ₂ v⋆)
--- instruction-weaken Δ₂ of-salloc = of-salloc
--- instruction-weaken Δ₂ (of-sfree drop) = of-sfree drop
--- instruction-weaken Δ₂ (of-sld l) = of-sld l
--- instruction-weaken Δ₂ (of-sst up) = of-sst up
--- instruction-weaken Δ₂ (of-ld eq l) = of-ld eq l
--- instruction-weaken Δ₂ (of-st eq lookup≤τ l up) = of-st eq (≤-++ lookup≤τ) l up
--- instruction-weaken Δ₂ (of-malloc τs⋆) = of-malloc (valid-++ τs⋆)
--- instruction-weaken Δ₂ (of-mov v⋆) = of-mov (vval-weaken Δ₂ v⋆)
--- instruction-weaken Δ₂ (of-beq eq v⋆ Γ≤Γ') = of-beq eq (vval-weaken Δ₂ v⋆) (≤-++ Γ≤Γ')
+vval-weaken-right : ∀ Δ₁ Δ₂ {ψ₁ Γ v τ} →
+                      ψ₁ , Δ₁ , Γ ⊢ v of τ vval →
+                      ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ v of τ vval
+vval-weaken-right Δ₁ Δ₂ of-reg = of-reg
+vval-weaken-right Δ₁ Δ₂ (of-globval l) = of-globval l
+vval-weaken-right Δ₁ Δ₂ of-int = of-int
+vval-weaken-right Δ₁ Δ₂ of-ns = of-ns
+vval-weaken-right Δ₁ Δ₂ (of-Λ {Δ₂ = Δ} v⋆ is⋆ subs-Γ)
+  with instantiations-weaken-right (Δ ++ Δ₁) Δ₂ is⋆
+... | is⋆'
+  rewrite List-++-assoc Δ Δ₁ Δ₂
+  = of-Λ (vval-weaken-right Δ₁ Δ₂ v⋆) is⋆' subs-Γ
 
--- instructionsequence-weaken' : ∀ {ψ₁ Δ₁} Δ₂ {Γ I} →
---                                 ψ₁ , Δ₁ , Γ ⊢ I instructionsequence →
---                                 ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ I instructionsequence
--- instructionsequence-weaken' Δ₂ (of-~> ι⋆ I⋆)
---   with instruction-weaken Δ₂ ι⋆
--- ... | ι⋆'
---   = of-~> ι⋆' (instructionsequence-weaken' Δ₂ I⋆)
--- instructionsequence-weaken' Δ₂ (of-jmp v⋆ Γ≤Γ') = of-jmp (vval-weaken Δ₂ v⋆) (≤-++ Γ≤Γ')
+instruction-weaken-right : ∀ {ψ₁} Δ₁ Δ₂ {ι Γ Γ'} →
+                       ψ₁ , Δ₁ , Γ ⊢ ι ⇒ Γ' instruction →
+                       ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ ι ⇒ Γ' instruction
+instruction-weaken-right Δ₁ Δ₂ (of-add eq v⋆) = of-add eq (vval-weaken-right Δ₁ Δ₂ v⋆)
+instruction-weaken-right Δ₁ Δ₂ (of-sub eq v⋆) = of-sub eq (vval-weaken-right Δ₁ Δ₂ v⋆)
+instruction-weaken-right Δ₁ Δ₂ of-salloc = of-salloc
+instruction-weaken-right Δ₁ Δ₂ (of-sfree drop) = of-sfree drop
+instruction-weaken-right Δ₁ Δ₂ (of-sld l) = of-sld l
+instruction-weaken-right Δ₁ Δ₂ (of-sst up) = of-sst up
+instruction-weaken-right Δ₁ Δ₂ (of-ld eq l) = of-ld eq l
+instruction-weaken-right Δ₁ Δ₂ (of-st eq lookup≤τ l up) = of-st eq (≤-++ lookup≤τ) l up
+instruction-weaken-right Δ₁ Δ₂ (of-malloc τs⋆) = of-malloc (valid-++ τs⋆)
+instruction-weaken-right Δ₁ Δ₂ (of-mov v⋆) = of-mov (vval-weaken-right Δ₁ Δ₂ v⋆)
+instruction-weaken-right Δ₁ Δ₂ (of-beq eq v⋆ Γ≤Γ') = of-beq eq (vval-weaken-right Δ₁ Δ₂ v⋆) (≤-++ Γ≤Γ')
 
--- instructionsequence-weaken : ∀ {ψ₁ Δ₁} Δ₂ {Γ I} →
---                                Δ₁ ⊢ Γ Valid →
---                                ψ₁ , Δ₁ , Γ ⊢ I instructionsequence →
---                                ψ₁ , Δ₁ ++ Δ₂ , weaken (length Δ₁) (length Δ₂) Γ ⊢ I instructionsequence
--- instructionsequence-weaken {ψ₁} {Δ₁} Δ₂ {Γ} {I} Γ⋆ I⋆
---   with instructionsequence-weaken' Δ₂ I⋆
--- ... | I⋆' = subst (λ Γ → ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ I instructionsequence) (sym (weaken-outside-ctx-0 (length Δ₂) Γ⋆)) I⋆'
+instructionsequence-weaken-right : ∀ {ψ₁} Δ₁ Δ₂ {Γ I} →
+                                     ψ₁ , Δ₁ , Γ ⊢ I instructionsequence →
+                                     ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ I instructionsequence
+instructionsequence-weaken-right Δ₁ Δ₂ (of-~> ι⋆ I⋆)
+  with instruction-weaken-right Δ₁ Δ₂ ι⋆
+... | ι⋆'
+  = of-~> ι⋆' (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
+instructionsequence-weaken-right Δ₁ Δ₂ (of-jmp v⋆ Γ≤Γ') = of-jmp (vval-weaken-right Δ₁ Δ₂ v⋆) (≤-++ Γ≤Γ')
 
-lookup-subst : ∀ {n} {regs regs' : Vec Type n} {i} ♯r →
-                 regs ⟦ i / 0 ⟧≡ regs' →
-                 lookup ♯r regs ⟦ i / 0 ⟧≡ lookup ♯r regs'
-lookup-subst zero (sub-w ∷ sub-regs) = sub-w
-lookup-subst (suc ♯r) (sub-w ∷ sub-regs) = lookup-subst ♯r sub-regs
 
-instantiations-length : ∀ {Δ₁ is Δ₂} →
-                          Δ₁ ⊢ is of Δ₂ instantiations →
-                          length is ≡ length Δ₂
-instantiations-length [] = refl
-instantiations-length (i⋆ ∷ is⋆) = cong suc (instantiations-length is⋆)
+-- STUFF!
+-- lookup-subst : ∀ {n} {regs regs' : Vec Type n} {i} ♯r →
+--                  regs ⟦ i / 0 ⟧≡ regs' →
+--                  lookup ♯r regs ⟦ i / 0 ⟧≡ lookup ♯r regs'
+-- lookup-subst zero (sub-w ∷ sub-regs) = sub-w
+-- lookup-subst (suc ♯r) (sub-w ∷ sub-regs) = lookup-subst ♯r sub-regs
+
+-- instantiations-length : ∀ {Δ₁ is Δ₂} →
+--                           Δ₁ ⊢ is of Δ₂ instantiations →
+--                           length is ≡ length Δ₂
+-- instantiations-length [] = refl
+-- instantiations-length (i⋆ ∷ is⋆) = cong suc (instantiations-length is⋆)
 
 -- instantiation-subst-exist : ∀ Δ₁ {Δ₂ i a i₁ i₂ a'} Δₑ →
 --                               Δ₂ ⊢ i of a instantiation →
 --                               Δ₁ ++ a ∷ Δ₂ ⊢ i₁ of a' instantiation →
 
 
-instantiation-subst : ∀ {Δ i a i₁ i₂ a'} Δₑ →
-                        Δ ⊢ i of a instantiation →
-                        i₁ ⟦ i / length Δₑ ⟧≡ i₂ →
-                        Δₑ ++ a ∷ Δ ⊢ i₁ of a' instantiation →
-                        Δₑ ++ Δ ⊢ i₂ of a' instantiation
-instantiation-subst Δₑ i⋆ (subst-α sub-τ) (of-α τ⋆) = of-α (valid-subst Δₑ i⋆ τ⋆ sub-τ )
-instantiation-subst Δₑ i⋆ (subst-ρ sub-σ) (of-ρ σ⋆) = of-ρ (valid-subst Δₑ i⋆ σ⋆ sub-σ)
+-- instantiation-subst : ∀ {Δ i a i₁ i₂ a'} Δₑ →
+--                         Δ ⊢ i of a instantiation →
+--                         i₁ ⟦ i / length Δₑ ⟧≡ i₂ →
+--                         Δₑ ++ a ∷ Δ ⊢ i₁ of a' instantiation →
+--                         Δₑ ++ Δ ⊢ i₂ of a' instantiation
+-- instantiation-subst Δₑ i⋆ (subst-α sub-τ) (of-α τ⋆) = of-α (valid-subst Δₑ i⋆ τ⋆ sub-τ )
+-- instantiation-subst Δₑ i⋆ (subst-ρ sub-σ) (of-ρ σ⋆) = of-ρ (valid-subst Δₑ i⋆ σ⋆ sub-σ)
 
 -- instantiations-subst : ∀ {Δ i a is is'} Δₒ {Δᵢ} →
 --                          Δ ⊢ i of a instantiation →
@@ -287,14 +294,14 @@ instantiation-subst Δₑ i⋆ (subst-ρ sub-σ) (of-ρ σ⋆) = of-ρ (valid-su
 -- --   with instructionsequence-subst-many ψ₁⋆ (valid-subst [] i⋆ Γ⋆ sub-Γ) is⋆ subs-Γ subs-I I'⋆
 -- -- ... | I''⋆ = I''⋆
 
-heap-length : ∀ {ψ₁ H ψ₂} →
-                ψ₁ ⊢ H of ψ₂ heap →
-                length H ≡ length ψ₂
-heap-length (of-heap τs⋆) = AllZip-length τs⋆
+-- heap-length : ∀ {ψ₁ H ψ₂} →
+--                 ψ₁ ⊢ H of ψ₂ heap →
+--                 length H ≡ length ψ₂
+-- heap-length (of-heap τs⋆) = AllZip-length τs⋆
 
-≤∀⇒≡∀ : ∀ {τ Δ Δ' Γ'} →
-          Δ ⊢ τ ≤ ∀[ Δ' ] Γ' →
-          ∃ λ Γ →
-            τ ≡ ∀[ Δ' ] Γ ×
-            Δ' ++ Δ ⊢ Γ' ≤ Γ
-≤∀⇒≡∀ (∀-≤ Γ'≤Γ) = _ , refl , Γ'≤Γ
+-- ≤∀⇒≡∀ : ∀ {τ Δ Δ' Γ'} →
+--           Δ ⊢ τ ≤ ∀[ Δ' ] Γ' →
+--           ∃ λ Γ →
+--             τ ≡ ∀[ Δ' ] Γ ×
+--             Δ' ++ Δ ⊢ Γ' ≤ Γ
+-- ≤∀⇒≡∀ (∀-≤ Γ'≤Γ) = _ , refl , Γ'≤Γ
