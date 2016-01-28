@@ -75,28 +75,138 @@ private
   weaken-← pos inc here = here
   weaken-← pos inc (there l) = there (weaken-← pos inc l)
 
-  subst-lookup-helper : ∀ {n} ♯r {pos i} {τs₁ τs₂ : Vec Type n} →
-                          τs₁ ⟦ i / pos ⟧≡ τs₂ →
-                          lookup ♯r τs₁ ⟦ i / pos ⟧≡ lookup ♯r τs₂
-  subst-lookup-helper zero (sub-τ ∷ sub-τs) = sub-τ
-  subst-lookup-helper (suc ♯r) (sub-τ ∷ sub-τs) = subst-lookup-helper ♯r sub-τs
+  subst-lookup : ∀ {n} ♯r {pos i} {τs₁ τs₂ : Vec Type n} →
+                       τs₁ ⟦ i / pos ⟧≡ τs₂ →
+                       lookup ♯r τs₁ ⟦ i / pos ⟧≡ lookup ♯r τs₂
+  subst-lookup zero (sub-τ ∷ sub-τs) = sub-τ
+  subst-lookup (suc ♯r) (sub-τ ∷ sub-τs) = subst-lookup ♯r sub-τs
 
-  subst-register-helper : ∀ ♯r {pos i Γ₁ Γ₂} →
-                            Γ₁ ⟦ i / pos ⟧≡ Γ₂ →
-                            lookup-regs ♯r Γ₁ ⟦ i / pos ⟧≡ lookup-regs ♯r Γ₂
-  subst-register-helper ♯r (subst-registerₐ sub-sp sub-regs) = subst-lookup-helper ♯r sub-regs
+  subst-lookup-regs : ∀ ♯r {pos i Γ₁ Γ₂} →
+                        Γ₁ ⟦ i / pos ⟧≡ Γ₂ →
+                        lookup-regs ♯r Γ₁ ⟦ i / pos ⟧≡ lookup-regs ♯r Γ₂
+  subst-lookup-regs ♯r (subst-registerₐ sub-sp sub-regs) = subst-lookup ♯r sub-regs
 
-  subst-lookup-helper-many : ∀ {n} ♯r {pos is} {τs₁ τs₂ : Vec Type n} →
-                               τs₁ ⟦ is / pos ⟧many≡ τs₂ →
-                               lookup ♯r τs₁ ⟦ is / pos ⟧many≡ lookup ♯r τs₂
-  subst-lookup-helper-many ♯r [] = []
-  subst-lookup-helper-many ♯r (sub-τs ∷ subs-τs) = subst-lookup-helper ♯r sub-τs ∷ subst-lookup-helper-many ♯r subs-τs
+  subst-lookup-regs-helper : ∀ {♯r pos i Γ₁ Γ₂ τ₁ τ₂} →
+                        Γ₁ ⟦ i / pos ⟧≡ Γ₂ →
+                        τ₁ ⟦ i / pos ⟧≡ τ₂ →
+                        lookup-regs ♯r Γ₁ ≡ τ₁ →
+                        lookup-regs ♯r Γ₂ ≡ τ₂
+  subst-lookup-regs-helper {♯r} sub-Γ sub-τ refl
+    = subst-unique (subst-lookup-regs ♯r sub-Γ) sub-τ
 
-  subst-register-helper-many : ∀ ♯r {pos is Γ₁ Γ₂} →
-                                 Γ₁ ⟦ is / pos ⟧many≡ Γ₂ →
-                                 lookup-regs ♯r Γ₁ ⟦ is / pos ⟧many≡ lookup-regs ♯r Γ₂
-  subst-register-helper-many ♯r [] = []
-  subst-register-helper-many ♯r (subst-registerₐ sub-sp sub-regs ∷ subs-Γ) = subst-lookup-helper ♯r sub-regs ∷ subst-register-helper-many ♯r subs-Γ
+  subst-lookup-many : ∀ {n} ♯r {pos is} {τs₁ τs₂ : Vec Type n} →
+                            τs₁ ⟦ is / pos ⟧many≡ τs₂ →
+                            lookup ♯r τs₁ ⟦ is / pos ⟧many≡ lookup ♯r τs₂
+  subst-lookup-many ♯r [] = []
+  subst-lookup-many ♯r (sub-τs ∷ subs-τs) = subst-lookup ♯r sub-τs ∷ subst-lookup-many ♯r subs-τs
+
+  subst-lookup-regs-many : ∀ ♯r {pos is Γ₁ Γ₂} →
+                             Γ₁ ⟦ is / pos ⟧many≡ Γ₂ →
+                             lookup-regs ♯r Γ₁ ⟦ is / pos ⟧many≡ lookup-regs ♯r Γ₂
+  subst-lookup-regs-many ♯r [] = []
+  subst-lookup-regs-many ♯r (subst-registerₐ sub-sp sub-regs ∷ subs-Γ) = subst-lookup ♯r sub-regs ∷ subst-lookup-regs-many ♯r subs-Γ
+
+  subst-update : ∀ {n} ♯r {pos i τ₁ τ₂} {τs₁ τs₂ : Vec Type n} →
+                       τ₁ ⟦ i / pos ⟧≡ τ₂ →
+                       τs₁ ⟦ i / pos ⟧≡ τs₂ →
+                       update ♯r τ₁ τs₁ ⟦ i / pos ⟧≡ update ♯r τ₂ τs₂
+  subst-update zero sub-τ (sub-τ' ∷ sub-τs) = sub-τ ∷ sub-τs
+  subst-update (suc ♯r) sub-τ (sub-τ' ∷ sub-τs) = sub-τ' ∷ subst-update ♯r sub-τ sub-τs
+
+  subst-update-regs : ∀ ♯r {pos i τ₁ τ₂ Γ₁ Γ₂} →
+                        τ₁ ⟦ i / pos ⟧≡ τ₂ →
+                        Γ₁ ⟦ i / pos ⟧≡ Γ₂ →
+                        update-regs ♯r τ₁ Γ₁ ⟦ i / pos ⟧≡ update-regs ♯r τ₂ Γ₂
+  subst-update-regs ♯r sub-τ (subst-registerₐ sub-sp sub-regs) = subst-registerₐ sub-sp (subst-update ♯r sub-τ sub-regs)
+
+  subst-map-uninit : ∀ {i pos} {τs τs' : List Type} →
+                       τs ⟦ i / pos ⟧≡ τs' →
+                       map (λ τ → τ , uninit) τs ⟦ i / pos ⟧≡ map (λ τ → τ , uninit) τs'
+  subst-map-uninit [] = []
+  subst-map-uninit (sub-τ ∷ sub-τs) = subst-τ⁻ sub-τ ∷ subst-map-uninit sub-τs
+
+  subst-stack-append-ns : ∀ n {pos i σ σ'} →
+                            σ ⟦ i / pos ⟧≡ σ' →
+                            stack-append (replicate n ns) σ ⟦ i / pos ⟧≡ stack-append (replicate n ns) σ'
+  subst-stack-append-ns zero sub-σ = sub-σ
+  subst-stack-append-ns (suc n) sub-σ = subst-ns ∷ subst-stack-append-ns n sub-σ
+
+  subst-stack-drop : ∀ {n pos i σ₁ σ₁' σ₂} →
+                       stack-drop n σ₁ σ₁' →
+                       σ₁ ⟦ i / pos ⟧≡ σ₂ →
+                       ∃ λ σ₂' →
+                         stack-drop n σ₂ σ₂' ×
+                         σ₁' ⟦ i / pos ⟧≡ σ₂'
+  subst-stack-drop here sub-σ = _ , here , sub-σ
+  subst-stack-drop (there drop) (sub-τ ∷ sub-σ)
+    with subst-stack-drop drop sub-σ
+  ... | _ , drop' , sub-σ'
+    = _ , there drop' , sub-σ'
+
+  subst-stack-lookup : ∀ {n i pos σ σ' τ} →
+                          stack-lookup n σ τ →
+                          σ ⟦ i / pos ⟧≡ σ' →
+                          ∃ λ τ' →
+                            stack-lookup n σ' τ' ×
+                            τ ⟦ i / pos ⟧≡ τ'
+  subst-stack-lookup here (sub-τ ∷ sub-σ) = _ , here , sub-τ
+  subst-stack-lookup (there l) (sub-τ ∷ sub-σ)
+    with subst-stack-lookup l sub-σ
+  ... | τ' , l' , sub-τ'
+    = τ' , there l' , sub-τ'
+
+  subst-reg-stack-lookup : ∀ {n i pos Γ Γ' τ} →
+                             register-stack-lookup n Γ τ →
+                             Γ ⟦ i / pos ⟧≡ Γ' →
+                             ∃ λ τ' →
+                               register-stack-lookup n Γ' τ' ×
+                               τ ⟦ i / pos ⟧≡ τ'
+  subst-reg-stack-lookup l (subst-registerₐ sub-sp sub-regs) = subst-stack-lookup l sub-sp
+
+  subst-stack-update : ∀ {n i pos σ₁ σ₁' σ₂ τ₁ τ₂} →
+                          stack-update n τ₁ σ₁ σ₁' →
+                          τ₁ ⟦ i / pos ⟧≡ τ₂ →
+                          σ₁ ⟦ i / pos ⟧≡ σ₂ →
+                          ∃ λ σ₂' →
+                            stack-update n τ₂ σ₂ σ₂' ×
+                            σ₁' ⟦ i / pos ⟧≡ σ₂'
+  subst-stack-update here sub-τ (sub-τ' ∷ sub-σ) = _ , here , sub-τ ∷ sub-σ
+  subst-stack-update (there up) sub-τ (sub-τ' ∷ sub-σ)
+    with subst-stack-update up sub-τ sub-σ
+  ... | σ₂' , up' , sub-σ'
+    = _ , there up' , sub-τ' ∷ sub-σ'
+
+  subst-↓ : ∀ {n i pos τ⁻} {τs⁻ τs⁻' : List InitType} →
+              τs⁻ ↓ n ⇒ τ⁻ →
+              τs⁻ ⟦ i / pos ⟧≡ τs⁻' →
+              ∃ λ τ⁻' →
+                τs⁻' ↓ n ⇒ τ⁻' ×
+                τ⁻ ⟦ i / pos ⟧≡ τ⁻'
+  subst-↓ here (sub-τ ∷ sub-τs) = _ , here , sub-τ
+  subst-↓ (there l) (sub-τ ∷ sub-τs)
+    with subst-↓ l sub-τs
+  ... | τ⁻' , l' , sub-τ'
+    = _ , there l' , sub-τ'
+
+  subst-← : ∀ {n i pos τ⁻₁ τ⁻₂} {τs⁻₁ τs⁻₁' τs⁻₂ : List InitType} →
+              τs⁻₁ ⟦ n ⟧← τ⁻₁ ⇒ τs⁻₁' →
+              τ⁻₁ ⟦ i / pos ⟧≡ τ⁻₂ →
+              τs⁻₁ ⟦ i / pos ⟧≡ τs⁻₂ →
+              ∃ λ τs⁻₂' →
+                τs⁻₂ ⟦ n ⟧← τ⁻₂ ⇒ τs⁻₂' ×
+                τs⁻₁' ⟦ i / pos ⟧≡ τs⁻₂'
+  subst-← here sub-τ⁻ (sub-τ⁻' ∷ sub-τs⁻) = _ , here , sub-τ⁻ ∷ sub-τs⁻
+  subst-← (there up) sub-τ⁻ (sub-τ⁻' ∷ sub-τs⁻)
+    with subst-← up sub-τ⁻ sub-τs⁻
+  ... | τ⁻' , up' , sub-τs⁻'
+    = _ , there up' , sub-τ⁻' ∷ sub-τs⁻'
+
+  subst-tuple-helper : ∀ {i pos τs⁻} {τ : Type} →
+                         tuple τs⁻ ⟦ i / pos ⟧≡ τ →
+                         ∃ λ τs⁻' →
+                           τ ≡ tuple τs⁻' ×
+                           τs⁻ ⟦ i / pos ⟧≡ τs⁻'
+  subst-tuple-helper (subst-tuple sub-τs⁻) = _ , refl , sub-τs⁻
 
   is-length : ∀ {Δ₁ Δ₂ is} →
                 Δ₁ ⊢ is of Δ₂ instantiations →
@@ -349,7 +459,7 @@ vval-subst : ∀ {ψ₁} Δ₁ Δ₂ {i a Γ₁ Γ₂ v₁ τ₁} →
                  τ₁ ⟦ i / length Δ₁ ⟧≡ τ₂ ×
                  ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ v₂ of τ₂ vval
 vval-subst Δ₁ Δ₂ {v₁ = reg ♯r}  ψ₁⋆ i⋆ sub-Γ of-reg
-  = _ , _ , subst-reg , subst-register-helper ♯r sub-Γ , of-reg
+  = _ , _ , subst-reg , subst-lookup-regs ♯r sub-Γ , of-reg
 vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ (of-globval l)
   = _ , _ , subst-globval , subst-outside-ctx (All-lookup l ψ₁⋆)  , of-globval l
 vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-int
@@ -380,3 +490,92 @@ vval-subst Δ₁ Δ₂ {a = a} {v₁ = Λ Δₒ ∙ v₁ ⟦ is₁ ⟧}  ψ₁�
   with subst-subst-many sub-is sub-Γₘ subs₁-Γ
 ... | Γₒ₂ , sub-Γₒ , subs₂-Γ
   = Λ Δₒ ∙ v₂ ⟦ is₂ ⟧ , ∀[ Δₒ ] Γₒ₂ , subst-Λ sub-v sub-is , subst-∀ sub-Γₒ , of-Λ v₂⋆ is₂⋆ subs₂-Γ
+
+instruction-subst : ∀ {ψ₁} Δ₁ Δ₂ {i a Γ₁ Γ₂} →
+                      [] ⊢ ψ₁ Valid →
+                      Δ₂ ⊢ i of a instantiation →
+                      Γ₁ ⟦ i / length Δ₁ ⟧≡ Γ₂ →
+                      ∀ {ι₁ Γᵣ₁} →
+                      ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ ι₁ ⇒ Γᵣ₁ instruction →
+                      ∃₂ λ ι₂ Γᵣ₂ →
+                           ι₁ ⟦ i / length Δ₁ ⟧≡ ι₂ ×
+                           Γᵣ₁ ⟦ i / length Δ₁ ⟧≡ Γᵣ₂ ×
+                           ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ ι₂ ⇒ Γᵣ₂ instruction
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {add ♯rd ♯rs v} (of-add eq v⋆)
+  with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v⋆
+... | v' , int , sub-v , subst-int , v'⋆
+  = _ , _ , subst-add sub-v , subst-update-regs ♯rd subst-int sub-Γ , of-add (subst-lookup-regs-helper sub-Γ subst-int eq) v'⋆
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {sub ♯rd ♯rs v} (of-sub eq v⋆)
+  with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v⋆
+... | v' , int , sub-v , subst-int , v'⋆
+  = _ , _ , subst-sub sub-v , subst-update-regs ♯rd subst-int sub-Γ , of-sub (subst-lookup-regs-helper sub-Γ subst-int eq) v'⋆
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ (subst-registerₐ sub-sp sub-regs) {salloc n} of-salloc
+  = _ , _ , subst-salloc , subst-registerₐ (subst-stack-append-ns n sub-sp) sub-regs , of-salloc
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ (subst-registerₐ sub-sp sub-regs) {sfree n} (of-sfree drop)
+  with subst-stack-drop drop sub-sp
+... | _ , drop' , sub-sp'
+  = _ , _ , subst-sfree , subst-registerₐ sub-sp' sub-regs , of-sfree drop'
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {sld ♯rd i} (of-sld l)
+  with subst-reg-stack-lookup l sub-Γ
+... | τ' , l' , sub-τ
+  = _ , _ , subst-sld , subst-update-regs ♯rd sub-τ sub-Γ  , of-sld l'
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ (subst-registerₐ sub-sp sub-regs) {sst i ♯rs} (of-sst up)
+  with subst-stack-update up (subst-lookup ♯rs sub-regs) sub-sp
+... | sp' , up' , sub-sp'
+  = _ , _ , subst-sst , subst-registerₐ sub-sp' sub-regs , of-sst up'
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {ld ♯rd ♯rs i} (of-ld eq l)
+  with subst-lookup-regs ♯rs sub-Γ
+... | sub-tuple
+  rewrite eq
+  with subst-tuple-helper sub-tuple
+... | τs⁻' , eq' , sub-τs⁻
+  with subst-↓ l sub-τs⁻
+... | (τ' , init) , l' , subst-τ⁻ sub-τ
+  = _ , _ , subst-ld , subst-update-regs ♯rd sub-τ sub-Γ , of-ld eq' l'
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {st ♯rd i ♯rs} (of-st eq lookup≤τ l up)
+  with subst-lookup-regs ♯rd sub-Γ
+... | sub-tuple
+  rewrite eq
+  with subst-tuple-helper sub-tuple
+... | τs⁻₂ , eq' , sub-τs⁻
+  with subtype-subst-exists Δ₁ i⋆ lookup≤τ
+... | lookup' , τ' , sub-lookup , sub-τ , lookup'≤τ'
+  with subst-← up (subst-τ⁻ sub-τ) sub-τs⁻
+... | τs⁻₂' , up' , sub-τs⁻'
+  with subst-↓ l sub-τs⁻
+... | (τ'' , φ) , l' , (subst-τ⁻ sub-τ')
+  rewrite subst-unique sub-lookup (subst-lookup-regs ♯rs sub-Γ)
+        | subst-unique sub-τ sub-τ'
+  = _ , _ , subst-st , subst-update-regs ♯rd (subst-tuple sub-τs⁻') sub-Γ  , of-st eq' lookup'≤τ' l' up'
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {malloc ♯rd τs} (of-malloc τs⋆)
+  with valid-subst-exists Δ₁ i⋆ τs⋆
+... | τs' , sub-τs , τs'⋆
+  = _ , _ , subst-malloc sub-τs , subst-update-regs ♯rd (subst-tuple (subst-map-uninit sub-τs)) sub-Γ , of-malloc τs'⋆
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {mov ♯rd v} (of-mov v⋆)
+  with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v⋆
+... | v' , τ' , sub-v , sub-τ , v'⋆
+  = _ , _ , subst-mov sub-v , subst-update-regs ♯rd sub-τ sub-Γ , of-mov v'⋆
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ (of-beq eq v⋆ Γ≤Γ')
+  with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v⋆
+... | v' , ∀[ [] ] Γ' , sub-v , subst-∀ sub-Γᵢ , v'⋆
+  = _ , _ , subst-beq sub-v , sub-Γ , of-beq (subst-lookup-regs-helper sub-Γ subst-int eq) v'⋆ (subtype-subst Δ₁ i⋆ Γ≤Γ' sub-Γ sub-Γᵢ)
+
+instructionsequence-subst : ∀ {ψ₁} Δ₁ Δ₂ {i a Γ₁ Γ₂} →
+                              [] ⊢ ψ₁ Valid →
+                              Δ₂ ⊢ i of a instantiation →
+                              Γ₁ ⟦ i / length Δ₁ ⟧≡ Γ₂ →
+                              ∀ {I₁} →
+                              ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ I₁ instructionsequence →
+                              ∃ λ I₂ →
+                                 I₁ ⟦ i / length Δ₁ ⟧≡ I₂ ×
+                                 ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ I₂ instructionsequence
+instructionsequence-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ (of-~> ι₁⋆ I₁⋆)
+  with instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ ι₁⋆
+... | ι₂ , Γₘ , sub-ι , sub-Γₘ , ι₂⋆
+  with instructionsequence-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γₘ I₁⋆
+... | I₂ , sub-I , I₂⋆
+  = _ , subst-~> sub-ι sub-I , of-~> ι₂⋆ I₂⋆
+instructionsequence-subst Δ₁ Δ₂ {Γ₁ = Γ₁} {Γ₂} ψ₁⋆ i⋆ sub-Γ (of-jmp .{Γ = Γ₁} {Γ₁'} v₁⋆ Γ₁≤Γ₁')
+  with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v₁⋆
+... | v₂ , ∀[ [] ] Γ₂' , sub-v , subst-∀ sub-Γ' , v₂⋆
+  = _ , subst-jmp sub-v , of-jmp v₂⋆ (subtype-subst Δ₁ i⋆ Γ₁≤Γ₁' sub-Γ sub-Γ')
