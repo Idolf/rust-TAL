@@ -579,3 +579,20 @@ instructionsequence-subst Δ₁ Δ₂ {Γ₁ = Γ₁} {Γ₂} ψ₁⋆ i⋆ sub-
   with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v₁⋆
 ... | v₂ , ∀[ [] ] Γ₂' , sub-v , subst-∀ sub-Γ' , v₂⋆
   = _ , subst-jmp sub-v , of-jmp v₂⋆ (subtype-subst Δ₁ i⋆ Γ₁≤Γ₁' sub-Γ sub-Γ')
+
+instructionsequence-subst-many : ∀ {ψ₁} Δ₁ Δ₂ Δ₃ {is Γ₁ Γ₂} →
+                                   [] ⊢ ψ₁ Valid →
+                                   Δ₃ ⊢ is of Δ₂ instantiations →
+                                   Γ₁ ⟦ is / length Δ₁ ⟧many≡ Γ₂ →
+                                   ∀ {I₁} →
+                                   ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , Γ₁ ⊢ I₁ instructionsequence →
+                                   ∃ λ I₂ →
+                                       I₁ ⟦ is / length Δ₁ ⟧many≡ I₂ ×
+                                       ψ₁ , Δ₁ ++ Δ₃ , Γ₂ ⊢ I₂ instructionsequence
+instructionsequence-subst-many Δ₁ [] Δ₃ ψ₁⋆ [] [] I₁⋆ = _ , [] , I₁⋆
+instructionsequence-subst-many Δ₁ (a ∷ Δ₂) Δ₃ ψ₁⋆ (i⋆ ∷ is⋆) (sub-Γ ∷ subs-Γ) I₁⋆
+  with instructionsequence-subst Δ₁ (Δ₂ ++ Δ₃) ψ₁⋆ i⋆ sub-Γ I₁⋆
+... | Iₘ , sub-I , Iₘ⋆
+  with instructionsequence-subst-many Δ₁ Δ₂ Δ₃ ψ₁⋆ is⋆ subs-Γ Iₘ⋆
+... | I₂ , subs-I , I₂⋆
+  = I₂ , sub-I ∷ subs-I , I₂⋆
