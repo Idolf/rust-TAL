@@ -22,7 +22,7 @@ eval-reduction ψ₁⋆ regs⋆ {v = reg ♯r} of-reg = allzipᵥ-lookup ♯r re
 eval-reduction ψ₁⋆ regs⋆ (of-globval l) = of-globval l (≤-refl (All-lookup l ψ₁⋆))
 eval-reduction ψ₁⋆ regs⋆ of-int = of-int
 eval-reduction ψ₁⋆ regs⋆ of-ns = of-ns
-eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} v⋆ is⋆ subs-Γ)
+eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} {Γ₁ = Γ₁} v⋆ is⋆ subs-Γ)
   with eval-reduction ψ₁⋆ regs⋆ v⋆
 ... | w⋆
   with wval-valid-type w⋆
@@ -31,8 +31,8 @@ eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] �
 ... | Γ₁'⋆
   rewrite List-++-right-identity Δ₁
         | List-++-right-identity Δ₂
-  = of-Λ w⋆ is⋆ subs-Γ (≤-refl (valid-subst-many [] is⋆ Γ₁'⋆ subs-Γ))
-
+        | weaken-outside-ctx-0 (length Δ₂) Γ₁⋆
+        = of-Λ w⋆ is⋆ subs-Γ (≤-refl (valid-subst-many [] is⋆ Γ₁'⋆ subs-Γ))
 
 instantiation-reduction' : ∀ {G ψ₁ ψ₂ w I Δ Γ} →
                              ⊢ G of ψ₁ globals →
@@ -49,9 +49,10 @@ instantiation-reduction' (of-globals gs⋆) (of-Λ {Δ₁ = Δ₁} {Δ₂ = Δ�
 ... | I⋆ , Γ⋆
   with instructionsequence-weaken Δ₂ Γ⋆ I⋆
 ... | I'⋆
-  rewrite weaken-outside-ctx-0 (length Δ₂) Γ⋆
-  with instructionsequence-subst-many (globals-valid-type (of-globals gs⋆)) (valid-++ Γ⋆) is⋆ subs-Γ subs-I I'⋆
-... | q = instructionsequence-subtype (globals-valid-type (of-globals gs⋆)) Γ₃≤Γ₂ q , proj₁ (≤-valid Γ₃≤Γ₂)
+  = {!!}
+--   rewrite weaken-outside-ctx-0 (length Δ₂) Γ⋆
+--   with instructionsequence-subst-many (globals-valid-type (of-globals gs⋆)) (valid-++ Γ⋆) is⋆ subs-Γ subs-I I'⋆
+-- ... | q = instructionsequence-subtype (globals-valid-type (of-globals gs⋆)) Γ₃≤Γ₂ q , proj₁ (≤-valid Γ₃≤Γ₂)
 
 
 instantiation-reduction : ∀ {G ψ₁ ψ₂ w I Δ Γ} →
@@ -245,7 +246,8 @@ step-reduction' G⋆ (of-heap hs⋆) sp⋆ regs⋆ {st ♯rd i ♯rs} (of-st eq�
 ... | wut
   with heap-helper (of-heap hs⋆) l₃ (tuple-≤ (update-helper τ⋆ (proj₁ (≤-valid τs≤τs'')) l₁' up₁')) (of-tuple wut) up₃
 ... | ψ₂' , up₄ , ψ₂'≤ψ₂ , H'⋆
-  = of-programstate H'⋆ (of-register (stack-helper ψ₂'≤ψ₂ sp⋆) (regs-helper₂ ♯rd (proj₁ (≤-valid ψ₂'≤ψ₂)) eq₂ (←-to-↓ up₄) (regs-helper₁ ψ₂'≤ψ₂ regs⋆))) (instructionsequence-subtype (globals-valid-type G⋆) (Γ-≤ (≤-refl (stack-valid-type sp⋆)) (allzipᵥ-update ♯rd (tuple-≤ τswut) (≤-refl (regs-valid-type regs⋆)))) I⋆)
+  = {!!}
+  -- = of-programstate H'⋆ (of-register (stack-helper ψ₂'≤ψ₂ sp⋆) (regs-helper₂ ♯rd (proj₁ (≤-valid ψ₂'≤ψ₂)) eq₂ (←-to-↓ up₄) (regs-helper₁ ψ₂'≤ψ₂ regs⋆))) (instructionsequence-subtype (globals-valid-type G⋆) (Γ-≤ (≤-refl (stack-valid-type sp⋆)) (allzipᵥ-update ♯rd (tuple-≤ τswut) (≤-refl (regs-valid-type regs⋆)))) I⋆)
 step-reduction' {ψ₂ = ψ₂} G⋆ H⋆ sp⋆ regs⋆ {malloc ♯rd τs} (of-malloc τs⋆) I⋆ step-malloc
   with (of-heapval (↓-length ψ₂ (tuple (map (λ τ → τ , uninit) τs))) (≤-refl (valid-tuple (help τs⋆))))
   where help : ∀ {τs : List Type} →

@@ -21,60 +21,6 @@ open import Lemmas
 ≤τ⁻⇒≡τ⁻ (τ⁻-≤ τ⋆ φ₁≤φ₂) = refl
 
 
-vval-valid-type : ∀ {ψ₁ Δ Γ τ} →
-                    [] ⊢ ψ₁ Valid →
-                    Δ ⊢ Γ Valid →
-                    {v : SmallValue} →
-                    ψ₁ , Δ , Γ ⊢ v of τ vval →
-                    Δ ⊢ τ Valid
-vval-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) {reg ♯r} of-reg = Allᵥ-lookup ♯r regs⋆
-vval-valid-type ψ₁⋆ Γ⋆ (of-globval l) = valid-++ (All-lookup l ψ₁⋆)
-vval-valid-type ψ₁⋆ Γ⋆ of-int = valid-int
-vval-valid-type ψ₁⋆ Γ⋆ of-ns = valid-ns
-vval-valid-type ψ₁⋆ Γ⋆ (of-Λ {Δ = Δ} {Δ₁ = Δ₁} {Δ₂} v⋆ is⋆ subs-Γ)
-  with vval-valid-type ψ₁⋆ Γ⋆ v⋆
-... | valid-∀ Γ⋆'
-  with valid-weaken Δ₁ Δ₂ Δ Γ⋆'
-... | Γ⋆''
-  rewrite List-++-right-identity Δ
-  with valid-subst-many [] {Δ₁} {Δ₂ ++ Δ} is⋆ Γ⋆'' subs-Γ
-... | Γ⋆'''
-  = valid-∀ Γ⋆'''
-
-instruction-valid-type : ∀ {ψ₁ Δ Γ₁ Γ₂ ι} →
-                           [] ⊢ ψ₁ Valid →
-                           Δ ⊢ Γ₁ Valid →
-                           ψ₁ , Δ , Γ₁ ⊢ ι ⇒ Γ₂ instruction →
-                           Δ ⊢ Γ₂ Valid
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-add {♯rd = ♯rd} eq v⋆) = valid-registerₐ sp⋆ (Allᵥ-update ♯rd valid-int regs⋆)
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-sub {♯rd = ♯rd} eq v⋆) = valid-registerₐ sp⋆ (Allᵥ-update ♯rd valid-int regs⋆)
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-salloc {n = n}) = valid-registerₐ (stack-append-valid (replicate-valid n) sp⋆) regs⋆
-  where replicate-valid : ∀ {Δ} n → Δ ⊢ replicate n ns Valid
-        replicate-valid zero = []
-        replicate-valid (suc n) = valid-ns ∷ replicate-valid n
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-sfree drop) = valid-registerₐ (stack-drop-valid sp⋆ drop) regs⋆
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-sld {♯rd = ♯rd} l) = valid-registerₐ sp⋆ (Allᵥ-update ♯rd (stack-lookup-valid sp⋆ l) regs⋆)
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-sst {♯rs = ♯rs} up) = valid-registerₐ (stack-update-valid sp⋆ (Allᵥ-lookup ♯rs regs⋆) up) regs⋆
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-ld {♯rd = ♯rd} {♯rs = ♯rs} eq l)
-  with Allᵥ-lookup ♯rs regs⋆
-... | lookup⋆ rewrite eq with lookup⋆
-... | valid-tuple τs⁻⋆ with All-lookup l τs⁻⋆
-... | valid-τ⁻ τ⋆ = valid-registerₐ sp⋆ (Allᵥ-update ♯rd τ⋆ regs⋆ )
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-st {♯rd = ♯rd} eq lookup≤τ l up)
-  with Allᵥ-lookup ♯rd regs⋆
-... | lookup⋆
-  rewrite eq
-  with lookup⋆
-... | valid-tuple τs⁻⋆
-  = valid-registerₐ sp⋆ (Allᵥ-update ♯rd (valid-tuple (All-update (valid-τ⁻ (proj₂ (≤-valid lookup≤τ))) up τs⁻⋆)) regs⋆)
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-malloc {♯rd = ♯rd} τs⋆) = valid-registerₐ sp⋆ (Allᵥ-update ♯rd (valid-tuple (help τs⋆)) regs⋆)
-  where help : ∀ {Δ} {τs : List Type} →
-                 All (λ τ → Δ ⊢ τ Valid) τs →
-                 All (λ τ⁻ → Δ ⊢ τ⁻ Valid) (map (λ τ → τ , uninit) τs)
-        help [] = []
-        help (τ⋆ ∷ τs⋆) = valid-τ⁻ τ⋆ ∷ help τs⋆
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-mov {♯rd = ♯rd} v⋆) = valid-registerₐ sp⋆ (Allᵥ-update ♯rd (vval-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) v⋆) regs⋆)
-instruction-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) (of-beq eq v⋆ Γ≤Γ') = valid-registerₐ sp⋆ regs⋆
 
 wval⁰-subtype : ∀ {ψ₁ ψ₂ w τ⁻₁ τ⁻₂} →
                   ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰ →

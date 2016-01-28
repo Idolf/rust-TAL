@@ -6,18 +6,74 @@ open import Lemmas.Equality
 open import Lemmas.Types
 open import Lemmas.Substitution
 open import Lemmas.TypeSubstitution
+open import Lemmas.SubtypeSubstitution
 open import Lemmas.Subtypes
 import Data.Nat.Properties as NP
 
 private
-  weaken-lookup-helper : ∀ {n} ♯r pos inc (τs : Vec Type n) →
-                    weaken pos inc (lookup ♯r τs) ≡ lookup ♯r (weaken pos inc τs)
-  weaken-lookup-helper zero pos inc (τ ∷ τs) = refl
-  weaken-lookup-helper (suc ♯r) pos inc (τ ∷ τs) = weaken-lookup-helper ♯r pos inc τs
+  weaken-lookup : ∀ {n} ♯r pos inc (τs : Vec Type n) →
+                        weaken pos inc (lookup ♯r τs) ≡ lookup ♯r (weaken pos inc τs)
+  weaken-lookup zero pos inc (τ ∷ τs) = refl
+  weaken-lookup (suc ♯r) pos inc (τ ∷ τs) = weaken-lookup ♯r pos inc τs
 
-  weaken-register-helper : ∀ ♯r pos inc Γ →
-                             weaken pos inc (lookup-regs ♯r Γ) ≡ lookup-regs ♯r (weaken pos inc Γ)
-  weaken-register-helper ♯r pos inc (registerₐ sp regs) = weaken-lookup-helper ♯r pos inc regs
+  weaken-lookup-regs : ∀ ♯r pos inc Γ →
+                         weaken pos inc (lookup-regs ♯r Γ) ≡ lookup-regs ♯r (weaken pos inc Γ)
+  weaken-lookup-regs ♯r pos inc (registerₐ sp regs) = weaken-lookup ♯r pos inc regs
+
+  weaken-update : ∀ {n} ♯r pos inc τ (τs : Vec Type n) →
+                    weaken pos inc (update ♯r τ τs) ≡ update ♯r (weaken pos inc τ) (weaken pos inc τs)
+  weaken-update zero pos inc τ (τ' ∷ τs) = refl
+  weaken-update (suc ♯r) pos inc τ (τ' ∷ τs) = cong₂ _∷_ refl (weaken-update ♯r pos inc τ τs)
+
+  weaken-update-regs : ∀ ♯r pos inc τ Γ →
+                         weaken pos inc (update-regs ♯r τ Γ) ≡ update-regs ♯r (weaken pos inc τ) (weaken pos inc Γ)
+  weaken-update-regs ♯r pos inc τ (registerₐ sp regs) = cong₂ registerₐ refl (weaken-update ♯r pos inc τ regs)
+
+  weaken-stack-append-ns : ∀ n pos inc σ →
+                             weaken pos inc (stack-append (replicate n ns) σ) ≡ stack-append (replicate n ns) (weaken pos inc σ)
+  weaken-stack-append-ns zero pos inc σ = refl
+  weaken-stack-append-ns (suc n) pos inc σ = cong (_∷_ ns) (weaken-stack-append-ns n pos inc σ)
+
+  weaken-stack-drop : ∀ {n} pos inc {σ₁ σ₂} →
+                         stack-drop n σ₁ σ₂ →
+                         stack-drop n (weaken pos inc σ₁) (weaken pos inc σ₂)
+  weaken-stack-drop pos inc here = here
+  weaken-stack-drop pos inc (there drop) = there (weaken-stack-drop pos inc drop)
+
+  weaken-stack-lookup : ∀ {n} pos inc {σ τ} →
+                          stack-lookup n σ τ →
+                          stack-lookup n (weaken pos inc σ) (weaken pos inc τ)
+  weaken-stack-lookup pos inc here = here
+  weaken-stack-lookup pos inc (there drop) = there (weaken-stack-lookup pos inc drop)
+
+  weaken-reg-stack-lookup : ∀ {n} pos inc {Γ τ} →
+                              register-stack-lookup n Γ τ →
+                              register-stack-lookup n (weaken pos inc Γ) (weaken pos inc τ)
+  weaken-reg-stack-lookup pos inc {Γ = registerₐ sp regs} l = weaken-stack-lookup pos inc l
+
+  weaken-stack-update : ∀ {n} pos inc {τ σ σ'} →
+                          stack-update n τ σ σ' →
+                          stack-update n (weaken pos inc τ) (weaken pos inc σ) (weaken pos inc σ')
+  weaken-stack-update pos inc here = here
+  weaken-stack-update pos inc (there drop) = there (weaken-stack-update pos inc drop)
+
+  weaken-maps-uninit : ∀ pos inc τs →
+                         weaken pos inc (map (λ τ → τ , uninit) τs) ≡
+                         map (λ τ → τ , uninit) (weaken pos inc τs)
+  weaken-maps-uninit pos inc [] = refl
+  weaken-maps-uninit pos inc (τ ∷ τs) = cong₂ _∷_ refl (weaken-maps-uninit pos inc τs)
+
+  weaken-↓ : ∀ {i} pos inc {τs⁻ : List InitType} {τ⁻} →
+               τs⁻ ↓ i ⇒ τ⁻ →
+               weaken pos inc τs⁻ ↓ i ⇒ weaken pos inc τ⁻
+  weaken-↓ pos inc here = here
+  weaken-↓ pos inc (there l) = there (weaken-↓ pos inc l)
+
+  weaken-← : ∀ {i} pos inc {τs⁻ τs⁻' : List InitType} {τ⁻} →
+               τs⁻ ⟦ i ⟧← τ⁻ ⇒ τs⁻' →
+               weaken pos inc τs⁻ ⟦ i ⟧← weaken pos inc τ⁻ ⇒ weaken pos inc τs⁻'
+  weaken-← pos inc here = here
+  weaken-← pos inc (there l) = there (weaken-← pos inc l)
 
   subst-lookup-helper : ∀ {n} ♯r {pos i} {τs₁ τs₂ : Vec Type n} →
                           τs₁ ⟦ i / pos ⟧≡ τs₂ →
@@ -161,7 +217,7 @@ vval-weaken : ∀ {ψ₁} →
                 ψ₁ , Δ₁ ++ Δ₃ , Γ ⊢ v of τ vval →
                 ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , weaken (length Δ₁) (length Δ₂) Γ ⊢ weaken (length Δ₁) (length Δ₂) v of weaken (length Δ₁) (length Δ₂) τ vval
 vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {Γ} {reg ♯r} of-reg
-  rewrite weaken-register-helper ♯r (length Δ₁) (length Δ₂) Γ = of-reg
+  rewrite weaken-lookup-regs ♯r (length Δ₁) (length Δ₂) Γ = of-reg
 vval-weaken {ψ₁} ψ₁⋆  Δ₁ Δ₂ Δ₃ {v = globval lab} (of-globval l)
   with weaken-empty-ctx (length Δ₁) (length Δ₂) (All-lookup l ψ₁⋆)
 ... | eq = of-globval (subst (λ τ → ψ₁ ↓ lab ⇒ τ) (sym eq) l)
@@ -191,6 +247,60 @@ vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-Λ {Δ₁ = Δᵢ} {Δ₂ = Δₒ} {�
         | eq
         | sym (weaken-exchange (length Δ₂) (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) Γᵢ)
   = of-Λ (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) is⋆' subs-Γ'
+
+instruction-weaken : ∀ {ψ₁} →
+                       [] ⊢ ψ₁ Valid →
+                       ∀ Δ₁ Δ₂ Δ₃ →
+                       ∀ {ι Γ₁ Γ₂} →
+                       ψ₁ , Δ₁ ++ Δ₃ , Γ₁ ⊢ ι ⇒ Γ₂ instruction →
+                       ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , weaken (length Δ₁) (length Δ₂) Γ₁ ⊢ weaken (length Δ₁) (length Δ₂) ι ⇒ weaken (length Δ₁) (length Δ₂) Γ₂ instruction
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {add ♯rd ♯rs v} {Γ} (of-add eq v⋆)
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) int Γ
+  = of-add (trans (sym (weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq) ) (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sub ♯rd ♯rs v} {Γ} (of-sub eq v⋆)
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) int Γ
+  = of-sub (trans (sym (weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq) ) (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {salloc n} {registerₐ sp₁ regs₁} of-salloc
+  rewrite weaken-stack-append-ns n (length Δ₁) (length Δ₂) sp₁ = of-salloc
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sfree n} {registerₐ sp₁ regs₁} (of-sfree drop)
+  = of-sfree (weaken-stack-drop (length Δ₁) (length Δ₂) drop)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sld ♯rd i} {Γ} (of-sld {τ = τ} l)
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) τ Γ
+  = of-sld (weaken-reg-stack-lookup (length Δ₁) (length Δ₂) l)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sst i ♯rs} {registerₐ sp regs} (of-sst up)
+  with weaken-stack-update (length Δ₁) (length Δ₂) up
+... | up'
+  rewrite weaken-lookup ♯rs (length Δ₁) (length Δ₂) regs
+  = of-sst up'
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {ld ♯rd ♯rs i} {Γ} (of-ld {τ = τ} eq l)
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) τ Γ
+  = of-ld (trans (sym (weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq)) (weaken-↓ (length Δ₁) (length Δ₂) l)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {st ♯rd i ♯rs} {Γ} (of-st {τs⁻' = τs⁻'} eq lookup≤τ l up)
+  with subtype-weaken Δ₁ Δ₂ Δ₃ lookup≤τ
+... | lookup≤τ'
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) (tuple τs⁻') Γ
+        | weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ
+  = of-st (trans (sym (weaken-lookup-regs ♯rd (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq)) lookup≤τ' (weaken-↓ (length Δ₁) (length Δ₂) l) (weaken-← (length Δ₁) (length Δ₂) up)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {malloc ♯rd τs} {Γ} (of-malloc τs⋆)
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) (tuple (map (λ τ → τ , uninit) τs)) Γ
+        | weaken-maps-uninit (length Δ₁) (length Δ₂) τs
+  = of-malloc (valid-weaken Δ₁ Δ₂ Δ₃ τs⋆)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {mov ♯rd v} {Γ} (of-mov {τ = τ} v⋆)
+  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) τ Γ
+  = of-mov (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {beq ♯r v} {Γ} (of-beq eq v⋆ Γ≤Γ')
+  = of-beq (trans (sym (weaken-lookup-regs ♯r (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq)) (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) (subtype-weaken Δ₁ Δ₂ Δ₃ Γ≤Γ')
+
+instructionsequence-weaken : ∀ {ψ₁} →
+                               [] ⊢ ψ₁ Valid →
+                               ∀ Δ₁ Δ₂ Δ₃ →
+                               ∀ {I Γ} →
+                               ψ₁ , Δ₁ ++ Δ₃ , Γ ⊢ I instructionsequence →
+                               ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , weaken (length Δ₁) (length Δ₂) Γ ⊢ weaken (length Δ₁) (length Δ₂) I instructionsequence
+instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-~> ι⋆ I⋆)
+  = of-~> (instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ ι⋆) (instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ I⋆)
+instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-jmp v⋆ Γ≤Γ')
+  = of-jmp (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) (subtype-weaken Δ₁ Δ₂ Δ₃ Γ≤Γ')
 
 i-subst : ∀ Δ₁ Δ₂ →
             ∀ {i a} →
