@@ -294,14 +294,14 @@ instructionsequence-weaken-right Δ₁ Δ₂ (of-jmp v⋆ Γ≤Γ') = of-jmp (vv
 -- --   with instructionsequence-subst-many ψ₁⋆ (valid-subst [] i⋆ Γ⋆ sub-Γ) is⋆ subs-Γ subs-I I'⋆
 -- -- ... | I''⋆ = I''⋆
 
--- heap-length : ∀ {ψ₁ H ψ₂} →
---                 ψ₁ ⊢ H of ψ₂ heap →
---                 length H ≡ length ψ₂
--- heap-length (of-heap τs⋆) = AllZip-length τs⋆
+heap-length : ∀ {ψ₁ H ψ₂} →
+                ψ₁ ⊢ H of ψ₂ heap →
+                length H ≡ length ψ₂
+heap-length (of-heap τs⋆) = AllZip-length τs⋆
 
--- ≤∀⇒≡∀ : ∀ {τ Δ Δ' Γ'} →
---           Δ ⊢ τ ≤ ∀[ Δ' ] Γ' →
---           ∃ λ Γ →
---             τ ≡ ∀[ Δ' ] Γ ×
---             Δ' ++ Δ ⊢ Γ' ≤ Γ
--- ≤∀⇒≡∀ (∀-≤ Γ'≤Γ) = _ , refl , Γ'≤Γ
+≤∀⇒≡∀ : ∀ {τ Δ Δ' Γ'} →
+          Δ ⊢ τ ≤ ∀[ Δ' ] Γ' →
+          ∃ λ Γ →
+            τ ≡ ∀[ Δ' ] Γ ×
+            Δ' ++ Δ ⊢ Γ' ≤ Γ
+≤∀⇒≡∀ (∀-≤ Γ'≤Γ) = _ , refl , Γ'≤Γ
