@@ -11,11 +11,8 @@ open import Judgments
 open import Lemmas
 
 -- -- A lot of junk
-open import WeakenRight
 open import HeapPush
 open import TermSubtyping
-open import Example
+open import WeakenRight
 open import Soundness
-
-
--- open import TermSubstitution
+open import Example
