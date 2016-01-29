@@ -111,3 +111,20 @@ stack-helper : ∀ {ψ₁ ψ₂ ψ₂' S σ} →
                  ψ₁ , ψ₂' ⊢ S of σ stack
 stack-helper ψ₂'≤ψ₂ [] = []
 stack-helper ψ₂'≤ψ₂ (w⋆ ∷ S⋆) = wval-helper ψ₂'≤ψ₂ w⋆ ∷ stack-helper ψ₂'≤ψ₂ S⋆
+
+regs-helper : ∀ {ψ₁ ψ₂ ψ₂' n} {regs : Vec WordValue n} {τs} →
+                [] ⊢ ψ₂' ≤ ψ₂ →
+                AllZipᵥ (λ w τ → ψ₁ , ψ₂  ⊢ w of τ wval) regs τs →
+                AllZipᵥ (λ w τ → ψ₁ , ψ₂' ⊢ w of τ wval) regs τs
+regs-helper ψ₂'≤ψ₂ [] = []
+regs-helper ψ₂'≤ψ₂ (w⋆ ∷ S⋆) = wval-helper ψ₂'≤ψ₂ w⋆ ∷ regs-helper ψ₂'≤ψ₂ S⋆
+
+
+regs-helper₂ : ∀ {ψ₁ ψ₂ n} {regs : Vec WordValue n} {τs} ♯rd {lₕ τ} →
+                 [] ⊢ ψ₂ Valid →
+                 lookup ♯rd regs ≡ heapval lₕ →
+                 ψ₂ ↓ lₕ ⇒ τ →
+                 AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
+                 AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs (update ♯rd τ τs)
+regs-helper₂ {regs = ._ ∷ regs} zero ψ₂⋆ refl l (w⋆ ∷ regs⋆) = of-heapval l (≤-refl (All-lookup l ψ₂⋆)) ∷ regs⋆
+regs-helper₂ (suc ♯rd) ψ₂⋆ eq l (w⋆ ∷ regs⋆) = w⋆ ∷ regs-helper₂ ♯rd ψ₂⋆ eq l regs⋆
