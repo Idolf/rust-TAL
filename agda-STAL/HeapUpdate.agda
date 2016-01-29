@@ -17,6 +17,23 @@ update-helper : ∀ {τs⁻₁ τs⁻₂ : List InitType} {i τ φ} →
 update-helper τ⋆ (τ⁻₁⋆ ∷ τs⁻₁⋆) here here = τ⁻-≤ τ⋆ φ-init-≤ ∷ (≤-refl τs⁻₁⋆)
 update-helper τ⋆ (τ⁻₁⋆ ∷ τs⁻₁⋆) (there l) (there up) = (≤-refl τ⁻₁⋆) ∷ update-helper τ⋆ τs⁻₁⋆ l up
 
+update-helper₂ : ∀ {ψ₁ ψ₂ τs⁻₁ τs⁻₂ ws i w τ φ} →
+                   τs⁻₁ ↓ i ⇒ (τ , φ) →
+                   [] ⊢ τs⁻₂ ≤ τs⁻₁ →
+                   ψ₁ , ψ₂ ⊢ w of τ wval →
+                   AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻₂ →
+                   ∃₂ λ ws' τs⁻₃ →
+                      ws   ⟦ i ⟧← w ⇒ ws' ×
+                      τs⁻₂ ⟦ i ⟧← (τ , init) ⇒ τs⁻₃ ×
+                      AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws' τs⁻₃ ×
+                      [] ⊢ τs⁻₃ ≤ τs⁻₂
+update-helper₂ here (τ⁻-≤ τ⋆ φ₂≤φ₁ ∷ τs⁻₂≤τs⁻₁) w⋆ (w'⋆ ∷ ws⋆)
+  = _ , _ , here , here , of-init w⋆ ∷ ws⋆ , τ⁻-≤ τ⋆ φ-init-≤ ∷ ≤-refl (wvals⁰-valid-type ws⋆)
+update-helper₂ (there l) (τ⁻₂≤τ⁻₁ ∷ τs⁻₂≤τs⁻₁) w⋆ (w'⋆ ∷ ws⋆)
+  with update-helper₂ l τs⁻₂≤τs⁻₁ w⋆ ws⋆
+... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
+  = _ , _ , there up₁ , there up₂ , w'⋆ ∷ ws'⋆ , ≤-refl (wval⁰-valid-type w'⋆) ∷ τs⁻₃≤τs⁻₂
+
 wval-helper : ∀ {ψ₁ ψ₂ ψ₂' w τ} →
                 [] ⊢ ψ₂' ≤ ψ₂ →
                 ψ₁ , ψ₂ ⊢ w of τ wval →

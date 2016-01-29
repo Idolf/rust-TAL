@@ -20,8 +20,6 @@ open import Lemmas
             τ⁻₁ ≡ τ⁻₂
 ≤τ⁻⇒≡τ⁻ (τ⁻-≤ τ⋆ φ₁≤φ₂) = refl
 
-
-
 wval⁰-subtype : ∀ {ψ₁ ψ₂ w τ⁻₁ τ⁻₂} →
                   ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰ →
                   [] ⊢ τ⁻₁ ≤ τ⁻₂ →
