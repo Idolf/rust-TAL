@@ -227,10 +227,12 @@ step-progress' {I = st ♯rd i ♯rs ~> I} G⋆ (of-heap hs⋆) (of-register sp�
 ... | ♯rd⋆ | ♯rs⋆
   rewrite eq
   with wval-tuple-helper G⋆ (of-heap hs⋆) ♯rd⋆
-... | lₕ , ws , τs⁻ , eq₁ , l₁ , l₂ , τs⁻'≤τs⁻ , ws⋆
-  with heap-helper {!!} (of-heap hs⋆) l₂ {!!}
-... | H' , ψ₂' , up₁ , up₂ , H'⋆ , ψ₂'≤ψ₂
-  = H' , ψ₂' , _ , _ , I , H'⋆ , {!!} , {!!} , step-st eq₁ l₁ {!!} {!!}
+... | lₕ , ws , τs⁻₂ , eq₁ , l₁ , l₂ , τs⁻₂≤τs⁻₁ , ws⋆
+  with update-helper₂ l τs⁻₂≤τs⁻₁ ♯rs⋆ ws⋆
+... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
+  with heap-helper (of-tuple ws'⋆) (of-heap hs⋆) l₂ (tuple-≤ τs⁻₃≤τs⁻₂)
+... | H' , ψ₂' , up₃ , up₄ , H'⋆ , ψ₂'≤ψ₂
+  = H' , ψ₂' , _ , _ , I , H'⋆ , of-register (stack-helper ψ₂'≤ψ₂ sp⋆) {!!} , I⋆ , step-st eq₁ l₁ up₁ up₃
 -- ... | ψ₂' , up'' , ψ₂'≤ψ₂ , H''⋆
   -- = _ , _ , _ , _ , _ , {!!} , of-register (stack-helper {!!} sp⋆) {!!} , I⋆ , step-st eq₁ l₁ {!!} {!!}
 step-progress' {H = H} {ψ₂ = ψ₂} {I = malloc ♯rd τs ~> I} G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-malloc τs⋆) I⋆)
