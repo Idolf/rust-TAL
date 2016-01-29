@@ -48,11 +48,6 @@ regs-++ : ∀ {n} {ψ₁ ψ₂ ψ₂⁺} {regs : Vec WordValue n} {τs} →
 regs-++ [] = []
 regs-++ (w⋆ ∷ regs⋆) = wval-++ w⋆ ∷ regs-++ regs⋆
 
-register-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ R Γ} →
-                ψ₁ , ψ₂ ⊢ R of Γ register →
-                ψ₁ , ψ₂ ++ ψ₂⁺ ⊢ R of Γ register
-register-++ (of-register sp⋆ regs⋆) = of-register (stack-++ sp⋆) (regs-++ regs⋆)
-
 heap-push : ∀ {ψ₁ H ψ₂ h τ} →
               ψ₁ ⊢ H of ψ₂ heap →
               ψ₁ , ψ₂ ⊢ h of τ hval →

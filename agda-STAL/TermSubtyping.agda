@@ -4,21 +4,24 @@ open import Util
 open import Judgments
 open import Lemmas
 
-≤int⇒≡int : ∀ {Δ} {τ : Type} →
-          Δ ⊢ τ ≤ int →
-          τ ≡ int
-≤int⇒≡int int-≤ = refl
+private
+  ≤int⇒≡int : ∀ {Δ} {τ : Type} →
+            Δ ⊢ τ ≤ int →
+            τ ≡ int
+  ≤int⇒≡int int-≤ = refl
 
-≤tuple⇒≡tuple : ∀ {Δ} {τ : Type} {τs⁻} →
-                  Δ ⊢ τ ≤ tuple τs⁻ →
-                  ∃ λ τs⁻' →
-                    τ ≡ tuple τs⁻'
-≤tuple⇒≡tuple (tuple-≤ τs⁻≤τs⁻') = _ , refl
+  ≤tuple⇒≡tuple : ∀ {Δ} {τ : Type} {τs⁻} →
+                    Δ ⊢ τ ≤ tuple τs⁻ →
+                    ∃ λ τs⁻' →
+                      τ ≡ tuple τs⁻'
+  ≤tuple⇒≡tuple (tuple-≤ τs⁻≤τs⁻') = _ , refl
 
-≤τ⁻⇒≡τ⁻ : ∀ {τ⁻₁ τ⁻₂ φ₁ φ₂ Δ} →
-            Δ ⊢ (τ⁻₁ , φ₁) ≤ (τ⁻₂ , φ₂) →
-            τ⁻₁ ≡ τ⁻₂
-≤τ⁻⇒≡τ⁻ (τ⁻-≤ τ⋆ φ₁≤φ₂) = refl
+  regs-update-≤ : ∀ {Δ m τ₁ τ₂} ♯r {τs₁ τs₂ : Vec Type m} →
+                    Δ ⊢ τs₁ ≤ τs₂ →
+                    Δ ⊢ τ₁ ≤ τ₂ →
+                    Δ ⊢ update ♯r τ₁ τs₁ ≤ update ♯r τ₂ τs₂
+  regs-update-≤ zero (τ₁'≤τ₂' ∷ τs₁≤τs₂) τ₁≤τ₂ = τ₁≤τ₂ ∷ τs₁≤τs₂
+  regs-update-≤ (suc ♯r) (τ₁'≤τ₂' ∷ τs₁≤τs₂) τ₁≤τ₂ = τ₁'≤τ₂' ∷ regs-update-≤ ♯r τs₁≤τs₂ τ₁≤τ₂
 
 wval⁰-subtype : ∀ {ψ₁ ψ₂ w τ⁻₁ τ⁻₂} →
                   ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰ →
@@ -78,13 +81,6 @@ vval-subtype {Δ = Δ} ψ₁⋆ Γ₁≤Γ₂ {Λ Δₒ ∙ v ⟦ is ⟧} {∀[ 
   with subtype-subst-exists-many {A = RegisterAssignment} [] is⋆ (subtype-weaken Δᵢ Δₒ Δ Γᵢ₁≤Γᵢ₂)
 ... | Γₒ₁' , Γₒ₂ , subs-Γ₁' , subs-Γ₂ , Γₒ₁'≤Γₒ₂
   rewrite subst-unique-many subs-Γ₁ subs-Γ₁' = ∀[ Δₒ ] Γₒ₂ , ∀-≤ Γₒ₁'≤Γₒ₂ , of-Λ v⋆' is⋆ subs-Γ₂
-
-regs-update-≤ : ∀ {Δ m τ₁ τ₂} ♯r {τs₁ τs₂ : Vec Type m} →
-                  Δ ⊢ τs₁ ≤ τs₂ →
-                  Δ ⊢ τ₁ ≤ τ₂ →
-                  Δ ⊢ update ♯r τ₁ τs₁ ≤ update ♯r τ₂ τs₂
-regs-update-≤ zero (τ₁'≤τ₂' ∷ τs₁≤τs₂) τ₁≤τ₂ = τ₁≤τ₂ ∷ τs₁≤τs₂
-regs-update-≤ (suc ♯r) (τ₁'≤τ₂' ∷ τs₁≤τs₂) τ₁≤τ₂ = τ₁'≤τ₂' ∷ regs-update-≤ ♯r τs₁≤τs₂ τ₁≤τ₂
 
 instruction-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ Γ₂'} →
                         [] ⊢ ψ₁ Valid →
