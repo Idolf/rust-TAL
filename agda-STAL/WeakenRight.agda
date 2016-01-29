@@ -3,7 +3,6 @@ module WeakenRight where
 open import Util
 open import Judgments
 open import Lemmas
-open import TermSubtyping
 
 instantiation-weaken-right : ∀ Δ₁ Δ₂ {i a} →
                          Δ₁ ⊢ i of a instantiation →
@@ -57,15 +56,3 @@ instructionsequence-weaken-right Δ₁ Δ₂ (of-~> ι⋆ I⋆)
 ... | ι⋆'
   = of-~> ι⋆' (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
 instructionsequence-weaken-right Δ₁ Δ₂ (of-jmp v⋆ Γ≤Γ') = of-jmp (vval-weaken-right Δ₁ Δ₂ v⋆) (≤-++ Γ≤Γ')
-
-heap-length : ∀ {ψ₁ H ψ₂} →
-                ψ₁ ⊢ H of ψ₂ heap →
-                length H ≡ length ψ₂
-heap-length (of-heap τs⋆) = AllZip-length τs⋆
-
-≤∀⇒≡∀ : ∀ {τ Δ Δ' Γ'} →
-          Δ ⊢ τ ≤ ∀[ Δ' ] Γ' →
-          ∃ λ Γ →
-            τ ≡ ∀[ Δ' ] Γ ×
-            Δ' ++ Δ ⊢ Γ' ≤ Γ
-≤∀⇒≡∀ (∀-≤ Γ'≤Γ) = _ , refl , Γ'≤Γ
