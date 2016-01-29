@@ -28,9 +28,9 @@ wval⁰-subtype (of-uninit τs⋆) (τ⁻-≤ τ⋆ φ-≤-uninit) = of-uninit �
 wval⁰-subtype (of-init w⋆) (τ⁻-≤ τ⋆ τ₁≤τ₂) = of-init w⋆
 
 wvals⁰-subtype : ∀ {ψ₁ ψ₂ ws τs⁻₁ τs⁻₂} →
-                  AllZip (λ w τ⁻₁ → ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰) ws τs⁻₁ →
-                  [] ⊢ τs⁻₁ ≤ τs⁻₂ →
-                  AllZip (λ w τ⁻₂ → ψ₁ , ψ₂ ⊢ w of τ⁻₂ wval⁰) ws τs⁻₂
+                   AllZip (λ w τ⁻₁ → ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰) ws τs⁻₁ →
+                   [] ⊢ τs⁻₁ ≤ τs⁻₂ →
+                   AllZip (λ w τ⁻₂ → ψ₁ , ψ₂ ⊢ w of τ⁻₂ wval⁰) ws τs⁻₂
 wvals⁰-subtype [] [] = []
 wvals⁰-subtype (w⋆ ∷ ws⋆) (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) = wval⁰-subtype w⋆ τ⁻₁≤τ⁻₂ ∷ wvals⁰-subtype ws⋆ τs⁻₁≤τs⁻₂
 
@@ -44,6 +44,13 @@ wval-subtype of-int int-≤ = of-int
 wval-subtype of-ns ns-≤ = of-ns
 wval-subtype (of-Λ {Δ₂ = Δ₂} w⋆ is⋆ subs-Γ Γ₃≤Γ₂) (∀-≤ Γ₄≤Γ₃)
   rewrite List-++-right-identity Δ₂ = of-Λ w⋆ is⋆ subs-Γ (≤-trans Γ₄≤Γ₃ Γ₃≤Γ₂)
+
+regs-subtype : ∀ {n ψ₁ ψ₂} {ws : Vec WordValue n} {τs₁ τs₂} →
+                 AllZipᵥ (λ w τ₁ → ψ₁ , ψ₂ ⊢ w of τ₁ wval) ws τs₁ →
+                 [] ⊢ τs₁ ≤ τs₂ →
+                 AllZipᵥ (λ w τ₂ → ψ₁ , ψ₂ ⊢ w of τ₂ wval) ws τs₂
+regs-subtype [] [] = []
+regs-subtype (w⋆ ∷ ws⋆) (τ₁≤τ₂ ∷ τs₁≤τs₂) = wval-subtype w⋆ τ₁≤τ₂ ∷ regs-subtype ws⋆ τs₁≤τs₂
 
 hval-subtype : ∀ {ψ₁ ψ₂ h τ₁ τ₂} →
                  ψ₁ , ψ₂ ⊢ h of τ₁ hval →

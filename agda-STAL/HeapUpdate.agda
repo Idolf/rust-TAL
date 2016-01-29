@@ -34,6 +34,16 @@ update-helper₂ (there l) (τ⁻₂≤τ⁻₁ ∷ τs⁻₂≤τs⁻₁) w⋆ 
 ... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
   = _ , _ , there up₁ , there up₂ , w'⋆ ∷ ws'⋆ , ≤-refl (wval⁰-valid-type w'⋆) ∷ τs⁻₃≤τs⁻₂
 
+update-helper₃ : ∀ {τs⁻₁ τs⁻₁' τs⁻₂ τs⁻₂' : List InitType} {i τ} →
+                   [] ⊢ τ Valid →
+                   [] ⊢ τs⁻₁ ≤ τs⁻₂ →
+                   τs⁻₁ ⟦ i ⟧← (τ , init) ⇒ τs⁻₁' →
+                   τs⁻₂ ⟦ i ⟧← (τ , init) ⇒ τs⁻₂' →
+                   [] ⊢ τs⁻₁' ≤ τs⁻₂'
+update-helper₃ τ⋆ (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) here here = τ⁻-≤ τ⋆ φ-≤-init ∷ τs⁻₁≤τs⁻₂
+update-helper₃ τ⋆ (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) (there up₁) (there up₂)
+  = τ⁻₁≤τ⁻₂ ∷ update-helper₃ τ⋆ τs⁻₁≤τs⁻₂ up₁ up₂
+
 wval-helper : ∀ {ψ₁ ψ₂ ψ₂' w τ} →
                 [] ⊢ ψ₂' ≤ ψ₂ →
                 ψ₁ , ψ₂ ⊢ w of τ wval →
