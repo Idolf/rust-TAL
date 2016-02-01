@@ -9,7 +9,7 @@ record Embed (H : Set) (S : Set) : Set where
   field
     embed : H → S
     bogus : ⊤
-open Embed {{...}}
+open Embed {{...}} public
 
 mkEmbed : ∀ {H S} → (H → S) → Embed H S
 mkEmbed f = mkEmbed' f tt
@@ -50,7 +50,7 @@ instance
           f (H.globval l) = S.globval l
           f (H.int n) = S.int n
           f H.ns = S.ns
-          f (H.uninit τ) = S.ns
+          f (H.uninit τ) = S.uninit
           f H.Λ Δ ∙ v ⟦ is ⟧ = f v
 
   embedInstruction : Embed H.Instruction S.Instruction
