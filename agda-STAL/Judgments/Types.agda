@@ -11,9 +11,10 @@ open HighGrammar
 record TypeLike (A : Set) : Set1 where
   constructor typeLike
   infix 3 _⊢_Valid
+  infix 3 _⊢_≤_
   field
     _⊢_Valid : TypeAssumptions → A → Set
-    TypeLike-junk : ⊤
+    _⊢_≤_ : TypeAssumptions → A → A → Set
 open TypeLike {{...}} public
 
 mutual
@@ -54,7 +55,6 @@ mutual
       Δ ⊢ τ , φ InitType
 
   infix 3  _⊢_StackType
-  infixr 5 _∷_
   data _⊢_StackType (Δ : TypeAssumptions) : StackType → Set where
     valid-ρ⁼ :
            ∀ {ι} →
@@ -83,70 +83,109 @@ mutual
       ----------------------------------------
       Δ ⊢ registerₐ sp regs RegisterAssignment
 
-infix 3 ⊢_GlobalLabelAssignment
-⊢_GlobalLabelAssignment : GlobalLabelAssignment → Set
-⊢ ψ₁ GlobalLabelAssignment = All (λ τ → [] ⊢ τ Type) ψ₁
+mutual
+  infix 3 _⊢_≤τ_
+  data _⊢_≤τ_ (Δ : TypeAssumptions) : Type → Type → Set where
+    α⁼-≤ :
+          ∀ {ι} →
+        Δ ↓ ι ⇒ α →
+      ----------------
+      Δ ⊢ α⁼ ι ≤τ α⁼ ι
 
-infix 3 ⊢_HeapLabelAssignment
-⊢_HeapLabelAssignment : HeapLabelAssignment → Set
-⊢ ψ₂ HeapLabelAssignment = All (λ τ → [] ⊢ τ Type) ψ₂
+    int-≤ :
+      --------------
+      Δ ⊢ int ≤τ int
 
-infix 3 ⊢_LabelAssignment
-⊢_LabelAssignment : LabelAssignment → Set
-⊢ ψ₁ , ψ₂ LabelAssignment =
-  (⊢ ψ₁ GlobalLabelAssignment) × (⊢ ψ₂ HeapLabelAssignment)
+    ns-≤ :
+      ------------
+      Δ ⊢ ns ≤τ ns
 
-infix 3 _⊢_Instantiation
-data _⊢_Instantiation (Δ : TypeAssumptions) :
-                      Instantiation → Set where
-  valid-α :
-           ∀ {τ} →
-        Δ ⊢ τ Type →
-    ---------------------
-    Δ ⊢ α τ Instantiation
+    ∀-≤ :
+            ∀ {Δ' Γ₁ Γ₂} →
+          Δ' ++ Δ ⊢ Γ₂ ≤Γ Γ₁ →
+      ----------------------------
+      Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ ∀[ Δ' ] Γ₂
 
-  valid-ρ :
-           ∀ {σ} →
-      Δ ⊢ σ StackType →
-    ---------------------
-    Δ ⊢ ρ σ Instantiation
+    tuple-≤ :
+                     ∀ {τs₁ τs₂} →
+      AllZip (λ τ⁻₁ τ⁻₂ → Δ ⊢ τ⁻₁ ≤τ⁻ τ⁻₂) τs₁ τs₂ →
+      ----------------------------------------------
+               Δ ⊢ tuple τs₁ ≤τ tuple τs₂
 
-Vec-TypeLike : ∀ A m {{T : TypeLike A}} → TypeLike (Vec A m)
-Vec-TypeLike A m = typeLike (λ Δ xs → Allᵥ (λ x → Δ ⊢ x Valid) xs) tt
+  infix 3 _≤φ_
+  data _≤φ_ : InitializationFlag → InitializationFlag → Set where
+    φ-≤-init :
+      ------------
+      init ≤φ init
+
+    φ-≤-uninit :
+        ∀ {φ} →
+      -----------
+      φ ≤φ uninit
+
+  infix 3 _⊢_≤τ⁻_
+  data _⊢_≤τ⁻_ (Δ : TypeAssumptions) : InitType → InitType → Set where
+    τ⁻-≤ :
+          ∀ {τ φ₁ φ₂} →
+          Δ ⊢ τ Type →
+            φ₁ ≤φ φ₂ →
+      ---------------------
+      Δ ⊢ τ , φ₁ ≤τ⁻ τ , φ₂
+
+  infix 3 _⊢_≤σ_
+  infixr 5 _∷_
+  data _⊢_≤σ_ (Δ : TypeAssumptions) : StackType → StackType → Set where
+    ρ⁼-≤ :
+          ∀ {ι} →
+        Δ ↓ ι ⇒ ρ →
+      ----------------
+      Δ ⊢ ρ⁼ ι ≤σ ρ⁼ ι
+
+    [] :
+      ------------
+      Δ ⊢ [] ≤σ []
+
+    _∷_ :
+       ∀ {τ₁ τ₂ σ₁ σ₂} →
+         Δ ⊢ τ₁ ≤τ τ₂ →
+         Δ ⊢ σ₁ ≤σ σ₂ →
+      ----------------------
+      Δ ⊢ τ₁ ∷ σ₁ ≤σ τ₂ ∷ σ₂
+
+  infix 3 _⊢_≤Γ_
+  data _⊢_≤Γ_ (Δ : TypeAssumptions) : (Γ₁ Γ₂ : RegisterAssignment) → Set where
+    Γ-≤ :
+                ∀ {sp₁ sp₂ regs₁ regs₂} →
+                    Δ ⊢ sp₁ ≤σ sp₂ →
+      AllZipᵥ (λ τ₂ τ₁ → Δ ⊢ τ₂ ≤τ τ₁) regs₁ regs₂ →
+      ----------------------------------------------
+      Δ ⊢ registerₐ sp₁ regs₁ ≤Γ registerₐ sp₂ regs₂
 
 List-TypeLike : ∀ A {{T : TypeLike A}} → TypeLike (List A)
-List-TypeLike A = typeLike (λ Δ xs → All (λ x → Δ ⊢ x Valid) xs) tt
+List-TypeLike A =
+  typeLike (λ Δ xs → All (λ x → Δ ⊢ x Valid) xs)
+           (λ Δ xs₁ xs₂ → AllZip (λ x₁ x₂ → Δ ⊢ x₁ ≤ x₂) xs₁ xs₂)
 
 instance
-  InitializationFlag-TypeLike : TypeLike InitializationFlag
-  InitializationFlag-TypeLike = typeLike (λ Δ φ → ⊤) tt
-
   Type-TypeLike : TypeLike Type
-  Type-TypeLike = typeLike _⊢_Type tt
+  Type-TypeLike = typeLike _⊢_Type _⊢_≤τ_
 
   TypeVec-TypeLike : ∀ {n} → TypeLike (Vec Type n)
-  TypeVec-TypeLike = Vec-TypeLike Type _
+  TypeVec-TypeLike =
+    typeLike (λ Δ → Allᵥ (λ τ → Δ ⊢ τ Type))
+             (λ Δ → AllZipᵥ (λ τ₂ τ₁ → Δ ⊢ τ₂ ≤τ τ₁))
 
   TypeList-TypeLike : TypeLike (List Type)
   TypeList-TypeLike = List-TypeLike Type
 
   InitType-TypeLike : TypeLike InitType
-  InitType-TypeLike = typeLike _⊢_InitType tt
-
-  InitTypeVec-TypeLike : ∀ {n} → TypeLike (Vec InitType n)
-  InitTypeVec-TypeLike = Vec-TypeLike InitType _
+  InitType-TypeLike = typeLike _⊢_InitType _⊢_≤τ⁻_
 
   InitTypeList-TypeLike : TypeLike (List InitType)
   InitTypeList-TypeLike = List-TypeLike InitType
 
   StackType-TypeLike : TypeLike StackType
-  StackType-TypeLike = typeLike _⊢_StackType tt
-
-  LabelAssignment-TypeLike : TypeLike LabelAssignment
-  LabelAssignment-TypeLike = typeLike (const ⊢_LabelAssignment) tt
+  StackType-TypeLike = typeLike _⊢_StackType _⊢_≤σ_
 
   RegisterAssignment-TypeLike : TypeLike RegisterAssignment
-  RegisterAssignment-TypeLike = typeLike _⊢_RegisterAssignment tt
-
-  Instantiation-TypeLike : TypeLike Instantiation
-  Instantiation-TypeLike = typeLike _⊢_Instantiation tt
+  RegisterAssignment-TypeLike = typeLike _⊢_RegisterAssignment _⊢_≤Γ_

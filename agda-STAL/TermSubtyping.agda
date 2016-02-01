@@ -119,7 +119,7 @@ instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
 ... | sp₂' , drop₂ , sp₂'≤sp₁' = _ , of-sfree drop₂ , Γ-≤ sp₂'≤sp₁' regs₁≤regs₂
 instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
                     {ι = sld ♯rd i} (of-sld l)
-  with stack-lookup₂-≤ sp₁≤sp₂ l
+  with stack-lookup-≤ sp₁≤sp₂ l
 ... | τ₂ , τ₂≤τ₁ , l' = _ , of-sld l' , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ τ₂≤τ₁)
 instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
                     {ι = sst i ♯rs} (of-sst up)

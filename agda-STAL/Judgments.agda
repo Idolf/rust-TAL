@@ -9,7 +9,7 @@ open import Judgments.Grammar public
 -- Step 2: Language translations
 open import Judgments.Embed public
 
--- Step 3 preparations: Substitution Judgments
+-- Step 3 requirements: Substitution Judgments
 -- (needed for the high semantics)
 open import Judgments.Substitution public
 
@@ -18,7 +18,7 @@ open import Judgments.SimpleSemantics public
 open import Judgments.HighSemantics public
 open import Judgments.Semantics public
 
--- Step 4 preparations: Stack operations
+-- Step 4 requirements: Stack operations
 -- (needed for the term judgments)
 open import Judgments.StackOperations public
 

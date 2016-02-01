@@ -6,8 +6,6 @@ open import Lemmas.Equality
 open import Lemmas.Types
 open import Lemmas.Substitution
 open import Lemmas.TypeSubstitution
-open import Lemmas.SubtypeSubstitution
-open import Lemmas.Subtypes
 import Data.Nat.Properties as NP
 open HighGrammar
 
@@ -288,118 +286,6 @@ vval-valid-type ψ₁⋆ Γ⋆ (of-Λ {Δ = Δ} {Δ₁ = Δ₁} {Δ₂} v⋆ is�
   with valid-subst-many [] {Δ₁} {Δ₂ ++ Δ} is⋆ Γ⋆'' subs-Γ
 ... | Γ⋆'''
   = valid-∀ Γ⋆'''
-
-i-weaken : ∀ Δ₁ Δ₂ Δ₃ {i a} →
-             Δ₁ ++ Δ₃ ⊢ i of a instantiation →
-             Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) i of a instantiation
-i-weaken Δ₁ Δ₂ Δ₃ (of-α τ⋆) = of-α (valid-weaken Δ₁ Δ₂ Δ₃ τ⋆)
-i-weaken Δ₁ Δ₂ Δ₃ (of-ρ σ⋆) = of-ρ (valid-weaken Δ₁ Δ₂ Δ₃ σ⋆)
-
-is-weaken : ∀ Δ₁ Δ₂ Δ₃ {is Δ} →
-              Δ₁ ++ Δ₃ ⊢ is of Δ instantiations →
-              Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) is of Δ instantiations
-is-weaken Δ₁ Δ₂ Δ₃ [] = []
-is-weaken Δ₁ Δ₂ Δ₃ {Δ = a ∷ Δ} (i⋆ ∷ is⋆)
-  rewrite sym (List-++-assoc Δ Δ₁ Δ₃)
-  with i-weaken (Δ ++ Δ₁) Δ₂ Δ₃ i⋆
-... | i⋆'
-  rewrite List-++-assoc Δ Δ₁ (Δ₂ ++ Δ₃)
-        | is-length is⋆
-        | List-length-++ Δ {Δ₁}
-  = i⋆' ∷ is-weaken Δ₁ Δ₂ Δ₃ is⋆
-
-vval-weaken : ∀ {ψ₁} →
-                [] ⊢ ψ₁ Valid →
-                ∀ Δ₁ Δ₂ Δ₃ →
-                ∀ {Γ v τ} →
-                ψ₁ , Δ₁ ++ Δ₃ , Γ ⊢ v of τ vval →
-                ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , weaken (length Δ₁) (length Δ₂) Γ ⊢ weaken (length Δ₁) (length Δ₂) v of weaken (length Δ₁) (length Δ₂) τ vval
-vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {Γ} {reg ♯r} of-reg
-  rewrite weaken-lookup-regs ♯r (length Δ₁) (length Δ₂) Γ = of-reg
-vval-weaken {ψ₁} ψ₁⋆  Δ₁ Δ₂ Δ₃ {v = globval lab} (of-globval l)
-  with weaken-empty-ctx (length Δ₁) (length Δ₂) (All-lookup l ψ₁⋆)
-... | eq = of-globval (subst (λ τ → ψ₁ ↓ lab ⇒ τ) (sym eq) l)
-vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ of-int = of-int
-vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ of-ns = of-ns
-vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-Λ {Δ₁ = Δᵢ} {Δ₂ = Δₒ} {Γ₁ = Γᵢ} v⋆ is⋆ subs-Γ)
-  rewrite sym (List-++-assoc Δₒ Δ₁ Δ₃)
-  with is-weaken (Δₒ ++ Δ₁) Δ₂ Δ₃ is⋆
-... | is⋆'
-  rewrite List-length-++ Δₒ {Δ₁}
-        | List-++-assoc Δₒ Δ₁ (Δ₂ ++ Δ₃)
-  with subst-weaken-inside-many 0 (length Δₒ + length Δ₁) (length Δ₂) subs-Γ
-... | subs-Γ'
-  rewrite is-length is⋆
-  with
-    begin
-      length Δᵢ + (length Δₒ + length Δ₁)
-    ⟨ +-assoc (length Δᵢ) (length Δₒ) (length Δ₁) ⟩≡
-      (length Δᵢ + length Δₒ) + length Δ₁
-    ≡⟨ +-comm (length Δᵢ) (length Δₒ) ∥ (λ v → v + length Δ₁) ⟩
-      (length Δₒ + length Δᵢ) + length Δ₁
-    ≡⟨ +-assoc (length Δₒ) (length Δᵢ) (length Δ₁) ⟩
-      length Δₒ + (length Δᵢ + length Δ₁)
-    ∎ where open Eq-Reasoning
-... | eq
-  rewrite +-comm (length Δᵢ) 0
-        | eq
-        | sym (weaken-exchange (length Δ₂) (length Δₒ) (NP.m≤m+n (length Δᵢ) (length Δ₁)) Γᵢ)
-  = of-Λ (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) is⋆' subs-Γ'
-
-instruction-weaken : ∀ {ψ₁} →
-                       [] ⊢ ψ₁ Valid →
-                       ∀ Δ₁ Δ₂ Δ₃ →
-                       ∀ {ι Γ₁ Γ₂} →
-                       ψ₁ , Δ₁ ++ Δ₃ , Γ₁ ⊢ ι ⇒ Γ₂ instruction →
-                       ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , weaken (length Δ₁) (length Δ₂) Γ₁ ⊢ weaken (length Δ₁) (length Δ₂) ι ⇒ weaken (length Δ₁) (length Δ₂) Γ₂ instruction
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {add ♯rd ♯rs v} {Γ} (of-add eq v⋆)
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) int Γ
-  = of-add (trans (sym (weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq) ) (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sub ♯rd ♯rs v} {Γ} (of-sub eq v⋆)
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) int Γ
-  = of-sub (trans (sym (weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq) ) (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {salloc n} {registerₐ sp₁ regs₁} of-salloc
-  rewrite weaken-stack-append-ns n (length Δ₁) (length Δ₂) sp₁ = of-salloc
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sfree n} {registerₐ sp₁ regs₁} (of-sfree drop)
-  = of-sfree (weaken-stack-drop (length Δ₁) (length Δ₂) drop)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sld ♯rd i} {registerₐ sp regs} (of-sld {τ = τ} l)
-  rewrite weaken-update ♯rd (length Δ₁) (length Δ₂) τ regs
-  = of-sld (weaken-stack-lookup (length Δ₁) (length Δ₂) l)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sst i ♯rs} {registerₐ sp regs} (of-sst up)
-  with weaken-stack-update (length Δ₁) (length Δ₂) up
-... | up'
-  rewrite weaken-lookup ♯rs (length Δ₁) (length Δ₂) regs
-  = of-sst up'
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {ld ♯rd ♯rs i} {Γ} (of-ld {τ = τ} eq l)
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) τ Γ
-  = of-ld (trans (sym (weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq)) (weaken-↓ (length Δ₁) (length Δ₂) l)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {st ♯rd i ♯rs} {Γ} (of-st {τs⁻' = τs⁻'} eq lookup≤τ l up)
-  with subtype-weaken Δ₁ Δ₂ Δ₃ lookup≤τ
-... | lookup≤τ'
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) (tuple τs⁻') Γ
-        | weaken-lookup-regs ♯rs (length Δ₁) (length Δ₂) Γ
-  = of-st (trans (sym (weaken-lookup-regs ♯rd (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq)) lookup≤τ' (weaken-↓ (length Δ₁) (length Δ₂) l) (weaken-← (length Δ₁) (length Δ₂) up)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {malloc ♯rd τs} {Γ} (of-malloc τs⋆)
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) (tuple (map (λ τ → τ , uninit) τs)) Γ
-        | weaken-maps-uninit (length Δ₁) (length Δ₂) τs
-  = of-malloc (valid-weaken Δ₁ Δ₂ Δ₃ τs⋆)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {mov ♯rd v} {Γ} (of-mov {τ = τ} v⋆)
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) τ Γ
-  = of-mov (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {beq ♯r v} {Γ} (of-beq eq v⋆ Γ≤Γ')
-  = of-beq (trans (sym (weaken-lookup-regs ♯r (length Δ₁) (length Δ₂) Γ)) (cong (weaken (length Δ₁) (length Δ₂)) eq)) (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) (subtype-weaken Δ₁ Δ₂ Δ₃ Γ≤Γ')
-
-instructionsequence-weaken : ∀ {ψ₁} →
-                               [] ⊢ ψ₁ Valid →
-                               ∀ Δ₁ Δ₂ Δ₃ →
-                               ∀ {I Γ} →
-                               ψ₁ , Δ₁ ++ Δ₃ , Γ ⊢ I instructionsequence →
-                               ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , weaken (length Δ₁) (length Δ₂) Γ ⊢ weaken (length Δ₁) (length Δ₂) I instructionsequence
-instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-~> ι⋆ I⋆)
-  = of-~> (instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ ι⋆) (instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ I⋆)
-instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-jmp v⋆ Γ≤Γ')
-  = of-jmp (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) (subtype-weaken Δ₁ Δ₂ Δ₃ Γ≤Γ')
-instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ of-halt = of-halt
 
 i-subst : ∀ Δ₁ Δ₂ →
             ∀ {i a} →

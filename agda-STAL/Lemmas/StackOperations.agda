@@ -93,26 +93,15 @@ stack-drop-dec (suc i) (τ ∷ σ)
 ... | yes (σ' , drop) = yes (σ' , there drop)
 ... | no ¬drop = no (λ { (σ' , there drop) → ¬drop (σ' , drop) })
 
-stack-lookup₁-≤ : ∀ {Δ sp₁ sp₂ i τ₁} →
-                    Δ ⊢ sp₁ ≤ sp₂ →
-                    stack-lookup i sp₁ τ₁ →
-                    ∃ λ τ₂ →
-                      Δ ⊢ τ₁ ≤ τ₂ ×
-                      stack-lookup i sp₂ τ₂
-stack-lookup₁-≤ (τ₁≤τ₂ ∷ sp₁≤sp₂) here = _ , τ₁≤τ₂ , here
-stack-lookup₁-≤ (τ₁≤τ₂ ∷ sp₁≤sp₂) (there l)
-  with stack-lookup₁-≤ sp₁≤sp₂ l
-... | τ₂' , τ₁≤τ₂' , l' = τ₂' , τ₁≤τ₂' , there l'
-
-stack-lookup₂-≤ : ∀ {Δ sp₁ sp₂ i τ₂} →
-                    Δ ⊢ sp₁ ≤ sp₂ →
-                    stack-lookup i sp₂ τ₂ →
-                    ∃ λ τ₁ →
-                      Δ ⊢ τ₁ ≤ τ₂ ×
-                      stack-lookup i sp₁ τ₁
-stack-lookup₂-≤ (τ₁≤τ₂ ∷ sp₁≤sp₂) here = _ , τ₁≤τ₂ , here
-stack-lookup₂-≤ (τ₁≤τ₂ ∷ sp₁≤sp₂) (there l)
-  with stack-lookup₂-≤ sp₁≤sp₂ l
+stack-lookup-≤ : ∀ {Δ sp₁ sp₂ i τ₂} →
+                   Δ ⊢ sp₁ ≤ sp₂ →
+                   stack-lookup i sp₂ τ₂ →
+                   ∃ λ τ₁ →
+                     Δ ⊢ τ₁ ≤ τ₂ ×
+                     stack-lookup i sp₁ τ₁
+stack-lookup-≤ (τ₁≤τ₂ ∷ sp₁≤sp₂) here = _ , τ₁≤τ₂ , here
+stack-lookup-≤ (τ₁≤τ₂ ∷ sp₁≤sp₂) (there l)
+  with stack-lookup-≤ sp₁≤sp₂ l
 ... | τ₂' , τ₁≤τ₂' , l' = τ₂' , τ₁≤τ₂' , there l'
 
 stack-update-≤ : ∀ {Δ sp₁ sp₂ sp₂' i τ₁ τ₂} →
