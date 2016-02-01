@@ -6,53 +6,6 @@ open import Lemmas
 open HighGrammar
 open HighSemantics
 
-eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs} →
-                   [] ⊢ ψ₁ Valid →
-                   AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
-                   {v : SmallValue} {τ : Type} →
-                   ψ₁ , [] , registerₐ σ τs ⊢ v of τ vval →
-                   ψ₁ , ψ₂ ⊢ evalSmallValue regs v of τ wval
-eval-reduction ψ₁⋆ regs⋆ {v = reg ♯r} of-reg = allzipᵥ-lookup ♯r regs⋆
-eval-reduction ψ₁⋆ regs⋆ (of-globval l) = of-globval l (≤-refl (All-lookup l ψ₁⋆))
-eval-reduction ψ₁⋆ regs⋆ of-int = of-int
-eval-reduction ψ₁⋆ regs⋆ of-ns = of-ns
-eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} {Γ₁ = Γ₁} v⋆ is⋆ subs-Γ)
-  with eval-reduction ψ₁⋆ regs⋆ v⋆
-... | w⋆
-  with wval-valid-type w⋆
-... | valid-∀ Γ₁⋆
-  with valid-weaken Δ₁ Δ₂ [] Γ₁⋆
-... | Γ₁'⋆
-  rewrite List-++-right-identity Δ₁
-        | List-++-right-identity Δ₂
-        | weaken-outside-ctx-0 (length Δ₂) Γ₁⋆
-        = of-Λ w⋆ is⋆ subs-Γ (≤-refl (valid-subst-many [] is⋆ Γ₁'⋆ subs-Γ))
-
-instantiation-progress : ∀ {G ψ₁ H ψ₂ w Δ Γ} →
-                             ⊢ G of ψ₁ globals →
-                             ψ₁ ⊢ H of ψ₂ heap →
-                             ψ₁ , ψ₂ ⊢ w of ∀[ Δ ] Γ wval →
-                             ∃ λ I →
-                               InstantiateGlobal G w I ×
-                               ψ₁ , Δ , Γ ⊢ I instructionsequence
-instantiation-progress (of-globals gs⋆) H⋆ (of-globval l τ≤τ')
-  with allzip-lookup₂ l gs⋆
-instantiation-progress (of-globals gs⋆) H⋆ (of-globval l (∀-≤ Γ≤Γ'))
-  | code[ Δ ] Γ ∙ I , l' , of-gval Γ⋆ I⋆
-  rewrite List-++-right-identity Δ
-    = _ , instantiate-globval l' , instructionsequence-subtype (gvals-valid-type gs⋆) Γ≤Γ' I⋆
-instantiation-progress G⋆ (of-heap hs⋆) (of-heapval l τ≤τ')
-  with allzip-lookup₂ l hs⋆
-... | tuple ws , l' , of-tuple ws⋆
-  with τ≤τ'
-... | ()
-instantiation-progress G⋆ H⋆ (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ is⋆ subs-Γ Γ≤Γ')
-  with instantiation-progress G⋆ H⋆ w⋆
-... | I , ig , I⋆
-  with instructionsequence-subst-many [] Δ₁ Δ₂ (globals-valid-type G⋆) is⋆ subs-Γ (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
-... | I' , subs-I , I'⋆
-  = I' , instantiate-Λ ig subs-I , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆
-
 private
   wval-int-helper : ∀ {G ψ₁ H ψ₂ w} →
                       ⊢ G of ψ₁ globals →
@@ -167,6 +120,53 @@ private
     = _ , there up' , w'⋆ ∷ sp'⋆
 
 
+
+eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs} →
+                   [] ⊢ ψ₁ Valid →
+                   AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
+                   {v : SmallValue} {τ : Type} →
+                   ψ₁ , [] , registerₐ σ τs ⊢ v of τ vval →
+                   ψ₁ , ψ₂ ⊢ evalSmallValue regs v of τ wval
+eval-reduction ψ₁⋆ regs⋆ {v = reg ♯r} of-reg = allzipᵥ-lookup ♯r regs⋆
+eval-reduction ψ₁⋆ regs⋆ (of-globval l) = of-globval l (≤-refl (All-lookup l ψ₁⋆))
+eval-reduction ψ₁⋆ regs⋆ of-int = of-int
+eval-reduction ψ₁⋆ regs⋆ of-ns = of-ns
+eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} {Γ₁ = Γ₁} v⋆ is⋆ subs-Γ)
+  with eval-reduction ψ₁⋆ regs⋆ v⋆
+... | w⋆
+  with wval-valid-type w⋆
+... | valid-∀ Γ₁⋆
+  with valid-weaken Δ₁ Δ₂ [] Γ₁⋆
+... | Γ₁'⋆
+  rewrite List-++-right-identity Δ₁
+        | List-++-right-identity Δ₂
+        | weaken-outside-ctx-0 (length Δ₂) Γ₁⋆
+        = of-Λ w⋆ is⋆ subs-Γ (≤-refl (valid-subst-many [] is⋆ Γ₁'⋆ subs-Γ))
+
+instantiation-progress : ∀ {G ψ₁ H ψ₂ w Δ Γ} →
+                             ⊢ G of ψ₁ globals →
+                             ψ₁ ⊢ H of ψ₂ heap →
+                             ψ₁ , ψ₂ ⊢ w of ∀[ Δ ] Γ wval →
+                             ∃ λ I →
+                               InstantiateGlobal G w I ×
+                               ψ₁ , Δ , Γ ⊢ I instructionsequence
+instantiation-progress (of-globals gs⋆) H⋆ (of-globval l τ≤τ')
+  with allzip-lookup₂ l gs⋆
+instantiation-progress (of-globals gs⋆) H⋆ (of-globval l (∀-≤ Γ≤Γ'))
+  | code[ Δ ] Γ ∙ I , l' , of-gval Γ⋆ I⋆
+  rewrite List-++-right-identity Δ
+    = _ , instantiate-globval l' , instructionsequence-subtype (gvals-valid-type gs⋆) Γ≤Γ' I⋆
+instantiation-progress G⋆ (of-heap hs⋆) (of-heapval l τ≤τ')
+  with allzip-lookup₂ l hs⋆
+... | tuple ws , l' , of-tuple ws⋆
+  with τ≤τ'
+... | ()
+instantiation-progress G⋆ H⋆ (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ is⋆ subs-Γ Γ≤Γ')
+  with instantiation-progress G⋆ H⋆ w⋆
+... | I , ig , I⋆
+  with instructionsequence-subst-many [] Δ₁ Δ₂ (globals-valid-type G⋆) is⋆ subs-Γ (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
+... | I' , subs-I , I'⋆
+  = I' , instantiate-Λ ig subs-I , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆
 step-progress' : ∀ {G ψ₁ H ψ₂ R Γ I} →
                    I ≢ halt →
                    ⊢ G of ψ₁ globals →

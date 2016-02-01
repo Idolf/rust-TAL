@@ -32,6 +32,37 @@ private
   ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
   ... | refl = refl
 
+  is-int : ∀ (w : WordValue) → Dec (∃ λ n → w ≡ int n)
+  is-int (globval l) = no (λ { (_ , ()) })
+  is-int (heapval lₕ) = no (λ { (_ , ()) })
+  is-int (int n) = yes (n , refl)
+  is-int ns = no (λ { (_ , ()) })
+  is-int (uninit τs) = no (λ { (_ , ()) })
+  is-int (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
+
+  ↓-is-int : ∀ regs ♯r → Dec (∃ λ n → regs ↓ ♯r ⇒ int n)
+  ↓-is-int regs ♯r with ↓-dec regs ♯r
+  ... | no ¬l = no (λ { (n , l) → ¬l (_ , l)})
+  ... | yes (v , l) with is-int v
+  ... | yes (n , eq) rewrite eq = yes (n , l)
+  ... | no ¬eq = no (λ { (n , l') → ¬eq (n , ↓-unique l l')})
+
+  is-heapval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ heapval lₕ)
+  is-heapval (globval l) = no (λ { (_ , ()) })
+  is-heapval (heapval lₕ) = yes (lₕ , refl)
+  is-heapval (int n) = no (λ { (_ , ()) })
+  is-heapval ns = no (λ { (_ , ()) })
+  is-heapval (uninit τs) = no (λ { (_ , ()) })
+  is-heapval (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
+
+  ↓-is-heapval : ∀ regs ♯r → Dec (∃ λ lₕ → regs ↓ ♯r ⇒ heapval lₕ)
+  ↓-is-heapval regs ♯r with ↓-dec regs ♯r
+  ... | no ¬l = no (λ { (lₕ , l) → ¬l (_ , l)})
+  ... | yes (v , l) with is-heapval v
+  ... | yes (lₕ , eq) rewrite eq = yes (lₕ , l)
+  ... | no ¬eq = no (λ { (lₕ , l') → ¬eq (lₕ , ↓-unique l l')})
+
+
 eval-unique : ∀ {G w I₁ I₂} →
                 InstantiateGlobal G w I₁ →
                 InstantiateGlobal G w I₂ →
@@ -132,37 +163,6 @@ instantiate-dec G (Λ Δ ∙ w ⟦ is ⟧)
           with eval-unique eval eval'
         help (Iₑ , instantiate-Λ {I = .I} eval' subs-I)
             | refl = ¬subs-I (Iₑ , subs-I)
-
-private
-  is-int : ∀ (w : WordValue) → Dec (∃ λ n → w ≡ int n)
-  is-int (globval l) = no (λ { (_ , ()) })
-  is-int (heapval lₕ) = no (λ { (_ , ()) })
-  is-int (int n) = yes (n , refl)
-  is-int ns = no (λ { (_ , ()) })
-  is-int (uninit τs) = no (λ { (_ , ()) })
-  is-int (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
-
-  ↓-is-int : ∀ regs ♯r → Dec (∃ λ n → regs ↓ ♯r ⇒ int n)
-  ↓-is-int regs ♯r with ↓-dec regs ♯r
-  ... | no ¬l = no (λ { (n , l) → ¬l (_ , l)})
-  ... | yes (v , l) with is-int v
-  ... | yes (n , eq) rewrite eq = yes (n , l)
-  ... | no ¬eq = no (λ { (n , l') → ¬eq (n , ↓-unique l l')})
-
-  is-heapval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ heapval lₕ)
-  is-heapval (globval l) = no (λ { (_ , ()) })
-  is-heapval (heapval lₕ) = yes (lₕ , refl)
-  is-heapval (int n) = no (λ { (_ , ()) })
-  is-heapval ns = no (λ { (_ , ()) })
-  is-heapval (uninit τs) = no (λ { (_ , ()) })
-  is-heapval (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
-
-  ↓-is-heapval : ∀ regs ♯r → Dec (∃ λ lₕ → regs ↓ ♯r ⇒ heapval lₕ)
-  ↓-is-heapval regs ♯r with ↓-dec regs ♯r
-  ... | no ¬l = no (λ { (lₕ , l) → ¬l (_ , l)})
-  ... | yes (v , l) with is-heapval v
-  ... | yes (lₕ , eq) rewrite eq = yes (lₕ , l)
-  ... | no ¬eq = no (λ { (lₕ , l') → ¬eq (lₕ , ↓-unique l l')})
 
 step-decₕ : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
 step-decₕ G (H , register sp regs , add ♯rd ♯rs v ~> I)
