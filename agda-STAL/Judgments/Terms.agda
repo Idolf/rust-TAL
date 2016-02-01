@@ -3,7 +3,6 @@ module Judgments.Terms where
 open import Util
 open import Judgments.Grammar
 open import Judgments.Types
-open import Judgments.Subtypes
 open import Judgments.Substitution
 open import Judgments.StackOperations
 open HighGrammar

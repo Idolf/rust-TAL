@@ -24,5 +24,4 @@ open import Judgments.StackOperations public
 
 -- Step 4: Typing Judgments
 open import Judgments.Types public
-open import Judgments.Subtypes public
 open import Judgments.Terms public

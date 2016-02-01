@@ -95,12 +95,6 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
     with weaken-outside-ctx 0 inc v⋆
   ... | eq rewrite +-comm (length Δ) 0 = eq
 
-  weaken-empty-ctx :
-    ∀ pos inc {v : A} →
-      [] ⊢ v Valid →
-      weaken pos inc v ≡ v
-  weaken-empty-ctx pos inc v⋆ = weaken-outside-ctx pos inc v⋆
-
   valid-subst-exists-many :
     ∀ Δ₁ {Δ₂ Δ₃ is} →
       Δ₃ ⊢ is of Δ₂ instantiations →
@@ -116,18 +110,6 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
     with valid-subst-exists-many Δ₁ is⋆ v'⋆
   ... | vₑ , subs-v , vₑ⋆
     = _ , sub-v ∷ subs-v , vₑ⋆
-
-  valid-subst :
-      ∀ Δ₁ {Δ₂ a i} →
-        Δ₂ ⊢ i of a instantiation →
-        {v v' : A} →
-        Δ₁ ++ a ∷ Δ₂ ⊢ v Valid →
-        v ⟦ i / length Δ₁ ⟧≡ v' →
-        Δ₁ ++ Δ₂ ⊢ v' Valid
-  valid-subst Δ₁ i⋆ v⋆ sub-v
-    with valid-subst-exists Δ₁ i⋆ v⋆
-  ... | v'' , sub-v' , v''⋆
-    rewrite subst-unique sub-v sub-v' = v''⋆
 
   valid-subst-many :
       ∀ Δ₁ {Δ₂ Δ₃ is} →
