@@ -122,6 +122,7 @@ infixr 6 _~>_
 data InstructionSequence : Set where
   _~>_ : Instruction → InstructionSequence → InstructionSequence
   jmp : SmallValue → InstructionSequence
+  halt : InstructionSequence
 
 -- Global values, g
 infix 7 code[_]_∙_
@@ -153,5 +154,6 @@ data RegisterFile : Set where
 ProgramState : Set
 ProgramState = Heap × RegisterFile × InstructionSequence
 
-Program : Set
-Program = Globals × ProgramState
+data Program : Set where
+  going : Globals → ProgramState → Program
+  halted : Program

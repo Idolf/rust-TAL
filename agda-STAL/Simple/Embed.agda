@@ -73,6 +73,7 @@ instance
     where f : H.InstructionSequence → S.InstructionSequence
           f (ι H.~> I) = embed ι S.~> f I
           f (H.jmp v) = S.jmp (embed v)
+          f H.halt = S.halt
 
   embedGlobalValue : Embed H.GlobalValue S.GlobalValue
   embedGlobalValue = mkEmbed f
@@ -107,4 +108,5 @@ instance
   embedProgram : Embed H.Program S.Program
   embedProgram = mkEmbed f
     where f : H.Program → S.Program
-          f (G , P) = embed G , embed P
+          f (H.going G P) = S.going (embed G) (embed P)
+          f H.halted = S.halted

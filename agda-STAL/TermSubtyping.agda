@@ -181,3 +181,4 @@ instructionsequence-subtype ψ₁⋆ Γ₁≤Γ₂ (of-~> ι⋆ I⋆)
 instructionsequence-subtype ψ₁⋆ Γ₁≤Γ₂ (of-jmp v⋆ Γ₁≤Γ')
   with vval-subtype ψ₁⋆ Γ₁≤Γ₂ v⋆
 ... | ∀[ [] ] Γ'' , ∀-≤ Γ'≤Γ'' , v⋆' = of-jmp v⋆' (≤-trans Γ₁≤Γ₂ (≤-trans Γ₁≤Γ' Γ'≤Γ''))
+instructionsequence-subtype ψ₁⋆ Γ₁≤Γ₂ of-halt = of-halt

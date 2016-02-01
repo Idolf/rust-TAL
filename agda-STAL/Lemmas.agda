@@ -1,9 +1,5 @@
 module Lemmas where
 
--- Various small helper lemmas, that
--- does not fit in very well in other places
--- open import Lemmas.Misc public
-
 -- Lemmas about lookup and update of StackTypes.
 -- Includes uniqueness proofs and decidibility proofs.
 open import Lemmas.StackLookup public

@@ -170,6 +170,7 @@ private
 
 
 step-progress' : ∀ {G ψ₁ H ψ₂ R Γ I} →
+                   I ≢ halt →
                    ⊢ G of ψ₁ globals →
                    ψ₁ ⊢ H of ψ₂ heap →
                    ψ₁ , ψ₂ ⊢ R of Γ register →
@@ -179,7 +180,7 @@ step-progress' : ∀ {G ψ₁ H ψ₂ R Γ I} →
                       ψ₁ , ψ₂' ⊢ R' of Γ' register ×
                       ψ₁ , [] , Γ' ⊢ I' instructionsequence ×
                       G ⊢ (H , R , I) ⇒ (H' , R' , I')
-step-progress' {I = add ♯rd ♯rs v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-add eq v⋆) I⋆)
+step-progress' {I = add ♯rd ♯rs v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-add eq v⋆) I⋆)
   with allzipᵥ-lookup ♯rs regs⋆
 ... | lookup⋆
   rewrite eq
@@ -188,7 +189,7 @@ step-progress' {I = add ♯rd ♯rs v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆
   with wval-int-helper G⋆ H⋆ lookup⋆
 ... | n , eq₂
   = _ , _ , _ , _ , I , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd of-int regs⋆) , I⋆ , step-add eq₁ eq₂
-step-progress' {I = sub ♯rd ♯rs v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sub eq v⋆) I⋆)
+step-progress' {I = sub ♯rd ♯rs v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sub eq v⋆) I⋆)
   with allzipᵥ-lookup ♯rs regs⋆
 ... | lookup⋆
   rewrite eq
@@ -197,21 +198,21 @@ step-progress' {I = sub ♯rd ♯rs v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆
   with wval-int-helper G⋆ H⋆ lookup⋆
 ... | n , eq₂
   = _ , _ , _ , _ , I , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd of-int regs⋆) , I⋆ , step-sub eq₁ eq₂
-step-progress' {I = salloc n ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> of-salloc I⋆)
+step-progress' {I = salloc n ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> of-salloc I⋆)
   = _ , _ , _ , _ , _ , H⋆ , of-register (replicate-helper n sp⋆) regs⋆ , I⋆ , step-salloc
-step-progress' {I = sfree n ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sfree drop) I⋆)
+step-progress' {I = sfree n ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sfree drop) I⋆)
   with drop-helper sp⋆ drop
 ... | sp' , sp'⋆ , drop'
   = _ , _ , _ , _ , _ , H⋆ , of-register sp'⋆ regs⋆ , I⋆ , step-sfree drop'
-step-progress' {I = sld ♯rd i ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sld l) I⋆)
+step-progress' {I = sld ♯rd i ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sld l) I⋆)
   with stack-lookup-helper sp⋆ l
 ... | w' , l' , w'⋆
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd w'⋆ regs⋆ ) , I⋆ , step-sld l'
-step-progress' {I = sst i ♯rs ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sst up) I⋆)
+step-progress' {I = sst i ♯rs ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sst up) I⋆)
   with stack-update-helper (allzipᵥ-lookup ♯rs regs⋆) sp⋆ up
 ... | sp' , up' , sp'⋆
   = _ , _ , _ , _ , _ , H⋆ , of-register sp'⋆ regs⋆ , I⋆ , step-sst up'
-step-progress' {I = ld ♯rd ♯rs i ~> I} G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-ld eq l) I⋆)
+step-progress' {I = ld ♯rd ♯rs i ~> I} I≢halt G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-ld eq l) I⋆)
   with allzipᵥ-lookup ♯rs regs⋆
 ... | lookup⋆
   rewrite eq
@@ -222,7 +223,7 @@ step-progress' {I = ld ♯rd ♯rs i ~> I} G⋆ (of-heap hs⋆) (of-register sp�
   with allzip-lookup₂ l₃ ws⋆
 ... | w , l₄ , of-init w⋆
   = _ , _ , _ , _ , _ , of-heap hs⋆ , of-register sp⋆ (allzipᵥ-update ♯rd w⋆ regs⋆) , I⋆ , step-ld eq₁ l₁ l₄
-step-progress' {I = st ♯rd i ♯rs ~> I} G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-st eq lookup≤τ l up) I⋆)
+step-progress' {I = st ♯rd i ♯rs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-st eq lookup≤τ l up) I⋆)
   with allzipᵥ-lookup ♯rd regs⋆ | wval-subtype (allzipᵥ-lookup ♯rs regs⋆) lookup≤τ
 ... | ♯rd⋆ | ♯rs⋆
   rewrite eq
@@ -237,60 +238,68 @@ step-progress' {I = st ♯rd i ♯rs ~> I} G⋆ (of-heap hs⋆) (of-register sp�
   with update-helper₃ (proj₂ (≤-valid lookup≤τ)) τs⁻₂≤τs⁻₁ up₂ up
 ... | τs⁻₃≤τs⁻₁'
   = H' , ψ₂' , _ , _ , I , H'⋆ , of-register (stack-helper ψ₂'≤ψ₂ sp⋆) (regs-subtype regs'⋆ (allzipᵥ-update ♯rd (tuple-≤ τs⁻₃≤τs⁻₁') (≤-refl (regs-valid-type regs⋆)))) , I⋆ , step-st eq₁ l₁ up₁ up₃
-step-progress' {H = H} {ψ₂ = ψ₂} {I = malloc ♯rd τs ~> I} G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-malloc τs⋆) I⋆)
+step-progress' {H = H} {ψ₂ = ψ₂} {I = malloc ♯rd τs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-malloc τs⋆) I⋆)
   = _ , _ , _ , _ , _ , heap-push (of-heap hs⋆) (of-tuple (map-uninit-helper τs⋆)) , of-register (stack-++ sp⋆) (allzipᵥ-update ♯rd (of-heapval (subst₂ (λ h i → ψ₂ ∷ʳ h ↓ i ⇒ h) refl (sym (AllZip-length hs⋆)) (↓-length ψ₂ (tuple (map (λ τ → τ , uninit) τs)))) (≤-refl (valid-tuple (map-uninit-helper₂ τs⋆)))) (regs-++ regs⋆)) , I⋆ , step-malloc
-step-progress' {I = mov ♯rd v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-mov v⋆) I⋆)
+step-progress' {I = mov ♯rd v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-mov v⋆) I⋆)
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd (eval-reduction (globals-valid-type G⋆) regs⋆ v⋆) regs⋆) , I⋆ , step-mov
-step-progress' {I = beq ♯r v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
+step-progress' {I = beq ♯r v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
   with allzipᵥ-lookup ♯r regs⋆
 ... | lookup⋆
   rewrite eq
   with wval-int-helper G⋆ H⋆ lookup⋆
-step-progress' {I = beq ♯r v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
+step-progress' {I = beq ♯r v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
     | lookup⋆ | zero , eq₁
   with instantiation-progress G⋆ H⋆ (eval-reduction (globals-valid-type G⋆) regs⋆ v⋆ )
 ... | I' , ig , I'⋆
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆ , step-beq₀ eq₁ ig
-step-progress' {I = beq ♯r v ~> I} G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
+step-progress' {I = beq ♯r v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
     | lookup⋆ | suc n , eq₁
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , I⋆ , step-beq₁ eq₁ (λ ())
-step-progress' G⋆ H⋆ (of-register sp⋆ regs⋆) (of-jmp v⋆ Γ≤Γ')
+step-progress' I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-jmp v⋆ Γ≤Γ')
   with instantiation-progress G⋆ H⋆ (eval-reduction (globals-valid-type G⋆) regs⋆ v⋆ )
 ... | I' , ig , I'⋆
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆ , step-jmp ig
+step-progress' I≢halt G⋆ H⋆ R⋆ of-halt
+  with I≢halt refl
+... | ()
 
-step-progress : ∀ {G P} →
-                   ⊢ G , P program →
+step-progress : ∀ {P} →
+                   ⊢ P program →
                    ∃ λ P' →
-                     ⊢ G , P' program ×
-                     G ⊢ P ⇒ P'
-step-progress (of-program G⋆ (of-programstate H⋆ R⋆ I⋆))
-  with step-progress' G⋆ H⋆ R⋆ I⋆
+                     ⊢ P' program ×
+                     ⊢ P ⇒ P'
+step-progress {P = going G (H , R , I)} (of-going G⋆ (of-programstate H⋆ R⋆ I⋆))
+  with I ≟ halt
+step-progress {P = going G (H , R , .halt)} (of-going G⋆ (of-programstate H⋆ R⋆ I⋆))
+    | yes refl = halted , of-halted , step-halting
+... | no I≢halt
+  with step-progress' I≢halt G⋆ H⋆ R⋆ I⋆
 ... | _ , _ , _ , _ , _ , H'⋆ , R'⋆ , I'⋆ , step
-  = _ , of-program G⋆ (of-programstate H'⋆ R'⋆ I'⋆) , step
+  = _ , of-going G⋆ (of-programstate H'⋆ R'⋆ I'⋆) , step-going step
+step-progress of-halted = halted , of-halted , step-halted
 
-step-reduction : ∀ {G P P'} →
-                   ⊢ G , P program →
-                   G ⊢ P ⇒ P' →
-                   ⊢ G , P' program
+step-reduction : ∀ {P P'} →
+                   ⊢ P program →
+                   ⊢ P ⇒ P' →
+                   ⊢ P' program
 step-reduction P⋆ step
   with step-progress P⋆
 ... | _ , P'⋆ , step'
-  rewrite step-unique step step'
+  rewrite step-prg-unique step step'
   = P'⋆
 
-steps-reduction : ∀ {n G P₁ P₂} →
-                    ⊢ G , P₁ program →
-                    G ⊢ P₁ ⇒ₙ n / P₂ →
-                    ⊢ G , P₂ program
+steps-reduction : ∀ {n P₁ P₂} →
+                    ⊢ P₁ program →
+                    ⊢ P₁ ⇒ₙ n / P₂ →
+                    ⊢ P₂ program
 steps-reduction P₁⋆ [] = P₁⋆
 steps-reduction P₁⋆ (step ∷ steps)
   = steps-reduction (step-reduction P₁⋆ step) steps
 
-steps-soundness : ∀ {n G P₁ P₂} →
-                    ⊢ G , P₁ program →
-                    G ⊢ P₁ ⇒ₙ n / P₂ →
+steps-soundness : ∀ {n P₁ P₂} →
+                    ⊢  P₁ program →
+                    ⊢ P₁ ⇒ₙ n / P₂ →
                     ∃ λ P₃ →
-                      ⊢ G , P₃ program ×
-                      G ⊢ P₂ ⇒ P₃
+                      ⊢ P₃ program ×
+                      ⊢ P₂ ⇒ P₃
 steps-soundness P⋆ steps = step-progress (steps-reduction P⋆ steps)

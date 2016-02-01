@@ -30,36 +30,30 @@ record Bisimulation (A : Set) (B : Set) : Set₁ where
                       step-A a a'
 
 EmbedBisimulation : Bisimulation H.Program S.Program
-EmbedBisimulation = bisimulation embed-rel step-H step-S forwards backwards
+EmbedBisimulation = bisimulation embed-rel HS.⊢_⇒_ SS.⊢_⇒_ forwards backwards
   where embed-rel : Rel H.Program S.Program
         embed-rel HP SP = embed HP ≡ SP ×
                           ⊢ HP program
 
-        step-H : Rel H.Program H.Program
-        step-H (G , P) (G' , P') = G ≡ G' × G HS.⊢ P ⇒ P'
-
-        step-S : Rel S.Program S.Program
-        step-S (G , P) (G' , P') = G ≡ G' × G SS.⊢ P ⇒ P'
-
         forwards : ∀ {HP HP' SP} →
                      embed-rel HP SP →
-                     step-H HP HP' →
+                     HS.⊢ HP ⇒ HP' →
                      ∃ λ SP' →
                          embed-rel HP' SP' ×
-                         step-S SP SP'
-        forwards (refl , HP⋆) (refl , step)
-          = _ , (refl , step-reduction HP⋆ step) , (refl , embed-step step)
+                         SS.⊢ SP ⇒ SP'
+        forwards (refl , HP⋆) step
+          = _ , (refl , step-reduction HP⋆ step) , embed-step-prg step
 
         backwards : ∀ {HP SP SP'} →
                      embed-rel HP SP →
-                     step-S SP SP' →
+                     SS.⊢ SP ⇒ SP' →
                      ∃ λ HP' →
                          embed-rel HP' SP' ×
-                         step-H HP HP'
-        backwards (refl , HP⋆) (refl , sstep)
+                         HS.⊢ HP ⇒ HP'
+        backwards (refl , HP⋆) sstep
           with step-progress HP⋆
         ... | HP' , HP'⋆ , hstep
-          with embed-step hstep
+          with embed-step-prg hstep
         ... | sstep'
-          rewrite SL.step-unique sstep sstep'
-            = _ , (refl , HP'⋆) , (refl , hstep)
+          rewrite SL.step-prg-unique sstep sstep'
+            = _ , (refl , HP'⋆) , hstep

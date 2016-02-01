@@ -284,6 +284,11 @@ mutual
       --------------------------------------
       ψ₁ , Δ , Γ ⊢ jmp v instructionsequence
 
+    of-halt :
+                  ∀ {ψ₁ Δ Γ} →
+      -------------------------------------
+      ψ₁ , Δ , Γ ⊢ halt instructionsequence
+
   infix 3 _⊢_programstate
   data _⊢_programstate : GlobalLabelAssignment → ProgramState → Set where
     of-programstate :
@@ -296,9 +301,13 @@ mutual
 
   infix 3 ⊢_program
   data ⊢_program : Program → Set where
-    of-program :
+    of-going :
            ∀ {G ψ₁ P} →
        ⊢ G of ψ₁ globals →
       ψ₁ ⊢ P programstate →
       ---------------------
-        ⊢ G , P program
+       ⊢ going G P program
+
+    of-halted :
+      ----------------
+      ⊢ halted program

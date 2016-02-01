@@ -18,3 +18,4 @@ open import Util.Product public
 -- Re-exports
 open import Data.Unit using (⊤ ; tt) public
 open import Data.Empty using (⊥) public
+open import Data.Sum using (inj₁ ; inj₂) renaming (_⊎_ to _∨_) public

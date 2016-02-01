@@ -1845,6 +1845,7 @@ instance
             = cong₂ _~>_ (subst-unique sub-ι₁ sub-ι₂) (unique sub-I₁ sub-I₂)
           unique (subst-jmp sub-v₁) (subst-jmp sub-v₂)
             = cong jmp (subst-unique sub-v₁ sub-v₂)
+          unique subst-halt subst-halt = refl
 
           dec : ∀ I i ι → Dec (∃ λ I' → I ⟦ i / ι ⟧I≡ I')
           dec (ι ~> I) i ιₚ with ι ⟦ i / ιₚ ⟧? | dec I i ιₚ
@@ -1858,6 +1859,7 @@ instance
           ... | yes (v' , sub-v) = yes (jmp v' , subst-jmp sub-v)
           ... | no ¬sub-v =
             no (λ { (jmp v' , subst-jmp sub-v) → ¬sub-v (v' , sub-v)})
+          dec halt i ι = yes (halt , subst-halt)
 
           I-weaken-0 : weaken-0ᵗ InstructionSequence
           I-weaken-0 pos (ι ~> I)
@@ -1865,6 +1867,7 @@ instance
                   | I-weaken-0 pos I = refl
           I-weaken-0 pos (jmp v)
             rewrite weaken-0 pos v = refl
+          I-weaken-0 pos halt = refl
 
           I-weaken-weaken : weaken-weakenᵗ InstructionSequence
           I-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (ι ~> I)
@@ -1872,16 +1875,19 @@ instance
                   | I-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ I = refl
           I-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (jmp v)
             rewrite weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ v = refl
+          I-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ halt = refl
 
           I-weaken-subst : weaken-substᵗ InstructionSequence
           I-weaken-subst inc pos₂≤pos₁ (subst-~> sub-v sub-I) = subst-~> (weaken-subst inc pos₂≤pos₁ sub-v) (I-weaken-subst inc pos₂≤pos₁ sub-I)
           I-weaken-subst inc pos₂≤pos₁ (subst-jmp sub-v) = subst-jmp (weaken-subst inc pos₂≤pos₁ sub-v)
+          I-weaken-subst inc pos₂≤pos₁ subst-halt = subst-halt
 
           I-subst-weaken : subst-weakenᵗ InstructionSequence
           I-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (ι ~> I)
             = subst-~> (subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ ι) (I-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ I)
           I-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (jmp v)
             = subst-jmp (subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ v)
+          I-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ halt = subst-halt
 
           I-subst-subst : subst-substᵗ InstructionSequence
           I-subst-subst sub-i (subst-~> sub-ι₁ sub-I₁) (subst-~> sub-ι₁' sub-I₁')
@@ -1894,6 +1900,8 @@ instance
             with subst-subst sub-i sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             = _ , subst-jmp sub-v₂ , subst-jmp sub-v₂'
+          I-subst-subst sub-i subst-halt subst-halt
+            = halt , subst-halt , subst-halt
 
           I-weaken-exchange : weaken-exchangeᵗ InstructionSequence
           I-weaken-exchange inc₁ inc₂ pos₂≤pos₁ (ι ~> I)
@@ -1901,6 +1909,7 @@ instance
                   | I-weaken-exchange inc₁ inc₂ pos₂≤pos₁ I = refl
           I-weaken-exchange inc₁ inc₂ pos₂≤pos₁ (jmp v)
             rewrite weaken-exchange inc₁ inc₂ pos₂≤pos₁ v = refl
+          I-weaken-exchange inc₁ inc₂ pos₂≤pos₁ halt = refl
 
           I-subst-weaken-inside : subst-weaken-insideᵗ InstructionSequence
           I-subst-weaken-inside pos₁ pos₂ inc (subst-~> sub-ι sub-I)
@@ -1908,3 +1917,5 @@ instance
                        (I-subst-weaken-inside pos₁ pos₂ inc sub-I)
           I-subst-weaken-inside pos₁ pos₂ inc (subst-jmp sub-v)
             = subst-jmp (subst-weaken-inside pos₁ pos₂ inc sub-v)
+          I-subst-weaken-inside pos₁ pos₂ inc subst-halt
+            = subst-halt

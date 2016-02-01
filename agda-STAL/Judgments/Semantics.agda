@@ -129,17 +129,34 @@ data _⊢_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                G ⊢ H , register sp regs , jmp v ⇒
                    H , register sp regs , I
 
-infix 3 _⊢_⇒ₙ_/_
+infix 3 ⊢_⇒_
+data ⊢_⇒_ : Program → Program → Set where
+  step-going :
+          ∀ {G P P'} →
+          G ⊢ P ⇒ P' →
+    ------------------------
+    ⊢ going G P ⇒ going G P'
+
+  step-halting :
+               ∀ {G H R} →
+    ---------------------------------
+    ⊢ going G (H , R , halt) ⇒ halted
+
+  step-halted :
+    -----------------
+    ⊢ halted ⇒ halted
+
+infix 3 ⊢_⇒ₙ_/_
 infixr 5 _∷_
-data _⊢_⇒ₙ_/_ (G : Globals) : ProgramState → ℕ → ProgramState → Set where
+data ⊢_⇒ₙ_/_ : Program → ℕ → Program → Set where
   []  :
-        ∀ {P} →
-    --------------
-    G ⊢ P ⇒ₙ 0 / P
+       ∀ {P} →
+    ------------
+    ⊢ P ⇒ₙ 0 / P
 
   _∷_ :
        ∀ {P₁ P₂ P₃ n} →
-         G ⊢ P₁ ⇒ P₂ →
-       G ⊢ P₂ ⇒ₙ n / P₃ →
-      --------------------
-      G ⊢ P₁ ⇒ₙ suc n / P₃
+          ⊢ P₁ ⇒ P₂ →
+       ⊢ P₂ ⇒ₙ n / P₃ →
+      ------------------
+      ⊢ P₁ ⇒ₙ suc n / P₃

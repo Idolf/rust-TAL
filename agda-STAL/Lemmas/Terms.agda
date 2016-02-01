@@ -411,6 +411,7 @@ instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-~> ι⋆ I⋆)
   = of-~> (instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ ι⋆) (instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ I⋆)
 instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ (of-jmp v⋆ Γ≤Γ')
   = of-jmp (vval-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ v⋆) (subtype-weaken Δ₁ Δ₂ Δ₃ Γ≤Γ')
+instructionsequence-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ of-halt = of-halt
 
 i-subst : ∀ Δ₁ Δ₂ →
             ∀ {i a} →
@@ -579,6 +580,8 @@ instructionsequence-subst Δ₁ Δ₂ {Γ₁ = Γ₁} {Γ₂} ψ₁⋆ i⋆ sub-
   with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v₁⋆
 ... | v₂ , ∀[ [] ] Γ₂' , sub-v , subst-∀ sub-Γ' , v₂⋆
   = _ , subst-jmp sub-v , of-jmp v₂⋆ (subtype-subst Δ₁ i⋆ Γ₁≤Γ₁' sub-Γ sub-Γ')
+instructionsequence-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-halt = _ , subst-halt , of-halt
+
 
 instructionsequence-subst-many : ∀ {ψ₁} Δ₁ Δ₂ Δ₃ {is Γ₁ Γ₂} →
                                    [] ⊢ ψ₁ Valid →

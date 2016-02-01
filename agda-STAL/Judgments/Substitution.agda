@@ -316,6 +316,11 @@ data _⟦_/_⟧I≡_ : InstructionSequence → Instantiation → ℕ →
     --------------------
     jmp v ⟦ i / ι ⟧I≡ jmp v'
 
+  subst-halt :
+          ∀ {i ι} →
+    ---------------------
+    halt ⟦ i / ι ⟧I≡ halt
+
 Vec-Substitution : ∀ A {{S : Substitution A}} m → Substitution (Vec A m)
 Vec-Substitution A m =
     substitution weaken-xs (λ xs i ι xs' → AllZipᵥ (λ x x' → x ⟦ i / ι ⟧≡ x') xs xs')
@@ -391,3 +396,4 @@ instance
     where weaken-I : ℕ → ℕ → InstructionSequence → InstructionSequence
           weaken-I pos inc (ι ~> I) = weaken pos inc ι ~> weaken-I pos inc I
           weaken-I pos inc (jmp v) = jmp (weaken pos inc v)
+          weaken-I pos inc halt = halt

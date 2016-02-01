@@ -97,6 +97,7 @@ embed-subst-I : ∀ {I I' : H.InstructionSequence} {i pos} →
                   embed I ≡ embed I'
 embed-subst-I (subst-~> sub-ι sub-I) = cong₂ _~>_ (embed-subst-ι sub-ι) (embed-subst-I sub-I)
 embed-subst-I (subst-jmp sub-v) = cong jmp (embed-subst-v sub-v)
+embed-subst-I subst-halt = refl
 
 embed-subst-I-many : ∀ {I I' : H.InstructionSequence} {is pos} →
                        I ⟦ is / pos ⟧many≡ I' →
@@ -181,3 +182,10 @@ embed-step (step-jmp {regs = regs} {v = v} ig)
 ... | lab , eq₁ , l
   rewrite embed-eval regs v
     = SS.step-jmp eq₁ l
+
+embed-step-prg : ∀ {P P'} →
+                   ⊢ P ⇒ P' →
+                   SS.⊢ embed P ⇒ embed P'
+embed-step-prg (step-going step) = SS.step-going (embed-step step)
+embed-step-prg step-halting = SS.step-halting
+embed-step-prg step-halted = SS.step-halted

@@ -3,6 +3,7 @@ module Simple.SemanticsLemmas where
 open import Util
 open import Simple.Grammar
 open import Simple.Semantics
+open import Simple.Equality
 
 private
   int-helper : ∀ {n₁ n₂} {w : WordValue} →
@@ -86,13 +87,25 @@ step-unique (step-jmp eq₁ l₁) (step-jmp eq₂ l₂)
         | ↓-unique-globals l₁ l₂
         = refl
 
-exec-unique : ∀ {G P P₁ P₂ n} →
-                 G ⊢ P ⇒ₙ n / P₁ →
-                 G ⊢ P ⇒ₙ n / P₂ →
+step-prg-unique : ∀ {P P₁ P₂} →
+                    ⊢ P ⇒ P₁ →
+                    ⊢ P ⇒ P₂ →
+                    P₁ ≡ P₂
+step-prg-unique (step-going step₁) (step-going step₂)
+  rewrite step-unique step₁ step₂
+    = refl
+step-prg-unique (step-going ()) step-halting
+step-prg-unique step-halting (step-going ())
+step-prg-unique step-halting step-halting = refl
+step-prg-unique step-halted step-halted = refl
+
+exec-unique : ∀ {P P₁ P₂ n} →
+                 ⊢ P ⇒ₙ n / P₁ →
+                 ⊢ P ⇒ₙ n / P₂ →
                  P₁ ≡ P₂
 exec-unique [] [] = refl
 exec-unique (step₁ ∷ exec₁) (step₂ ∷ exec₂)
-  rewrite step-unique step₁ step₂
+  rewrite step-prg-unique step₁ step₂
         | exec-unique exec₁ exec₂ = refl
 
 private
@@ -210,14 +223,30 @@ step-dec G (H , register sp regs , jmp v)
         help (._ , step-jmp eq' l)
           with globval-helper eq eq'
         ... | refl = ¬l (_ , l)
+step-dec G (H , R , halt) = no (λ { (_ , ()) })
 
-exec-dec : ∀ G P n → Dec (∃ λ P' → G ⊢ P ⇒ₙ n / P')
-exec-dec G P zero = yes (P , [])
-exec-dec G P (suc n) with step-dec G P
+step-prg-dec : ∀ P → Dec (∃ λ P' → ⊢ P ⇒ P')
+step-prg-dec (going G (H , R , I))
+  with I ≟ halt | step-dec G (H , R , I)
+step-prg-dec (going G (H , R , .halt))
+    | yes refl | _ = yes (halted , step-halting)
+... | _ | yes (P' , step) = yes (going G P' , step-going step)
+... | no I≢halt | no ¬step = no (help I≢halt ¬step)
+  where help : ∀ {G H R I} →
+                 I ≢ halt →
+                 ¬ ∃ (λ P' → (G ⊢ (H , R , I) ⇒ P')) →
+                 ¬ ∃ (λ P' → (⊢ going G (H , R , I) ⇒ P'))
+        help I≢halt ¬step (_ , step-going step) = ¬step (_ , step)
+        help I≢halt ¬step (_ , step-halting) = I≢halt refl
+step-prg-dec halted = yes (halted , step-halted)
+
+exec-dec : ∀ P n → Dec (∃ λ P' → ⊢ P ⇒ₙ n / P')
+exec-dec P zero = yes (P , [])
+exec-dec P (suc n) with step-prg-dec P
 ... | no ¬step = no (λ { (P'' , step ∷ exec) → ¬step (_ , step)})
-... | yes (P' , step) with exec-dec G P' n
+... | yes (P' , step) with exec-dec P' n
 ... | no ¬exec = no (λ
   { (P'' , step' ∷ exec) → ¬exec (P'' ,
-    subst (λ p → G ⊢ p ⇒ₙ n / P'') (step-unique step' step) exec
+    subst (λ P → ⊢ P ⇒ₙ n / P'') (step-prg-unique step' step) exec
   )})
 ... | yes (P'' , exec) = yes (P'' , step ∷ exec)

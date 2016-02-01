@@ -56,3 +56,4 @@ instructionsequence-weaken-right Δ₁ Δ₂ (of-~> ι⋆ I⋆)
 ... | ι⋆'
   = of-~> ι⋆' (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
 instructionsequence-weaken-right Δ₁ Δ₂ (of-jmp v⋆ Γ≤Γ') = of-jmp (vval-weaken-right Δ₁ Δ₂ v⋆) (≤-++ Γ≤Γ')
+instructionsequence-weaken-right Δ₁ Δ₂ of-halt = of-halt
