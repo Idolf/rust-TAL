@@ -3,6 +3,7 @@ module HeapPush where
 open import Util
 open import Judgments
 open import Lemmas
+open HighGrammar
 
 wval-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ w τ} →
             ψ₁ , ψ₂ ⊢ w of τ wval →

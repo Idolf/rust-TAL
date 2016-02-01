@@ -7,6 +7,8 @@ open import TermSubtyping
 open import HeapPush
 open import HeapUpdate
 open import WeakenRight
+open HighGrammar
+open HighSemantics
 
 eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs} →
                    [] ⊢ ψ₁ Valid →
@@ -285,7 +287,7 @@ step-reduction : ∀ {P P'} →
 step-reduction P⋆ step
   with step-progress P⋆
 ... | _ , P'⋆ , step'
-  rewrite step-prg-unique step step'
+  rewrite step-prg-uniqueₕ step step'
   = P'⋆
 
 steps-reduction : ∀ {n P₁ P₂} →

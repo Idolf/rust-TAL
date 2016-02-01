@@ -3,6 +3,7 @@ module TermSubtyping where
 open import Util
 open import Judgments
 open import Lemmas
+open HighGrammar
 
 private
   ≤int⇒≡int : ∀ {Δ} {τ : Type} →

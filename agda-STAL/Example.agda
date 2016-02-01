@@ -1,6 +1,7 @@
 open import Util
 open import Judgments
 open import Lemmas
+open HighGrammar
 
 -- Static type checking
 foo-word : SmallValue

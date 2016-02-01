@@ -4,6 +4,7 @@ open import Util
 open import Judgments
 import Data.Nat as N
 import Data.Nat.Properties as NP
+open HighGrammar
 
 -- The purpose of this file is
 -- to include instances of this record,

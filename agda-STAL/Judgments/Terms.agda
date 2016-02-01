@@ -5,8 +5,8 @@ open import Judgments.Grammar
 open import Judgments.Types
 open import Judgments.Subtypes
 open import Judgments.Substitution
-open import Judgments.StackLookup
-
+open import Judgments.StackOperations
+open HighGrammar
 
 lookup-regs : Register → RegisterAssignment → Type
 lookup-regs ♯r (registerₐ sp regs) = lookup ♯r regs
@@ -211,16 +211,16 @@ mutual
                registerₐ (stack-append (replicate n ns) sp) regs instruction
 
     of-sfree :
-                               ∀ {ψ₁ Δ sp sp' regs n} →
+                             ∀ {ψ₁ Δ sp sp' regs n} →
                                stack-drop n sp sp' →
       ----------------------------------------------------------------------
       ψ₁ , Δ , registerₐ sp regs ⊢ sfree n ⇒ registerₐ sp' regs instruction
 
     of-sld :
-                      ∀ {ψ₁ Δ Γ ♯rd i τ} →
-                  register-stack-lookup i Γ τ →
-      --------------------------------------------------------
-      ψ₁ , Δ , Γ ⊢ sld ♯rd i ⇒ update-regs ♯rd τ Γ instruction
+                         ∀ {ψ₁ Δ sp regs ♯rd i τ} →
+                            stack-lookup i sp τ →
+      -------------------------------------------------------------------------------------
+      ψ₁ , Δ , registerₐ sp regs ⊢ sld ♯rd i ⇒ registerₐ sp (update ♯rd τ regs) instruction
 
     of-sst :
                       ∀ {ψ₁ Δ sp sp' regs i ♯rs} →

@@ -1,22 +1,28 @@
 module Judgments where
 
--- Has the base grammar on which everything depends
+-- Step 1: Base Grammar
+open import Judgments.CommonGrammar public
+open import Judgments.SimpleGrammar public
+open import Judgments.HighGrammar public
 open import Judgments.Grammar public
 
--- The equivalent of _↓_⇒_ for StackTypes
-open import Judgments.StackLookup public
+-- Step 2: Language translations
+open import Judgments.Embed public
 
--- Judgments showing if a type-like object is valid
-open import Judgments.Types public
-
--- Judgments showing of a type-like object is a subtype of another
-open import Judgments.Subtypes public
-
--- Substitution judgments
+-- Step 3 preparations: Substitution Judgments
+-- (needed for the high semantics)
 open import Judgments.Substitution public
 
--- Judgments to show if a term is valid
-open import Judgments.Terms public
-
--- The small-step semantics for our language
+-- Step 3: Semantics
+open import Judgments.SimpleSemantics public
+open import Judgments.HighSemantics public
 open import Judgments.Semantics public
+
+-- Step 4 preparations: Stack operations
+-- (needed for the term judgments)
+open import Judgments.StackOperations public
+
+-- Step 4: Typing Judgments
+open import Judgments.Types public
+open import Judgments.Subtypes public
+open import Judgments.Terms public

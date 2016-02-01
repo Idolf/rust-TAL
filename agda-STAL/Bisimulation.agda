@@ -1,15 +1,21 @@
-module Simple.Bisimulation where
+module Bisimulation where
 
 open import Util
 open import Judgments
+open import Lemmas
 open import Soundness
-open import Judgments.Grammar as H
-open import Simple.Grammar as S
-open import Judgments.Semantics as HS
-open import Simple.Semantics as SS
-open import Simple.SemanticsLemmas as SL
-open import Simple.Embed
-open import Simple.EmbedSemantics
+open import EmbedSemantics
+
+private
+  module S where
+    open SimpleGrammar public
+    open SimpleSemantics public
+    open SimpleSemanticsLemmas public
+
+  module H where
+    open HighGrammar public
+    open HighSemantics public
+    open HighSemanticsLemmas public
 
 Rel : Set → Set → Set₁
 Rel A B = A → B → Set
@@ -30,30 +36,30 @@ record Bisimulation (A : Set) (B : Set) : Set₁ where
                       step-A a a'
 
 EmbedBisimulation : Bisimulation H.Program S.Program
-EmbedBisimulation = bisimulation embed-rel HS.⊢_⇒_ SS.⊢_⇒_ forwards backwards
+EmbedBisimulation = bisimulation embed-rel H.⊢_⇒_ S.⊢_⇒_ forwards backwards
   where embed-rel : Rel H.Program S.Program
         embed-rel HP SP = embed HP ≡ SP ×
                           ⊢ HP program
 
         forwards : ∀ {HP HP' SP} →
                      embed-rel HP SP →
-                     HS.⊢ HP ⇒ HP' →
+                     H.⊢ HP ⇒ HP' →
                      ∃ λ SP' →
                          embed-rel HP' SP' ×
-                         SS.⊢ SP ⇒ SP'
+                         S.⊢ SP ⇒ SP'
         forwards (refl , HP⋆) step
           = _ , (refl , step-reduction HP⋆ step) , embed-step-prg step
 
         backwards : ∀ {HP SP SP'} →
                      embed-rel HP SP →
-                     SS.⊢ SP ⇒ SP' →
+                     S.⊢ SP ⇒ SP' →
                      ∃ λ HP' →
                          embed-rel HP' SP' ×
-                         HS.⊢ HP ⇒ HP'
+                         H.⊢ HP ⇒ HP'
         backwards (refl , HP⋆) sstep
           with step-progress HP⋆
         ... | HP' , HP'⋆ , hstep
           with embed-step-prg hstep
         ... | sstep'
-          rewrite SL.step-prg-unique sstep sstep'
+          rewrite step-prg-uniqueₛ sstep sstep'
             = _ , (refl , HP'⋆) , hstep

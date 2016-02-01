@@ -3,6 +3,7 @@ module Judgments.Subtypes where
 open import Util
 open import Judgments.Grammar
 open import Judgments.Types
+open HighGrammar
 
 -- This file contains judgments to determine subtyping
 -- relations. As syntactic sugar, we include this record

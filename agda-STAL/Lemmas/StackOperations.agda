@@ -1,4 +1,4 @@
-module Lemmas.StackLookup where
+module Lemmas.StackOperations where
 
 open import Util
 open import Judgments

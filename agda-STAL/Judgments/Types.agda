@@ -2,6 +2,7 @@ module Judgments.Types where
 
 open import Util
 open import Judgments.Grammar
+open HighGrammar
 
 -- This file contains judgments to determine of
 -- a type-like object is valid in a given context.

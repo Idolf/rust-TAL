@@ -1,4 +1,4 @@
-module Judgments.StackLookup where
+module Judgments.StackOperations where
 
 open import Util
 open import Judgments.Grammar
@@ -26,9 +26,6 @@ data stack-update : ℕ → Type → StackType → StackType → Set where
             stack-update i τ₁ σ₁ σ₂ →
     -------------------------------------------
     stack-update (suc i) τ₁ (τ₂ ∷ σ₁) (τ₂ ∷ σ₂)
-
-register-stack-lookup : ℕ → RegisterAssignment → Type → Set
-register-stack-lookup n (registerₐ sp regs) τ = stack-lookup n sp τ
 
 stack-append : List Type → StackType → StackType
 stack-append [] σ = σ

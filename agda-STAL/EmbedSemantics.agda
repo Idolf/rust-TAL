@@ -1,12 +1,17 @@
-module Simple.EmbedSemantics where
+module EmbedSemantics where
 
 open import Util
-open import Simple.Embed
-open import Simple.Grammar
 open import Judgments
 open import Data.List using (drop)
-import Simple.Semantics as SS
-import Judgments.Grammar as H
+
+private
+  module S where
+    open SimpleGrammar public
+    open SimpleSemantics public
+
+  module H where
+    open HighGrammar public
+    open HighSemantics public
 
 private
   embed-↓ : ∀ {A B : Set} {{E : Embed A B}}
@@ -108,7 +113,7 @@ embed-subst-I-many (sub-I ∷ subs-I)
     = embed-subst-I-many subs-I
 
 embed-eval : ∀ regs v →
-               embed (evalSmallValue regs v) ≡ SS.evalSmallValue (embed regs) (embed v)
+               embed (H.evalSmallValue regs v) ≡ S.evalSmallValue (embed regs) (embed v)
 embed-eval regs (reg ♯r) = embed-lookup ♯r regs
 embed-eval regs (globval l) = refl
 embed-eval regs (int i) = refl
@@ -129,63 +134,63 @@ embed-instantiate (instantiate-Λ ig subs-I)
     = _ , eq , l
 
 embed-step : ∀ {G P P'} →
-               G ⊢ P ⇒ P' →
-               embed G SS.⊢ embed P ⇒ embed P'
+               G H.⊢ P ⇒ P' →
+               embed G S.⊢ embed P ⇒ embed P'
 embed-step (step-add {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
   rewrite embed-update ♯rd (int (n₁ + n₂)) regs
-        = SS.step-add (trans (sym (embed-eval regs v)) (cong embed eq₁))
+        = step-add (trans (sym (embed-eval regs v)) (cong embed eq₁))
                       (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₂))
 embed-step (step-sub {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
   rewrite embed-update ♯rd (int (n₁ ∸ n₂)) regs
-        = SS.step-sub (trans (sym (embed-eval regs v)) (cong embed eq₁))
+        = step-sub (trans (sym (embed-eval regs v)) (cong embed eq₁))
                       (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₂))
 embed-step (step-salloc {sp = sp} {n = n})
   rewrite replicate-ns n sp
-    = SS.step-salloc
+    = step-salloc
 embed-step (step-sfree drop)
   rewrite drop-helper drop
-    = SS.step-sfree
+    = step-sfree
 embed-step (step-sld {regs = regs} {♯rd = ♯rd} {w = w} l)
   rewrite embed-update ♯rd w regs
-    = SS.step-sld (embed-↓ l)
+    = step-sld (embed-↓ l)
 embed-step (step-sst {regs = regs} {♯rs = ♯rs} up)
   with embed-← up
 ... | up'
   rewrite embed-lookup ♯rs regs
-    = SS.step-sst up'
+    = step-sst up'
 embed-step (step-ld {regs = regs} {♯rd = ♯rd} {♯rs} {w = w} eq l₁ l₂)
   rewrite embed-update ♯rd w regs
-  = SS.step-ld (trans (sym (embed-lookup ♯rs regs)) (cong embed eq)) (embed-↓ l₁) (embed-↓ l₂)
+  = step-ld (trans (sym (embed-lookup ♯rs regs)) (cong embed eq)) (embed-↓ l₁) (embed-↓ l₂)
 embed-step (step-st {regs = regs} {♯rd = ♯rd} {♯rs = ♯rs} eq l up₁ up₂)
   with embed-← up₁
 ... | up₁'
   rewrite embed-lookup ♯rs regs
-  = SS.step-st (trans (sym (embed-lookup ♯rd regs)) (cong embed eq)) (embed-↓ l) up₁' (embed-← up₂)
+  = step-st (trans (sym (embed-lookup ♯rd regs)) (cong embed eq)) (embed-↓ l) up₁' (embed-← up₂)
 embed-step (step-malloc {H = H} {regs = regs} {♯rd = ♯rd} {τs = τs})
   rewrite malloc-helper H τs
         | embed-update ♯rd (heapval (length H)) regs
         | sym (embed-length H)
-    = SS.step-malloc
+    = step-malloc
 embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v} )
-  rewrite embed-update ♯rd (evalSmallValue regs v) regs
+  rewrite embed-update ♯rd (H.evalSmallValue regs v) regs
         | embed-eval regs v
-  = SS.step-mov
+  = step-mov
 embed-step (step-beq₀ {regs = regs} {♯r = ♯r} {v = v} eq ig)
   with embed-instantiate ig
 ... | lab , eq₁ , l
   rewrite embed-eval regs v
-  = SS.step-beq₀ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) eq₁ l
+  = step-beq₀ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) eq₁ l
 embed-step (step-beq₁ {regs = regs} {♯r = ♯r} eq neq)
-  = SS.step-beq₁ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) neq
+  = step-beq₁ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) neq
 embed-step (step-jmp {regs = regs} {v = v} ig)
   with embed-instantiate ig
 ... | lab , eq₁ , l
   rewrite embed-eval regs v
-    = SS.step-jmp eq₁ l
+    = step-jmp eq₁ l
 
 embed-step-prg : ∀ {P P'} →
-                   ⊢ P ⇒ P' →
-                   SS.⊢ embed P ⇒ embed P'
-embed-step-prg (step-going step) = SS.step-going (embed-step step)
-embed-step-prg step-halting = SS.step-halting
-embed-step-prg step-halted = SS.step-halted
+                   H.⊢ P ⇒ P' →
+                   S.⊢ embed P ⇒ embed P'
+embed-step-prg (step-going step) = step-going (embed-step step)
+embed-step-prg step-halting = step-halting
+embed-step-prg step-halted = step-halted

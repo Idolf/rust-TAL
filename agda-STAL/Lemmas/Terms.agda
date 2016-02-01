@@ -9,6 +9,7 @@ open import Lemmas.TypeSubstitution
 open import Lemmas.SubtypeSubstitution
 open import Lemmas.Subtypes
 import Data.Nat.Properties as NP
+open HighGrammar
 
 private
   weaken-lookup : ∀ {n} ♯r pos inc (τs : Vec Type n) →
@@ -45,11 +46,6 @@ private
                           stack-lookup n (weaken pos inc σ) (weaken pos inc τ)
   weaken-stack-lookup pos inc here = here
   weaken-stack-lookup pos inc (there drop) = there (weaken-stack-lookup pos inc drop)
-
-  weaken-reg-stack-lookup : ∀ {n} pos inc {Γ τ} →
-                              register-stack-lookup n Γ τ →
-                              register-stack-lookup n (weaken pos inc Γ) (weaken pos inc τ)
-  weaken-reg-stack-lookup pos inc {Γ = registerₐ sp regs} l = weaken-stack-lookup pos inc l
 
   weaken-stack-update : ∀ {n} pos inc {τ σ σ'} →
                           stack-update n τ σ σ' →
@@ -154,14 +150,6 @@ private
     with subst-stack-lookup l sub-σ
   ... | τ' , l' , sub-τ'
     = τ' , there l' , sub-τ'
-
-  subst-reg-stack-lookup : ∀ {n i pos Γ Γ' τ} →
-                             register-stack-lookup n Γ τ →
-                             Γ ⟦ i / pos ⟧≡ Γ' →
-                             ∃ λ τ' →
-                               register-stack-lookup n Γ' τ' ×
-                               τ ⟦ i / pos ⟧≡ τ'
-  subst-reg-stack-lookup l (subst-registerₐ sub-sp sub-regs) = subst-stack-lookup l sub-sp
 
   subst-stack-update : ∀ {n i pos σ₁ σ₁' σ₂ τ₁ τ₂} →
                           stack-update n τ₁ σ₁ σ₁' →
@@ -374,9 +362,9 @@ instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {salloc n} {registerₐ sp₁ regs
   rewrite weaken-stack-append-ns n (length Δ₁) (length Δ₂) sp₁ = of-salloc
 instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sfree n} {registerₐ sp₁ regs₁} (of-sfree drop)
   = of-sfree (weaken-stack-drop (length Δ₁) (length Δ₂) drop)
-instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sld ♯rd i} {Γ} (of-sld {τ = τ} l)
-  rewrite weaken-update-regs ♯rd (length Δ₁) (length Δ₂) τ Γ
-  = of-sld (weaken-reg-stack-lookup (length Δ₁) (length Δ₂) l)
+instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sld ♯rd i} {registerₐ sp regs} (of-sld {τ = τ} l)
+  rewrite weaken-update ♯rd (length Δ₁) (length Δ₂) τ regs
+  = of-sld (weaken-stack-lookup (length Δ₁) (length Δ₂) l)
 instruction-weaken ψ₁⋆ Δ₁ Δ₂ Δ₃ {sst i ♯rs} {registerₐ sp regs} (of-sst up)
   with weaken-stack-update (length Δ₁) (length Δ₂) up
 ... | up'
@@ -516,10 +504,10 @@ instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ (subst-registerₐ sub-sp sub-regs) 
   with subst-stack-drop drop sub-sp
 ... | _ , drop' , sub-sp'
   = _ , _ , subst-sfree , subst-registerₐ sub-sp' sub-regs , of-sfree drop'
-instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {sld ♯rd i} (of-sld l)
-  with subst-reg-stack-lookup l sub-Γ
+instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ (subst-registerₐ sub-sp sub-regs) {sld ♯rd i} (of-sld l)
+  with subst-stack-lookup l sub-sp
 ... | τ' , l' , sub-τ
-  = _ , _ , subst-sld , subst-update-regs ♯rd sub-τ sub-Γ  , of-sld l'
+  = _ , _ , subst-sld , subst-update-regs ♯rd sub-τ (subst-registerₐ sub-sp sub-regs) , of-sld l'
 instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ (subst-registerₐ sub-sp sub-regs) {sst i ♯rs} (of-sst up)
   with subst-stack-update up (subst-lookup ♯rs sub-regs) sub-sp
 ... | sp' , up' , sub-sp'

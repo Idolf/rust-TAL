@@ -2,6 +2,7 @@ module Judgments.Substitution where
 
 open import Util
 open import Judgments.Grammar
+open HighGrammar
 
 -- The purpose of this file is
 -- to include instances of this record.
@@ -204,7 +205,7 @@ data _⟦_/_⟧is≡_ : Instantiations → Instantiation → ℕ → Instantiati
        i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
 
 infix 3 _⟦_/_⟧v≡_
-data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → Set where
+data _⟦_/_⟧v≡_ : SmallValueₕ → Instantiation → ℕ → SmallValueₕ → Set where
   subst-reg :
           ∀ {♯r i ι} →
     -------------------------
@@ -239,7 +240,7 @@ data _⟦_/_⟧v≡_ : SmallValue → Instantiation → ℕ → SmallValue → S
     (Λ Δ ∙ v ⟦ is ⟧) ⟦ i / ι ⟧v≡ (Λ Δ ∙ v' ⟦ is' ⟧)
 
 infix 3 _⟦_/_⟧ι≡_
-data _⟦_/_⟧ι≡_ : Instruction → Instantiation → ℕ  → Instruction → Set where
+data _⟦_/_⟧ι≡_ : Instructionₕ → Instantiation → ℕ  → Instructionₕ → Set where
   subst-add :
            ∀ {♯rd ♯rs v v' i ι} →
                v ⟦ i / ι ⟧v≡ v' →
@@ -301,8 +302,8 @@ data _⟦_/_⟧ι≡_ : Instruction → Instantiation → ℕ  → Instruction �
     beq ♯r v ⟦ i / ι ⟧ι≡ beq ♯r v'
 
 infix 3 _⟦_/_⟧I≡_
-data _⟦_/_⟧I≡_ : InstructionSequence → Instantiation → ℕ →
-                 InstructionSequence → Set where
+data _⟦_/_⟧I≡_ : InstructionSequenceₕ → Instantiation → ℕ →
+                 InstructionSequenceₕ → Set where
   subst-~> :
         ∀ {ι ι' I I' i ιₚ} →
          ι ⟦ i / ιₚ ⟧ι≡ ι' →
@@ -366,9 +367,9 @@ instance
   Instantiations-Substitution : Substitution Instantiations
   Instantiations-Substitution = substitution weaken-is _⟦_/_⟧is≡_
 
-  SmallValue-Substitution : Substitution SmallValue
+  SmallValue-Substitution : Substitution SmallValueₕ
   SmallValue-Substitution = substitution weaken-v _⟦_/_⟧v≡_
-    where weaken-v : ℕ → ℕ → SmallValue → SmallValue
+    where weaken-v : ℕ → ℕ → SmallValueₕ → SmallValueₕ
           weaken-v pos inc (reg ♯r) = reg ♯r
           weaken-v pos inc (globval l) = globval l
           weaken-v pos inc (int i) = int i
@@ -376,9 +377,9 @@ instance
           weaken-v pos inc (uninit τ) = uninit (weaken pos inc τ)
           weaken-v pos inc (Λ Δ ∙ v ⟦ is ⟧) = Λ Δ ∙ weaken-v pos inc v ⟦ weaken (length Δ + pos) inc is ⟧
 
-  Instruction-Substitution : Substitution Instruction
+  Instruction-Substitution : Substitution Instructionₕ
   Instruction-Substitution = substitution weaken-ι _⟦_/_⟧ι≡_
-    where weaken-ι : ℕ → ℕ → Instruction → Instruction
+    where weaken-ι : ℕ → ℕ → Instructionₕ → Instructionₕ
           weaken-ι pos inc (add ♯rd ♯rs v) = add ♯rd ♯rs (weaken pos inc v)
           weaken-ι pos inc (sub ♯rd ♯rs v) = sub ♯rd ♯rs (weaken pos inc v)
           weaken-ι pos inc (salloc i) = salloc i
@@ -391,9 +392,9 @@ instance
           weaken-ι pos inc (mov ♯rd v) = mov ♯rd (weaken pos inc v)
           weaken-ι pos inc (beq ♯r v) = beq ♯r (weaken pos inc v)
 
-  InstructionSequence-Substitution : Substitution InstructionSequence
+  InstructionSequence-Substitution : Substitution InstructionSequenceₕ
   InstructionSequence-Substitution = substitution weaken-I _⟦_/_⟧I≡_
-    where weaken-I : ℕ → ℕ → InstructionSequence → InstructionSequence
+    where weaken-I : ℕ → ℕ → InstructionSequenceₕ → InstructionSequenceₕ
           weaken-I pos inc (ι ~> I) = weaken pos inc ι ~> weaken-I pos inc I
           weaken-I pos inc (jmp v) = jmp (weaken pos inc v)
           weaken-I pos inc halt = halt

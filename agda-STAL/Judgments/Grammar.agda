@@ -1,159 +1,82 @@
 module Judgments.Grammar where
 
-open import Util
+open import Judgments.SimpleGrammar public
+open import Judgments.HighGrammar public
 
--- The purpose of this file is to introduce the base grammar
--- on which every other file depends.
+module SimpleGrammar where
+  open import Judgments.SimpleGrammar
 
-♯regs : ℕ
-♯regs = 4
+  WordValue : Set
+  WordValue = WordValueₛ
 
--- Assignment index, ι
-AssignmentIndex : Set
-AssignmentIndex = ℕ
+  SmallValue : Set
+  SmallValue = SmallValueₛ
 
-mutual
-  -- Types, τ
-  infix 7  ∀[_]_
-  data Type : Set where
-    α⁼    : AssignmentIndex → Type
-    int   : Type
-    ns    : Type
-    ∀[_]_ : TypeAssumptions → RegisterAssignment → Type
-    tuple : List InitType → Type
+  Instruction : Set
+  Instruction = Instructionₛ
 
-  -- Initialization flags, φ
-  data InitializationFlag : Set where
-    init : InitializationFlag
-    uninit : InitializationFlag
+  InstructionSequence : Set
+  InstructionSequence = InstructionSequenceₛ
 
-  -- Possible uninitialized type, τ⁻
-  InitType : Set
-  InitType = Type × InitializationFlag
+  GlobalValue : Set
+  GlobalValue = GlobalValueₛ
 
-  -- Stack types, σ
-  infixr 5 _∷_
-  data StackType : Set where
-    ρ⁼  : AssignmentIndex → StackType
-    []  : StackType
-    _∷_ : Type → StackType → StackType
+  Globals : Set
+  Globals = Globalsₛ
 
-  -- Type assignments, Δ
-  TypeAssumptions : Set
-  TypeAssumptions = List TypeAssumptionValue
+  HeapValue : Set
+  HeapValue = HeapValueₛ
 
-  -- Type assignment values, a
-  data TypeAssumptionValue : Set where
-    α : TypeAssumptionValue
-    ρ : TypeAssumptionValue
+  Heap : Set
+  Heap = Heapₛ
 
-  -- Register assignments, Γ
-  data RegisterAssignment : Set where
-    registerₐ : StackType → Vec Type ♯regs → RegisterAssignment
+  Stack : Set
+  Stack = Stackₛ
 
--- Global label assignments, ψ₁
-GlobalLabelAssignment : Set
-GlobalLabelAssignment = List Type
+  RegisterFile : Set
+  RegisterFile = RegisterFileₛ
 
--- Heap label assignments, ψ₂
-HeapLabelAssignment : Set
-HeapLabelAssignment = List Type
+  ProgramState : Set
+  ProgramState = ProgramStateₛ
 
--- Label assignments, ψ
-LabelAssignment : Set
-LabelAssignment = GlobalLabelAssignment × HeapLabelAssignment
+  Program : Set
+  Program = Programₛ
 
--- Registers, ♯r
-Register : Set
-Register = Fin ♯regs
+module HighGrammar where
+  open import Judgments.HighGrammar
 
--- Global labels, l
-GlobLabel : Set
-GlobLabel = ℕ
+  WordValue : Set
+  WordValue = WordValueₕ
 
--- Heap labels, lₕ
-HeapLabel : Set
-HeapLabel = ℕ
+  SmallValue : Set
+  SmallValue = SmallValueₕ
 
--- Instantiation, i
-data Instantiation : Set where
-  α : Type → Instantiation
-  ρ : StackType → Instantiation
+  Instruction : Set
+  Instruction = Instructionₕ
 
--- Instantiations, is
-Instantiations : Set
-Instantiations = List Instantiation
+  InstructionSequence : Set
+  InstructionSequence = InstructionSequenceₕ
 
--- Word value, w
-infixl 6 Λ_∙_⟦_⟧
-data WordValue : Set where
-  globval : GlobLabel → WordValue
-  heapval : HeapLabel → WordValue
-  int     : ℕ → WordValue
-  ns      : WordValue
-  uninit  : Type → WordValue
-  Λ_∙_⟦_⟧ : TypeAssumptions → WordValue → Instantiations → WordValue
+  GlobalValue : Set
+  GlobalValue = GlobalValueₕ
 
--- Small values, v
-data SmallValue : Set where
-  reg     : Register → SmallValue
-  globval : GlobLabel → SmallValue
-  int     : ℕ → SmallValue
-  ns      : SmallValue
-  uninit  : Type → SmallValue
-  Λ_∙_⟦_⟧ : TypeAssumptions → SmallValue → Instantiations → SmallValue
+  Globals : Set
+  Globals = Globalsₕ
 
--- ι
-data Instruction : Set where
-  add    : Register → Register → SmallValue → Instruction
-  sub    : Register → Register → SmallValue → Instruction
-  salloc : ℕ → Instruction
-  sfree  : ℕ → Instruction
-  sld    : Register → ℕ → Instruction
-  sst    : ℕ → Register → Instruction
-  ld     : Register → Register → ℕ → Instruction
-  st     : Register → ℕ → Register → Instruction
-  malloc : Register → List Type → Instruction
-  mov    : Register → SmallValue → Instruction
-  beq    : Register → SmallValue → Instruction
+  HeapValue : Set
+  HeapValue = HeapValueₕ
 
--- I
-infixr 6 _~>_
-data InstructionSequence : Set where
-  _~>_ : Instruction → InstructionSequence → InstructionSequence
-  jmp : SmallValue → InstructionSequence
-  halt : InstructionSequence
+  Heap : Set
+  Heap = Heapₕ
 
--- Global values, g
-infix 7 code[_]_∙_
-data GlobalValue : Set where
-  code[_]_∙_ :
-    TypeAssumptions → RegisterAssignment → InstructionSequence → GlobalValue
+  Stack : Set
+  Stack = Stackₕ
 
--- Global constants, G
-Globals : Set
-Globals = List GlobalValue
+  RegisterFile : Set
+  RegisterFile = RegisterFileₕ
 
--- Heap values, h
-data HeapValue : Set where
-  tuple : List WordValue → HeapValue
+  ProgramState : Set
+  ProgramState = ProgramStateₕ
 
--- Heaps, H
-Heap : Set
-Heap = List HeapValue
-
--- Stacks, S
-Stack : Set
-Stack = List WordValue
-
--- Register files, R
-data RegisterFile : Set where
-  register : Stack → Vec WordValue ♯regs → RegisterFile
-
--- P
-ProgramState : Set
-ProgramState = Heap × RegisterFile × InstructionSequence
-
-data Program : Set where
-  going : Globals → ProgramState → Program
-  halted : Program
+  Program : Set
+  Program = Programₕ

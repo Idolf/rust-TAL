@@ -3,6 +3,7 @@ module HeapUpdate where
 open import Util
 open import Judgments
 open import Lemmas
+open HighGrammar
 
 φ-init-≤ : ∀ {φ} → init ≤φ φ
 φ-init-≤ {init} = φ-≤-init
