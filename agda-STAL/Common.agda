@@ -15,4 +15,5 @@ open import HeapPush
 open import TermSubtyping
 open import WeakenRight
 open import Soundness
+open import Bisimulation
 open import Example
