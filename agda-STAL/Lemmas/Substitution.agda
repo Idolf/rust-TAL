@@ -60,6 +60,21 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
   subst-unique-many (sub-v₁ ∷ subs-v₁) (sub-v₂ ∷ subs-v₂)
       | refl | refl = refl
 
+  _⟦_/_⟧many? : ∀ (v : A) is ι → Dec (∃ λ v' → v ⟦ is / ι ⟧many≡ v')
+  v ⟦ [] / ι ⟧many? = yes (v , [])
+  v ⟦ i ∷ is / ι ⟧many?
+    with v ⟦ i / ι ⟧?
+  ... | no ¬sub-v = no (λ { (vₑ , sub-v ∷ subs-v) → ¬sub-v (_ , sub-v)})
+  ... | yes (v' , sub-v)
+    with v' ⟦ is / ι ⟧many?
+  ... | yes (vₑ , subs-v) = yes (vₑ , sub-v ∷ subs-v)
+  ... | no ¬subs-v = no help
+    where help : ¬ (∃ λ vₑ → v ⟦ i ∷ is / ι ⟧many≡ vₑ)
+          help (vₑ , sub-v' ∷ subs-v)
+            with subst-unique sub-v sub-v'
+          help (vₑ , sub-v' ∷ subs-v)
+              | refl = ¬subs-v (vₑ , subs-v)
+
   subst-subst-many : ∀ {vᵢ₁ vᵢ₂ vₒ₁ : A}
                        {i is₁ is₂ pos₁ pos₂} →
                        is₁ ⟦ i / pos₁ ⟧≡ is₂ →
