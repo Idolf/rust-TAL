@@ -62,3 +62,11 @@ EmbedBisimulation = bisimulation embed-rel H.⊢_⇒_ S.⊢_⇒_ forwards backwa
         ... | sstep'
           rewrite step-prg-uniqueₛ sstep sstep'
             = _ , (refl , HP'⋆) , hstep
+
+-- TODO
+steps-soundness : ∀ {n P₁ P₂} →
+                    ⊢ P₁ program →
+                    ⊢ embed P₁ ⇒ₙ n / P₂ →
+                    ∃ λ P₃ →
+                      ⊢ P₂ ⇒ P₃
+steps-soundness P⋆ steps = step-progress (steps-reduction P⋆ steps)

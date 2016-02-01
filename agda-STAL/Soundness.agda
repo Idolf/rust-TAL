@@ -1,4 +1,4 @@
-module HighSoundness where
+module Soundness where
 
 open import Util
 open import Judgments

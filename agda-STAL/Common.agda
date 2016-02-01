@@ -11,7 +11,7 @@ open import Judgments
 open import Lemmas
 
 -- Step 5: High soundness
-open import HighSoundness
+open import Soundness
 
 -- Step 6: Bisimulation and simple soundness
 open import Bisimulation
