@@ -9,8 +9,6 @@ evalSmallValueₛ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₛ regs (reg ♯r) = lookup ♯r regs
 evalSmallValueₛ regs (globval l) = globval l
 evalSmallValueₛ regs (int i) = int i
-evalSmallValueₛ regs ns = ns
-evalSmallValueₛ regs uninit = uninit
 
 infix 3 _⊢ₛ_⇒_
 data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where

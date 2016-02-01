@@ -50,8 +50,6 @@ instance
           f (reg ♯r) = reg ♯r
           f (globval l) = globval l
           f (int n) = int n
-          f ns = ns
-          f (uninit τ) = uninit
           f Λ Δ ∙ v ⟦ is ⟧ = f v
 
   embedInstruction : Embed H.Instruction S.Instruction

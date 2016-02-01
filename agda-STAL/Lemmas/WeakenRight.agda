@@ -26,7 +26,6 @@ vval-weaken-right : ∀ Δ₁ Δ₂ {ψ₁ Γ v τ} →
 vval-weaken-right Δ₁ Δ₂ of-reg = of-reg
 vval-weaken-right Δ₁ Δ₂ (of-globval l) = of-globval l
 vval-weaken-right Δ₁ Δ₂ of-int = of-int
-vval-weaken-right Δ₁ Δ₂ of-ns = of-ns
 vval-weaken-right Δ₁ Δ₂ (of-Λ {Δ₂ = Δ} v⋆ is⋆ subs-Γ)
   with instantiations-weaken-right (Δ ++ Δ₁) Δ₂ is⋆
 ... | is⋆'

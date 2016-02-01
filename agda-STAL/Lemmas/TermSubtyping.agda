@@ -119,7 +119,6 @@ vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) {reg ♯r} of-reg
 ... | lookup₁≤lookup₂ = _ , lookup₁≤lookup₂ , of-reg
 vval-subtype ψ₁⋆ Γ₁≤Γ₂ (of-globval l) = _ , ≤-++ (≤-refl (All-lookup l ψ₁⋆)) , of-globval l
 vval-subtype ψ₁⋆ Γ₁≤Γ₂ of-int = int , int-≤ , of-int
-vval-subtype ψ₁⋆ Γ₁≤Γ₂ of-ns = ns , ns-≤ , of-ns
 vval-subtype {Δ = Δ} ψ₁⋆ Γ₁≤Γ₂ {Λ Δₒ ∙ v ⟦ is ⟧} {∀[ .Δₒ ] Γₒ₁} (of-Λ {Δ₁ = Δᵢ} .{Δₒ} {Γᵢ₁} .{Γₒ₁} v⋆ is⋆ subs-Γ₁)
   with vval-subtype ψ₁⋆ Γ₁≤Γ₂ v⋆
 ... | ∀[ .Δᵢ ] Γᵢ₂ , ∀-≤ Γᵢ₁≤Γᵢ₂ , v⋆'

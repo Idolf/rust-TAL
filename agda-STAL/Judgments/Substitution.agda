@@ -221,17 +221,6 @@ data _⟦_/_⟧v≡_ : SmallValueₕ → Instantiation → ℕ → SmallValueₕ
     -----------------------
     int n ⟦ i / ι ⟧v≡ int n
 
-  subst-ns :
-       ∀ {i ι} →
-    -----------------
-    ns ⟦ i / ι ⟧v≡ ns
-
-  subst-uninit :
-           ∀ {τ τ' i ι} →
-          τ ⟦ i / ι ⟧τ≡ τ' →
-    ------------------------------
-    uninit τ ⟦ i / ι ⟧v≡ uninit τ'
-
   subst-Λ :
                 ∀ {Δ v v' is is' i ι} →
                   v ⟦ i / ι ⟧v≡ v' →
@@ -373,8 +362,6 @@ instance
           weaken-v pos inc (reg ♯r) = reg ♯r
           weaken-v pos inc (globval l) = globval l
           weaken-v pos inc (int i) = int i
-          weaken-v pos inc ns = ns
-          weaken-v pos inc (uninit τ) = uninit (weaken pos inc τ)
           weaken-v pos inc (Λ Δ ∙ v ⟦ is ⟧) = Λ Δ ∙ weaken-v pos inc v ⟦ weaken (length Δ + pos) inc is ⟧
 
   Instruction-Substitution : Substitution Instructionₕ

@@ -12,8 +12,6 @@ evalSmallValueₕ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₕ regs (reg ♯r) = lookup ♯r regs
 evalSmallValueₕ regs (globval l) = globval l
 evalSmallValueₕ regs (int i) = int i
-evalSmallValueₕ regs ns = ns
-evalSmallValueₕ regs (uninit τ) = uninit τ
 evalSmallValueₕ regs Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ evalSmallValueₕ regs v ⟦ is ⟧
 
 data InstantiateGlobal (G : Globals) : WordValue → InstructionSequence → Set where

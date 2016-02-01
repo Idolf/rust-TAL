@@ -72,8 +72,6 @@ private
   embed-subst-v subst-reg = refl
   embed-subst-v subst-globval = refl
   embed-subst-v subst-int = refl
-  embed-subst-v subst-ns = refl
-  embed-subst-v (subst-uninit sub-τ) = refl
   embed-subst-v (subst-Λ sub-v subs-I) = embed-subst-v sub-v
 
   embed-subst-ι : ∀ {ι ι' : H.Instruction} {i pos} →
@@ -117,8 +115,6 @@ embed-eval : ∀ regs v →
 embed-eval regs (reg ♯r) = embed-lookup ♯r regs
 embed-eval regs (globval l) = refl
 embed-eval regs (int i) = refl
-embed-eval regs ns = refl
-embed-eval regs (uninit τ) = refl
 embed-eval regs Λ Δ ∙ v ⟦ is ⟧ = embed-eval regs v
 
 embed-instantiate : ∀ {G w I} →

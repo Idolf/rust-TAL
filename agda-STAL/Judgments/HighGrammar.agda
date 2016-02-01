@@ -85,8 +85,6 @@ data SmallValueₕ : Set where
   reg     : Register → SmallValueₕ
   globval : GlobLabel → SmallValueₕ
   int     : ℕ → SmallValueₕ
-  ns      : SmallValueₕ
-  uninit  : Type → SmallValueₕ
   Λ_∙_⟦_⟧ : TypeAssumptions → SmallValueₕ → Instantiations → SmallValueₕ
 
 -- ι

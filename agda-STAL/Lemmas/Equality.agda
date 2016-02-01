@@ -126,15 +126,11 @@ instance
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
           from (node 1 (l ∷ _)) = globval <$> fromTree l
           from (node 2 (n ∷ _)) = int <$> fromTree n
-          from (node 3 _) = just ns
-          from (node 4 _) = just uninit
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
           sur (globval l) = T₁ 1 l , globval <$=> invTree l
           sur (int n) = T₁ 2 n , int <$=> invTree n
-          sur ns = T₀ 3 , refl
-          sur uninit = T₀ 4 , refl
 
   Instructionₛ-Tree : ToTree S.Instruction
   Instructionₛ-Tree = tree⋆ from sur
@@ -284,17 +280,13 @@ instance
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
           from (node 1 (l ∷ _)) = globval <$> fromTree l
           from (node 2 (n ∷ _)) = int <$> fromTree n
-          from (node 3 _) = just ns
-          from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
-          from (node 5 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
+          from (node 3 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
           sur (globval l) = T₁ 1 l , globval <$=> invTree l
           sur (int n) = T₁ 2 n , int <$=> invTree n
-          sur ns = T₀ 3 , refl
-          sur (uninit τ) = T₁ 4 τ , uninit <$=> invTree τ
-          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 5 Δ (proj₁ (sur w)) is ,
+          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 3 Δ (proj₁ (sur w)) is ,
             Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is
 
   Instructionₕ-Tree : ToTree H.Instruction

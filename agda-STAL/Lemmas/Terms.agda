@@ -276,7 +276,6 @@ vval-valid-type : ∀ {ψ₁ Δ Γ τ} →
 vval-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) {reg ♯r} of-reg = Allᵥ-lookup ♯r regs⋆
 vval-valid-type ψ₁⋆ Γ⋆ (of-globval l) = valid-++ (All-lookup l ψ₁⋆)
 vval-valid-type ψ₁⋆ Γ⋆ of-int = valid-int
-vval-valid-type ψ₁⋆ Γ⋆ of-ns = valid-ns
 vval-valid-type ψ₁⋆ Γ⋆ (of-Λ {Δ = Δ} {Δ₁ = Δ₁} {Δ₂} v⋆ is⋆ subs-Γ)
   with vval-valid-type ψ₁⋆ Γ⋆ v⋆
 ... | valid-∀ Γ⋆'
@@ -339,8 +338,6 @@ vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ (of-globval l)
   = _ , _ , subst-globval , subst-outside-ctx (All-lookup l ψ₁⋆) , of-globval l
 vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-int
   = _ , _ , subst-int , subst-int , of-int
-vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-ns
-  = _ , _ , subst-ns , subst-ns , of-ns
 vval-subst Δ₁ Δ₂ {a = a} {v₁ = Λ Δₒ ∙ v₁ ⟦ is₁ ⟧} ψ₁⋆ i⋆ sub-Γ (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} {Γ₁ = Γᵢ₁} {Γ₂ = Γₒ₁} v₁⋆ is₁⋆ subs₁-Γ)
   rewrite sym (List-++-assoc Δₒ Δ₁ (a ∷ Δ₂))
   with is-subst (Δₒ ++ Δ₁) Δ₂ i⋆ {is₁} {Δᵢ} is₁⋆

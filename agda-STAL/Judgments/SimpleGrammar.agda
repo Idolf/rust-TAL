@@ -19,8 +19,6 @@ data SmallValueₛ : Set where
   reg     : Register → SmallValueₛ
   globval : GlobLabel → SmallValueₛ
   int     : ℕ → SmallValueₛ
-  ns      : SmallValueₛ
-  uninit  : SmallValueₛ
 
 -- ι
 data Instructionₛ : Set where

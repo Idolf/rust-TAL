@@ -60,8 +60,6 @@ private
     with allzip-lookup₂ l gs⋆
   ... | g , l' , ()
   vval-int-helper {v = int n} G⋆ H⋆ regs⋆ v⋆ = n , refl
-  vval-int-helper {v = ns} G⋆ H⋆ regs⋆ ()
-  vval-int-helper {v = uninit x} G⋆ H⋆ regs⋆ ()
   vval-int-helper {v = Λ Δ ∙ v ⟦ is ⟧} G⋆ H⋆ regs⋆ ()
 
   replicate-helper : ∀ {ψ₁ ψ₂ sp σ} n →
@@ -130,7 +128,6 @@ eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs} →
 eval-reduction ψ₁⋆ regs⋆ {v = reg ♯r} of-reg = allzipᵥ-lookup ♯r regs⋆
 eval-reduction ψ₁⋆ regs⋆ (of-globval l) = of-globval l (≤-refl (All-lookup l ψ₁⋆))
 eval-reduction ψ₁⋆ regs⋆ of-int = of-int
-eval-reduction ψ₁⋆ regs⋆ of-ns = of-ns
 eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} {Γ₁ = Γ₁} v⋆ is⋆ subs-Γ)
   with eval-reduction ψ₁⋆ regs⋆ v⋆
 ... | w⋆

@@ -869,9 +869,6 @@ instance
           unique subst-reg subst-reg = refl
           unique subst-globval subst-globval = refl
           unique subst-int subst-int = refl
-          unique subst-ns subst-ns = refl
-          unique (subst-uninit sub-τ₁) (subst-uninit sub-τ₂)
-            rewrite subst-unique sub-τ₁ sub-τ₂ = refl
           unique (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₂ sub-is₂)
             rewrite unique sub-v₁ sub-v₂
                   | subst-unique sub-is₁ sub-is₂ = refl
@@ -880,11 +877,6 @@ instance
           dec (reg ♯r) i ι = yes (reg ♯r , subst-reg)
           dec (globval l) i ι = yes (globval l , subst-globval)
           dec (int i) iₚ ι = yes (int i , subst-int)
-          dec ns i ι = yes (ns , subst-ns)
-          dec (uninit τ) i ι
-            with τ ⟦ i / ι ⟧?
-          ... | yes (τ' , sub-τ) = yes (uninit τ' , subst-uninit sub-τ)
-          ... | no ¬sub-τ = no (λ { (._ , subst-uninit sub-τ) → ¬sub-τ (_ , sub-τ)})
           dec Λ Δ ∙ v ⟦ is ⟧ i ι
             with dec v i ι | is ⟦ i / length Δ + ι ⟧?
           ... | yes (v' , sub-v) | yes (is' , sub-is) = yes (Λ Δ ∙ v' ⟦ is' ⟧ , subst-Λ sub-v sub-is)
@@ -895,8 +887,6 @@ instance
           v-weaken-subst inc pos₂≤pos₁ subst-reg = subst-reg
           v-weaken-subst inc pos₂≤pos₁ subst-globval = subst-globval
           v-weaken-subst inc pos₂≤pos₁ subst-int = subst-int
-          v-weaken-subst inc pos₂≤pos₁ subst-ns = subst-ns
-          v-weaken-subst inc pos₂≤pos₁ (subst-uninit sub-τ) = subst-uninit (weaken-subst inc pos₂≤pos₁ sub-τ)
           v-weaken-subst {pos₁} inc pos₂≤pos₁ {v₁ = Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v sub-is)
             with weaken-subst inc (l+m≤l+n (length Δ) pos₂≤pos₁) sub-is
           ... | sub-is'
@@ -907,11 +897,6 @@ instance
           v-subst-subst sub-i subst-reg subst-reg = _ , subst-reg , subst-reg
           v-subst-subst sub-i subst-globval subst-globval = _ , subst-globval , subst-globval
           v-subst-subst sub-i subst-int subst-int = _ , subst-int , subst-int
-          v-subst-subst sub-i subst-ns subst-ns = _ , subst-ns , subst-ns
-          v-subst-subst sub-i (subst-uninit sub-τ₁) (subst-uninit sub-τ₁')
-            with subst-subst sub-i sub-τ₁ sub-τ₁'
-          ... | τ₂ , sub-τ₂ , sub-τ₂'
-            = _ , subst-uninit sub-τ₂ , subst-uninit sub-τ₂'
           v-subst-subst {pos₁} {pos₂} sub-i {Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₁' sub-is₁')
             with v-subst-subst sub-i sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
