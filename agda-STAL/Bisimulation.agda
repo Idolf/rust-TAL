@@ -4,7 +4,6 @@ open import Util
 open import Judgments
 open import Lemmas
 open import Soundness
-open import EmbedSemantics
 
 private
   module S where

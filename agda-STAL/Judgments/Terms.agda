@@ -198,7 +198,7 @@ mutual
 
     of-sub :
                        ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
-                     lookup-regs ♯rs Γ  ≡ int →
+                     lookup-regs ♯rs Γ ≡ int →
                     ψ₁ , Δ , Γ ⊢ v of int vval →
       --------------------------------------------------------------
       ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v ⇒ update-regs ♯rd int Γ instruction

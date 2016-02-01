@@ -40,7 +40,7 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
     subst-subst :
       ∀ {pos₁ pos₂ i₁ i₁' i₂} →
         i₁ ⟦ i₂ / pos₂ ⟧≡ i₁' →
-        {v₁ v₂ v₁' : A}  →
+        {v₁ v₂ v₁' : A} →
         v₁ ⟦ i₂ / suc pos₁ + pos₂ ⟧≡ v₁' →
         v₁ ⟦ i₁ / pos₁ ⟧≡ v₂ →
         ∃ λ v₂' →
@@ -98,7 +98,7 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
     ∎ where open Eq-Reasoning
   ... | eq
     rewrite eq
-    with subst-subst {pos₁ = pos₂} {pos₂ = length is₁ + pos₁}  sub-i sub-vᵢ sub₁-v
+    with subst-subst {pos₁ = pos₂} {pos₂ = length is₁ + pos₁} sub-i sub-vᵢ sub₁-v
   ... | vₘ₂ , sub-vₘ , sub₂-v
     rewrite sym (+-assoc pos₂ (length is₁) pos₁)
     with subst-subst-many sub-is sub-vₘ subs₁-v
@@ -561,7 +561,7 @@ private
     subst-substᵗ : ∀ A {{_ : Substitution A}} → Set
     subst-substᵗ A = ∀ {pos₁ pos₂ i₁ i₁' i₂} →
                        i₁ ⟦ i₂ / pos₂ ⟧≡ i₁' →
-                       {v₁ v₂ v₁' : A}  →
+                       {v₁ v₂ v₁' : A} →
                        v₁ ⟦ i₂ / suc pos₁ + pos₂ ⟧≡ v₁' →
                        v₁ ⟦ i₁ / pos₁ ⟧≡ v₂ →
                        ∃ λ v₂' →
@@ -750,14 +750,14 @@ instance
 
   InitType-Substitution⁺ : Substitution⁺ InitType
   InitType-Substitution⁺ =
-    substitution⁺ subst-τ⁻-unique  _⟦_/_⟧τ⁻? τ⁻-weaken-weaken τ⁻-weaken-subst τ⁻-subst-weaken τ⁻-subst-subst
+    substitution⁺ subst-τ⁻-unique _⟦_/_⟧τ⁻? τ⁻-weaken-weaken τ⁻-weaken-subst τ⁻-subst-weaken τ⁻-subst-subst
 
   InitTypeList-Substitution⁺ : Substitution⁺ (List InitType)
   InitTypeList-Substitution⁺ = substitution⁺ subst-τs⁻-unique _⟦_/_⟧τs⁻? τs⁻-weaken-weaken τs⁻-weaken-subst τs⁻-subst-weaken τs⁻-subst-subst
 
   StackType-Substitution⁺ : Substitution⁺ StackType
   StackType-Substitution⁺ =
-    substitution⁺ subst-σ-unique  _⟦_/_⟧σ? σ-weaken-weaken σ-weaken-subst σ-subst-weaken σ-subst-subst
+    substitution⁺ subst-σ-unique _⟦_/_⟧σ? σ-weaken-weaken σ-weaken-subst σ-subst-weaken σ-subst-subst
 
   RegisterAssignment-Substitution⁺ : Substitution⁺ RegisterAssignment
   RegisterAssignment-Substitution⁺ =
@@ -916,7 +916,7 @@ instance
               (length is₁ + pos₁) + pos₂
             ≡⟨ +-assoc (length is₁) pos₁ pos₂ ⟩
               length is₁ + (pos₁ + pos₂)
-            ≡⟨ is-subst-length sub-is₁' ∥ (λ v → v + (pos₁ + pos₂))  ⟩
+            ≡⟨ is-subst-length sub-is₁' ∥ (λ v → v + (pos₁ + pos₂)) ⟩
               length is₂ + (pos₁ + pos₂)
             ∎ | begin
               length is₁ + pos₁
@@ -1023,7 +1023,7 @@ instance
           ... | τ₂ , sub-τ₂ , sub-τ₂'
             = _ , subst-uninit sub-τ₂ , subst-uninit sub-τ₂'
           v-subst-subst {pos₁} {pos₂} sub-i {Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₁' sub-is₁')
-            with v-subst-subst sub-i  sub-v₁ sub-v₁'
+            with v-subst-subst sub-i sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             with begin
               length Δ + suc (pos₁ + pos₂)
@@ -1117,7 +1117,7 @@ instance
           ι-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (malloc ♯rd τs)
             rewrite weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ τs = refl
           ι-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (mov ♯rd v)
-            rewrite weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁  v = refl
+            rewrite weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ v = refl
           ι-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (beq ♯r v)
             rewrite weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ v = refl
 

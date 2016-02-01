@@ -1,8 +1,9 @@
-module HeapUpdate where
+module Lemmas.HeapUpdate where
 
 open import Util
 open import Judgments
-open import Lemmas
+open import Lemmas.Types
+open import Lemmas.Terms
 open HighGrammar
 
 φ-init-≤ : ∀ {φ} → init ≤φ φ
@@ -52,7 +53,7 @@ wval-helper : ∀ {ψ₁ ψ₂ ψ₂' w τ} →
 wval-helper ψ₂'≤ψ₂ (of-globval l τ'≤τ) = of-globval l τ'≤τ
 wval-helper ψ₂'≤ψ₂ (of-heapval l τ'≤τ)
   with allzip-lookup₂ l ψ₂'≤ψ₂
-... | τ' , l' , τ''≤τ'  = of-heapval l' (≤-trans τ''≤τ' τ'≤τ)
+... | τ' , l' , τ''≤τ' = of-heapval l' (≤-trans τ''≤τ' τ'≤τ)
 wval-helper ψ₂'≤ψ₂ of-int = of-int
 wval-helper ψ₂'≤ψ₂ of-ns = of-ns
 wval-helper ψ₂'≤ψ₂ (of-Λ w⋆ is⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-helper ψ₂'≤ψ₂ w⋆) is⋆ subs-Γ Γ₃≤Γ₂
@@ -129,7 +130,6 @@ regs-helper : ∀ {ψ₁ ψ₂ ψ₂' n} {regs : Vec WordValue n} {τs} →
                 AllZipᵥ (λ w τ → ψ₁ , ψ₂' ⊢ w of τ wval) regs τs
 regs-helper ψ₂'≤ψ₂ [] = []
 regs-helper ψ₂'≤ψ₂ (w⋆ ∷ S⋆) = wval-helper ψ₂'≤ψ₂ w⋆ ∷ regs-helper ψ₂'≤ψ₂ S⋆
-
 
 regs-helper₂ : ∀ {ψ₁ ψ₂ n} {regs : Vec WordValue n} {τs} ♯rd {lₕ τ} →
                  [] ⊢ ψ₂ Valid →

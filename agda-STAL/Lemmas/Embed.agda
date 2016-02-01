@@ -1,4 +1,4 @@
-module EmbedSemantics where
+module Lemmas.Embed where
 
 open import Util
 open import Judgments
@@ -66,51 +66,51 @@ private
   embed-length [] = refl
   embed-length (x ∷ xs) = cong suc (embed-length xs)
 
-embed-subst-v : ∀ {v v' : H.SmallValue} {i pos} →
-                  v ⟦ i / pos ⟧≡ v' →
-                  embed v ≡ embed v'
-embed-subst-v subst-reg = refl
-embed-subst-v subst-globval = refl
-embed-subst-v subst-int = refl
-embed-subst-v subst-ns = refl
-embed-subst-v (subst-uninit sub-τ) = refl
-embed-subst-v (subst-Λ sub-v subs-I) = embed-subst-v sub-v
+  embed-subst-v : ∀ {v v' : H.SmallValue} {i pos} →
+                    v ⟦ i / pos ⟧≡ v' →
+                    embed v ≡ embed v'
+  embed-subst-v subst-reg = refl
+  embed-subst-v subst-globval = refl
+  embed-subst-v subst-int = refl
+  embed-subst-v subst-ns = refl
+  embed-subst-v (subst-uninit sub-τ) = refl
+  embed-subst-v (subst-Λ sub-v subs-I) = embed-subst-v sub-v
 
-embed-subst-ι : ∀ {ι ι' : H.Instruction} {i pos} →
-                  ι ⟦ i / pos ⟧≡ ι' →
-                  embed ι ≡ embed ι'
-embed-subst-ι {add ♯rd ♯rs v} (subst-add sub-v) = cong (add ♯rd ♯rs) (embed-subst-v sub-v)
-embed-subst-ι {sub ♯rd ♯rs v} (subst-sub sub-v) = cong (sub ♯rd ♯rs) (embed-subst-v sub-v)
-embed-subst-ι subst-salloc = refl
-embed-subst-ι subst-sfree = refl
-embed-subst-ι subst-sld = refl
-embed-subst-ι subst-sst = refl
-embed-subst-ι subst-ld = refl
-embed-subst-ι subst-st = refl
-embed-subst-ι (subst-malloc sub-τs) = cong₂ malloc refl (help sub-τs)
-  where help : ∀ {τs τs' : List Type} {i pos} →
-                 τs ⟦ i / pos ⟧≡ τs' →
-                 length τs ≡ length τs'
-        help [] = refl
-        help (sub-τ ∷ sub-τs) = cong suc (help sub-τs)
+  embed-subst-ι : ∀ {ι ι' : H.Instruction} {i pos} →
+                    ι ⟦ i / pos ⟧≡ ι' →
+                    embed ι ≡ embed ι'
+  embed-subst-ι {add ♯rd ♯rs v} (subst-add sub-v) = cong (add ♯rd ♯rs) (embed-subst-v sub-v)
+  embed-subst-ι {sub ♯rd ♯rs v} (subst-sub sub-v) = cong (sub ♯rd ♯rs) (embed-subst-v sub-v)
+  embed-subst-ι subst-salloc = refl
+  embed-subst-ι subst-sfree = refl
+  embed-subst-ι subst-sld = refl
+  embed-subst-ι subst-sst = refl
+  embed-subst-ι subst-ld = refl
+  embed-subst-ι subst-st = refl
+  embed-subst-ι (subst-malloc sub-τs) = cong₂ malloc refl (help sub-τs)
+    where help : ∀ {τs τs' : List Type} {i pos} →
+                   τs ⟦ i / pos ⟧≡ τs' →
+                   length τs ≡ length τs'
+          help [] = refl
+          help (sub-τ ∷ sub-τs) = cong suc (help sub-τs)
 
-embed-subst-ι (subst-mov sub-v) = cong₂ mov refl (embed-subst-v sub-v)
-embed-subst-ι (subst-beq sub-v) = cong₂ beq refl (embed-subst-v sub-v)
+  embed-subst-ι (subst-mov sub-v) = cong₂ mov refl (embed-subst-v sub-v)
+  embed-subst-ι (subst-beq sub-v) = cong₂ beq refl (embed-subst-v sub-v)
 
-embed-subst-I : ∀ {I I' : H.InstructionSequence} {i pos} →
-                  I ⟦ i / pos ⟧≡ I' →
-                  embed I ≡ embed I'
-embed-subst-I (subst-~> sub-ι sub-I) = cong₂ _~>_ (embed-subst-ι sub-ι) (embed-subst-I sub-I)
-embed-subst-I (subst-jmp sub-v) = cong jmp (embed-subst-v sub-v)
-embed-subst-I subst-halt = refl
+  embed-subst-I : ∀ {I I' : H.InstructionSequence} {i pos} →
+                    I ⟦ i / pos ⟧≡ I' →
+                    embed I ≡ embed I'
+  embed-subst-I (subst-~> sub-ι sub-I) = cong₂ _~>_ (embed-subst-ι sub-ι) (embed-subst-I sub-I)
+  embed-subst-I (subst-jmp sub-v) = cong jmp (embed-subst-v sub-v)
+  embed-subst-I subst-halt = refl
 
-embed-subst-I-many : ∀ {I I' : H.InstructionSequence} {is pos} →
-                       I ⟦ is / pos ⟧many≡ I' →
-                       embed I ≡ embed I'
-embed-subst-I-many [] = refl
-embed-subst-I-many (sub-I ∷ subs-I)
-  rewrite embed-subst-I sub-I
-    = embed-subst-I-many subs-I
+  embed-subst-I-many : ∀ {I I' : H.InstructionSequence} {is pos} →
+                         I ⟦ is / pos ⟧many≡ I' →
+                         embed I ≡ embed I'
+  embed-subst-I-many [] = refl
+  embed-subst-I-many (sub-I ∷ subs-I)
+    rewrite embed-subst-I sub-I
+      = embed-subst-I-many subs-I
 
 embed-eval : ∀ regs v →
                embed (H.evalSmallValue regs v) ≡ S.evalSmallValue (embed regs) (embed v)

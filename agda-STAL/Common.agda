@@ -10,10 +10,9 @@ open import Judgments
 -- Most lemmas are in this directory
 open import Lemmas
 
--- -- A lot of junk
-open import HeapPush
-open import TermSubtyping
-open import WeakenRight
-open import Soundness
+-- Step 5: High soundness
+open import HighSoundness
+
+-- Step 6: Bisimulation and simple soundness
 open import Bisimulation
 open import Example

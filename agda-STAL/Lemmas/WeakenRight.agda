@@ -1,8 +1,8 @@
-module WeakenRight where
+module Lemmas.WeakenRight where
 
 open import Util
 open import Judgments
-open import Lemmas
+open import Lemmas.TypeSubstitution
 
 instantiation-weaken-right : ∀ Δ₁ Δ₂ {i a} →
                          Δ₁ ⊢ i of a instantiation →

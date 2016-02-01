@@ -170,7 +170,7 @@ step-decₛ G (H , register sp regs , ld ♯rd ♯rs i ~> I)
 ... | yes (w , l₂) = yes (_ , step-ld eq l₁ l₂)
 step-decₛ G (H , register sp regs , st ♯rd i ♯rs ~> I)
   with is-heapval (lookup ♯rd regs)
-... | no ¬eq = no (λ { (_ , step-st eq l up₁ up₂)  → ¬eq (_ , eq)})
+... | no ¬eq = no (λ { (_ , step-st eq l up₁ up₂) → ¬eq (_ , eq)})
 ... | yes (lₕ , eq) with ↓-dec H lₕ
 ... | no ¬l = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , st ♯rd i ♯rs ~> I ⇒ P')

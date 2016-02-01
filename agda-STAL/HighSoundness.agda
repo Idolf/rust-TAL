@@ -1,12 +1,8 @@
-module Soundness where
+module HighSoundness where
 
 open import Util
 open import Judgments
 open import Lemmas
-open import TermSubtyping
-open import HeapPush
-open import HeapUpdate
-open import WeakenRight
 open HighGrammar
 open HighSemantics
 
@@ -299,7 +295,7 @@ steps-reduction P₁⋆ (step ∷ steps)
   = steps-reduction (step-reduction P₁⋆ step) steps
 
 steps-soundness : ∀ {n P₁ P₂} →
-                    ⊢  P₁ program →
+                    ⊢ P₁ program →
                     ⊢ P₁ ⇒ₙ n / P₂ →
                     ∃ λ P₃ →
                       ⊢ P₃ program ×

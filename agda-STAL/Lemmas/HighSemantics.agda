@@ -205,7 +205,7 @@ step-decₕ G (H , register sp regs , ld ♯rd ♯rs i ~> I)
 ... | yes (w , l₂) = yes (_ , step-ld eq l₁ l₂)
 step-decₕ G (H , register sp regs , st ♯rd i ♯rs ~> I)
   with is-heapval (lookup ♯rd regs)
-... | no ¬eq = no (λ { (_ , step-st eq l up₁ up₂)  → ¬eq (_ , eq)})
+... | no ¬eq = no (λ { (_ , step-st eq l up₁ up₂) → ¬eq (_ , eq)})
 ... | yes (lₕ , eq) with ↓-dec H lₕ
 ... | no ¬l = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , st ♯rd i ♯rs ~> I ⇒ P')
@@ -239,7 +239,7 @@ step-decₕ G (H , register sp regs , beq ♯r v ~> I)
 ... | yes (I' , eval) = yes (_ , step-beq₀ eq eval)
 step-decₕ G (H , register sp regs , jmp v)
   with instantiate-dec G (evalSmallValue regs v)
-... | no ¬eval = no (λ { (._ , step-jmp  eval) → ¬eval (_ , eval) })
+... | no ¬eval = no (λ { (._ , step-jmp eval) → ¬eval (_ , eval) })
 ... | yes (I' , eval) = yes (_ , step-jmp eval)
 step-decₕ G (H , R , halt) = no (λ { (_ , ()) })
 

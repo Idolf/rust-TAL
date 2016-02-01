@@ -112,9 +112,9 @@ mutual
       ∀[ Δ ] Γ ⟦ i / ι ⟧τ≡ ∀[ Δ ] Γ'
 
     subst-tuple :
-           ∀ {i ι τs τs'} →
-          τs ⟦ i / ι ⟧τs⁻≡ τs' →
-      --------------------------
+            ∀ {i ι τs τs'} →
+           τs ⟦ i / ι ⟧τs⁻≡ τs' →
+      ------------------------------
       tuple τs ⟦ i / ι ⟧τ≡ tuple τs'
 
   infix 3 _⟦_/_⟧τ⁻≡_
@@ -140,36 +140,36 @@ mutual
       ρ⁼ ι₁ ⟦ i / ι₂ ⟧σ≡ ρ⁼ (pred ι₁)
 
     subst-ρ-≡ :
-            ∀ {σ ι} →
+                  ∀ {σ ι} →
       ---------------------------------
       ρ⁼ ι ⟦ ρ σ / ι ⟧σ≡ weaken-σ 0 ι σ
 
     subst-ρ-< :
-          ∀ {ι₁ ι₂ i} →
-            ι₁ < ι₂ →
+            ∀ {ι₁ ι₂ i} →
+              ι₁ < ι₂ →
       ------------------------
       ρ⁼ ι₁ ⟦ i / ι₂ ⟧σ≡ ρ⁼ ι₁
 
     [] :
-         ∀ {i ι} →
-      -------------
+          ∀ {i ι} →
+      -----------------
       [] ⟦ i / ι ⟧σ≡ []
 
     _∷_ :
-        ∀ {τ τ' σ σ' i ι} →
-         τ ⟦ i / ι ⟧τ≡ τ' →
-         σ ⟦ i / ι ⟧σ≡ σ' →
-      ---------------------
+         ∀ {τ τ' σ σ' i ι} →
+          τ ⟦ i / ι ⟧τ≡ τ' →
+          σ ⟦ i / ι ⟧σ≡ σ' →
+      -------------------------
       τ ∷ σ ⟦ i / ι ⟧σ≡ τ' ∷ σ'
 
   infix 3 _⟦_/_⟧Γ≡_
   data _⟦_/_⟧Γ≡_ : RegisterAssignment → Instantiation → ℕ →
                    RegisterAssignment → Set where
     subst-registerₐ :
-              ∀ {regs regs' sp sp' i ι} →
-                  sp ⟦ i / ι ⟧σ≡ sp' →
-               regs ⟦ i / ι ⟧regs≡ regs' →
-      ---------------------------------------------
+                 ∀ {regs regs' sp sp' i ι} →
+                     sp ⟦ i / ι ⟧σ≡ sp' →
+                  regs ⟦ i / ι ⟧regs≡ regs' →
+      -------------------------------------------------
       registerₐ sp regs ⟦ i / ι ⟧Γ≡ registerₐ sp' regs'
 
   infix 3 _⟦_/_⟧regs≡_
@@ -198,11 +198,11 @@ data _⟦_/_⟧is≡_ : Instantiations → Instantiation → ℕ → Instantiati
     [] ⟦ i / ι ⟧is≡ []
 
   _∷_ :
-           ∀ {i ι i₁ i₂ is₁ is₂} →
-    i₁  ⟦ i / length is₁ + ι ⟧i≡  i₂ →
-           is₁ ⟦ i / ι ⟧is≡ is₂ →
-    -----------------------------------
-       i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
+         ∀ {i ι i₁ i₂ is₁ is₂} →
+    i₁ ⟦ i / length is₁ + ι ⟧i≡ i₂ →
+         is₁ ⟦ i / ι ⟧is≡ is₂ →
+    --------------------------------
+     i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
 
 infix 3 _⟦_/_⟧v≡_
 data _⟦_/_⟧v≡_ : SmallValueₕ → Instantiation → ℕ → SmallValueₕ → Set where
@@ -240,7 +240,7 @@ data _⟦_/_⟧v≡_ : SmallValueₕ → Instantiation → ℕ → SmallValueₕ
     (Λ Δ ∙ v ⟦ is ⟧) ⟦ i / ι ⟧v≡ (Λ Δ ∙ v' ⟦ is' ⟧)
 
 infix 3 _⟦_/_⟧ι≡_
-data _⟦_/_⟧ι≡_ : Instructionₕ → Instantiation → ℕ  → Instructionₕ → Set where
+data _⟦_/_⟧ι≡_ : Instructionₕ → Instantiation → ℕ → Instructionₕ → Set where
   subst-add :
            ∀ {♯rd ♯rs v v' i ι} →
                v ⟦ i / ι ⟧v≡ v' →

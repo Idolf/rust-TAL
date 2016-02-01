@@ -1,8 +1,10 @@
-module TermSubtyping where
+module Lemmas.TermSubtyping where
 
 open import Util
 open import Judgments
-open import Lemmas
+open import Lemmas.Types
+open import Lemmas.Substitution
+open import Lemmas.TypeSubstitution
 open HighGrammar
 
 private

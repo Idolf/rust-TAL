@@ -333,15 +333,15 @@ vval-subst : ∀ {ψ₁} Δ₁ Δ₂ {i a Γ₁ Γ₂ v₁ τ₁} →
                  v₁ ⟦ i / length Δ₁ ⟧≡ v₂ ×
                  τ₁ ⟦ i / length Δ₁ ⟧≡ τ₂ ×
                  ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ v₂ of τ₂ vval
-vval-subst Δ₁ Δ₂ {v₁ = reg ♯r}  ψ₁⋆ i⋆ sub-Γ of-reg
+vval-subst Δ₁ Δ₂ {v₁ = reg ♯r} ψ₁⋆ i⋆ sub-Γ of-reg
   = _ , _ , subst-reg , subst-lookup-regs ♯r sub-Γ , of-reg
 vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ (of-globval l)
-  = _ , _ , subst-globval , subst-outside-ctx (All-lookup l ψ₁⋆)  , of-globval l
+  = _ , _ , subst-globval , subst-outside-ctx (All-lookup l ψ₁⋆) , of-globval l
 vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-int
   = _ , _ , subst-int , subst-int , of-int
 vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ of-ns
   = _ , _ , subst-ns , subst-ns , of-ns
-vval-subst Δ₁ Δ₂ {a = a} {v₁ = Λ Δₒ ∙ v₁ ⟦ is₁ ⟧}  ψ₁⋆ i⋆ sub-Γ (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} {Γ₁ = Γᵢ₁} {Γ₂ = Γₒ₁} v₁⋆ is₁⋆ subs₁-Γ)
+vval-subst Δ₁ Δ₂ {a = a} {v₁ = Λ Δₒ ∙ v₁ ⟦ is₁ ⟧} ψ₁⋆ i⋆ sub-Γ (of-Λ {Δ₁ = Δᵢ} .{Δ₂ = Δₒ} {Γ₁ = Γᵢ₁} {Γ₂ = Γₒ₁} v₁⋆ is₁⋆ subs₁-Γ)
   rewrite sym (List-++-assoc Δₒ Δ₁ (a ∷ Δ₂))
   with is-subst (Δₒ ++ Δ₁) Δ₂ i⋆ {is₁} {Δᵢ} is₁⋆
 ... | is₂ , sub-is , is₂⋆
@@ -421,7 +421,7 @@ instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {st ♯rd i ♯rs} (of-st eq 
 ... | (τ'' , φ) , l' , (subst-τ⁻ sub-τ')
   rewrite subst-unique sub-lookup (subst-lookup-regs ♯rs sub-Γ)
         | subst-unique sub-τ sub-τ'
-  = _ , _ , subst-st , subst-update-regs ♯rd (subst-tuple sub-τs⁻') sub-Γ  , of-st eq' lookup'≤τ' l' up'
+  = _ , _ , subst-st , subst-update-regs ♯rd (subst-tuple sub-τs⁻') sub-Γ , of-st eq' lookup'≤τ' l' up'
 instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {malloc ♯rd τs} (of-malloc τs⋆)
   with valid-subst-exists Δ₁ i⋆ τs⋆
 ... | τs' , sub-τs , τs'⋆

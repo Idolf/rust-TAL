@@ -54,7 +54,7 @@ mutual
       ------------------
       Δ ⊢ τ , φ InitType
 
-  infix 3  _⊢_StackType
+  infix 3 _⊢_StackType
   data _⊢_StackType (Δ : TypeAssumptions) : StackType → Set where
     valid-ρ⁼ :
            ∀ {ι} →
