@@ -52,7 +52,7 @@ The type system for \highlang: \\
 The grammar for \highlang: \\
 \textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta \cdot \high{w}[\theta, \dots, \theta]$ \\
 \textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\theta, \dots, \theta]$ \\
-\textit{global values}            & $\high g$ & ::= & $\mathtt{code}\ \forall[ \Delta ] \Gamma \cdot \high I$ \\
+\textit{global values}            & $\high g$ & ::= & $\mathtt{code}[ \Delta ] \Gamma \cdot \high I$ \\
 \textit{global collections}       & $\high G$ & ::= & $\{\ell_g |-> \high{g}, \dots, \ell_g |-> \high{g}\}$ \\
 \textit{heap values}              & $\high h$ & ::= & $\langle \high w, \dots, \high w \rangle$ \\
 \textit{heap collections}         & $\high H$ & ::= & $\{\ell_h |-> \high{h}, \dots, \ell_h |-> \high{h}\}$ \\
@@ -113,11 +113,13 @@ The biggest difference is how we represent the variables (i.e.
 $\ell_g, \ell_h, \alpha, \rho$) and the stores that use these variables
 (i.e. $\Psi_g, \Psi_h, \Delta$). In this report we will mostly just assume that
 we have an endless supply of unique variables (e.g.
-$\alpha_0, \rho_0, \ell_{g,0}, \ell_{h,0}, \alpha_1, \dots$), however this is
+$\alpha_1, \rho_1, \ell_{g,1}, \ell_{h,1}, \alpha_2, \dots$), however this is
 not a practical solution in Agda.
 
+\todo{Bad font for $\mathbb{\alpha}$}
+
 For the $\alpha$ and $\rho$ we will use De Bruijn indices. The $\Delta$ values
-will simply be lists composed over two elements $\mathtt{\alpha}$ and
+will simply be lists composed over two elements $\mathbb{\alpha}$ and
 $\mathtt{\rho}$. For an $\alpha$-variable to be valid in a given
 $\Delta$-context we must have that that $\Delta[\alpha] = \mathtt{\alpha}$ (and
 similarly for $\rho$). This means that while on paper we might simply allow

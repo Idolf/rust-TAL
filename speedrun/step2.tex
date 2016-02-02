@@ -23,19 +23,18 @@ of this thesis. Finally \high\embed is this function:
 \drop{w}(\mathtt{int}\ i) &= \mathtt{int}\ i \\
 \drop{w}(\mathtt{ns}) &= \mathtt{ns} \\
 \drop{w}(\mathtt{uninit}\ \tau) &= \mathtt{uninit} \\
-\drop{w}(\Lambda\ \Delta.w[\theta_1, \dots, \theta_n]) &= \drop{w}(w) \\\\
+\drop{w}(\Lambda\ \Delta \cdot w[\theta_1, \dots, \theta_n]) &= \drop{w}(w) \\\\
 
 \rlap{$\drop{v} : \high v -> \simple{v}$} \\
 \drop{v}(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
 \drop{v}(\mathtt{reg}\ r) &= \mathtt{reg}\ r \\
 \drop{v}(\mathtt{int}\ i) &= \mathtt{int}\ i \\
-\drop{v}(\mathtt{uninit}\ \tau) &= \mathtt{uninit} \\
 \drop{v}(\Lambda\ \Delta \cdot v[\theta_1, \dots, \theta_n]) &= \drop{v}(v)
 \end{array} \\\\
 
 \begin{array}{l}
 \drop{g} : \high g -> \simple{g} \\
-\drop{g}(\mathtt{code}\ \forall[\Delta]\Gamma.I) = \mathtt{code}\ (\drop{I}(I)) \\\\
+\drop{g}(\mathtt{code}[\Delta]\Gamma \cdot I) = \mathtt{code}\ (\drop{I}(I)) \\\\
 
 \drop{G} : \high G -> \simple{G} \\
 \drop{G}(\{\ell_{g,1} |-> g_1, \dots, \ell_{g,n} |-> g_n\}) = \{\ell_{g,1} |-> \drop{g}(g_1), \dots, \ell_{g,n} |-> \drop{g}(g_n)\} \\\\
@@ -61,14 +60,14 @@ of this thesis. Finally \high\embed is this function:
 
 \begin{array}{ll}
 \rlap{$\drop{\iota} : \high\iota -> \simple\iota$} \\
-\drop{\iota}(\mathtt{add}\ r, r, v) &= \mathtt{add}\ r, r, \drop{v}(v) \\
-\drop{\iota}(\mathtt{sub}\ r, r, v) &= \mathtt{sub}\ r, r, \drop{v}(v) \\
+\drop{\iota}(\mathtt{add}\ r_a, r_b, v) &= \mathtt{add}\ r_a, r_b, \drop{v}(v) \\
+\drop{\iota}(\mathtt{sub}\ r_a, r_b, v) &= \mathtt{sub}\ r_a, r_b, \drop{v}(v) \\
 \drop{\iota}(\mathtt{salloc}\ n) &= \mathtt{salloc}\ n \\
 \drop{\iota}(\mathtt{sfree}\ n) &= \mathtt{sfree}\ n \\
 \drop{\iota}(\mathtt{ld}\ r, \mathtt{sp}(n)) &= \mathtt{ld}\ r, \mathtt{sp}(n) \\
 \drop{\iota}(\mathtt{st}\ \mathtt{sp}(n), r) &= \mathtt{st}\ \mathtt{sp}(n), r \\
-\drop{\iota}(\mathtt{ld}\ r, r(n)) &= \mathtt{ld}\ r, r(n) \\
-\drop{\iota}(\mathtt{st}\ r(n), r) &= \mathtt{st}\ r(n), r \\
+\drop{\iota}(\mathtt{ld}\ r_a, r_b(n)) &= \mathtt{ld}\ r_a, r_b(n) \\
+\drop{\iota}(\mathtt{st}\ r_a(n), r_b) &= \mathtt{st}\ r_a(n), r_b \\
 \drop{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
 \drop{\iota}(\mathtt{mov}\ r, v) &= \mathtt{mov}\ r, \drop{v}(v) \\
 \drop{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, \drop{v}(v) \\
@@ -82,15 +81,12 @@ of this thesis. Finally \high\embed is this function:
 \end{array} \\\\
 
 \begin{array}{l}
-\drop{C} : \high C -> \simple{C} \\
-\drop{C}(H, R, I) = (\drop{H}(H), \drop{R}(R), \drop{I}(I)) \\\\
-
 \drop{P} : \high P -> \simple{P} \\
-\drop{P}(G, H, R, I) = (\drop{G}(G), \drop{H}(H), \drop{R}(R), \drop{I}(I)) \\\\
+\drop{P}(H, R, I) = (\drop{H}(H), \drop{R}(R), \drop{I}(I)) \\\\
 
-\high\embed : \high P -> \simple{P} \\
-\high\embed(P) = \drop{P}(P) \\
-\high\embed(\high\halt) = \simple\halt \\
+\high\embed : \highlang -> \simplelang \\
+\high\embed(\high\running(G, P)) = \simple\running(\drop{G}(G), \drop{P}(P)) \\
+\high\embed(\high\halted) = \simple\halted \\
 \end{array} \\\\
 
 \end{array}\]

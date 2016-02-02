@@ -16,9 +16,6 @@ The semantics for \nativelang are as in the manual.
 \infer{ }{
   \evalregs{\simple R}{\mathtt{int}\ i}{\mathtt{int}\ i}
 } \and
-\infer{ }{
-  \evalregs{\simple R}{\mathtt{uninit}}{\mathtt{uninit}}
-}
 \end{mathpar}
 
 \begin{mathpar}
@@ -51,9 +48,6 @@ The semantics for \nativelang are as in the manual.
 \infer{ }{
   \evalregs{\high R}{\mathtt{int}\ i}{\mathtt{int}\ i}
 } \and
-\infer{ }{
-  \evalregs{\high R}{\mathtt{uninit}\ \tau}{\mathtt{uninit}\ \tau}
-} \and
 \infer{
   \evalregs{\high R}{\high v}{\high w}
 }{
@@ -78,30 +72,33 @@ The semantics for \nativelang are as in the manual.
 \end{minipage}
 
 \begin{mathpar}
-\fbox{$\evalcode{\simple G}{\simple w}{\simple g}$} \\
-\infer{ }{
-  \evalcode{\simple G}{\mathtt{globval}\ \ell_g}{\simple G[\ell_g]}
+\fbox{$\evalcode{\simple G}{\simple w}{I}$} \\
+\infer{
+  \simple G[\ell_g] = \mathtt{code}\ \simple I
+}{
+  \evalcode{\simple G}{\mathtt{globval}\ \ell_g}{\simple I}
 }
 \end{mathpar}
 
 \begin{mathpar}
 \fbox{$\evalcode{\high G}{\high w}{I}$} \\
-\infer{ }{
-  \evalcode{\high G}{\mathtt{globval}\ \ell_g}{G[\ell_g]}
+\infer{
+  \high G[\ell_g] = \mathtt{code}[ \Delta ] \Gamma \cdot \high I
+}{
+  \evalcode{\high G}{\mathtt{globval}\ \ell_g}{\high I}
 } \and
 \infer{
-  \evalcode{\high G}{w}{\mathtt{code}\ \forall[ a_1, \dots, a_n ] \Gamma \cdot \high I} \\
+  \evalcode{\high G}{w}{\high I} \\
   \high I_1 = \high I[x_1 / a_1] \and \dots \and \high I_n = \high I_{n-1}[x_n / a_n] \\
-  \Gamma_1  = \Gamma[x_1 / a_1]  \and \dots \and \Gamma_n = \Gamma_{n-1}[x_n / a_n] \\
   \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
   \\
 }{
-  \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\mathtt{code}\ \forall[ \Delta ] \Gamma_n \cdot I_n}
+  \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\high I_n}
 }
 \end{mathpar}
 
 \begin{mathpar}
-\fbox{$\execis{\simple G}{\simple C}{\simple C}$} \\
+\fbox{$\execis{\simple G}{\simple P}{\simple P}$} \\
 \infer{
   \simple R[r_b] = \mathtt{int}\ i_1 \and
   \evalregs{\simple R}{\simple v}{\mathtt{int}\ i_2}
@@ -207,7 +204,7 @@ The semantics for \nativelang are as in the manual.
 \end{mathpar}
 
 \begin{mathpar}
-\fbox{$\execis{\high G}{\high C}{\high C}$} \\
+\fbox{$\execis{\high G}{\high P}{\high P}$} \\
 \infer{
   \high R[r_b] = \mathtt{int}\ i_1 \and
   \evalregs{\high R}{\high v}{\mathtt{int}\ i_2}
@@ -288,7 +285,7 @@ The semantics for \nativelang are as in the manual.
 \infer{
   \high R[r] = \mathtt{int}\ 0 \and
   \evalregs{\high R}{\high v}{\high w} \and
-  \evalcode{\high G}{\high w}{\mathtt{code}\ [ \mathtt{nil} ] \Gamma \cdot I'}
+  \evalcode{\high G}{\high w}{\mathtt{code}[ \mathtt{nil} ] \Gamma \cdot I'}
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{beq}\ r, \high v) ; \high I}
