@@ -295,12 +295,12 @@ mutual
 
   infix 3 ⊢_program
   data ⊢_program : Program → Set where
-    of-going :
+    of-running :
            ∀ {G ψ₁ P} →
        ⊢ G of ψ₁ globals →
       ψ₁ ⊢ P programstate →
       ---------------------
-       ⊢ going G P program
+       ⊢ running G P program
 
     of-halted :
       ----------------

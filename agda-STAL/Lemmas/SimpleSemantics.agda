@@ -113,11 +113,11 @@ step-prg-uniqueₛ : ∀ {P P₁ P₂} →
                     ⊢ P ⇒ P₁ →
                     ⊢ P ⇒ P₂ →
                     P₁ ≡ P₂
-step-prg-uniqueₛ (step-going step₁) (step-going step₂)
+step-prg-uniqueₛ (step-running step₁) (step-running step₂)
   rewrite step-uniqueₛ step₁ step₂
     = refl
-step-prg-uniqueₛ (step-going ()) step-halting
-step-prg-uniqueₛ step-halting (step-going ())
+step-prg-uniqueₛ (step-running ()) step-halting
+step-prg-uniqueₛ step-halting (step-running ())
 step-prg-uniqueₛ step-halting step-halting = refl
 step-prg-uniqueₛ step-halted step-halted = refl
 
@@ -226,17 +226,17 @@ step-decₛ G (H , register sp regs , jmp v)
 step-decₛ G (H , R , halt) = no (λ { (_ , ()) })
 
 step-prg-decₛ : ∀ P → Dec (∃ λ P' → ⊢ P ⇒ P')
-step-prg-decₛ (going G (H , R , I))
+step-prg-decₛ (running G (H , R , I))
   with I ≟ halt | step-decₛ G (H , R , I)
-step-prg-decₛ (going G (H , R , .halt))
+step-prg-decₛ (running G (H , R , .halt))
     | yes refl | _ = yes (halted , step-halting)
-... | _ | yes (P' , step) = yes (going G P' , step-going step)
+... | _ | yes (P' , step) = yes (running G P' , step-running step)
 ... | no I≢halt | no ¬step = no (help I≢halt ¬step)
   where help : ∀ {G H R I} →
                  I ≢ halt →
                  ¬ ∃ (λ P' → (G ⊢ (H , R , I) ⇒ P')) →
-                 ¬ ∃ (λ P' → (⊢ going G (H , R , I) ⇒ P'))
-        help I≢halt ¬step (_ , step-going step) = ¬step (_ , step)
+                 ¬ ∃ (λ P' → (⊢ running G (H , R , I) ⇒ P'))
+        help I≢halt ¬step (_ , step-running step) = ¬step (_ , step)
         help I≢halt ¬step (_ , step-halting) = I≢halt refl
 step-prg-decₛ halted = yes (halted , step-halted)
 

@@ -130,16 +130,16 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
 
 infix 3 ⊢ₕ_⇒_
 data ⊢ₕ_⇒_ : Program → Program → Set where
-  step-going :
+  step-running :
           ∀ {G P P'} →
           G ⊢ₕ P ⇒ P' →
     -------------------------
-    ⊢ₕ going G P ⇒ going G P'
+    ⊢ₕ running G P ⇒ running G P'
 
   step-halting :
                ∀ {G H R} →
     ----------------------------------
-    ⊢ₕ going G (H , R , halt) ⇒ halted
+    ⊢ₕ running G (H , R , halt) ⇒ halted
 
   step-halted :
     ------------------

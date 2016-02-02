@@ -107,5 +107,5 @@ instance
   embedProgram : Embed H.Program S.Program
   embedProgram = mkEmbed f
     where f : H.Program → S.Program
-          f (going G P) = going (embed G) (embed P)
+          f (running G P) = running (embed G) (embed P)
           f halted = halted

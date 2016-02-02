@@ -139,5 +139,5 @@ ProgramStateₕ : Set
 ProgramStateₕ = Heapₕ × RegisterFileₕ × InstructionSequenceₕ
 
 data Programₕ : Set where
-  going : Globalsₕ → ProgramStateₕ → Programₕ
+  running : Globalsₕ → ProgramStateₕ → Programₕ
   halted : Programₕ

@@ -263,14 +263,14 @@ step-progress : ∀ {P} →
                    ∃ λ P' →
                      ⊢ P' program ×
                      ⊢ P ⇒ P'
-step-progress {P = going G (H , R , I)} (of-going G⋆ (of-programstate H⋆ R⋆ I⋆))
+step-progress {P = running G (H , R , I)} (of-running G⋆ (of-programstate H⋆ R⋆ I⋆))
   with I ≟ halt
-step-progress {P = going G (H , R , .halt)} (of-going G⋆ (of-programstate H⋆ R⋆ I⋆))
+step-progress {P = running G (H , R , .halt)} (of-running G⋆ (of-programstate H⋆ R⋆ I⋆))
     | yes refl = halted , of-halted , step-halting
 ... | no I≢halt
   with step-progress' I≢halt G⋆ H⋆ R⋆ I⋆
 ... | _ , _ , _ , _ , _ , H'⋆ , R'⋆ , I'⋆ , step
-  = _ , of-going G⋆ (of-programstate H'⋆ R'⋆ I'⋆) , step-going step
+  = _ , of-running G⋆ (of-programstate H'⋆ R'⋆ I'⋆) , step-running step
 step-progress of-halted = halted , of-halted , step-halted
 
 step-reduction : ∀ {P P'} →

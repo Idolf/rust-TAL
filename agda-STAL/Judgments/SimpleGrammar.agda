@@ -70,5 +70,5 @@ ProgramStateₛ : Set
 ProgramStateₛ = Heapₛ × RegisterFileₛ × InstructionSequenceₛ
 
 data Programₛ : Set where
-  going : Globalsₛ → ProgramStateₛ → Programₛ
+  running : Globalsₛ → ProgramStateₛ → Programₛ
   halted : Programₛ
