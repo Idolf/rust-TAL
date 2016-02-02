@@ -20,7 +20,7 @@ Common definitions: \\
 
 The grammar for \simplelang: \\
 \textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
-\textit{small values}       & $\simple v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \mathtt{uninit}$ \\
+\textit{small values}       & $\simple v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i$ \\
 \textit{global values}      & $\simple g$ & ::= & $\mathtt{code}\ \simple I$ \\
 \textit{global collections} & $\simple G$ & ::= & $\{\ell_g |-> \simple{g}, \dots, \ell_g |-> \simple{g}\}$ \\
 \textit{heap values}        & $\simple h$ & ::= & $\langle \simple w, \dots, \simple w \rangle$ \\
@@ -36,12 +36,12 @@ The grammar for \simplelang: \\
         &&& $\mathtt{mov}\ r, \simple v \mid \mathtt{beq}\ r, \simple v$ \\
 \textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v \mid \mathtt{halt}$ \\
 \textit{program states} & $\simple P$ & ::= & $(\simple H, \simple R, \simple I)$ \\
-\textit{programs} & $\simplelang$ & ::= & $(\simple G, \simple H, \simple R, \simple I) \mid \simple\halt$ \\\\
+\textit{programs} & $\simplelang$ & ::= & $\simple\running (\simple G, \simple P) \mid \simple\halted$ \\\\
 
 The type system for \highlang: \\
 \textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
-\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \mathtt{nil} \mid \tau :: \sigma$ \\
 \textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
+\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \mathtt{nil} \mid \tau :: \sigma$ \\
 \textit{type assignments}         & $\Delta$ & ::= & $\mathtt{nil} \mid a :: \Delta$ \\
 \textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
 \textit{global label assignments} & $\Psi_g$ & ::= & $\{\ell_g |-> \tau, \dots, \ell_g |-> \tau\}$ \\
@@ -49,7 +49,7 @@ The type system for \highlang: \\
 \textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{max} |-> \tau\}$ \\
 \textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\\\
 
-The grammar for \highlang:
+The grammar for \highlang: \\
 \textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta \cdot \high{w}[\theta, \dots, \theta]$ \\
 \textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\theta, \dots, \theta]$ \\
 \textit{global values}            & $\high g$ & ::= & $\mathtt{code}\ \forall[ \Delta ] \Gamma \cdot \high I$ \\
@@ -63,11 +63,11 @@ The grammar for \highlang:
         &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
         &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
         &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
-        &&& $\mathtt{malloc}\ r,\ \langle \tau_1, \dots, \tau_n \rangle \mid $ \\
+        &&& $\mathtt{malloc}\ r,\ \langle \tau, \dots, \tau \rangle \mid $ \\
         &&& $\mathtt{mov}\ r, \high v \mid \mathtt{beq}\ r, \high v$ \\
 \textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v \mid \mathtt{halt}$ \\
 \textit{program states} & $\high P$ & ::= & $(\high H, \high R, \high I)$ \\
-\textit{programs} & $\highlang$ & ::= & $(\high G, \high H, \high R, \high I) \mid \high\halt$ \\
+\textit{programs} & $\highlang$ & ::= & $\high\running (\high G, \high P) \mid \high\halted$ \\\\
 \end{tabular}
 }
 
@@ -103,3 +103,29 @@ on the heap and self-modifying code (such as just-in-time compilers).
 It should be possible to expand the language to allow more programs, however
 some sacrifice will always be needed, as we are not able to exclude malicious
 programs from our semantics without also excluding some valid programs.
+
+\subsection{Notes on the Agda implementation}
+
+The Agda implementation is mostly a faithful representation of the grammar
+presented here, though the notation used for it is slightly different in places.
+
+The biggest difference is how we represent the variables (i.e.
+$\ell_g, \ell_h, \alpha, \rho$) and the stores that use these variables
+(i.e. $\Psi_g, \Psi_h, \Delta$). In this report we will mostly just assume that
+we have an endless supply of unique variables (e.g.
+$\alpha_0, \rho_0, \ell_{g,0}, \ell_{h,0}, \alpha_1, \dots$), however this is
+not a practical solution in Agda.
+
+For the $\alpha$ and $\rho$ we will use De Bruijn indices. The $\Delta$ values
+will simply be lists composed over two elements $\mathtt{\alpha}$ and
+$\mathtt{\rho}$. For an $\alpha$-variable to be valid in a given
+$\Delta$-context we must have that that $\Delta[\alpha] = \mathtt{\alpha}$ (and
+similarly for $\rho$). This means that while on paper we might simply allow
+assume weakening or reordering of contexts as fundamental rules, this approach
+will not work in Agda. In this particular case we will instead have to prove a
+explicit weakening lemma, which depends on a renaming function.
+
+For the heap and globals we will simply compose them into lists and have the
+variables be indices into this list. This will not cause any significant
+complications, as our semantics will never remove anything from either of the
+lists.
