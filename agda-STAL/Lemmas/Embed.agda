@@ -167,7 +167,7 @@ embed-step (step-malloc {H = H} {regs = regs} {♯rd = ♯rd} {τs = τs})
         | embed-update ♯rd (heapval (length H)) regs
         | sym (embed-length H)
     = step-malloc
-embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v} )
+embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v})
   rewrite embed-update ♯rd (H.evalSmallValue regs v) regs
         | embed-eval regs v
   = step-mov

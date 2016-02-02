@@ -200,60 +200,58 @@ private
   is-length [] = refl
   is-length (i⋆ ∷ is⋆) = cong suc (is-length is⋆)
 
-mutual
-  gval-valid-type : ∀ {ψ₁ g τ} →
-                      ψ₁ ⊢ g of τ gval →
-                      [] ⊢ τ Valid
-  gval-valid-type (of-gval {Δ = Δ} Γ⋆ I⋆) = valid-∀ (subst₂ _⊢_Valid (sym (List-++-right-identity Δ)) refl Γ⋆)
+gval-valid-type : ∀ {ψ₁ g τ} →
+                    ψ₁ ⊢ g of τ gval →
+                    [] ⊢ τ Valid
+gval-valid-type (of-gval {Δ = Δ} Γ⋆ I⋆) = valid-∀ (subst₂ _⊢_Valid (sym (List-++-right-identity Δ)) refl Γ⋆)
 
-  gvals-valid-type : ∀ {ψ₁ gs τs} →
-                       AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs →
-                       [] ⊢ τs Valid
-  gvals-valid-type [] = []
-  gvals-valid-type (g⋆ ∷ gs⋆) = gval-valid-type g⋆ ∷ gvals-valid-type gs⋆
+gvals-valid-type : ∀ {ψ₁ gs τs} →
+                     AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs →
+                     [] ⊢ τs Valid
+gvals-valid-type [] = []
+gvals-valid-type (g⋆ ∷ gs⋆) = gval-valid-type g⋆ ∷ gvals-valid-type gs⋆
 
-  globals-valid-type : ∀ {ψ₁ G} →
-                         ⊢ G of ψ₁ globals →
-                         [] ⊢ ψ₁ Valid
-  globals-valid-type (of-globals gs⋆) = gvals-valid-type gs⋆
+globals-valid-type : ∀ {ψ₁ G} →
+                       ⊢ G of ψ₁ globals →
+                       [] ⊢ ψ₁ Valid
+globals-valid-type (of-globals gs⋆) = gvals-valid-type gs⋆
 
-mutual
-  hval-valid-type : ∀ {ψ₁ ψ₂ h τ} →
-                      ψ₁ , ψ₂ ⊢ h of τ hval →
-                      [] ⊢ τ Valid
-  hval-valid-type (of-tuple ws⋆) = valid-tuple (wvals⁰-valid-type ws⋆)
+wval-valid-type : ∀ {ψ₁ ψ₂ w τ} →
+                    ψ₁ , ψ₂ ⊢ w of τ wval →
+                    [] ⊢ τ Valid
+wval-valid-type (of-globval l lookup≤τ) = proj₂ (≤-valid lookup≤τ)
+wval-valid-type (of-heapval l lookup≤τ) = proj₂ (≤-valid lookup≤τ)
+wval-valid-type of-int = valid-int
+wval-valid-type of-ns = valid-ns
+wval-valid-type (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ is⋆ subs-Γ Γ₃≤Γ₂) = valid-∀ (proj₁ (≤-valid (≤-++ Γ₃≤Γ₂)))
 
-  hvals-valid-type : ∀ {ψ₁ ψ₂ hs τs} →
-                       AllZip (λ h τ → ψ₁ , ψ₂ ⊢ h of τ hval) hs τs →
-                       [] ⊢ τs Valid
-  hvals-valid-type [] = []
-  hvals-valid-type (h⋆ ∷ hs⋆) = hval-valid-type h⋆ ∷ hvals-valid-type hs⋆
+wval⁰-valid-type : ∀ {ψ₁ ψ₂ w τ⁻} →
+                     ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰ →
+                     [] ⊢ τ⁻ Valid
+wval⁰-valid-type (of-uninit τ⋆) = valid-τ⁻ τ⋆
+wval⁰-valid-type (of-init w⋆) = valid-τ⁻ (wval-valid-type w⋆)
 
-  heap-valid-type : ∀ {ψ₁ H ψ₂} →
-                      ψ₁ ⊢ H of ψ₂ heap →
-                      [] ⊢ ψ₂ Valid
-  heap-valid-type (of-heap hs⋆) = hvals-valid-type hs⋆
+wvals⁰-valid-type : ∀ {ψ₁ ψ₂ ws τs⁻} →
+                      AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻ →
+                      [] ⊢ τs⁻ Valid
+wvals⁰-valid-type [] = []
+wvals⁰-valid-type (w⋆ ∷ ws⋆) = wval⁰-valid-type w⋆ ∷ wvals⁰-valid-type ws⋆
 
-  wval-valid-type : ∀ {ψ₁ ψ₂ w τ} →
-                      ψ₁ , ψ₂ ⊢ w of τ wval →
-                      [] ⊢ τ Valid
-  wval-valid-type (of-globval l lookup≤τ) = proj₂ (≤-valid lookup≤τ)
-  wval-valid-type (of-heapval l lookup≤τ) = proj₂ (≤-valid lookup≤τ)
-  wval-valid-type of-int = valid-int
-  wval-valid-type of-ns = valid-ns
-  wval-valid-type (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ is⋆ subs-Γ Γ₃≤Γ₂) = valid-∀ (proj₁ (≤-valid (≤-++ Γ₃≤Γ₂)))
+hval-valid-type : ∀ {ψ₁ ψ₂ h τ} →
+                    ψ₁ , ψ₂ ⊢ h of τ hval →
+                    [] ⊢ τ Valid
+hval-valid-type (of-tuple ws⋆) = valid-tuple (wvals⁰-valid-type ws⋆)
 
-  wval⁰-valid-type : ∀ {ψ₁ ψ₂ w τ⁻} →
-                       ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰ →
-                       [] ⊢ τ⁻ Valid
-  wval⁰-valid-type (of-uninit τ⋆) = valid-τ⁻ τ⋆
-  wval⁰-valid-type (of-init w⋆) = valid-τ⁻ (wval-valid-type w⋆)
+hvals-valid-type : ∀ {ψ₁ ψ₂ hs τs} →
+                     AllZip (λ h τ → ψ₁ , ψ₂ ⊢ h of τ hval) hs τs →
+                     [] ⊢ τs Valid
+hvals-valid-type [] = []
+hvals-valid-type (h⋆ ∷ hs⋆) = hval-valid-type h⋆ ∷ hvals-valid-type hs⋆
 
-  wvals⁰-valid-type : ∀ {ψ₁ ψ₂ ws τs⁻} →
-                        AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻ →
-                        [] ⊢ τs⁻ Valid
-  wvals⁰-valid-type [] = []
-  wvals⁰-valid-type (w⋆ ∷ ws⋆) = wval⁰-valid-type w⋆ ∷ wvals⁰-valid-type ws⋆
+heap-valid-type : ∀ {ψ₁ H ψ₂} →
+                    ψ₁ ⊢ H of ψ₂ heap →
+                    [] ⊢ ψ₂ Valid
+heap-valid-type (of-heap hs⋆) = hvals-valid-type hs⋆
 
 stack-valid-type : ∀ {ψ₁ ψ₂ sp σ} →
                      ψ₁ , ψ₂ ⊢ sp of σ stack →

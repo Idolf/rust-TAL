@@ -160,7 +160,7 @@ data _⟦_⟧←_⇒_ {ℓ} {A : Set ℓ} : List A → ℕ → A → List A → 
 ←-dec (x ∷ xs) zero v = yes (v ∷ xs , here)
 ←-dec (x ∷ xs) (suc i) v with ←-dec xs i v
 ... | yes (xs' , up) = yes (x ∷ xs' , there up)
-... | no ¬up = no (λ { (._ , there up) → ¬up (_ , up)} )
+... | no ¬up = no (λ { (._ , there up) → ¬up (_ , up)})
 
 <-to-← : ∀ {ℓ} {A : Set ℓ} xs (x : A) {i} →
            i < length xs →
