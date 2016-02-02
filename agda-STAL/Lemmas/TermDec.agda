@@ -100,15 +100,30 @@ instruction-unique : ∀ {ψ₁ Δ Γ ι Γ₁ Γ₂} →
 instruction-unique (of-add eq₁ v⋆₁) (of-add eq₂ v⋆₂) = refl
 instruction-unique (of-sub eq₁ v⋆₁) (of-sub eq₂ v⋆₂) = refl
 instruction-unique of-salloc of-salloc = refl
-instruction-unique (of-sfree drop₁) (of-sfree drop₂)
-  rewrite stack-drop-unique drop₁ drop₂ = refl
+instruction-unique (of-sfree drop₁) (of-sfree drop₂) = {!!}
+  -- rewrite stack-drop-unique drop₁ drop₂ = refl
 instruction-unique (of-sld x) (of-sld x₁) = {!!}
 instruction-unique (of-sst x) (of-sst x₁) = {!!}
-instruction-unique (of-ld x x₁) (of-ld x₂ x₃) = {!!}
-instruction-unique (of-st x₃ x x₁ x₂) (of-st x₄ x₅ x₆ x₇) = {!!}
-instruction-unique (of-malloc x) (of-malloc x₁) = {!!}
-instruction-unique (of-mov x) (of-mov x₁) = {!!}
-instruction-unique (of-beq x₂ x x₁) (of-beq x₃ x₄ x₅) = {!!}
+instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
+  with trans (sym eq₁) eq₂
+instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
+    | refl with ↓-unique l₁ l₂
+instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
+    | refl | refl = refl
+instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+  with trans (sym eq₁) eq₂
+instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+    | refl with ↓-unique l₁ l₂
+instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+    | refl | refl with ←-unique up₁ up₂
+instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+    | refl | refl | refl = refl
+instruction-unique (of-malloc τs⋆₁) (of-malloc τs⋆₂) = refl
+instruction-unique (of-mov v⋆₁) (of-mov v⋆₂)
+  with vval-unique v⋆₁ v⋆₂
+instruction-unique (of-mov v⋆₁) (of-mov v⋆₂)
+    | refl = refl
+instruction-unique (of-beq eq₁ v⋆₁ Γ≤₁Γ') (of-beq eq₂ v⋆₂ Γ≤₂Γ') = refl
 
 
 instructionsequence-dec : ∀ {ψ₁ Δ Γ} I →
