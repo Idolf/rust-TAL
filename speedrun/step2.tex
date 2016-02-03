@@ -71,13 +71,13 @@ of this thesis. Finally \highembed is this function:
 \embed{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
 \embed{\iota}(\mathtt{mov}\ r, v) &= \mathtt{mov}\ r, \embed_v(v) \\
 \embed{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, \embed_v(v) \\
-\embed{\iota}(\mathtt{halt}) &= \mathtt{halt} \\
 \end{array} \\\\
 
 \begin{array}{ll}
 \embed_I : \high I -> \simple{I} \\
 \embed_I(\iota ; I) &= \embed{\iota}(\iota) ; \embed_I(I) \\
-\embed_I(\mathtt{jmp}\ v) &= \mathtt{jmp}\ (\embed_v(v))
+\embed_I(\mathtt{jmp}\ v) &= \mathtt{jmp}\ (\embed_v(v)) \\
+\embed_I(\mathtt{halt}) &= \mathtt{halt}
 \end{array} \\\\
 
 \begin{array}{l}
