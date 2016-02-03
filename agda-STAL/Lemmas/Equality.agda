@@ -107,14 +107,14 @@ instance
   WordValueₛ-Tree : ToTree S.WordValue
   WordValueₛ-Tree = tree⋆ from sur
     where from : Tree → Maybe S.WordValue
-          from (node 0 (l ∷ _)) = globval <$> fromTree l
-          from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
+          from (node 0 (lab ∷ _)) = globval <$> fromTree lab
+          from (node 1 (labₕ ∷ _)) = heapval <$> fromTree labₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 _) = just ns
           from _ = nothing
           sur : IsSurjective from
-          sur (globval l) = T₁ 0 l , globval <$=> invTree l
-          sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
+          sur (globval lab) = T₁ 0 lab , globval <$=> invTree lab
+          sur (heapval labₕ) = T₁ 1 labₕ , heapval <$=> invTree labₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
           sur ns = T₀ 3 , refl
 
@@ -122,12 +122,12 @@ instance
   SmallValueₛ-Tree = tree⋆ from sur
     where from : Tree → Maybe S.SmallValue
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
-          from (node 1 (l ∷ _)) = globval <$> fromTree l
+          from (node 1 (lab ∷ _)) = globval <$> fromTree lab
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
-          sur (globval l) = T₁ 1 l , globval <$=> invTree l
+          sur (globval lab) = T₁ 1 lab , globval <$=> invTree lab
           sur (int n) = T₁ 2 n , int <$=> invTree n
 
   Instructionₛ-Tree : ToTree S.Instruction
@@ -255,17 +255,17 @@ instance
   WordValueₕ-Tree : ToTree H.WordValue
   WordValueₕ-Tree = tree⋆ from sur
     where from : Tree → Maybe H.WordValue
-          from (node 0 (l ∷ _)) = globval <$> fromTree l
-          from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
+          from (node 0 (lab ∷ _)) = globval <$> fromTree lab
+          from (node 1 (labₕ ∷ _)) = heapval <$> fromTree labₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 _) = just ns
           from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
           from (node 5 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
           from _ = nothing
           sur : IsSurjective from
-          sur (globval l) = T₁ 0 l ,
-            globval <$=> invTree l
-          sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
+          sur (globval lab) = T₁ 0 lab ,
+            globval <$=> invTree lab
+          sur (heapval labₕ) = T₁ 1 labₕ , heapval <$=> invTree labₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
           sur ns = T₀ 3 , refl
           sur (uninit τ) = T₁ 4 τ , uninit <$=> invTree τ
@@ -276,13 +276,13 @@ instance
   SmallValueₕ-Tree = tree⋆ from sur
     where from : Tree → Maybe H.SmallValue
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
-          from (node 1 (l ∷ _)) = globval <$> fromTree l
+          from (node 1 (lab ∷ _)) = globval <$> fromTree lab
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
-          sur (globval l) = T₁ 1 l , globval <$=> invTree l
+          sur (globval lab) = T₁ 1 lab , globval <$=> invTree lab
           sur (int n) = T₁ 2 n , int <$=> invTree n
           sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 3 Δ (proj₁ (sur w)) is ,
             Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is

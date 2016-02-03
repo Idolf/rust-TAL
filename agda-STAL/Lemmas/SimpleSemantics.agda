@@ -13,21 +13,21 @@ private
                  n₁ ≡ n₂
   int-helper refl refl = refl
 
-  heapval-helper : ∀ {lₕ₁ lₕ₂} {w : WordValue} →
-                     w ≡ heapval lₕ₁ →
-                     w ≡ heapval lₕ₂ →
-                     lₕ₁ ≡ lₕ₂
+  heapval-helper : ∀ {labₕ₁ labₕ₂} {w : WordValue} →
+                     w ≡ heapval labₕ₁ →
+                     w ≡ heapval labₕ₂ →
+                     labₕ₁ ≡ labₕ₂
   heapval-helper refl refl = refl
 
-  globval-helper : ∀ {l₁ l₂} {w : WordValue} →
-                     w ≡ globval l₁ →
-                     w ≡ globval l₂ →
-                     l₁ ≡ l₂
+  globval-helper : ∀ {lab₁ lab₂} {w : WordValue} →
+                     w ≡ globval lab₁ →
+                     w ≡ globval lab₂ →
+                     lab₁ ≡ lab₂
   globval-helper refl refl = refl
 
-  ↓-unique-heap : ∀ {H : Heap} {lₕ ws₁ ws₂} →
-                    H ↓ lₕ ⇒ tuple ws₁ →
-                    H ↓ lₕ ⇒ tuple ws₂ →
+  ↓-unique-heap : ∀ {H : Heap} {labₕ ws₁ ws₂} →
+                    H ↓ labₕ ⇒ tuple ws₁ →
+                    H ↓ labₕ ⇒ tuple ws₂ →
                     ws₁ ≡ ws₂
   ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
   ... | refl = refl
@@ -40,20 +40,20 @@ private
   ... | refl = refl
 
   is-int : ∀ (w : WordValue) → Dec (∃ λ n → w ≡ int n)
-  is-int (globval l) = no (λ { (_ , ()) })
-  is-int (heapval lₕ) = no (λ { (_ , ()) })
+  is-int (globval lab) = no (λ { (_ , ()) })
+  is-int (heapval labₕ) = no (λ { (_ , ()) })
   is-int (int n) = yes (n , refl)
   is-int ns = no (λ { (_ , ()) })
 
-  is-heapval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ heapval lₕ)
-  is-heapval (globval l) = no (λ { (_ , ()) })
-  is-heapval (heapval lₕ) = yes (lₕ , refl)
+  is-heapval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ heapval labₕ)
+  is-heapval (globval lab) = no (λ { (_ , ()) })
+  is-heapval (heapval labₕ) = yes (labₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval ns = no (λ { (_ , ()) })
 
-  is-globval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ globval lₕ)
-  is-globval (globval l) = yes (l , refl)
-  is-globval (heapval lₕ) = no (λ { (_ , ()) })
+  is-globval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ globval labₕ)
+  is-globval (globval lab) = yes (lab , refl)
+  is-globval (heapval labₕ) = no (λ { (_ , ()) })
   is-globval (int n) = no (λ { (_ , ()) })
   is-globval ns = no (λ { (_ , ()) })
 
@@ -135,11 +135,11 @@ exec-uniqueₛ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
         | exec-uniqueₛ exec₁ exec₂ = refl
 
 instantiate-decₛ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
-instantiate-decₛ G (globval l)
-  with ↓-dec G l
+instantiate-decₛ G (globval lab)
+  with ↓-dec G lab
 ... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
 ... | yes (code I , l') = yes (I , instantiate-globval l')
-instantiate-decₛ G (heapval l) = no (λ { (_ , ()) })
+instantiate-decₛ G (heapval lab) = no (λ { (_ , ()) })
 instantiate-decₛ G (int n) = no (λ { (_ , ()) })
 instantiate-decₛ G ns = no (λ { (_ , ()) })
 

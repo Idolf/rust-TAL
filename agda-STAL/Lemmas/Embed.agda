@@ -113,7 +113,7 @@ private
 embed-eval : ∀ regs v →
                embed (H.evalSmallValue regs v) ≡ S.evalSmallValue (embed regs) (embed v)
 embed-eval regs (reg ♯r) = embed-lookup ♯r regs
-embed-eval regs (globval l) = refl
+embed-eval regs (globval lab) = refl
 embed-eval regs (int i) = refl
 embed-eval regs Λ Δ ∙ v ⟦ is ⟧ = embed-eval regs v
 

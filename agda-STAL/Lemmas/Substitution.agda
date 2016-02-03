@@ -875,7 +875,7 @@ instance
 
           dec : ∀ v i ι → Dec (∃ λ v' → v ⟦ i / ι ⟧v≡ v')
           dec (reg ♯r) i ι = yes (reg ♯r , subst-reg)
-          dec (globval l) i ι = yes (globval l , subst-globval)
+          dec (globval lab) i ι = yes (globval lab , subst-globval)
           dec (int i) iₚ ι = yes (int i , subst-int)
           dec Λ Δ ∙ v ⟦ is ⟧ i ι
             with dec v i ι | is ⟦ i / length Δ + ι ⟧?

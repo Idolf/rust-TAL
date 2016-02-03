@@ -131,10 +131,10 @@ regs-helper : ∀ {ψ₁ ψ₂ ψ₂' n} {regs : Vec WordValue n} {τs} →
 regs-helper ψ₂'≤ψ₂ [] = []
 regs-helper ψ₂'≤ψ₂ (w⋆ ∷ S⋆) = wval-helper ψ₂'≤ψ₂ w⋆ ∷ regs-helper ψ₂'≤ψ₂ S⋆
 
-regs-helper₂ : ∀ {ψ₁ ψ₂ n} {regs : Vec WordValue n} {τs} ♯rd {lₕ τ} →
+regs-helper₂ : ∀ {ψ₁ ψ₂ n} {regs : Vec WordValue n} {τs} ♯rd {labₕ τ} →
                  [] ⊢ ψ₂ Valid →
-                 lookup ♯rd regs ≡ heapval lₕ →
-                 ψ₂ ↓ lₕ ⇒ τ →
+                 lookup ♯rd regs ≡ heapval labₕ →
+                 ψ₂ ↓ labₕ ⇒ τ →
                  AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
                  AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs (update ♯rd τ τs)
 regs-helper₂ {regs = ._ ∷ regs} zero ψ₂⋆ refl l (w⋆ ∷ regs⋆) = of-heapval l (≤-refl (All-lookup l ψ₂⋆)) ∷ regs⋆

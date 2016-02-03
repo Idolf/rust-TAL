@@ -105,18 +105,18 @@ mutual
   data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment →
                     WordValue → Type → Set where
     of-globval :
-            ∀ {ψ₁ ψ₂ l τ₁ τ₂} →
-             ψ₁ ↓ l ⇒ τ₁ →
-            [] ⊢ τ₁ ≤ τ₂ →
-      ------------------------------
-      ψ₁ , ψ₂ ⊢ globval l of τ₂ wval
+            ∀ {ψ₁ ψ₂ lab τ₁ τ₂} →
+             ψ₁ ↓ lab ⇒ τ₁ →
+             [] ⊢ τ₁ ≤ τ₂ →
+      --------------------------------
+      ψ₁ , ψ₂ ⊢ globval lab of τ₂ wval
 
     of-heapval :
-             ∀ {ψ₁ ψ₂ lₕ τ₁ τ₂} →
-              ψ₂ ↓ lₕ ⇒ τ₁ →
-              [] ⊢ τ₁ ≤ τ₂ →
-      -------------------------------
-      ψ₁ , ψ₂ ⊢ heapval lₕ of τ₂ wval
+             ∀ {ψ₁ ψ₂ labₕ τ₁ τ₂} →
+               ψ₂ ↓ labₕ ⇒ τ₁ →
+                [] ⊢ τ₁ ≤ τ₂ →
+      ---------------------------------
+      ψ₁ , ψ₂ ⊢ heapval labₕ of τ₂ wval
 
     of-int :
              ∀ {ψ₁ ψ₂ n} →
@@ -162,10 +162,10 @@ mutual
       ψ₁ , Δ , Γ ⊢ reg ♯r of lookup-regs ♯r Γ vval
 
     of-globval :
-               ∀ {ψ₁ Δ Γ l τ} →
-                ψ₁ ↓ l ⇒ τ →
-      --------------------------------
-      ψ₁ , Δ , Γ ⊢ globval l of τ vval
+               ∀ {ψ₁ Δ Γ lab τ} →
+                 ψ₁ ↓ lab ⇒ τ →
+      ----------------------------------
+      ψ₁ , Δ , Γ ⊢ globval lab of τ vval
 
     of-int :
              ∀ {ψ₁ Δ Γ n} →

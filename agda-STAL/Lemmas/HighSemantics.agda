@@ -19,10 +19,10 @@ private
                    n₁ ≡ n₂
   int-helper refl refl = refl
 
-  heapval-helper : ∀ {lₕ₁ lₕ₂} {w : WordValue} →
-                   w ≡ heapval lₕ₁ →
-                   w ≡ heapval lₕ₂ →
-                   lₕ₁ ≡ lₕ₂
+  heapval-helper : ∀ {labₕ₁ labₕ₂} {w : WordValue} →
+                   w ≡ heapval labₕ₁ →
+                   w ≡ heapval labₕ₂ →
+                   labₕ₁ ≡ labₕ₂
   heapval-helper refl refl = refl
 
   ↓-unique-heap : ∀ {H : Heap} {lₕ ws₁ ws₂} →
@@ -33,8 +33,8 @@ private
   ... | refl = refl
 
   is-int : ∀ (w : WordValue) → Dec (∃ λ n → w ≡ int n)
-  is-int (globval l) = no (λ { (_ , ()) })
-  is-int (heapval lₕ) = no (λ { (_ , ()) })
+  is-int (globval lab) = no (λ { (_ , ()) })
+  is-int (heapval labₕ) = no (λ { (_ , ()) })
   is-int (int n) = yes (n , refl)
   is-int ns = no (λ { (_ , ()) })
   is-int (uninit τs) = no (λ { (_ , ()) })
@@ -47,15 +47,15 @@ private
   ... | yes (n , eq) rewrite eq = yes (n , l)
   ... | no ¬eq = no (λ { (n , l') → ¬eq (n , ↓-unique l l')})
 
-  is-heapval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ heapval lₕ)
-  is-heapval (globval l) = no (λ { (_ , ()) })
-  is-heapval (heapval lₕ) = yes (lₕ , refl)
+  is-heapval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ heapval labₕ)
+  is-heapval (globval lab) = no (λ { (_ , ()) })
+  is-heapval (heapval labₕ) = yes (labₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval ns = no (λ { (_ , ()) })
   is-heapval (uninit τs) = no (λ { (_ , ()) })
   is-heapval (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
 
-  ↓-is-heapval : ∀ regs ♯r → Dec (∃ λ lₕ → regs ↓ ♯r ⇒ heapval lₕ)
+  ↓-is-heapval : ∀ regs ♯r → Dec (∃ λ labₕ → regs ↓ ♯r ⇒ heapval labₕ)
   ↓-is-heapval regs ♯r with ↓-dec regs ♯r
   ... | no ¬l = no (λ { (lₕ , l) → ¬l (_ , l)})
   ... | yes (v , l) with is-heapval v
@@ -142,11 +142,11 @@ exec-uniqueₕ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
         | exec-uniqueₕ exec₁ exec₂ = refl
 
 instantiate-decₕ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
-instantiate-decₕ G (globval l)
-  with ↓-dec G l
+instantiate-decₕ G (globval lab)
+  with ↓-dec G lab
 ... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
 ... | yes (code[ Δ ] Γ ∙ I , l') = yes (I , instantiate-globval l')
-instantiate-decₕ G (heapval l) = no (λ { (_ , ()) })
+instantiate-decₕ G (heapval lab) = no (λ { (_ , ()) })
 instantiate-decₕ G (int n) = no (λ { (_ , ()) })
 instantiate-decₕ G ns = no (λ { (_ , ()) })
 instantiate-decₕ G (uninit τ) = no (λ { (_ , ()) })
