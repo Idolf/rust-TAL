@@ -35,7 +35,7 @@ instance
           f (heapval l) = heapval l
           f (int n) = int n
           f ns = ns
-          f (uninit τ) = uninit
+          f (uninit τ) = ns
           f (Λ Δ ∙ w ⟦ is ⟧) = f w
 
   embedListWordValue : Embed (List H.WordValue) (List S.WordValue)

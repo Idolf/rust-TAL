@@ -30,11 +30,11 @@ represents every any malicious state.
 \paragraph{Step 2:} Define two translation functions and a relation:
 
 \begin{itemize}
-\item $\high\embed : \highlang -> \simplelang$. Intuition: Simply drop the type
+\item $\highembed : \highlang -> \simplelang$. Intuition: Simply drop the type
   annotations.
-\item $\simple\embed : \simplelang -> \nativelang$. Intuition: An assembler
+\item $\simpleembed : \simplelang -> \nativelang$. Intuition: An assembler
   along with a code generator to construct the heap.
-\item $\simple\embedp \subset \simplelang \times \nativelang$. Intuition:
+\item $\simpleembedp : \simplelang -> \mathbb{P}(\nativelang)$. Intuition:
   Multiple equivalent run-time equivalents of a single problem might exist. We
   use this relate multiple native programs to the same simplified program.
 \end{itemize}
@@ -42,10 +42,10 @@ represents every any malicious state.
 We observe that:
 
 \begin{itemize}
-\item $\high\embed(\high\halt) = \simple\halt$
-\item $\simple\embedp(\simple\halt) = \{\native\halt\}$
-\item $\malicious \notin \simple\embedp(p)$ for all p
-\item $\simple\embed(p) \in \simple\embedp(p)$ for all p
+\item $\highembed(\high\halt) = \simple\halt$
+\item $\simpleembedp(\simple\halt) = \{\native\halt\}$
+\item $\malicious \notin \simpleembedp(p)$ for all p
+\item $\simpleembed(p) \in \simpleembedp(p)$ for all p
 \end{itemize}
 
 \paragraph{Step 3:} For each of these languages, define a small-step relation:
@@ -110,7 +110,7 @@ true for \simplelang or \highlang.
 
   Define the relation $R$ as:
 
-  $$R = \{(p, \high\embed(p)) \mid \neg\Stuck(p)\} \subset \highlang \times
+  $$R = \{(p, \highembed(p)) \mid \neg\Stuck(p)\} \subset \highlang \times
   \simplelang$$
 
   We see that $R$ is bisimulation between \higho{->} and \simpleo{->}. More
@@ -125,7 +125,7 @@ true for \simplelang or \highlang.
     $p_1 \higho{->} p_2$.
   \end{itemize}
 \item \textbf{Soundness for \simplelang}: Assume $p_1 \in \typedlang$ and
-  $\high\embed(p_1) \simpleo{->} \dots \simpleo{->} p_2$. In that case there
+  $\highembed(p_1) \simpleo{->} \dots \simpleo{->} p_2$. In that case there
   exists some $p_3$ such that $p_2 \simpleo{->} p_3$. This follows
   directly from the previous two theorems.
 \end{itemize}
@@ -142,7 +142,7 @@ true for \simplelang or \highlang.
   Note specifically that $\neg\Stuck(\simple\halt)$. Now define a relation $R$
   by:
 
-  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simple\embedp(p_1) \cup \{\native\halt\}\}$$
+  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simpleembedp(p_1) \cup \{\native\halt\}\}$$
 
   This relation is a stuttering bisimulation of $\simpleo{->}$ and
   $\nativeo{->}$. More specifically there is a function
@@ -166,18 +166,18 @@ true for \simplelang or \highlang.
 \paragraph{Step 8:} We finally prove the desired theorems:
 \begin{itemize}
 \item \textbf{Safety}: Assume $p \in \typedlang$,
-  $p' \in \simple\embedp(\high\embed(p))$. There exists no path such that
+  $p' \in \simpleembedp(\highembed(p))$. There exists no path such that
   $p \nativeo{->} \dots \native{\malicious}$. In particular it is safe to
-  execute $\simple\embed(\high\embed(p))$.
+  execute $\simpleembed(\highembed(p))$.
 
   This theorem follows directly from the two previous theorems.
 
 \item \textbf{Correctness}: Assume $p_1 \in \typedlang$,
-  $p_1' \in \simple\embedp(\high\embed(p_1))$ and assume
+  $p_1' \in \simpleembedp(\highembed(p_1))$ and assume
   $p_1 \higho{->} \dots \higho{->} p_n$. There now exists a finite sequence
   $p_1' \nativeo{->} \dots \nativeo{->} p_m'$ such that
-  $p_m' \in \simple\embedp(\high\embed(p_n)) \cup \{\native\halt\}$. In
-  particular this holds if $p_1' = \simple\embed(\high\embed(p_1)$.
+  $p_m' \in \simpleembedp(\highembed(p_n)) \cup \{\native\halt\}$. In
+  particular this holds if $p_1' = \simpleembed(\highembed(p_1)$.
 
 \item \textbf{Decidability}: If $p \in \highlang$, then it is decidable to check
   if $p$ is a member of $\typedlang$.
@@ -193,11 +193,11 @@ these statements hold in the practical implementation:
 \item It is possible to compile from a high-level language into
   $\typedlang$. This compiler should not be significantly worse in the relevant
   metrics than compilers that translate directly into assembler language.
-\item The function $\simple\embedp(\high\embed(\cdot))$ does not degrade
+\item The function $\simpleembedp(\highembed(\cdot))$ does not degrade
   performance seriously.
 \item None of our theorems restrict in what situations the programs in
   \nativelang could halt. In principle we could have
-  $\simple\embed(p) = \native\halt$ for all $p$. Ideally one would prove some
+  $\simpleembed(p) = \native\halt$ for all $p$. Ideally one would prove some
   guarantees about the conditions in which the translated programs could halt.
 \end{itemize}
 

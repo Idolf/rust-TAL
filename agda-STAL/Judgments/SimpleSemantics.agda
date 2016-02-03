@@ -77,7 +77,7 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                     ∀ {H sp regs I ♯rd n} →
       -----------------------------------------------------------
       G ⊢ₛ H , register sp regs , malloc ♯rd n ~> I ⇒
-           H ∷ʳ tuple (replicate n uninit) ,
+           H ∷ʳ tuple (replicate n ns) ,
            register sp (update ♯rd (heapval (length H)) regs) , I
 
     step-mov :

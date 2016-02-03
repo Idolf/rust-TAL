@@ -44,21 +44,18 @@ private
   is-int (heapval lₕ) = no (λ { (_ , ()) })
   is-int (int n) = yes (n , refl)
   is-int ns = no (λ { (_ , ()) })
-  is-int uninit = no (λ { (_ , ()) })
 
   is-heapval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ heapval lₕ)
   is-heapval (globval l) = no (λ { (_ , ()) })
   is-heapval (heapval lₕ) = yes (lₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval ns = no (λ { (_ , ()) })
-  is-heapval uninit = no (λ { (_ , ()) })
 
   is-globval : ∀ (w : WordValue) → Dec (∃ λ lₕ → w ≡ globval lₕ)
   is-globval (globval l) = yes (l , refl)
   is-globval (heapval lₕ) = no (λ { (_ , ()) })
   is-globval (int n) = no (λ { (_ , ()) })
   is-globval ns = no (λ { (_ , ()) })
-  is-globval uninit = no (λ { (_ , ()) })
 
 step-uniqueₛ : ∀ {G P P₁ P₂} →
                  G ⊢ P ⇒ P₁ →

@@ -1,6 +1,6 @@
 \section{Step 2: Translations}
 
-The a (very informal) definition of \simple\embed is as follows:
+The a (very informal) definition of \simpleembed is as follows:
 
 \begin{itemize}
 \item $\simple{H}$: Create assembler code to malloc and initialize the heap
@@ -11,83 +11,89 @@ The a (very informal) definition of \simple\embed is as follows:
 \item Finally run an assembler over the generated text to create machine code.
 \end{itemize}
 
-Defining \simple\embedp is somewhat more complicated, and is outside the scope
-of this thesis. Finally \high\embed is this function:
+Defining \simpleembedp is somewhat more complicated, and is outside the scope
+of this thesis. Finally \highembed is this function:
 
 {\footnotesize
 \[\begin{array}{l}
 \begin{array}{ll}
-\rlap{$\drop{w} : \high w -> \simple{w}$} \\
-\drop{w}(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
-\drop{w}(\mathtt{heapval}\ \ell_h) &= \mathtt{heapval}\ \ell_h \\
-\drop{w}(\mathtt{int}\ i) &= \mathtt{int}\ i \\
-\drop{w}(\mathtt{ns}) &= \mathtt{ns} \\
-\drop{w}(\mathtt{uninit}\ \tau) &= \mathtt{uninit} \\
-\drop{w}(\Lambda\ \Delta \cdot w[\theta_1, \dots, \theta_n]) &= \drop{w}(w) \\\\
+\rlap{$\embed_w : \high w -> \simple{w}$} \\
+\embed_w(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
+\embed_w(\mathtt{heapval}\ \ell_h) &= \mathtt{heapval}\ \ell_h \\
+\embed_w(\mathtt{int}\ i) &= \mathtt{int}\ i \\
+\embed_w(\mathtt{ns}) &= \mathtt{ns} \\
+\embed_w(\mathtt{uninit}\ \tau) &= \mathtt{ns} \\
+\embed_w(\Lambda\ \Delta \cdot w[\theta_1, \dots, \theta_n]) &= \embed_w(w) \\\\
 
-\rlap{$\drop{v} : \high v -> \simple{v}$} \\
-\drop{v}(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
-\drop{v}(\mathtt{reg}\ r) &= \mathtt{reg}\ r \\
-\drop{v}(\mathtt{int}\ i) &= \mathtt{int}\ i \\
-\drop{v}(\Lambda\ \Delta \cdot v[\theta_1, \dots, \theta_n]) &= \drop{v}(v)
+\rlap{$\embed_v : \high v -> \simple{v}$} \\
+\embed_v(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
+\embed_v(\mathtt{reg}\ r) &= \mathtt{reg}\ r \\
+\embed_v(\mathtt{int}\ i) &= \mathtt{int}\ i \\
+\embed_v(\Lambda\ \Delta \cdot v[\theta_1, \dots, \theta_n]) &= \embed_v(v)
 \end{array} \\\\
 
 \begin{array}{l}
-\drop{g} : \high g -> \simple{g} \\
-\drop{g}(\mathtt{code}[\Delta]\Gamma \cdot I) = \mathtt{code}\ (\drop{I}(I)) \\\\
+\embed_g : \high g -> \simple{g} \\
+\embed_g(\mathtt{code}[\Delta]\Gamma \cdot I) = \mathtt{code}\ (\embed_I(I)) \\\\
 
-\drop{G} : \high G -> \simple{G} \\
-\drop{G}(\{\ell_{g,1} |-> g_1, \dots, \ell_{g,n} |-> g_n\}) = \{\ell_{g,1} |-> \drop{g}(g_1), \dots, \ell_{g,n} |-> \drop{g}(g_n)\} \\\\
+\embed_G : \high G -> \simple{G} \\
+\embed_G(\{\ell_{g,1} |-> g_1, \dots, \ell_{g,n} |-> g_n\}) = \{\ell_{g,1} |-> \embed_g(g_1), \dots, \ell_{g,n} |-> \embed_g(g_n)\} \\\\
 
-\drop{h} : \high h -> \simple{h} \\
-\drop{h}(\langle w_1, \dots, w_n \rangle) = \langle \drop{w}(w_1), \dots \drop{w}(w_n)\rangle \\\\
+\embed_h : \high h -> \simple{h} \\
+\embed_h(\langle w_1, \dots, w_n \rangle) = \langle \embed_w(w_1), \dots \embed_w(w_n)\rangle \\\\
 
-\drop{H} : \high H -> \simple{H} \\
-\drop{H}(\{\ell_{h,1} |-> h_1, \dots, \ell_{h,n} |-> h_n\}) = \{\ell_{h,1} |-> \drop{h}(h_1), \dots, \ell_{h,n} |-> \drop{h}(h_n)\}
+\embed_H : \high H -> \simple{H} \\
+\embed_H(\{\ell_{h,1} |-> h_1, \dots, \ell_{h,n} |-> h_n\}) = \{\ell_{h,1} |-> \embed_h(h_1), \dots, \ell_{h,n} |-> \embed_h(h_n)\}
 \end{array} \\\\
 
 \begin{array}{ll}
-\rlap{$\drop{S} : \high S -> \simple{S}$} \\
-\drop{S}(\mathtt{nil}) &= \mathtt{nil} \\
-\drop{S}(w :: S) &= \drop{w}(w) :: \drop{S}(S) \\
+\rlap{$\embed_S : \high S -> \simple{S}$} \\
+\embed_S(\mathtt{nil}) &= \mathtt{nil} \\
+\embed_S(w :: S) &= \embed_w(w) :: \embed_S(S) \\
 \end{array} \\\\
 
 \begin{array}{l}
-\drop{R} : \high R -> \simple{R} \\
-\drop{R}(\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w_1, \dots, \mathtt{r}_{r_{max}} |-> w_{r_{max}}\})\\
-\quad\quad\quad\quad = \{\mathtt{sp} |-> \drop{S}(S), \mathtt{r}_1 |-> \drop{w}(w_1), \dots, \mathtt{r}_{r_{max}} |-> \drop{w}(w_{r_{max}})\}
+\embed_R : \high R -> \simple{R} \\
+\embed_R(\{\mathtt{sp} |-> S, \mathtt{r}_1 |-> w_1, \dots, \mathtt{r}_{r_{max}} |-> w_{r_{max}}\})\\
+\quad\quad\quad\quad = \{\mathtt{sp} |-> \embed_S(S), \mathtt{r}_1 |-> \embed_w(w_1), \dots, \mathtt{r}_{r_{max}} |-> \embed_w(w_{r_{max}})\}
 \end{array} \\\\
 
 \begin{array}{ll}
-\rlap{$\drop{\iota} : \high\iota -> \simple\iota$} \\
-\drop{\iota}(\mathtt{add}\ r_a, r_b, v) &= \mathtt{add}\ r_a, r_b, \drop{v}(v) \\
-\drop{\iota}(\mathtt{sub}\ r_a, r_b, v) &= \mathtt{sub}\ r_a, r_b, \drop{v}(v) \\
-\drop{\iota}(\mathtt{salloc}\ n) &= \mathtt{salloc}\ n \\
-\drop{\iota}(\mathtt{sfree}\ n) &= \mathtt{sfree}\ n \\
-\drop{\iota}(\mathtt{ld}\ r, \mathtt{sp}(n)) &= \mathtt{ld}\ r, \mathtt{sp}(n) \\
-\drop{\iota}(\mathtt{st}\ \mathtt{sp}(n), r) &= \mathtt{st}\ \mathtt{sp}(n), r \\
-\drop{\iota}(\mathtt{ld}\ r_a, r_b(n)) &= \mathtt{ld}\ r_a, r_b(n) \\
-\drop{\iota}(\mathtt{st}\ r_a(n), r_b) &= \mathtt{st}\ r_a(n), r_b \\
-\drop{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
-\drop{\iota}(\mathtt{mov}\ r, v) &= \mathtt{mov}\ r, \drop{v}(v) \\
-\drop{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, \drop{v}(v) \\
-\drop{\iota}(\mathtt{halt}) &= \mathtt{halt} \\
+\rlap{$\embed{\iota} : \high\iota -> \simple\iota$} \\
+\embed{\iota}(\mathtt{add}\ r_a, r_b, v) &= \mathtt{add}\ r_a, r_b, \embed_v(v) \\
+\embed{\iota}(\mathtt{sub}\ r_a, r_b, v) &= \mathtt{sub}\ r_a, r_b, \embed_v(v) \\
+\embed{\iota}(\mathtt{salloc}\ n) &= \mathtt{salloc}\ n \\
+\embed{\iota}(\mathtt{sfree}\ n) &= \mathtt{sfree}\ n \\
+\embed{\iota}(\mathtt{ld}\ r, \mathtt{sp}(n)) &= \mathtt{ld}\ r, \mathtt{sp}(n) \\
+\embed{\iota}(\mathtt{st}\ \mathtt{sp}(n), r) &= \mathtt{st}\ \mathtt{sp}(n), r \\
+\embed{\iota}(\mathtt{ld}\ r_a, r_b(n)) &= \mathtt{ld}\ r_a, r_b(n) \\
+\embed{\iota}(\mathtt{st}\ r_a(n), r_b) &= \mathtt{st}\ r_a(n), r_b \\
+\embed{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
+\embed{\iota}(\mathtt{mov}\ r, v) &= \mathtt{mov}\ r, \embed_v(v) \\
+\embed{\iota}(\mathtt{beq}\ r, v) &= \mathtt{beq}\ r, \embed_v(v) \\
+\embed{\iota}(\mathtt{halt}) &= \mathtt{halt} \\
 \end{array} \\\\
 
 \begin{array}{ll}
-\drop{I} : \high I -> \simple{I} \\
-\drop{I}(\iota ; I) &= \drop{\iota}(\iota) ; \drop{I}(I) \\
-\drop{I}(\mathtt{jmp}\ v) &= \mathtt{jmp}\ (\drop{v}(v))
+\embed_I : \high I -> \simple{I} \\
+\embed_I(\iota ; I) &= \embed{\iota}(\iota) ; \embed_I(I) \\
+\embed_I(\mathtt{jmp}\ v) &= \mathtt{jmp}\ (\embed_v(v))
 \end{array} \\\\
 
 \begin{array}{l}
-\drop{P} : \high P -> \simple{P} \\
-\drop{P}(H, R, I) = (\drop{H}(H), \drop{R}(R), \drop{I}(I)) \\\\
+\embed_P : \high P -> \simple{P} \\
+\embed_P(H, R, I) = (\embed_H(H), \embed_R(R), \embed_I(I)) \\\\
 
-\high\embed : \highlang -> \simplelang \\
-\high\embed(\high\running(G, P)) = \simple\running(\drop{G}(G), \drop{P}(P)) \\
-\high\embed(\high\halted) = \simple\halted \\
+\highembed : \highlang -> \simplelang \\
+\highembed(\high\running(G, P)) = \simple\running(\embed_G(G), \embed_P(P)) \\
+\highembed(\high\halted) = \simple\halted \\
 \end{array} \\\\
 
 \end{array}\]
 }
+
+\subsection{Notes on the Agda implementation}
+
+The Agda-implementation\footnote{The relevant file is
+  \texttt{Judgments/Embed.agda}} for this is more or less a direct transcription
+of this section.

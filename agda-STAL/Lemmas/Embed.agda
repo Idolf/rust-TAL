@@ -52,12 +52,12 @@ private
   drop-helper (there drop) = drop-helper drop
 
   uninit-helper : ∀ (τs : List Type) →
-                    embed {{ListEmbed embedWordValue}} (map uninit τs) ≡ replicate (length τs) uninit
+                    embed {{ListEmbed embedWordValue}} (map uninit τs) ≡ replicate (length τs) ns
   uninit-helper [] = refl
   uninit-helper (τ ∷ τs) = cong₂ _∷_ refl (uninit-helper τs)
 
   malloc-helper : ∀ (H : H.Heap) τs →
-                    embed (H ∷ʳ tuple (map uninit τs)) ≡ embed H ∷ʳ tuple (replicate (length τs) uninit)
+                    embed (H ∷ʳ tuple (map uninit τs)) ≡ embed H ∷ʳ tuple (replicate (length τs) ns)
   malloc-helper [] τs = cong (λ w → [ tuple w ]) (uninit-helper τs)
   malloc-helper (h ∷ H) τs = cong₂ _∷_ refl (malloc-helper H τs)
 

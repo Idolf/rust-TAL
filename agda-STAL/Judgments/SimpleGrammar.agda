@@ -12,7 +12,6 @@ data WordValueₛ : Set where
   heapval : HeapLabel → WordValueₛ
   int     : ℕ → WordValueₛ
   ns      : WordValueₛ
-  uninit  : WordValueₛ
 
 -- Small values, v
 data SmallValueₛ : Set where

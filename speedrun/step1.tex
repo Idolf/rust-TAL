@@ -19,7 +19,7 @@ Common definitions: \\
 \textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{max}$ \\\\
 
 The grammar for \simplelang: \\
-\textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}$ \\
+\textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns}$ \\
 \textit{small values}       & $\simple v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i$ \\
 \textit{global values}      & $\simple g$ & ::= & $\mathtt{code}\ \simple I$ \\
 \textit{global collections} & $\simple G$ & ::= & $\{\ell_g |-> \simple{g}, \dots, \ell_g |-> \simple{g}\}$ \\
@@ -106,7 +106,11 @@ programs from our semantics without also excluding some valid programs.
 
 \subsection{Notes on the Agda implementation}
 
-The Agda implementation is mostly a faithful representation of the grammar
+The Agda implementation\footnote{The relevant files are
+  \texttt{Judgments/SimpleGrammar.agda} and
+  \texttt{Judgments/HighGrammar.agda}. It might also be relevant to look at
+  \texttt{Judgments/Grammar.agda}, which renames some of the values for easier
+  use in later files.} is mostly a faithful representation of the grammar
 presented here, though the notation used for it is slightly different in places.
 
 The biggest difference is how we represent the variables (i.e.

@@ -111,14 +111,12 @@ instance
           from (node 1 (lₕ ∷ _)) = heapval <$> fromTree lₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 _) = just ns
-          from (node 4 _) = just uninit
           from _ = nothing
           sur : IsSurjective from
           sur (globval l) = T₁ 0 l , globval <$=> invTree l
           sur (heapval lₕ) = T₁ 1 lₕ , heapval <$=> invTree lₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
           sur ns = T₀ 3 , refl
-          sur uninit = T₀ 4 , refl
 
   SmallValueₛ-Tree : ToTree S.SmallValue
   SmallValueₛ-Tree = tree⋆ from sur
