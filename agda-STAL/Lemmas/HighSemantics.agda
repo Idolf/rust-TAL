@@ -62,20 +62,19 @@ private
   ... | yes (lₕ , eq) rewrite eq = yes (lₕ , l)
   ... | no ¬eq = no (λ { (lₕ , l') → ¬eq (lₕ , ↓-unique l l')})
 
-
-eval-unique : ∀ {G w I₁ I₂} →
-                InstantiateGlobal G w I₁ →
-                InstantiateGlobal G w I₂ →
-                I₁ ≡ I₂
-eval-unique (instantiate-globval l₁) (instantiate-globval l₂)
+instantiate-uniqueₕ : ∀ {G w I₁ I₂} →
+                        InstantiateGlobal G w I₁ →
+                        InstantiateGlobal G w I₂ →
+                        I₁ ≡ I₂
+instantiate-uniqueₕ (instantiate-globval l₁) (instantiate-globval l₂)
   with ↓-unique l₁ l₂
-eval-unique (instantiate-globval l₁) (instantiate-globval l₂)
+instantiate-uniqueₕ (instantiate-globval l₁) (instantiate-globval l₂)
   | refl = refl
-eval-unique (instantiate-Λ eval₁ x) (instantiate-Λ eval₂ x₁)
-  with eval-unique eval₁ eval₂
-eval-unique (instantiate-Λ eval₁ subs-I₁) (instantiate-Λ eval₂ subs-I₂)
+instantiate-uniqueₕ (instantiate-Λ ig₁ x) (instantiate-Λ ig₂ x₁)
+  with instantiate-uniqueₕ ig₁ ig₂
+instantiate-uniqueₕ (instantiate-Λ ig₁ subs-I₁) (instantiate-Λ ig₂ subs-I₂)
   | refl with subst-unique-many subs-I₁ subs-I₂
-eval-unique (instantiate-Λ eval₁ subs-I₁) (instantiate-Λ eval₂ subs-I₂)
+instantiate-uniqueₕ (instantiate-Λ ig₁ subs-I₁) (instantiate-Λ ig₂ subs-I₂)
   | refl | refl = refl
 
 step-uniqueₕ : ∀ {G P P₁ P₂} →
@@ -107,18 +106,18 @@ step-uniqueₕ (step-st eq₁ l₁ u₁₁ u₁₂) (step-st eq₂ l₂ u₂₁ 
   = refl
 step-uniqueₕ step-mov step-mov = refl
 step-uniqueₕ step-malloc step-malloc = refl
-step-uniqueₕ (step-beq₀ eq₁ eval₁) (step-beq₀ eq₂ eval₂)
-  with eval-unique eval₁ eval₂
+step-uniqueₕ (step-beq₀ eq₁ ig₁) (step-beq₀ eq₂ ig₂)
+  with instantiate-uniqueₕ ig₁ ig₂
 ... | refl = refl
-step-uniqueₕ (step-beq₀ eq₁ eval₁) (step-beq₁ eq₂ neq₂)
+step-uniqueₕ (step-beq₀ eq₁ ig₁) (step-beq₁ eq₂ neq₂)
   rewrite int-helper eq₁ eq₂ with neq₂ refl
 ... | ()
-step-uniqueₕ (step-beq₁ eq₁ neq₁) (step-beq₀ eq₂ eval₂)
+step-uniqueₕ (step-beq₁ eq₁ neq₁) (step-beq₀ eq₂ ig₂)
   rewrite int-helper eq₁ eq₂ with neq₁ refl
 ... | ()
 step-uniqueₕ (step-beq₁ eq₁ neq₁) (step-beq₁ eq₂ neq₂) = refl
-step-uniqueₕ (step-jmp eval₁) (step-jmp eval₂)
-  with eval-unique eval₁ eval₂
+step-uniqueₕ (step-jmp ig₁) (step-jmp ig₂)
+  with instantiate-uniqueₕ ig₁ ig₂
 ... | refl = refl
 
 step-prg-uniqueₕ : ∀ {P P₁ P₂} →
@@ -142,26 +141,26 @@ exec-uniqueₕ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
   rewrite step-prg-uniqueₕ step₁ step₂
         | exec-uniqueₕ exec₁ exec₂ = refl
 
-instantiate-dec : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
-instantiate-dec G (globval l)
+instantiate-decₕ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
+instantiate-decₕ G (globval l)
   with ↓-dec G l
 ... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
 ... | yes (code[ Δ ] Γ ∙ I , l') = yes (I , instantiate-globval l')
-instantiate-dec G (heapval l) = no (λ { (_ , ()) })
-instantiate-dec G (int n) = no (λ { (_ , ()) })
-instantiate-dec G ns = no (λ { (_ , ()) })
-instantiate-dec G (uninit τ) = no (λ { (_ , ()) })
-instantiate-dec G (Λ Δ ∙ w ⟦ is ⟧)
-  with instantiate-dec G w
-... | no ¬eval = no (λ { (_ , instantiate-Λ eval subs-I) → ¬eval (_ , eval)})
-... | yes (I , eval)
+instantiate-decₕ G (heapval l) = no (λ { (_ , ()) })
+instantiate-decₕ G (int n) = no (λ { (_ , ()) })
+instantiate-decₕ G ns = no (λ { (_ , ()) })
+instantiate-decₕ G (uninit τ) = no (λ { (_ , ()) })
+instantiate-decₕ G (Λ Δ ∙ w ⟦ is ⟧)
+  with instantiate-decₕ G w
+... | no ¬ig = no (λ { (_ , instantiate-Λ ig subs-I) → ¬ig (_ , ig)})
+... | yes (I , ig)
   with I ⟦ is / 0 ⟧many?
-... | yes (Iₑ , subs-I) = yes (Iₑ , instantiate-Λ eval subs-I)
+... | yes (Iₑ , subs-I) = yes (Iₑ , instantiate-Λ ig subs-I)
 ... | no ¬subs-I = no help
   where help : ¬ (∃ λ I → InstantiateGlobal G (Λ Δ ∙ w ⟦ is ⟧) I)
-        help (Iₑ , instantiate-Λ {I = I'} eval' subs-I)
-          with eval-unique eval eval'
-        help (Iₑ , instantiate-Λ {I = .I} eval' subs-I)
+        help (Iₑ , instantiate-Λ {I = I'} ig' subs-I)
+          with instantiate-uniqueₕ ig ig'
+        help (Iₑ , instantiate-Λ {I = .I} ig' subs-I)
             | refl = ¬subs-I (Iₑ , subs-I)
 
 step-decₕ : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
@@ -229,18 +228,18 @@ step-decₕ G (H , register sp regs , malloc ♯rd τs ~> I) = yes (_ , step-mal
 step-decₕ G (H , register sp regs , mov ♯rd v ~> I) = yes (_ , step-mov)
 step-decₕ G (H , register sp regs , beq ♯r v ~> I)
   with is-int (lookup ♯r regs)
-... | no ¬eq = no (λ { (._ , step-beq₀ eq eval) → ¬eq (_ , eq)
+... | no ¬eq = no (λ { (._ , step-beq₀ eq ig) → ¬eq (_ , eq)
                      ; (._ , step-beq₁ eq neg) → ¬eq (_ , eq)})
 ... | yes (suc n , eq) = yes (_ , step-beq₁ eq (λ ()))
-... | yes (zero , eq) with instantiate-dec G (evalSmallValue regs v)
-... | no ¬eval = no (λ { (._ , step-beq₀ eq' eval) → ¬eval (_ , eval)
+... | yes (zero , eq) with instantiate-decₕ G (evalSmallValue regs v)
+... | no ¬ig = no (λ { (._ , step-beq₀ eq' ig) → ¬ig (_ , ig)
                        ; (._ , step-beq₁ eq' neq) →
                              neq (int-helper eq' eq)})
-... | yes (I' , eval) = yes (_ , step-beq₀ eq eval)
+... | yes (I' , ig) = yes (_ , step-beq₀ eq ig)
 step-decₕ G (H , register sp regs , jmp v)
-  with instantiate-dec G (evalSmallValue regs v)
-... | no ¬eval = no (λ { (._ , step-jmp eval) → ¬eval (_ , eval) })
-... | yes (I' , eval) = yes (_ , step-jmp eval)
+  with instantiate-decₕ G (evalSmallValue regs v)
+... | no ¬ig = no (λ { (._ , step-jmp ig) → ¬ig (_ , ig) })
+... | yes (I' , ig) = yes (_ , step-jmp ig)
 step-decₕ G (H , R , halt) = no (λ { (_ , ()) })
 
 step-prg-decₕ : ∀ P → Dec (∃ λ P' → ⊢ P ⇒ P')

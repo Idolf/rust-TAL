@@ -10,23 +10,23 @@ open HighGrammar
 
 evalSmallValueₕ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₕ regs (reg ♯r) = lookup ♯r regs
-evalSmallValueₕ regs (globval l) = globval l
+evalSmallValueₕ regs (globval lab) = globval lab
 evalSmallValueₕ regs (int i) = int i
 evalSmallValueₕ regs Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ evalSmallValueₕ regs v ⟦ is ⟧
 
-data InstantiateGlobal (G : Globals) : WordValue → InstructionSequence → Set where
+data InstantiateGlobalₕ (G : Globals) : WordValue → InstructionSequence → Set where
   instantiate-globval :
-            ∀ {l Δ Γ I} →
-       G ↓ l ⇒ (code[ Δ ] Γ ∙ I) →
-    ---------------------------------
-    InstantiateGlobal G (globval l) I
+              ∀ {lab Δ Γ I} →
+        G ↓ lab ⇒ (code[ Δ ] Γ ∙ I) →
+    -----------------------------------
+    InstantiateGlobalₕ G (globval lab) I
 
   instantiate-Λ :
                ∀ {w I I' Δ is} →
-            InstantiateGlobal G w I →
+            InstantiateGlobalₕ G w I →
               I ⟦ is / 0 ⟧many≡ I' →
     ---------------------------------------
-    InstantiateGlobal G (Λ Δ ∙ w ⟦ is ⟧) I'
+    InstantiateGlobalₕ G (Λ Δ ∙ w ⟦ is ⟧) I'
 
 infix 3 _⊢ₕ_⇒_
 data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
@@ -108,10 +108,10 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
     step-beq₀ :
                   ∀ {H sp regs ♯r v I₁ I₂} →
                    lookup ♯r regs ≡ int 0 →
-      InstantiateGlobal G (evalSmallValueₕ regs v) I₂ →
-      -------------------------------------------------
+      InstantiateGlobalₕ G (evalSmallValueₕ regs v) I₂ →
+      --------------------------------------------------
          G ⊢ₕ H , register sp regs , beq ♯r v ~> I₁ ⇒
-             H , register sp regs , I₂
+              H , register sp regs , I₂
 
     step-beq₁ :
                 ∀ {H sp regs I ♯r v n₀} →
@@ -123,8 +123,8 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
 
     step-jmp :
                     ∀ {H sp regs v I} →
-      InstantiateGlobal G (evalSmallValueₕ regs v) I →
-      ------------------------------------------------
+      InstantiateGlobalₕ G (evalSmallValueₕ regs v) I →
+      -------------------------------------------------
          G ⊢ₕ H , register sp regs , jmp v ⇒
               H , register sp regs , I
 

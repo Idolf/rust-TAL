@@ -118,16 +118,14 @@ embed-eval regs (int i) = refl
 embed-eval regs Λ Δ ∙ v ⟦ is ⟧ = embed-eval regs v
 
 embed-instantiate : ∀ {G w I} →
-                      InstantiateGlobal G w I →
-                      ∃ λ l →
-                        embed w ≡ globval l ×
-                        embed G ↓ l ⇒ code (embed I)
-embed-instantiate (instantiate-globval l) = _ , refl , embed-↓ l
+                      H.InstantiateGlobal G w I →
+                      S.InstantiateGlobal (embed G) (embed w) (embed I)
+embed-instantiate (instantiate-globval l) = instantiate-globval (embed-↓ l)
 embed-instantiate (instantiate-Λ ig subs-I)
   with embed-instantiate ig
-... | lab , eq , l
+... | ig'
   rewrite embed-subst-I-many subs-I
-    = _ , eq , l
+    = ig'
 
 embed-step : ∀ {G P P'} →
                G H.⊢ P ⇒ P' →
@@ -173,16 +171,16 @@ embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v})
   = step-mov
 embed-step (step-beq₀ {regs = regs} {♯r = ♯r} {v = v} eq ig)
   with embed-instantiate ig
-... | lab , eq₁ , l
+... | ig'
   rewrite embed-eval regs v
-  = step-beq₀ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) eq₁ l
+  = step-beq₀ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) ig'
 embed-step (step-beq₁ {regs = regs} {♯r = ♯r} eq neq)
   = step-beq₁ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) neq
 embed-step (step-jmp {regs = regs} {v = v} ig)
   with embed-instantiate ig
-... | lab , eq₁ , l
+... | ig'
   rewrite embed-eval regs v
-    = step-jmp eq₁ l
+  = step-jmp ig'
 
 embed-step-prg : ∀ {P P'} →
                    H.⊢ P ⇒ P' →

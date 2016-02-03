@@ -57,6 +57,15 @@ private
   is-globval (int n) = no (λ { (_ , ()) })
   is-globval ns = no (λ { (_ , ()) })
 
+instantiate-uniqueₛ : ∀ {G w I₁ I₂} →
+                        InstantiateGlobal G w I₁ →
+                        InstantiateGlobal G w I₂ →
+                        I₁ ≡ I₂
+instantiate-uniqueₛ (instantiate-globval l₁) (instantiate-globval l₂)
+  with ↓-unique l₁ l₂
+instantiate-uniqueₛ (instantiate-globval l₁) (instantiate-globval l₂)
+  | refl = refl
+
 step-uniqueₛ : ∀ {G P P₁ P₂} →
                  G ⊢ P ⇒ P₁ →
                  G ⊢ P ⇒ P₂ →
@@ -88,23 +97,21 @@ step-uniqueₛ (step-st eq₁ l₁ up₁₁ up₁₂) (step-st eq₂ l₂ up₂�
         = refl
 step-uniqueₛ step-malloc step-malloc = refl
 step-uniqueₛ step-mov step-mov = refl
-step-uniqueₛ (step-beq₀ eq₁₁ eq₁₂ l₁) (step-beq₀ eq₂₁ eq₂₂ l₂)
-  rewrite globval-helper eq₁₂ eq₂₂
-        | ↓-unique-globals l₁ l₂
-        = refl
-step-uniqueₛ (step-beq₀ eq₁₁ eq₁₂ l₁) (step-beq₁ eq₂ neq₂)
-  rewrite int-helper eq₁₁ eq₂
+step-uniqueₛ (step-beq₀ eq₁ ig₁) (step-beq₀ eq₂ ig₂)
+  with instantiate-uniqueₛ ig₁ ig₂
+... | refl = refl
+step-uniqueₛ (step-beq₀ eq₁ ig₁) (step-beq₁ eq₂ neq₂)
+  rewrite int-helper eq₁ eq₂
   with neq₂ refl
 ... | ()
-step-uniqueₛ (step-beq₁ eq₁ neq₁) (step-beq₀ eq₂₁ eq₂₂ l₂)
-  rewrite int-helper eq₁ eq₂₁
+step-uniqueₛ (step-beq₁ eq₁ neq₁) (step-beq₀ eq₂ ig₂)
+  rewrite int-helper eq₁ eq₂
   with neq₁ refl
 ... | ()
 step-uniqueₛ (step-beq₁ eq₁ neq₁) (step-beq₁ eq₂ neq₂) = refl
-step-uniqueₛ (step-jmp eq₁ l₁) (step-jmp eq₂ l₂)
-  rewrite globval-helper eq₁ eq₂
-        | ↓-unique-globals l₁ l₂
-        = refl
+step-uniqueₛ (step-jmp ig₁) (step-jmp ig₂)
+  with instantiate-uniqueₛ ig₁ ig₂
+... | refl = refl
 
 step-prg-uniqueₛ : ∀ {P P₁ P₂} →
                     ⊢ P ⇒ P₁ →
@@ -126,6 +133,15 @@ exec-uniqueₛ [] [] = refl
 exec-uniqueₛ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
   rewrite step-prg-uniqueₛ step₁ step₂
         | exec-uniqueₛ exec₁ exec₂ = refl
+
+instantiate-decₛ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
+instantiate-decₛ G (globval l)
+  with ↓-dec G l
+... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
+... | yes (code I , l') = yes (I , instantiate-globval l')
+instantiate-decₛ G (heapval l) = no (λ { (_ , ()) })
+instantiate-decₛ G (int n) = no (λ { (_ , ()) })
+instantiate-decₛ G ns = no (λ { (_ , ()) })
 
 step-decₛ : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
 step-decₛ G (H , register sp regs , add ♯rd ♯rs v ~> I)
@@ -193,33 +209,18 @@ step-decₛ G (H , register sp regs , mov ♯rd v ~> I)
   = yes (_ , step-mov)
 step-decₛ G (H , register sp regs , beq ♯r v ~> I)
   with is-int (lookup ♯r regs)
-... | no ¬eq = no (λ { (_ , step-beq₀ eq₁ eq₂ l) → ¬eq (_ , eq₁) ; (_ , step-beq₁ eq neq) → ¬eq (_ , eq) })
+... | no ¬eq = no (λ { (._ , step-beq₀ eq ig) → ¬eq (_ , eq)
+                     ; (._ , step-beq₁ eq neg) → ¬eq (_ , eq)})
 ... | yes (suc n , eq) = yes (_ , step-beq₁ eq (λ ()))
-... | yes (zero , eq₁)
-  with is-globval (evalSmallValue regs v)
-... | no ¬eq = no (λ { (_ , step-beq₀ eq₁ eq₂ l) → ¬eq (_ , eq₂) ; (_ , step-beq₁ eq neq) → neq (int-helper eq eq₁) })
-... | yes (lab , eq₂)
-  with ↓-dec G lab
-... | yes (code I₂ , l)
-  = yes (_ , step-beq₀ eq₁ eq₂ l)
-... | no ¬l = no help
-  where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , beq ♯r v ~> I ⇒ P')
-        help (._ , step-beq₀ eq₃ eq₄ l)
-          with globval-helper eq₂ eq₄
-        ... | refl = ¬l (_ , l)
-        help (._ , step-beq₁ eq neq) = neq (int-helper eq eq₁)
+... | yes (zero , eq) with instantiate-decₛ G (evalSmallValue regs v)
+... | no ¬ig = no (λ { (._ , step-beq₀ eq' ig) → ¬ig (_ , ig)
+                       ; (._ , step-beq₁ eq' neq) →
+                             neq (int-helper eq' eq)})
+... | yes (I' , ig) = yes (_ , step-beq₀ eq ig)
 step-decₛ G (H , register sp regs , jmp v)
-  with is-globval (evalSmallValue regs v)
-... | no ¬eq = no (λ { (_ , step-jmp eq l) → ¬eq (_ , eq) })
-... | yes (lab , eq)
-  with ↓-dec G lab
-... | yes (code I , l)
-  = yes (_ , step-jmp eq l)
-... | no ¬l = no help
-  where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , jmp v ⇒ P')
-        help (._ , step-jmp eq' l)
-          with globval-helper eq eq'
-        ... | refl = ¬l (_ , l)
+  with instantiate-decₛ G (evalSmallValue regs v)
+... | no ¬ig = no (λ { (._ , step-jmp ig) → ¬ig (_ , ig) })
+... | yes (I' , ig) = yes (_ , step-jmp ig)
 step-decₛ G (H , R , halt) = no (λ { (_ , ()) })
 
 step-prg-decₛ : ∀ P → Dec (∃ λ P' → ⊢ P ⇒ P')

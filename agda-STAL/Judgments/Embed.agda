@@ -31,8 +31,8 @@ instance
   embedWordValue : Embed H.WordValue S.WordValue
   embedWordValue = mkEmbed f
     where f : H.WordValue → S.WordValue
-          f (globval l) = globval l
-          f (heapval l) = heapval l
+          f (globval lab) = globval lab
+          f (heapval labₕ) = heapval labₕ
           f (int n) = int n
           f ns = ns
           f (uninit τ) = ns
@@ -48,7 +48,7 @@ instance
   embedSmallValue = mkEmbed f
     where f : H.SmallValue → S.SmallValue
           f (reg ♯r) = reg ♯r
-          f (globval l) = globval l
+          f (globval lab) = globval lab
           f (int n) = int n
           f (Λ Δ ∙ v ⟦ is ⟧) = f v
 

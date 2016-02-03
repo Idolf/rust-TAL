@@ -7,8 +7,15 @@ open SimpleGrammar
 
 evalSmallValueₛ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₛ regs (reg ♯r) = lookup ♯r regs
-evalSmallValueₛ regs (globval l) = globval l
+evalSmallValueₛ regs (globval lab) = globval lab
 evalSmallValueₛ regs (int i) = int i
+
+data InstantiateGlobalₛ (G : Globals) : WordValue → InstructionSequence → Set where
+  instantiate-globval :
+               ∀ {lab I} →
+           G ↓ lab ⇒ (code I) →
+    -----------------------------------
+    InstantiateGlobalₛ G (globval lab) I
 
 infix 3 _⊢ₛ_⇒_
 data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
@@ -55,20 +62,20 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
            H , register sp' regs , I
 
     step-ld :
-          ∀ {H sp regs I ♯rd ♯rs i lₕ ws w} →
-             lookup ♯rs regs ≡ heapval lₕ →
-                     H ↓ lₕ ⇒ tuple ws →
+          ∀ {H sp regs I ♯rd ♯rs i labₕ ws w} →
+             lookup ♯rs regs ≡ heapval labₕ →
+                  H ↓ labₕ ⇒ tuple ws →
                      ws ↓ i ⇒ w →
       -----------------------------------------------
       G ⊢ₛ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒
            H , register sp (update ♯rd w regs) , I
 
     step-st :
-          ∀ {H H' sp regs I ♯rd i ♯rs lₕ ws ws'} →
-             lookup ♯rd regs ≡ heapval lₕ →
-                       H ↓ lₕ ⇒ tuple ws →
+          ∀ {H H' sp regs I ♯rd i ♯rs labₕ ws ws'} →
+              lookup ♯rd regs ≡ heapval labₕ →
+                    H ↓ labₕ ⇒ tuple ws →
               ws ⟦ i ⟧← lookup ♯rs regs ⇒ ws' →
-                    H ⟦ lₕ ⟧← tuple ws' ⇒ H' →
+                 H ⟦ labₕ ⟧← tuple ws' ⇒ H' →
       ------------------------------------------------
       G ⊢ₛ H  , register sp regs , st ♯rd i ♯rs ~> I ⇒
            H' , register sp regs , I
@@ -86,14 +93,14 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       G ⊢ₛ H , register sp regs , mov ♯rd v ~> I ⇒
            H , register sp (update ♯rd (evalSmallValueₛ regs v) regs) , I
 
+
     step-beq₀ :
-            ∀ {H sp regs ♯r v l I₁ I₂} →
-             lookup ♯r regs ≡ int 0 →
-           evalSmallValueₛ regs v ≡ globval l →
-                    G ↓ l ⇒ code I₂ →
-      --------------------------------------------
-      G ⊢ₛ H , register sp regs , beq ♯r v ~> I₁ ⇒
-           H , register sp regs , I₂
+                  ∀ {H sp regs ♯r v I₁ I₂} →
+                   lookup ♯r regs ≡ int 0 →
+      InstantiateGlobalₛ G (evalSmallValueₛ regs v) I₂ →
+      --------------------------------------------------
+         G ⊢ₛ H , register sp regs , beq ♯r v ~> I₁ ⇒
+              H , register sp regs , I₂
 
     step-beq₁ :
                 ∀ {H sp regs I ♯r v n₀} →
@@ -104,12 +111,11 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
            H , register sp regs , I
 
     step-jmp :
-           ∀ {H sp regs v l I} →
-      evalSmallValueₛ regs v ≡ globval l →
-               G ↓ l ⇒ code I →
-      ------------------------------------
-      G ⊢ₛ H , register sp regs , jmp v ⇒
-           H , register sp regs , I
+                    ∀ {H sp regs v I} →
+      InstantiateGlobalₛ G (evalSmallValueₛ regs v) I →
+      -------------------------------------------------
+         G ⊢ₛ H , register sp regs , jmp v ⇒
+              H , register sp regs , I
 
 infix 3 ⊢ₛ_⇒_
 data ⊢ₛ_⇒_ : Program → Program → Set where

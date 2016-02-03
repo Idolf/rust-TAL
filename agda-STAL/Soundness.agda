@@ -25,10 +25,10 @@ private
                         ⊢ G of ψ₁ globals →
                         ψ₁ ⊢ H of ψ₂ heap →
                         ψ₁ , ψ₂ ⊢ w of tuple τs⁻ wval →
-                        ∃₂ λ lₕ ws → ∃ λ τs⁻' →
-                          w ≡ heapval lₕ ×
-                          H ↓ lₕ ⇒ tuple ws ×
-                          ψ₂ ↓ lₕ ⇒ tuple τs⁻' ×
+                        ∃₂ λ labₕ ws → ∃ λ τs⁻' →
+                          w ≡ heapval labₕ ×
+                          H ↓ labₕ ⇒ tuple ws ×
+                          ψ₂ ↓ labₕ ⇒ tuple τs⁻' ×
                           AllZip (λ τ⁻' τ⁻ → [] ⊢ τ⁻' ≤ τ⁻) τs⁻' τs⁻ ×
                           AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻'
   wval-tuple-helper (of-globals gs⋆) H⋆ (of-globval l τ≤tuple) with allzip-lookup₂ l gs⋆
@@ -212,7 +212,7 @@ step-progress' {I = ld ♯rd ♯rs i ~> I} I≢halt G⋆ (of-heap hs⋆) (of-reg
 ... | lookup⋆
   rewrite eq
   with wval-tuple-helper G⋆ (of-heap hs⋆) lookup⋆
-... | lₕ , ws , τs⁻ , eq₁ , l₁ , l₂ , τs'≤τs , ws⋆
+... | labₕ , ws , τs⁻ , eq₁ , l₁ , l₂ , τs'≤τs , ws⋆
   with allzip-lookup₂ l τs'≤τs
 ... | (τ , init) , l₃ , (τ⁻-≤ τ⋆ φ-≤-init)
   with allzip-lookup₂ l₃ ws⋆
@@ -223,7 +223,7 @@ step-progress' {I = st ♯rd i ♯rs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-reg
 ... | ♯rd⋆ | ♯rs⋆
   rewrite eq
   with wval-tuple-helper G⋆ (of-heap hs⋆) ♯rd⋆
-... | lₕ , ws , τs⁻₂ , eq₁ , l₁ , l₂ , τs⁻₂≤τs⁻₁ , ws⋆
+... | labₕ , ws , τs⁻₂ , eq₁ , l₁ , l₂ , τs⁻₂≤τs⁻₁ , ws⋆
   with update-helper₂ l τs⁻₂≤τs⁻₁ ♯rs⋆ ws⋆
 ... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
   with heap-helper (of-tuple ws'⋆) (of-heap hs⋆) l₂ (tuple-≤ τs⁻₃≤τs⁻₂)

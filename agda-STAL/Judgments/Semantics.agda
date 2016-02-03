@@ -10,6 +10,9 @@ module SimpleSemantics where
   evalSmallValue : Vec WordValue ♯regs → SmallValue → WordValue
   evalSmallValue = evalSmallValueₛ
 
+  InstantiateGlobal : Globals → WordValue → InstructionSequence → Set
+  InstantiateGlobal = InstantiateGlobalₛ
+
   infix 3 _⊢_⇒_
   _⊢_⇒_ : Globals → ProgramState → ProgramState → Set
   _⊢_⇒_ = _⊢ₛ_⇒_
@@ -27,6 +30,9 @@ module HighSemantics where
 
   evalSmallValue : Vec WordValue ♯regs → SmallValue → WordValue
   evalSmallValue = evalSmallValueₕ
+
+  InstantiateGlobal : Globals → WordValue → InstructionSequence → Set
+  InstantiateGlobal = InstantiateGlobalₕ
 
   infix 3 _⊢_⇒_
   _⊢_⇒_ : Globals → ProgramState → ProgramState → Set

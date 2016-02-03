@@ -212,9 +212,9 @@ data _⟦_/_⟧v≡_ : SmallValueₕ → Instantiation → ℕ → SmallValueₕ
     reg ♯r ⟦ i / ι ⟧v≡ reg ♯r
 
   subst-globval :
-             ∀ {l i ι} →
-    -------------------------------
-    globval l ⟦ i / ι ⟧v≡ globval l
+               ∀ {lab i ι} →
+    -----------------------------------
+    globval lab ⟦ i / ι ⟧v≡ globval lab
 
   subst-int :
          ∀ {n i ι} →

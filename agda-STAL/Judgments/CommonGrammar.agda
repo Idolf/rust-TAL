@@ -9,10 +9,10 @@ open import Util
 Register : Set
 Register = Fin ♯regs
 
--- Global labels, l
+-- Global labels, lab
 GlobLabel : Set
 GlobLabel = ℕ
 
--- Heap labels, lₕ
+-- Heap labels, labₕ
 HeapLabel : Set
 HeapLabel = ℕ
