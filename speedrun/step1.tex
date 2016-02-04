@@ -120,12 +120,10 @@ we have an endless supply of unique variables (e.g.
 $\alpha_1, \rho_1, \ell_{g,1}, \ell_{h,1}, \alpha_2, \dots$), however this is
 not a practical solution in Agda.
 
-\todo{Bad font for $\mathbb{\alpha}$}
-
 For the $\alpha$ and $\rho$ we will use De Bruijn indices. The $\Delta$ values
-will simply be lists composed over two elements $\mathbb{\alpha}$ and
-$\mathtt{\rho}$. For an $\alpha$-variable to be valid in a given
-$\Delta$-context we must have that that $\Delta[\alpha] = \mathtt{\alpha}$ (and
+will simply be lists composed over two elements $\ttalpha$ and
+$\ttrho$. For an $\alpha$-variable to be valid in a given
+$\Delta$-context we must have that that $\Delta[\alpha] = \ttalpha$ (and
 similarly for $\rho$). This means that while on paper we might simply allow
 assume weakening or reordering of contexts as fundamental rules, this approach
 will not work in Agda. In this particular case we will instead have to prove a
