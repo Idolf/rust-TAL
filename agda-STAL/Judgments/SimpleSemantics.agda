@@ -21,16 +21,16 @@ infix 3 _⊢ₛ_⇒_
 data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
     step-add :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
-          evalSmallValueₛ regs v ≡ int n₁ →
-                lookup ♯rs regs ≡ int n₂ →
+                lookup ♯rs regs ≡ int n₁ →
+          evalSmallValueₛ regs v ≡ int n₂ →
       ---------------------------------------------------------
       G ⊢ₛ H , register sp regs , add ♯rd ♯rs v ~> I ⇒
            H , register sp (update ♯rd (int (n₁ + n₂)) regs) , I
 
     step-sub :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
-          evalSmallValueₛ regs v ≡ int n₁ →
-                lookup ♯rs regs ≡ int n₂ →
+                lookup ♯rs regs ≡ int n₁ →
+          evalSmallValueₛ regs v ≡ int n₂ →
       ----------------------------------------------------------
       G ⊢ₛ H , register sp regs , sub ♯rd ♯rs v ~> I ⇒
            H , register sp (update ♯rd (int (n₁ ∸ n₂)) regs) , I

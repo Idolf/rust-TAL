@@ -132,12 +132,12 @@ embed-step : ∀ {G P P'} →
                embed G S.⊢ embed P ⇒ embed P'
 embed-step (step-add {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
   rewrite embed-update ♯rd (int (n₁ + n₂)) regs
-        = step-add (trans (sym (embed-eval regs v)) (cong embed eq₁))
-                      (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₂))
+        = step-add (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
+                   (trans (sym (embed-eval regs v)) (cong embed eq₂))
 embed-step (step-sub {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
   rewrite embed-update ♯rd (int (n₁ ∸ n₂)) regs
-        = step-sub (trans (sym (embed-eval regs v)) (cong embed eq₁))
-                      (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₂))
+        = step-sub (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
+                   (trans (sym (embed-eval regs v)) (cong embed eq₂))
 embed-step (step-salloc {sp = sp} {n = n})
   rewrite replicate-ns n sp
     = step-salloc

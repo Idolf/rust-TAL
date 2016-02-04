@@ -179,19 +179,19 @@ step-progress' {I = add ♯rd ♯rs v ~> I} I≢halt G⋆ H⋆ (of-register sp�
   with allzipᵥ-lookup ♯rs regs⋆
 ... | lookup⋆
   rewrite eq
-  with vval-int-helper G⋆ H⋆ regs⋆ v⋆
-... | n' , eq₁
   with wval-int-helper G⋆ H⋆ lookup⋆
-... | n , eq₂
+... | i₁ , eq₁
+  with vval-int-helper G⋆ H⋆ regs⋆ v⋆
+... | i₂ , eq₂
   = _ , _ , _ , _ , I , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd of-int regs⋆) , I⋆ , step-add eq₁ eq₂
 step-progress' {I = sub ♯rd ♯rs v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sub eq v⋆) I⋆)
   with allzipᵥ-lookup ♯rs regs⋆
 ... | lookup⋆
   rewrite eq
-  with vval-int-helper G⋆ H⋆ regs⋆ v⋆
-... | n' , eq₁
   with wval-int-helper G⋆ H⋆ lookup⋆
-... | n , eq₂
+... | i₁ , eq₁
+  with vval-int-helper G⋆ H⋆ regs⋆ v⋆
+... | i₂ , eq₂
   = _ , _ , _ , _ , I , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd of-int regs⋆) , I⋆ , step-sub eq₁ eq₂
 step-progress' {I = salloc n ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> of-salloc I⋆)
   = _ , _ , _ , _ , _ , H⋆ , of-register (replicate-helper n sp⋆) regs⋆ , I⋆ , step-salloc
