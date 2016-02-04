@@ -1,101 +1,87 @@
 \section{Step 3: Semantics}
 
-The semantics for \nativelang are as in the manual.
+The semantics for \nativelang are as in the manual. \vspace{0.5cm}
 
-\begin{minipage}{0.48\textwidth}
-\begin{mathpar}
-\fbox{$\evalregs{\simple R}{\simple v}{\simple w}$} \\
-\infer{ }{
-  \evalregs{\simple R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
-} \and
-\infer{
+\begin{tabular}{|c|c|}
+\hline &\\
+\fbox{$\evalregs{\simple R}{\simple v}{\simple w}$} &
+\fbox{$\evalregs{\high R}{\high v}{\high w}$} \\&\\
+$\infer{
   \simple R[r] = \simple w
 }{
   \evalregs{\simple R}{\mathtt{reg}\ r}{\simple w}
-} \and
-\infer{ }{
-  \evalregs{\simple R}{\mathtt{int}\ i}{\mathtt{int}\ i}
-} \and
-\end{mathpar}
-
-\begin{mathpar}
-\fbox{$\simplelang \simpleo{->} \simplelang$} \\
-\infer{
-  \execis{\simple G}{\simple H, \simple R, \simple I}{\simple H', \simple R', \simple I'}
-}{
-  \steps{(\simple G, \simple H, \simple R, \simple I)}{(\simple G, \simple H', \simple R', \simple I')}
-} \and
-\infer{ }{
-  \steps{(\simple G, \simple H, \simple R, \mathtt{halt})}{\simple\halt}
-} \and
-\infer{ }{
-  \steps{\simple\halt}{\simple\halt}
-}
-\end{mathpar}
-
-\end{minipage}\hspace{0.3cm}
-\begin{minipage}{0.48\textwidth}
-\begin{mathpar}
-\fbox{$\evalregs{\high R}{\high v}{\high w}$} \\
-\infer{ }{
-  \evalregs{\high R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
-} \and
-\infer{
+}$ &
+$\infer{
   \high R[r] = \high w
 }{
   \evalregs{\high R}{\mathtt{reg}\ r}{\high w}
-} \and
+}$ \\&\\
+$\infer{ }{
+  \evalregs{\simple R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+}$ &
+$
 \infer{ }{
+  \evalregs{\high R}{\mathtt{globval}\ \ell_g}{\mathtt{globval}\ \ell_g}
+}$ \\&\\
+$\infer{ }{
+  \evalregs{\simple R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+}$ &
+$\infer{ }{
   \evalregs{\high R}{\mathtt{int}\ i}{\mathtt{int}\ i}
-} \and
+}$ \\&\\
+& $
 \infer{
   \evalregs{\high R}{\high v}{\high w}
 }{
   \evalregs{\high R}{\Lambda\ \Delta \cdot \high{v}[\theta_1, \dots, \theta_n]}{\Lambda\ \Delta \cdot \high{w}[\theta_1, \dots, \theta_n]}
 }
-\end{mathpar}
-
-\begin{mathpar}
-\fbox{$\highlang \higho{->} \highlang$} \\
-\infer{
-  \execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}
+$ \\&\\\hline &\\
+\fbox{$\simplelang \simpleo{->} \simplelang$} &
+\fbox{$\highlang \higho{->} \highlang$} \\&\\
+$\infer{
+  \execis{\simple G}{\simple P}{\simple P'}
 }{
-  \steps{(\high G, \high H, \high R, \high I)}{(\high G, \high H', \high R', \high I')}
-} \and
-\infer{ }{
-  \steps{(\high G, \high H, \high R, \mathtt{halt})}{\high\halt}
-} \and
-\infer{ }{
-  \steps{\high\halt}{\high\halt}
-}
-\end{mathpar}
-\end{minipage}
-
-\begin{mathpar}
-\fbox{$\evalcode{\simple G}{\simple w}{I}$} \\
-\infer{
+  \steps{\simple\running(\simple G, \simple P)}{\simple\running(\simple G, \simple P')}
+}$ &
+$\infer{
+  \execis{\high G}{\high P}{\high P'}
+}{
+  \steps{\high\running(\high G, \high P)}{\high\running(\high G, \high P')}
+}$ \\&\\
+$\infer{ }{
+  \steps{\simple\running(\simple G, \simple H, \simple R, \mathtt{halt})}{\simple\halted}
+}$ &
+$\infer{ }{
+  \steps{\high\running(\high G, \high H, \high R, \mathtt{halt})}{\high\halted}
+}$ \\&\\
+$\infer{ }{
+  \steps{\simple\halted}{\simple\halted}
+}$ &
+$\infer{ }{
+  \steps{\high\halted}{\high\halted}
+}$\\&\\\hline &\\
+\fbox{$\evalcode{\simple G}{\simple w}{I}$} &
+\fbox{$\evalcode{\high G}{\high w}{I}$} \\&\\
+$\infer{
   \simple G[\ell_g] = \mathtt{code}\ \simple I
 }{
   \evalcode{\simple G}{\mathtt{globval}\ \ell_g}{\simple I}
-}
-\end{mathpar}
-
-\begin{mathpar}
-\fbox{$\evalcode{\high G}{\high w}{I}$} \\
-\infer{
+}$ &
+$\infer{
   \high G[\ell_g] = \mathtt{code}[ \Delta ] \Gamma \cdot \high I
 }{
   \evalcode{\high G}{\mathtt{globval}\ \ell_g}{\high I}
-} \and
-\infer{
+}$ \\&\\\cline{1-1} \multicolumn{2}{|c|}{} \\
+\multicolumn{2}{|c|}{
+$\infer{
   \evalcode{\high G}{w}{\high I} \\
   \high I_1 = \high I[x_1 / a_1] \and \dots \and \high I_n = \high I_{n-1}[x_n / a_n] \\
   \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
   \\
 }{
   \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\high I_n}
-}
-\end{mathpar}
+}$}\\\multicolumn{2}{|c|}{}\\\hline
+\end{tabular}
 
 \begin{mathpar}
 \fbox{$\execis{\simple G}{\simple P}{\simple P}$} \\
@@ -130,19 +116,19 @@ The semantics for \nativelang are as in the manual.
     {\simple H, \simple R[\mathtt{sp} |-> \simple S], \simple I}
 } \and
 \infer{
-  \simple R[\mathtt{sp}] = \simple S
+  \simple R[\mathtt{sp}][n] = \simple w
 }{
   \execis{\simple G}
     {\simple H, \simple R, (\mathtt{ld}\ r, \mathtt{sp}(n)) ; \simple I}
-    {\simple H, \simple R[r |-> \simple S[n]], \simple I}
+    {\simple H, \simple R[r |-> \simple w], \simple I}
 } \and
 \infer{
   \simple R[r_b] = \mathtt{heapval}\ \ell_h \and
-  \simple H[\ell_h] = \simple h
+  \simple H[\ell_h][n] = \simple w
 }{
   \execis{\simple G}
     {\simple H, \simple R, (\mathtt{ld}\ r_a, r_b(n)) ; \simple I}
-    {\simple H, \simple R[r_a |-> h[n]], \simple I}
+    {\simple H, \simple R[r_a |-> \simple w], \simple I}
 } \and
 \infer{
   R[r] = \simple w \and
@@ -179,7 +165,7 @@ The semantics for \nativelang are as in the manual.
 \infer{
   \simple R[r] = \mathtt{int}\ 0 \and
   \evalregs{\simple R}{\simple v}{\simple w} \and
-  \evalcode{\simple G}{\simple w}{\mathtt{code}\ \simple I'}
+  \evalcode{\simple G}{\simple w}{\simple I'}
 }{
   \execis{\simple G}
     {\simple H, \simple R, (\mathtt{beq}\ r, \simple v) ; \simple I}
@@ -195,11 +181,11 @@ The semantics for \nativelang are as in the manual.
 } \and
 \infer{
   \evalregs{\simple R}{\simple v}{\simple w} \and
-  \evalcode{\simple G}{\simple w}{\mathtt{code}\ \simple I'}
+  \evalcode{\simple G}{\simple w}{\simple I}
 }{
   \execis{\simple G}
     {\simple H, \simple R, \mathtt{jmp}\ \simple v}
-    {\simple H, \simple R, \simple I'}
+    {\simple H, \simple R, \simple I}
 }
 \end{mathpar}
 
@@ -236,19 +222,19 @@ The semantics for \nativelang are as in the manual.
     {\high H, \high R[\mathtt{sp} |-> \high S], \high I}
 } \and
 \infer{
-  \high R[\mathtt{sp}] = \high S
+  \high R[\mathtt{sp}][n] = \high w
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{ld}\ r, \mathtt{sp}(n)) ; \high I}
-    {\high H, \high R[r |-> \high S[n]], \high I}
+    {\high H, \high R[r |-> \high w], \high I}
 } \and
 \infer{
   \high R[r_b] = \mathtt{heapval}\ \ell_h \and
-  \high H[\ell_h] = \high h
+  \high H[\ell_h][n] = \high w
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{ld}\ r_a, r_b(n)) ; \high I}
-    {\high H, \high R[r_a |-> h[n]], \high I}
+    {\high H, \high R[r_a |-> w], \high I}
 } \and
 \infer{
   R[r] = \high w \and
@@ -285,7 +271,7 @@ The semantics for \nativelang are as in the manual.
 \infer{
   \high R[r] = \mathtt{int}\ 0 \and
   \evalregs{\high R}{\high v}{\high w} \and
-  \evalcode{\high G}{\high w}{\mathtt{code}[ \mathtt{nil} ] \Gamma \cdot I'}
+  \evalcode{\high G}{\high w}{I'}
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{beq}\ r, \high v) ; \high I}
@@ -301,10 +287,21 @@ The semantics for \nativelang are as in the manual.
 } \and
 \infer{
   \evalregs{\high R}{\high v}{\high w} \and
-  \evalcode{\high G}{\high w}{\mathtt{code}\ [ \mathtt{nil} ] \Gamma \cdot \high I'}
+  \evalcode{\high G}{\high w}{I}
 }{
   \execis{\high G}
     {\high H, \high R, \mathtt{jmp}\ \high v}
-    {\high H, \high R, \high I'}
+    {\high H, \high R, \high I}
 }
 \end{mathpar}
+
+\subsection{Notes on the Agda implementation}
+
+If we ignore the issues discussed in step 1, then the
+Agda-implementation\footnote{The relevant files are
+  \texttt{Judgments/CommonGrammar.agda}, \texttt{Judgments/SimpleGrammar.agda}
+  and \texttt{Judgments/HighGrammar.agda}. It might also be relevant to look at
+  \texttt{Judgments/Grammar.agda}, which renames some of the values for easier
+  use in later files.} for this is more or less a direct transcription of this
+section. The biggest difference is that some judgments have been turned into
+functions in the Agda-code and vice-versa.
