@@ -163,6 +163,13 @@ true for \simplelang or \highlang.
   different statement regarding sequences of any length.)
 \end{itemize}
 
+Note that proving this is a rather large task, as it involves proving
+correctness of at least the memory allocater. It will likely also require proofs
+about the garbage collector and about when/where interrupts/signals can arrive
+from the surrounding system. In practice one would likely declare at least some
+of the components to be part of the trusted computing base, however even so it
+is still not a trivial task.
+
 \paragraph{Step 8:} We finally prove the desired theorems:
 \begin{itemize}
 \item \textbf{Safety}: Assume $p \in \typedlang$,
