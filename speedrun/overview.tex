@@ -18,12 +18,12 @@ run-through of our strategy.
 
 To avoid dealing with halting semantics, we introduce the following states:
 \begin{itemize}
-\item $\malicious, \native\halt \in \nativelang$
-\item $\simple\halt \in \simplelang$
-\item $\high\halt \in \highlang$
+\item $\malicious, \native\halted \in \nativelang$
+\item $\simple\halted \in \simplelang$
+\item $\high\halted \in \highlang$
 \end{itemize}
 
-$\halt$ represents every program that has halted in a non-malicious way (such as
+$\halted$ represents every program that has halted in a non-malicious way (such as
 intentional exiting or properly handled out-of-memory exceptions). $\malicious$
 represents every any malicious state.
 
@@ -42,8 +42,8 @@ represents every any malicious state.
 We observe that:
 
 \begin{itemize}
-\item $\highembed(\high\halt) = \simple\halt$
-\item $\simpleembedp(\simple\halt) = \{\native\halt\}$
+\item $\highembed(\high\halted) = \simple\halted$
+\item $\simpleembedp(\simple\halted) = \{\native\halted\}$
 \item $\malicious \notin \simpleembedp(p)$ for all p
 \item $\simpleembed(p) \in \simpleembedp(p)$ for all p
 \end{itemize}
@@ -64,8 +64,8 @@ We observe that:
 
 \begin{itemize}
 \item If $p \in \nativelang$ is halting for non-malicious reasons, then
-  $p \nativeo{->} \native\halt$.
-\item $\native\halt \nativeo{->} p \iff p = \native\halt$.
+  $p \nativeo{->} \native\halted$.
+\item $\native\halted \nativeo{->} p \iff p = \native\halted$.
 \item (Similarly for \simplelang and \highlang).
 \item If $p \in \nativelang$ can transition in a malicious or undefined way,
   then $p \nativeo{->} \malicious$.
@@ -106,7 +106,7 @@ true for \simplelang or \highlang.
 \item \textbf{Bisimulation}: Define the following predicate on
   programs in \highlang:
 
-  $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor (\not\exists p': p \higho{->} p')$$
+  $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor \neg(\exists p': p \higho{->} p')$$
 
   Define the relation $R$ as:
 
@@ -137,17 +137,17 @@ true for \simplelang or \highlang.
 \item \textbf{Stuttering bisimulation}: Define the following predicate on
   programs in \simplelang:
 
-  $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor (\not\exists p': p \simpleo{->} p')$$
+  $$\Stuck(p) = (\exists p': p \simpleo{->} p' \land \Stuck(p')) \lor \neg(\exists p': p \simpleo{->} p')$$
 
-  Note specifically that $\neg\Stuck(\simple\halt)$. Now define a relation $R$
+  Note specifically that $\neg\Stuck(\simple\halted)$. Now define a relation $R$
   by:
 
-  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simpleembedp(p_1) \cup \{\native\halt\}\}$$
+  $$R = \{(p_1, p_2) \mid \neg\Stuck(p_1), p_2 \in \simpleembedp(p_1) \cup \{\native\halted\}\}$$
 
   This relation is a stuttering bisimulation of $\simpleo{->}$ and
   $\nativeo{->}$. More specifically there is a function
-  $f : \simplelang \times \nativelang \to \mathbb{N}$ such that:\footnote{This is
-    again a somewhat specialized definition of a much more general concept.}
+  $f : \simplelang \times \nativelang \to \mathbb{N}$ such that:\footnote{This
+    is again a somewhat specialized definition of a much more general concept.}
 
   \begin{itemize}
   \item Assume $(p, p_1) \in R$ and $p \simpleo{->} p'$. Then there exists
@@ -183,7 +183,7 @@ is still not a trivial task.
   $p_1' \in \simpleembedp(\highembed(p_1))$ and assume
   $p_1 \higho{->} \dots \higho{->} p_n$. There now exists a finite sequence
   $p_1' \nativeo{->} \dots \nativeo{->} p_m'$ such that
-  $p_m' \in \simpleembedp(\highembed(p_n)) \cup \{\native\halt\}$. In
+  $p_m' \in \simpleembedp(\highembed(p_n)) \cup \{\native\halted\}$. In
   particular this holds if $p_1' = \simpleembed(\highembed(p_1)$.
 
 \item \textbf{Decidability}: If $p \in \highlang$, then it is decidable to check
@@ -204,7 +204,7 @@ these statements hold in the practical implementation:
   performance seriously.
 \item None of our theorems restrict in what situations the programs in
   \nativelang could halt. In principle we could have
-  $\simpleembed(p) = \native\halt$ for all $p$. Ideally one would prove some
+  $\simpleembed(p) = \native\halted$ for all $p$. Ideally one would prove some
   guarantees about the conditions in which the translated programs could halt.
 \end{itemize}
 
