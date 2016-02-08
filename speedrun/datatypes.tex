@@ -38,4 +38,9 @@ i.e. the number of elements in $L$.
 
 We further define $L[k] = x_k$ and $L[k |-> x_{new}]$ to be the list-like member
 of $S$ such that
-$f(L[k |-> x_{new}]) = [x_1, \dots, x_{k-1}, x_{new}, \dots, x_n]$.
+$f(L[k |-> x_{new}]) = [x_1, \dots, x_{k-1}, x_{new}, \dots, x_n]$. We write
+$x \in L$ iff $x = L[k]$ for some $k$.
+
+Finally if $L'$ is another member of $S$ such that $f(L') = [y_1, \dots, y_m]$,
+then $L ++ L'$ is the list such that
+$f(L ++ L') = [x_1, \dots, x_n, y_1, \dots, y_m]$.

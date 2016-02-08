@@ -33,7 +33,7 @@ $\infer{ }{
 \infer{
   \evalregs{\high R}{\high v}{\high w}
 }{
-  \evalregs{\high R}{\Lambda\ \Delta \cdot \high{v}[\theta_1, \dots, \theta_n]}{\Lambda\ \Delta \cdot \high{w}[\theta_1, \dots, \theta_n]}
+  \evalregs{\high R}{\Lambda\ \Delta \cdot \high{v}[\Theta]}{\Lambda\ \Delta \cdot \high{w}[\Theta]}
 }
 $ \\&\\\hline &\\
 \fbox{$\simplelang \simpleo{->} \simplelang$} &
@@ -41,24 +41,24 @@ $ \\&\\\hline &\\
 $\infer{
   \execis{\simple G}{\simple P}{\simple P'}
 }{
-  \steps{\simple\running(\simple G, \simple P)}{\simple\running(\simple G, \simple P')}
+  \steps{\running(\simple G, \simple P)}{\running(\simple G, \simple P')}
 }$ &
 $\infer{
   \execis{\high G}{\high P}{\high P'}
 }{
-  \steps{\high\running(\high G, \high P)}{\high\running(\high G, \high P')}
+  \steps{\running(\high G, \high P)}{\running(\high G, \high P')}
 }$ \\&\\
 $\infer{ }{
-  \steps{\simple\running(\simple G, \simple H, \simple R, \mathtt{halt})}{\simple\halted}
+  \steps{\running(\simple G, \simple H, \simple R, \mathtt{halt})}{\halted}
 }$ &
 $\infer{ }{
-  \steps{\high\running(\high G, \high H, \high R, \mathtt{halt})}{\high\halted}
+  \steps{\running(\high G, \high H, \high R, \mathtt{halt})}{\halted}
 }$ \\&\\
 $\infer{ }{
-  \steps{\simple\halted}{\simple\halted}
+  \steps{\halted}{\halted}
 }$ &
 $\infer{ }{
-  \steps{\high\halted}{\high\halted}
+  \steps{\halted}{\halted}
 }$\\&\\\hline &\\
 \fbox{$\evalcode{\simple G}{\simple w}{I}$} &
 \fbox{$\evalcode{\high G}{\high w}{I}$} \\&\\

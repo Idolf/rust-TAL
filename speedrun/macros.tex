@@ -2,6 +2,7 @@
 \mathlig{|->}{\mapsto}
 \mathlig{!}{\downarrow}
 \mathlig{>>}{\gg}
+\mathlig{++}{\ensuremath{\mathbin{+\mkern-10mu+}}}
 
 \newcommand \embed {{\ensuremath{\mathbf{embed}}}}
 \newcommand \embedp {\ensuremath{\mathbf{embed}^\ast}}
@@ -32,8 +33,8 @@
 \newcommand \ttalpha{\greek{\ttfamily\textalpha}}
 \newcommand \ttrho{\greek{\ttfamily\textrho}}
 \newcommand \malicious {{\ensuremath{\mathbf{malicious}}}}
-\newcommand \halted {\ensuremath{\mathbf{halted}}}
-\newcommand \running {\ensuremath{\mathbf{running}}}
+\newcommand \halted {\ensuremath{\mathtt{halted}}}
+\newcommand \running {\ensuremath{\mathtt{running}}}
 \newcommand \halt {\ensuremath{\mathbf{halt}}}
 
 \newcommand \valid[2] {{#1} |- {#2}\ \mathbf{Valid}}
@@ -51,10 +52,10 @@
 \newcommand \ofstack[3] {{#1} |- {#2} : {#3}}
 \newcommand \ofword[3] {{#1} |- {#2} : {#3}}
 \newcommand \ofregister[3] {{#1} |- {#2} : {#3}}
-\newcommand \ofinstructions[2] {{#1} |- {#2}\ \mathbf{Valid}}
+\newcommand \ofinstructions[2] {{#1} |- {#2}}
 \newcommand \ofinstruction[3] {{#1} |- {#2} : {#3}}
-\newcommand \ofprogram[2] {{#1} |- {#2}}
-\newcommand \oflang[1] {|- {#1}}
+\newcommand \ofprogramstate[3] {{#1} |- {#2} : {#3}}
+\newcommand \ofprogram[1] {|- {#1}}
 \newcommand \ofinstantiation[3] {{#1} |- {#2} : {#3}}
 \newcommand \ofinstantiations[3] {{#1} |- {#2} : {#3}}
 
@@ -69,3 +70,5 @@
 \newcommand \execia[3] {{#1} |- {#2} => {#3}}
 \newcommand \stepa[2] {{#1} -> {#2}}
 \newcommand \donea[1] {{#1}\ \mathbf{done}}
+
+\newcommand \nil {\ensuremath{\mathtt{nil}}}

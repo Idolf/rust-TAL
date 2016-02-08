@@ -22,13 +22,13 @@ of this thesis. Finally \highembed is this function:
 \embed_w(\mathtt{heapval}\ \ell_h) &= \mathtt{heapval}\ \ell_h \\
 \embed_w(\mathtt{int}\ i) &= \mathtt{int}\ i \\
 \embed_w(\mathtt{uninit}) &= \mathtt{uninit} \\
-\embed_w(\Lambda\ \Delta \cdot w[\theta_1, \dots, \theta_n]) &= \embed_w(w) \\\\
+\embed_w(\Lambda\ \Delta \cdot w[\Theta]) &= \embed_w(w) \\\\
 
 \rlap{$\embed_v : \high v -> \simple{v}$} \\
 \embed_v(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
 \embed_v(\mathtt{reg}\ r) &= \mathtt{reg}\ r \\
 \embed_v(\mathtt{int}\ i) &= \mathtt{int}\ i \\
-\embed_v(\Lambda\ \Delta \cdot v[\theta_1, \dots, \theta_n]) &= \embed_v(v)
+\embed_v(\Lambda\ \Delta \cdot v[\Theta]) &= \embed_v(v)
 \end{array} \\\\
 
 \begin{array}{l}
@@ -84,8 +84,8 @@ of this thesis. Finally \highembed is this function:
 \embed_P(H, R, I) = (\embed_H(H), \embed_R(R), \embed_I(I)) \\\\
 
 \highembed : \highlang -> \simplelang \\
-\highembed(\high\running(G, P)) = \simple\running(\embed_G(G), \embed_P(P)) \\
-\highembed(\high\halted) = \simple\halted \\
+\highembed(\running(G, P)) = \running(\embed_G(G), \embed_P(P)) \\
+\highembed(\halted) = \halted \\
 \end{array} \\\\
 
 \end{array}\]

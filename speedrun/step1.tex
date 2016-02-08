@@ -25,7 +25,7 @@ The grammar for \simplelang: \\
 \textit{global collections} & $\simple G$ & ::= & $\{\ell_g |-> \simple{g}, \dots, \ell_g |-> \simple{g}\}$ \\
 \textit{heap values}        & $\simple h$ & ::= & $\langle \simple w, \dots, \simple w \rangle$ \\
 \textit{heap collections}   & $\simple H$ & ::= & $\{\ell_h |-> \simple{h}, \dots, \ell_h |-> \simple{h}\}$ \\
-\textit{stacks}             & $\simple S$ & ::= & $\mathtt{nil} \mid \simple w :: \simple S$ \\
+\textit{stacks}             & $\simple S$ & ::= & $\nil \mid \simple w :: \simple S$ \\
 \textit{register files}     & $\simple R$ & ::= & $\{\mathtt{sp} |-> \simple{S}, \mathtt{r}_1 |-> \simple{w}, \dots, \mathtt{r}_{max} |-> \simple{w}\}$ \\\\
 
 \textit{instructions} & $\simple \iota$ & ::= & $\mathtt{add}\ r, r, \simple v \mid \mathtt{sub}\ r, r, \simple v \mid$ \\
@@ -36,27 +36,28 @@ The grammar for \simplelang: \\
         &&& $\mathtt{mov}\ r, \simple v \mid \mathtt{beq}\ r, \simple v$ \\
 \textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v \mid \mathtt{halt}$ \\
 \textit{program states} & $\simple P$ & ::= & $(\simple H, \simple R, \simple I)$ \\
-\textit{programs} & $\simplelang$ & ::= & $\simple\running (\simple G, \simple P) \mid \simple\halted$ \\\\
+\textit{programs} & $\simplelang$ & ::= & $\running (\simple G, \simple P) \mid \halted$ \\\\
 
 The type system for \highlang: \\
 \textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
 \textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
-\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \mathtt{nil} \mid \tau :: \sigma$ \\
-\textit{type assignments}         & $\Delta$ & ::= & $\mathtt{nil} \mid a :: \Delta$ \\
+\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \nil \mid \tau :: \sigma$ \\
+\textit{type assignments}         & $\Delta$ & ::= & $\nil \mid a :: \Delta$ \\
 \textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
 \textit{global label assignments} & $\Psi_g$ & ::= & $\{\ell_g |-> \tau, \dots, \ell_g |-> \tau\}$ \\
 \textit{heap label assignmentss}  & $\Psi_h$ & ::= & $\{\ell_h |-> \tau, \dots, \ell_h |-> \tau\}$ \\
 \textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{max} |-> \tau\}$ \\
-\textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\\\
+\textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\
+\textit{instantiations}           & $\Theta$ & ::= & $\theta :: \Theta \mid \nil$ \\\\
 
 The grammar for \highlang: \\
-\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{uninit} \mid \Lambda\ \Delta \cdot \high{w}[\theta, \dots, \theta]$ \\
-\textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\theta, \dots, \theta]$ \\
+\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{uninit} \mid \Lambda\ \Delta \cdot \high{w}[\Theta]$ \\
+\textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\Theta]$ \\
 \textit{global values}            & $\high g$ & ::= & $\mathtt{code}[ \Delta ] \Gamma \cdot \high I$ \\
 \textit{global collections}       & $\high G$ & ::= & $\{\ell_g |-> \high{g}, \dots, \ell_g |-> \high{g}\}$ \\
 \textit{heap values}              & $\high h$ & ::= & $\langle \high w, \dots, \high w \rangle$ \\
 \textit{heap collections}         & $\high H$ & ::= & $\{\ell_h |-> \high{h}, \dots, \ell_h |-> \high{h}\}$ \\
-\textit{stacks}                   & $\high S$ & ::= & $\mathtt{nil} \mid \high w :: \high S$ \\
+\textit{stacks}                   & $\high S$ & ::= & $\nil \mid \high w :: \high S$ \\
 \textit{register files}           & $\high R$ & ::= & $\{\mathtt{sp} |-> \high{S}, \mathtt{r}_1 |-> \high{w}, \dots, \mathtt{r}_{max} |-> \high{w}\}$ \\\\
 
 \textit{instructions} & $\high\iota$ & ::= & $\mathtt{add}\ r, r, \high v \mid \mathtt{sub}\ r, r, \high v \mid$ \\
@@ -67,7 +68,7 @@ The grammar for \highlang: \\
         &&& $\mathtt{mov}\ r, \high v \mid \mathtt{beq}\ r, \high v$ \\
 \textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v \mid \mathtt{halt}$ \\
 \textit{program states} & $\high P$ & ::= & $(\high H, \high R, \high I)$ \\
-\textit{programs} & $\highlang$ & ::= & $\high\running (\high G, \high P) \mid \high\halted$ \\\\
+\textit{programs} & $\highlang$ & ::= & $\running (\high G, \high P) \mid \halted$ \\\\
 \end{tabular}
 }
 
