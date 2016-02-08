@@ -4,22 +4,29 @@ open import Util
 open import Judgments
 open import Lemmas.Equality
 
--- The purpose of this file is
--- to include instances of this record.
+-- The purpose of this file is to include proofs that:
+-- * Subtyping is a preorder when restricted to valid terms.
+-- * "Δ ⊢ x Valid" is equivalent to "Δ ⊢ x ≤ x".
+-- * "Δ ⊢ x ≤ y" implies both that both "x" and "y" are valid.
+-- * Subtyping and validity are both decidible.
+
 record TypeLike⁺ (A : Set) {{_ : TypeLike A}} : Set1 where
   constructor typeLike⁺
   infix 3 _⊢?_Valid
   field
-    ≤-refl : ∀ {Δ} {v : A} → Δ ⊢ v Valid → Δ ⊢ v ≤ v
-    ≤-trans : ∀ {Δ} {v₁ v₂ v₃ : A} → Δ ⊢ v₁ ≤ v₂ → Δ ⊢ v₂ ≤ v₃ → Δ ⊢ v₁ ≤ v₃
-    ≤-valid : ∀ {Δ} {v₁ v₂ : A} → Δ ⊢ v₁ ≤ v₂ → Δ ⊢ v₁ Valid × Δ ⊢ v₂ Valid
-    _⊢_≤?_ : ∀ Δ (v₁ v₂ : A) → Dec (Δ ⊢ v₁ ≤ v₂)
+    ≤-refl : ∀ {Δ} {x : A} → Δ ⊢ x Valid → Δ ⊢ x ≤ x
+    ≤-trans : ∀ {Δ} {x₁ x₂ x₃ : A} → Δ ⊢ x₁ ≤ x₂ → Δ ⊢ x₂ ≤ x₃ → Δ ⊢ x₁ ≤ x₃
+    ≤-valid : ∀ {Δ} {x₁ x₂ : A} → Δ ⊢ x₁ ≤ x₂ → Δ ⊢ x₁ Valid × Δ ⊢ x₂ Valid
+    _⊢_≤?_ : ∀ Δ (x₁ x₂ : A) → Dec (Δ ⊢ x₁ ≤ x₂)
 
-  _⊢?_Valid : ∀ Δ (v : A) → Dec (Δ ⊢ v Valid)
-  Δ ⊢? v Valid
-    with Δ ⊢ v ≤? v
-  ... | yes v≤v = yes (proj₁ (≤-valid v≤v))
-  ... | no v≰v = no (λ v⋆ → v≰v (≤-refl v⋆))
+  ≤-valid₁ : ∀ {Δ} {x₁ x₂ : A} → Δ ⊢ x₁ ≤ x₂ → Δ ⊢ x₁ Valid
+  ≤-valid₁ = proj₁ ∘ ≤-valid
+
+  ≤-valid₂ : ∀ {Δ} {x₁ x₂ : A} → Δ ⊢ x₁ ≤ x₂ → Δ ⊢ x₂ Valid
+  ≤-valid₂ = proj₂ ∘ ≤-valid
+
+  _⊢?_Valid : ∀ Δ (x : A) → Dec (Δ ⊢ x Valid)
+  Δ ⊢? x Valid = dec-inj ≤-valid₁ ≤-refl (Δ ⊢ x ≤? x)
 open TypeLike⁺ {{...}} public
 
 private

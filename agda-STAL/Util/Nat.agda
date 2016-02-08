@@ -5,6 +5,12 @@ open import Data.Nat
   using ( ℕ ; zero ; suc ; pred ; _<_ ; _>_ ; _≤_
         ; _≥_ ; _+_ ; _∸_ ; _≤?_ ; s≤s ; z≤n)
   public
+module ≤-Reasoning = Data.Nat.≤-Reasoning
+open import Data.Nat.Properties
+  using ( 1+n≰n ; ≤⇒pred≤ ; pred-mono ; m≤m+n ; n≤m+n; ≰⇒>
+        ; ≤-step ; ≤-steps ; m+n∸m≡n ; n∸n≡0)
+  renaming ( <-trans to Nat-<-trans )
+  public
 
 -- Local imports
 open import Util.Maybe

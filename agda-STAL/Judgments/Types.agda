@@ -4,10 +4,9 @@ open import Util
 open import Judgments.Grammar
 open HighGrammar
 
--- This file contains judgments to determine of
--- a type-like object is valid in a given context.
--- As syntactic sugar, we include this record and
--- add instances for it:
+-- This file contains judgments to determine if
+-- a type-like object is valid in a given context,
+-- and to determine if one value is a subtype of another.
 record TypeLike (A : Set) : Set1 where
   constructor typeLike
   infix 3 _⊢_Valid

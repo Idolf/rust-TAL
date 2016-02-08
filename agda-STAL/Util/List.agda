@@ -208,6 +208,17 @@ AllZip-dec f (x ∷ xs) (y ∷ ys)
 ... | _ | no ¬ps = no (λ { (p ∷ ps) → ¬ps ps})
 
 
+All-map' : ∀ {a b p q}
+             {A : Set a} {P : A → Set p}
+             {B : Set b} {Q : B → Set q}
+             {xs}
+             {f : A → B} →
+             (g : ∀ {x} → P x → Q (f x)) →
+             All P xs →
+             All Q (map f xs)
+All-map' g [] = []
+All-map' g (p ∷ ps) = g p ∷ All-map' g ps
+
 List-++-assoc : ∀ {ℓ} {A : Set ℓ} (xs₁ xs₂ xs₃ : List A) →
                   (xs₁ ++ xs₂) ++ xs₃ ≡ xs₁ ++ xs₂ ++ xs₃
 List-++-assoc {A = A} = A.Monoid.assoc (L.monoid A)

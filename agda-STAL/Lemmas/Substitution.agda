@@ -2,14 +2,12 @@ module Lemmas.Substitution where
 
 open import Util
 open import Judgments
-import Data.Nat as N
-import Data.Nat.Properties as NP
 open HighGrammar
 
--- The purpose of this file is
--- to include instances of this record,
--- along with a few additional functions
--- at the bottom of the file
+-- The purpose of this file is to include proofs that:
+-- * Substitution is deterministic.
+-- * Substitution is decidible.
+-- * An Agda-encoding of some commutative diagrams about substitution and weakening.
 record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
   constructor substitution⁺
   field
@@ -104,24 +102,24 @@ private
 
     τ-subst-unique : subst-uniqueᵗ Type
     τ-subst-unique (subst-α-> ι>ι) subst-α-≡
-      with NP.1+n≰n ι>ι
+      with 1+n≰n ι>ι
     ... | ()
     τ-subst-unique (subst-α-> ι₁>ι₂) (subst-α-> ι₁>ι₂') = refl
     τ-subst-unique (subst-α-> ι₁>ι₂) (subst-α-< ι₁<ι₂)
-      with NP.1+n≰n (NP.<-trans ι₁<ι₂ ι₁>ι₂)
+      with 1+n≰n (Nat-<-trans ι₁<ι₂ ι₁>ι₂)
     ... | ()
     τ-subst-unique subst-α-≡ subst-α-≡ = refl
     τ-subst-unique subst-α-≡ (subst-α-> ι>ι)
-      with NP.1+n≰n ι>ι
+      with 1+n≰n ι>ι
     ... | ()
     τ-subst-unique subst-α-≡ (subst-α-< ι<ι)
-      with NP.1+n≰n ι<ι
+      with 1+n≰n ι<ι
     ... | ()
     τ-subst-unique (subst-α-< ι<ι) subst-α-≡
-      with NP.1+n≰n ι<ι
+      with 1+n≰n ι<ι
     ... | ()
     τ-subst-unique (subst-α-< ι₁<ι₂) (subst-α-> ι₁>ι₂)
-      with NP.1+n≰n (NP.<-trans ι₁<ι₂ ι₁>ι₂)
+      with 1+n≰n (Nat-<-trans ι₁<ι₂ ι₁>ι₂)
     ... | ()
     τ-subst-unique (subst-α-< ι₁<ι₂) (subst-α-< ι₁<ι₂') = refl
     τ-subst-unique subst-int subst-int = refl
@@ -143,24 +141,24 @@ private
 
     σ-subst-unique : subst-uniqueᵗ StackType
     σ-subst-unique (subst-ρ-> ι>ι) subst-ρ-≡
-      with NP.1+n≰n ι>ι
+      with 1+n≰n ι>ι
     ... | ()
     σ-subst-unique (subst-ρ-> ι₁>ι₂) (subst-ρ-> ι₁>ι₂') = refl
     σ-subst-unique (subst-ρ-> ι₁>ι₂) (subst-ρ-< ι₁<ι₂)
-      with NP.1+n≰n (NP.<-trans ι₁<ι₂ ι₁>ι₂)
+      with 1+n≰n (Nat-<-trans ι₁<ι₂ ι₁>ι₂)
     ... | ()
     σ-subst-unique subst-ρ-≡ subst-ρ-≡ = refl
     σ-subst-unique subst-ρ-≡ (subst-ρ-> ι>ι)
-      with NP.1+n≰n ι>ι
+      with 1+n≰n ι>ι
     ... | ()
     σ-subst-unique subst-ρ-≡ (subst-ρ-< ι<ι)
-      with NP.1+n≰n ι<ι
+      with 1+n≰n ι<ι
     ... | ()
     σ-subst-unique (subst-ρ-< ι<ι) subst-ρ-≡
-      with NP.1+n≰n ι<ι
+      with 1+n≰n ι<ι
     ... | ()
     σ-subst-unique (subst-ρ-< ι₁<ι₂) (subst-ρ-> ι₁>ι₂)
-      with NP.1+n≰n (NP.<-trans ι₁<ι₂ ι₁>ι₂)
+      with 1+n≰n (Nat-<-trans ι₁<ι₂ ι₁>ι₂)
     ... | ()
     σ-subst-unique (subst-ρ-< ι₁<ι₂) (subst-ρ-< ι₁<ι₂') = refl
     σ-subst-unique [] [] = refl
@@ -193,8 +191,8 @@ private
         | tri≈ _ refl _ = yes (weaken 0 ι τ , subst-α-≡)
     τ-subst-dec (ρ σ) .ι (α⁼ ι)
         | tri≈ _ refl _ =
-      no (λ { (._ , subst-α-> ι>ι) → NP.1+n≰n ι>ι
-            ; (._ , subst-α-< ι<ι) → NP.1+n≰n ι<ι })
+      no (λ { (._ , subst-α-> ι>ι) → 1+n≰n ι>ι
+            ; (._ , subst-α-< ι<ι) → 1+n≰n ι<ι })
     ... | tri> _ _ ι₁>ι₂ = yes (α⁼ (pred ι₁) , subst-α-> ι₁>ι₂)
     τ-subst-dec θ ι int = yes (int , subst-int)
     τ-subst-dec θ ι ns = yes (ns , subst-ns)
@@ -232,8 +230,8 @@ private
     ... | tri< ι₁<ι₂ _ _ = yes (ρ⁼ ι₁ , subst-ρ-< ι₁<ι₂)
     σ-subst-dec (α τ) .ι (ρ⁼ ι)
         | tri≈ _ refl _ =
-      no (λ { (._ , subst-ρ-> ι>ι) → NP.1+n≰n ι>ι
-            ; (._ , subst-ρ-< ι<ι) → NP.1+n≰n ι<ι })
+      no (λ { (._ , subst-ρ-> ι>ι) → 1+n≰n ι>ι
+            ; (._ , subst-ρ-< ι<ι) → 1+n≰n ι<ι })
     σ-subst-dec (ρ σ) .ι (ρ⁼ ι)
         | tri≈ _ refl _ = yes (weaken 0 ι σ , subst-ρ-≡)
     ... | tri> _ _ ι₁>ι₂ = yes (ρ⁼ (pred ι₁) , subst-ρ-> ι₁>ι₂)
@@ -374,11 +372,11 @@ private
     τ-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = α⁼ ι} (subst-α-> ι>pos₁)
       with pos₂ ≤? ι | pos₂ ≤? pred ι
     ... | no pos₂≰ι | _
-      with pos₂≰ι (Nat-≤-trans pos₂≤pos₁ (NP.≤⇒pred≤ _ _ ι>pos₁))
+      with pos₂≰ι (Nat-≤-trans pos₂≤pos₁ (≤⇒pred≤ _ _ ι>pos₁))
     ... | ()
     τ-weaken-subst inc pos₂≤pos₁ {v₁ = α⁼ ι} (subst-α-> ι>pos₁)
         | _ | no pos₂≰ι'
-      with pos₂≰ι' (Nat-≤-trans pos₂≤pos₁ (NP.pred-mono ι>pos₁))
+      with pos₂≰ι' (Nat-≤-trans pos₂≤pos₁ (pred-mono ι>pos₁))
     ... | ()
     τ-weaken-subst {pos₁} inc pos₂≤pos₁ {v₁ = α⁼ ι} (subst-α-> ι>pos₁)
         | yes pos₂≤ι | yes pos₂≤ι'
@@ -398,7 +396,7 @@ private
     τ-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = α⁼ ι} (subst-α-< ι<pos₁)
       with pos₂ ≤? ι
     ... | no pos₂≰ι
-      = subst-α-< (Nat-≤-trans ι<pos₁ (NP.m≤m+n pos₁ inc))
+      = subst-α-< (Nat-≤-trans ι<pos₁ (m≤m+n pos₁ inc))
     ... | yes pos₂≤ι
       rewrite +-comm pos₁ inc
       = subst-α-< (l+m<l+n inc ι<pos₁)
@@ -424,11 +422,11 @@ private
     σ-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = ρ⁼ ι} (subst-ρ-> ι>pos₁)
       with pos₂ ≤? ι | pos₂ ≤? pred ι
     ... | no pos₂≰ι | _
-      with pos₂≰ι (Nat-≤-trans pos₂≤pos₁ (NP.≤⇒pred≤ _ _ ι>pos₁))
+      with pos₂≰ι (Nat-≤-trans pos₂≤pos₁ (≤⇒pred≤ _ _ ι>pos₁))
     ... | ()
     σ-weaken-subst inc pos₂≤pos₁ {v₁ = ρ⁼ ι} (subst-ρ-> ι>pos₁)
         | _ | no pos₂≰ι'
-      with pos₂≰ι' (Nat-≤-trans pos₂≤pos₁ (NP.pred-mono ι>pos₁))
+      with pos₂≰ι' (Nat-≤-trans pos₂≤pos₁ (pred-mono ι>pos₁))
     ... | ()
     σ-weaken-subst {pos₁} inc pos₂≤pos₁ {v₁ = ρ⁼ ι} (subst-ρ-> ι>pos₁)
         | yes pos₂≤ι | yes pos₂≤ι'
@@ -448,7 +446,7 @@ private
     σ-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = ρ⁼ ι} (subst-ρ-< ι<pos₁)
       with pos₂ ≤? ι
     ... | no pos₂≰ι
-      = subst-ρ-< (Nat-≤-trans ι<pos₁ (NP.m≤m+n pos₁ inc))
+      = subst-ρ-< (Nat-≤-trans ι<pos₁ (m≤m+n pos₁ inc))
     ... | yes pos₂≤ι
       rewrite +-comm pos₁ inc
       = subst-ρ-< (l+m<l+n inc ι<pos₁)
@@ -476,7 +474,7 @@ private
     τ-subst-weaken {pos₁} inc pos₁≤pos₂ pos₂≤inc+pos₁ (α⁼ ι)
       with pos₁ ≤? ι
     ... | yes pos₁≤ι = subst-α-> (s≤s (Nat-≤-trans pos₂≤inc+pos₁ (l+m≤l+n inc pos₁≤ι)))
-    ... | no pos₁≰ι = subst-α-< (Nat-≤-trans (NP.≰⇒> pos₁≰ι) pos₁≤pos₂)
+    ... | no pos₁≰ι = subst-α-< (Nat-≤-trans (≰⇒> pos₁≰ι) pos₁≤pos₂)
     τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ int = subst-int
     τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ ns = subst-ns
     τ-subst-weaken {pos₁} {pos₂} inc pos₁≤pos₂ pos₂≤inc+pos₁ (∀[ Δ ] Γ)
@@ -490,7 +488,7 @@ private
         inc + (pos₁ + length Δ)
       ≡⟨ cong (λ v → inc + v) (+-comm pos₁ (length Δ)) ⟩
         inc + (length Δ + pos₁)
-      ∎ where open N.≤-Reasoning
+      ∎ where open ≤-Reasoning
     ... | len-≤
       = subst-∀ (Γ-subst-weaken inc (l+m≤l+n (length Δ) pos₁≤pos₂) len-≤ Γ)
     τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (tuple τs⁻)
@@ -509,7 +507,7 @@ private
     σ-subst-weaken {pos₁} inc pos₁≤pos₂ pos₂≤inc+pos₁ (ρ⁼ ι)
       with pos₁ ≤? ι
     ... | yes pos₁≤ι = subst-ρ-> (s≤s (Nat-≤-trans pos₂≤inc+pos₁ (l+m≤l+n inc pos₁≤ι)))
-    ... | no pos₁≰ι = subst-ρ-< (Nat-≤-trans (NP.≰⇒> pos₁≰ι) pos₁≤pos₂)
+    ... | no pos₁≰ι = subst-ρ-< (Nat-≤-trans (≰⇒> pos₁≰ι) pos₁≤pos₂)
     σ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ [] = []
     σ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ (τ ∷ τs)
       = τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ τ ∷ σ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ τs
@@ -532,10 +530,10 @@ private
         τ ≡ α⁼ ι'
   sub-α-helper (s≤s ι≥pos) (subst-α-> (s≤s ι≥pos')) = _ , refl , refl
   sub-α-helper ι>pos subst-α-≡
-    with NP.1+n≰n ι>pos
+    with 1+n≰n ι>pos
   ... | ()
   sub-α-helper ι>pos (subst-α-< ι<pos)
-    with NP.1+n≰n (NP.<-trans ι<pos ι>pos)
+    with 1+n≰n (Nat-<-trans ι<pos ι>pos)
   ... | ()
 
   sub-ρ-helper :
@@ -547,10 +545,10 @@ private
         σ ≡ ρ⁼ ι'
   sub-ρ-helper (s≤s ι≥pos) (subst-ρ-> (s≤s ι≥pos')) = _ , refl , refl
   sub-ρ-helper ι>pos subst-ρ-≡
-    with NP.1+n≰n ι>pos
+    with 1+n≰n ι>pos
   ... | ()
   sub-ρ-helper ι>pos (subst-ρ-< ι<pos)
-    with NP.1+n≰n (NP.<-trans ι<pos ι>pos)
+    with 1+n≰n (Nat-<-trans ι<pos ι>pos)
   ... | ()
 
   mutual
@@ -568,26 +566,26 @@ private
     τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-> (s≤s ι>pos)) (subst-α-> (s≤s ι>pos'))
       rewrite +-comm pos₁ (suc pos₂)
             | +-comm pos₂ pos₁
-      = _ , subst-α-> ι>pos , subst-α-> (Nat-≤-trans (s≤s (NP.m≤m+n pos₁ pos₂)) ι>pos)
+      = _ , subst-α-> ι>pos , subst-α-> (Nat-≤-trans (s≤s (m≤m+n pos₁ pos₂)) ι>pos)
     τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-> ι>pos) subst-α-≡
-      with NP.1+n≰n (Nat-≤-trans (s≤s (NP.≤-step (NP.m≤m+n pos₁ pos₂))) ι>pos)
+      with 1+n≰n (Nat-≤-trans (s≤s (≤-step (m≤m+n pos₁ pos₂))) ι>pos)
     ... | ()
     τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-> ι>pos) (subst-α-< ι<pos)
-      with NP.1+n≰n (Nat-≤-trans ι<pos (Nat-≤-trans (NP.≤-steps 2 (NP.m≤m+n pos₁ pos₂)) ι>pos))
+      with 1+n≰n (Nat-≤-trans ι<pos (Nat-≤-trans (≤-steps 2 (m≤m+n pos₁ pos₂)) ι>pos))
     ... | ()
     τ-subst-subst {pos₁} {pos₂} {θ₂ = α τ} sub-θ subst-α-≡ sub-τ₁'
-      with sub-α-helper (s≤s (NP.m≤m+n pos₁ pos₂)) sub-τ₁'
+      with sub-α-helper (s≤s (m≤m+n pos₁ pos₂)) sub-τ₁'
     ... | ι' , eq₁ , eq₂
       rewrite sym (cong pred eq₁)
             | eq₂
-        = _ , subst-α-≡ , τ-subst-weaken (pos₁ + pos₂) z≤n (Nat-≤-trans (NP.m≤m+n pos₁ pos₂) (NP.m≤m+n (pos₁ + pos₂) zero)) τ
+        = _ , subst-α-≡ , τ-subst-weaken (pos₁ + pos₂) z≤n (Nat-≤-trans (m≤m+n pos₁ pos₂) (m≤m+n (pos₁ + pos₂) zero)) τ
     τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-< (s≤s ι≤pos)) (subst-α-> (s≤s ι≥pos'))
         = _ , subst-α-< ι≤pos , subst-α-> (s≤s ι≥pos')
     τ-subst-subst {pos₁} {pos₂} (subst-α sub-τ) (subst-α-< ι<pos) subst-α-≡
       rewrite +-comm pos₁ pos₂
         = _ , τ-weaken-subst pos₁ z≤n sub-τ , subst-α-≡
     τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-< ι<pos) (subst-α-< ι<pos')
-      = _ , subst-α-< (Nat-≤-trans ι<pos' (NP.m≤m+n pos₁ pos₂)) , subst-α-< ι<pos'
+      = _ , subst-α-< (Nat-≤-trans ι<pos' (m≤m+n pos₁ pos₂)) , subst-α-< ι<pos'
     τ-subst-subst sub-θ subst-int subst-int = int , subst-int , subst-int
     τ-subst-subst sub-θ subst-ns subst-ns = ns , subst-ns , subst-ns
     τ-subst-subst {pos₁} {pos₂} sub-θ {∀[ Δ ] Γ₁} (subst-∀ sub-Γ₁) (subst-∀ sub-Γ₁')
@@ -632,26 +630,26 @@ private
     σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-> (s≤s ι>pos)) (subst-ρ-> (s≤s ι>pos'))
       rewrite +-comm pos₁ (suc pos₂)
             | +-comm pos₂ pos₁
-      = _ , subst-ρ-> ι>pos , subst-ρ-> (Nat-≤-trans (s≤s (NP.m≤m+n pos₁ pos₂)) ι>pos)
+      = _ , subst-ρ-> ι>pos , subst-ρ-> (Nat-≤-trans (s≤s (m≤m+n pos₁ pos₂)) ι>pos)
     σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-> ι>pos) subst-ρ-≡
-      with NP.1+n≰n (Nat-≤-trans (s≤s (NP.≤-step (NP.m≤m+n pos₁ pos₂))) ι>pos)
+      with 1+n≰n (Nat-≤-trans (s≤s (≤-step (m≤m+n pos₁ pos₂))) ι>pos)
     ... | ()
     σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-> ι>pos) (subst-ρ-< ι<pos)
-      with NP.1+n≰n (Nat-≤-trans ι<pos (Nat-≤-trans (NP.≤-steps 2 (NP.m≤m+n pos₁ pos₂)) ι>pos))
+      with 1+n≰n (Nat-≤-trans ι<pos (Nat-≤-trans (≤-steps 2 (m≤m+n pos₁ pos₂)) ι>pos))
     ... | ()
     σ-subst-subst {pos₁} {pos₂} {θ₂ = ρ σ} sub-θ subst-ρ-≡ sub-σ₁'
-      with sub-ρ-helper (s≤s (NP.m≤m+n pos₁ pos₂)) sub-σ₁'
+      with sub-ρ-helper (s≤s (m≤m+n pos₁ pos₂)) sub-σ₁'
     ... | ι' , eq₁ , eq₂
       rewrite sym (cong pred eq₁)
             | eq₂
-        = _ , subst-ρ-≡ , σ-subst-weaken (pos₁ + pos₂) z≤n (Nat-≤-trans (NP.m≤m+n pos₁ pos₂) (NP.m≤m+n (pos₁ + pos₂) zero)) σ
+        = _ , subst-ρ-≡ , σ-subst-weaken (pos₁ + pos₂) z≤n (Nat-≤-trans (m≤m+n pos₁ pos₂) (m≤m+n (pos₁ + pos₂) zero)) σ
     σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-< (s≤s ι≤pos)) (subst-ρ-> (s≤s ι≥pos'))
         = _ , subst-ρ-< ι≤pos , subst-ρ-> (s≤s ι≥pos')
     σ-subst-subst {pos₁} {pos₂} (subst-ρ sub-σ) (subst-ρ-< ι<pos) subst-ρ-≡
       rewrite +-comm pos₁ pos₂
         = _ , σ-weaken-subst pos₁ z≤n sub-σ , subst-ρ-≡
     σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-< ι<pos) (subst-ρ-< ι<pos')
-      = _ , subst-ρ-< (Nat-≤-trans ι<pos' (NP.m≤m+n pos₁ pos₂)) , subst-ρ-< ι<pos'
+      = _ , subst-ρ-< (Nat-≤-trans ι<pos' (m≤m+n pos₁ pos₂)) , subst-ρ-< ι<pos'
     σ-subst-subst sub-θ [] [] = [] , [] , []
     σ-subst-subst sub-θ (sub-τ₁ ∷ sub-σ₁) (sub-τ₁' ∷ sub-σ₁')
       with τ-subst-subst sub-θ sub-τ₁ sub-τ₁'

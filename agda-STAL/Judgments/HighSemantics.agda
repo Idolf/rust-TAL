@@ -6,7 +6,7 @@ open import Judgments.Substitution
 open HighGrammar
 
 -- The purpose of this file is to define the
--- small-step semantics for our assembler language
+-- small-step semantics for the high grammar
 
 evalSmallValueₕ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₕ regs (reg ♯r) = lookup ♯r regs

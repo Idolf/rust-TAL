@@ -219,11 +219,11 @@ globals-valid-type (of-globals gs⋆) = gvals-valid-type gs⋆
 wval-valid-type : ∀ {ψ₁ ψ₂ w τ} →
                     ψ₁ , ψ₂ ⊢ w of τ wval →
                     [] ⊢ τ Valid
-wval-valid-type (of-globval l lookup≤τ) = proj₂ (≤-valid lookup≤τ)
-wval-valid-type (of-heapval l lookup≤τ) = proj₂ (≤-valid lookup≤τ)
+wval-valid-type (of-globval l lookup≤τ) = ≤-valid₂ lookup≤τ
+wval-valid-type (of-heapval l lookup≤τ) = ≤-valid₂ lookup≤τ
 wval-valid-type of-int = valid-int
 wval-valid-type of-ns = valid-ns
-wval-valid-type (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = valid-∀ (proj₁ (≤-valid (≤-++ Γ₃≤Γ₂)))
+wval-valid-type (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = valid-∀ (valid-++ (≤-valid₁ Γ₃≤Γ₂))
 
 wval⁰-valid-type : ∀ {ψ₁ ψ₂ w τ⁻} →
                      ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰ →
@@ -269,7 +269,7 @@ vval-valid-type : ∀ {ψ₁ Δ Γ τ} →
                     [] ⊢ ψ₁ Valid →
                     Δ ⊢ Γ Valid →
                     {v : SmallValue} →
-                    ψ₁ , Δ , Γ ⊢ v of τ vval →
+                    ψ₁ , Δ ⊢ v of Γ ⇒ τ vval →
                     Δ ⊢ τ Valid
 vval-valid-type ψ₁⋆ (valid-registerₐ sp⋆ regs⋆) {reg ♯r} of-reg = Allᵥ-lookup ♯r regs⋆
 vval-valid-type ψ₁⋆ Γ⋆ (of-globval l) = valid-++ (All-lookup l ψ₁⋆)
@@ -325,11 +325,11 @@ vval-subst : ∀ {ψ₁} Δ₁ Δ₂ {θ a Γ₁ Γ₂ v₁ τ₁} →
                [] ⊢ ψ₁ Valid →
                Δ₂ ⊢ θ of a instantiation →
                Γ₁ ⟦ θ / length Δ₁ ⟧≡ Γ₂ →
-               ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ v₁ of τ₁ vval →
+               ψ₁ , Δ₁ ++ a ∷ Δ₂ ⊢ v₁ of Γ₁ ⇒ τ₁ vval →
                ∃₂ λ v₂ τ₂ →
                  v₁ ⟦ θ / length Δ₁ ⟧≡ v₂ ×
                  τ₁ ⟦ θ / length Δ₁ ⟧≡ τ₂ ×
-                 ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ v₂ of τ₂ vval
+                 ψ₁ , Δ₁ ++ Δ₂ ⊢ v₂ of Γ₂ ⇒ τ₂ vval
 vval-subst Δ₁ Δ₂ {v₁ = reg ♯r} ψ₁⋆ θ⋆ sub-Γ of-reg
   = _ , _ , subst-reg , subst-lookup-regs ♯r sub-Γ , of-reg
 vval-subst Δ₁ Δ₂ ψ₁⋆ θ⋆ sub-Γ (of-globval l)
@@ -366,11 +366,11 @@ instruction-subst : ∀ {ψ₁} Δ₁ Δ₂ {θ a Γ₁ Γ₂} →
                       Δ₂ ⊢ θ of a instantiation →
                       Γ₁ ⟦ θ / length Δ₁ ⟧≡ Γ₂ →
                       ∀ {ι₁ Γᵣ₁} →
-                      ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ ι₁ of Γᵣ₁ instruction →
+                      ψ₁ , Δ₁ ++ a ∷ Δ₂ ⊢ ι₁ of Γ₁ ⇒ Γᵣ₁ instruction →
                       ∃₂ λ ι₂ Γᵣ₂ →
                            ι₁ ⟦ θ / length Δ₁ ⟧≡ ι₂ ×
                            Γᵣ₁ ⟦ θ / length Δ₁ ⟧≡ Γᵣ₂ ×
-                           ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ ι₂ of Γᵣ₂ instruction
+                           ψ₁ , Δ₁ ++ Δ₂ ⊢ ι₂ of Γ₂ ⇒ Γᵣ₂ instruction
 instruction-subst Δ₁ Δ₂ ψ₁⋆ θ⋆ sub-Γ {add ♯rd ♯rs v} (of-add eq v⋆)
   with vval-subst Δ₁ Δ₂ ψ₁⋆ θ⋆ sub-Γ v⋆
 ... | v' , int , sub-v , subst-int , v'⋆
@@ -435,10 +435,10 @@ instructionsequence-subst : ∀ {ψ₁} Δ₁ Δ₂ {θ a Γ₁ Γ₂} →
                               Δ₂ ⊢ θ of a instantiation →
                               Γ₁ ⟦ θ / length Δ₁ ⟧≡ Γ₂ →
                               ∀ {I₁} →
-                              ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ I₁ instructionsequence →
+                              ψ₁ , Δ₁ ++ a ∷ Δ₂ ⊢ I₁ of Γ₁ instructionsequence →
                               ∃ λ I₂ →
                                  I₁ ⟦ θ / length Δ₁ ⟧≡ I₂ ×
-                                 ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ I₂ instructionsequence
+                                 ψ₁ , Δ₁ ++ Δ₂ ⊢ I₂ of Γ₂ instructionsequence
 instructionsequence-subst Δ₁ Δ₂ ψ₁⋆ θ⋆ sub-Γ (of-~> ι₁⋆ I₁⋆)
   with instruction-subst Δ₁ Δ₂ ψ₁⋆ θ⋆ sub-Γ ι₁⋆
 ... | ι₂ , Γₘ , sub-ι , sub-Γₘ , ι₂⋆
@@ -457,10 +457,10 @@ instructionsequence-subst-many : ∀ {ψ₁} Δ₁ Δ₂ Δ₃ {θs Γ₁ Γ₂}
                                    Δ₃ ⊢ θs of Δ₂ instantiations →
                                    Γ₁ ⟦ θs / length Δ₁ ⟧many≡ Γ₂ →
                                    ∀ {I₁} →
-                                   ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ , Γ₁ ⊢ I₁ instructionsequence →
+                                   ψ₁ , Δ₁ ++ Δ₂ ++ Δ₃ ⊢ I₁ of Γ₁ instructionsequence →
                                    ∃ λ I₂ →
                                        I₁ ⟦ θs / length Δ₁ ⟧many≡ I₂ ×
-                                       ψ₁ , Δ₁ ++ Δ₃ , Γ₂ ⊢ I₂ instructionsequence
+                                       ψ₁ , Δ₁ ++ Δ₃ ⊢ I₂ of Γ₂ instructionsequence
 instructionsequence-subst-many Δ₁ [] Δ₃ ψ₁⋆ [] [] I₁⋆ = _ , [] , I₁⋆
 instructionsequence-subst-many Δ₁ (a ∷ Δ₂) Δ₃ ψ₁⋆ (θ⋆ ∷ θs⋆) (sub-Γ ∷ subs-Γ) I₁⋆
   with instructionsequence-subst Δ₁ (Δ₂ ++ Δ₃) ψ₁⋆ θ⋆ sub-Γ I₁⋆

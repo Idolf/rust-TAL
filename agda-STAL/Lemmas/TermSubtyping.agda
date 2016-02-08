@@ -5,7 +5,13 @@ open import Judgments
 open import Lemmas.Types
 open import Lemmas.Substitution
 open import Lemmas.TypeSubstitution
+open import Lemmas.StackSubtyping
 open HighGrammar
+
+-- The purpose of this file is to prove two theorems:
+-- * That WordValues can be casted to more general types.
+-- * That InstructionSequences are also valid given a more
+--     specific RegisterAssignment.
 
 private
   ≤int⇒≡int : ∀ {Δ} {τ : Type} →
@@ -19,68 +25,126 @@ private
                       τ ≡ tuple τs⁻'
   ≤tuple⇒≡tuple (tuple-≤ τs⁻≤τs⁻') = _ , refl
 
-  regs-update-≤ : ∀ {Δ m τ₁ τ₂} ♯r {τs₁ τs₂ : Vec Type m} →
-                    Δ ⊢ τs₁ ≤ τs₂ →
-                    Δ ⊢ τ₁ ≤ τ₂ →
-                    Δ ⊢ update ♯r τ₁ τs₁ ≤ update ♯r τ₂ τs₂
-  regs-update-≤ zero (τ₁'≤τ₂' ∷ τs₁≤τs₂) τ₁≤τ₂ = τ₁≤τ₂ ∷ τs₁≤τs₂
-  regs-update-≤ (suc ♯r) (τ₁'≤τ₂' ∷ τs₁≤τs₂) τ₁≤τ₂ = τ₁'≤τ₂' ∷ regs-update-≤ ♯r τs₁≤τs₂ τ₁≤τ₂
+  vval-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂} →
+                   [] ⊢ ψ₁ Valid →
+                   {v : SmallValue} {τ₂ : Type} →
+                   ψ₁ , Δ  ⊢ v of Γ₂ ⇒ τ₂ vval →
+                   Δ ⊢ Γ₁ ≤ Γ₂ →
+                   ∃ λ τ₁ →
+                     Δ ⊢ τ₁ ≤ τ₂ ×
+                     ψ₁ , Δ ⊢ v of Γ₁ ⇒ τ₁ vval
+  vval-subtype ψ₁⋆ {reg ♯r} of-reg  (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with allzipᵥ-lookup ♯r regs₁≤regs₂
+  ... | lookup₁≤lookup₂ = _ , lookup₁≤lookup₂ , of-reg
+  vval-subtype ψ₁⋆ (of-globval l) Γ₁≤Γ₂ = _ , ≤-++ (≤-refl (All-lookup l ψ₁⋆)) , of-globval l
+  vval-subtype ψ₁⋆ of-int Γ₁≤Γ₂ = int , int-≤ , of-int
+  vval-subtype {Δ = Δ} ψ₁⋆ {Λ Δₒ ∙ v ⟦ θs ⟧} {∀[ .Δₒ ] Γₒ₁} (of-Λ {Δ₁ = Δᵢ} .{Δₒ} {Γᵢ₁} .{Γₒ₁} v⋆ θs⋆ subs-Γ₁)  Γ₁≤Γ₂
+    with vval-subtype ψ₁⋆ v⋆  Γ₁≤Γ₂
+  ... | ∀[ .Δᵢ ] Γᵢ₂ , ∀-≤ Γᵢ₁≤Γᵢ₂ , v⋆'
+    with subtype-subst-exists-many {A = RegisterAssignment} [] θs⋆ (subtype-weaken Δᵢ Δₒ Δ Γᵢ₁≤Γᵢ₂)
+  ... | Γₒ₁' , Γₒ₂ , subs-Γ₁' , subs-Γ₂ , Γₒ₁'≤Γₒ₂
+    rewrite subst-unique-many subs-Γ₁ subs-Γ₁' = ∀[ Δₒ ] Γₒ₂ , ∀-≤ Γₒ₁'≤Γₒ₂ , of-Λ v⋆' θs⋆ subs-Γ₂
 
-  stack-lookup-subtype : ∀ {Δ sp₁ sp₂ i τ₂} →
-                           Δ ⊢ sp₁ ≤ sp₂ →
-                           stack-lookup i sp₂ τ₂ →
-                           ∃ λ τ₁ →
-                               Δ ⊢ τ₁ ≤ τ₂ ×
-                               stack-lookup i sp₁ τ₁
-  stack-lookup-subtype (τ₁≤τ₂ ∷ sp₁≤sp₂) here = _ , τ₁≤τ₂ , here
-  stack-lookup-subtype (τ₁≤τ₂ ∷ sp₁≤sp₂) (there l)
+  instruction-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ Γ₂'} →
+                          [] ⊢ ψ₁ Valid →
+                          {ι : Instruction} →
+                          ψ₁ , Δ ⊢ ι of Γ₂ ⇒ Γ₂' instruction →
+                          Δ ⊢ Γ₁ ≤ Γ₂ →
+                          ∃ λ Γ₁' →
+                            ψ₁ , Δ ⊢ ι of Γ₁ ⇒ Γ₁' instruction ×
+                            Δ ⊢ Γ₁' ≤ Γ₂'
+  instruction-subtype ψ₁⋆ {ι = add ♯rd ♯rs v} (of-add eq v⋆)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with vval-subtype ψ₁⋆ v⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) | allzipᵥ-lookup ♯rs regs₁≤regs₂
+  ... | τ , int≤τ , v⋆' | int≤lookup
+    rewrite eq
+          | ≤int⇒≡int int≤τ
+    = _ , of-add (≤int⇒≡int int≤lookup) v⋆' ,
+          Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd int-≤ regs₁≤regs₂)
+  instruction-subtype ψ₁⋆ {ι = sub ♯rd ♯rs v} (of-sub eq v⋆)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with vval-subtype ψ₁⋆ v⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) | allzipᵥ-lookup ♯rs regs₁≤regs₂
+  ... | τ , int≤τ , v⋆' | int≤lookup
+    rewrite eq
+          | ≤int⇒≡int int≤τ
+    = _ , of-sub (≤int⇒≡int int≤lookup) v⋆' ,
+          Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd int-≤ regs₁≤regs₂)
+  instruction-subtype ψ₁⋆ {ι = salloc n} of-salloc
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    = _ , of-salloc , Γ-≤ (stack-append-subtype (replicate-subtype n) sp₁≤sp₂) regs₁≤regs₂
+    where replicate-subtype : ∀ {Δ} n →
+                                Δ ⊢ replicate n ns ≤ replicate n ns
+          replicate-subtype zero = []
+          replicate-subtype (suc n) = ns-≤ ∷ replicate-subtype n
+  instruction-subtype ψ₁⋆ {ι = sfree n} (of-sfree drop₁)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with stack-drop-subtype sp₁≤sp₂ drop₁
+  ... | sp₂' , drop₂ , sp₂'≤sp₁'
+    = _ , of-sfree drop₂ , Γ-≤ sp₂'≤sp₁' regs₁≤regs₂
+  instruction-subtype ψ₁⋆ {ι = sld ♯rd i} (of-sld l)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
     with stack-lookup-subtype sp₁≤sp₂ l
-  ... | τ₂' , τ₁≤τ₂' , l' = τ₂' , τ₁≤τ₂' , there l'
+  ... | τ₂ , τ₂≤τ₁ , l'
+    = _ , of-sld l' , Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd τ₂≤τ₁ regs₁≤regs₂)
+  instruction-subtype ψ₁⋆ {ι = sst i ♯rs} (of-sst up)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with stack-update-subtype sp₁≤sp₂ (allzipᵥ-lookup ♯rs regs₁≤regs₂) up
+  ... | sp₂' , up' , sp₂'≤sp₁'
+    = _ , of-sst up' , Γ-≤ sp₂'≤sp₁' regs₁≤regs₂
+  instruction-subtype {Δ = Δ} ψ₁⋆ {ι = ld ♯rd ♯rs i} (of-ld eq l)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with allzipᵥ-lookup ♯rs regs₁≤regs₂
+  ... | lookup₁≤lookup₂
+    with ≤tuple⇒≡tuple (subst₂ (_⊢_≤_ Δ) refl eq lookup₁≤lookup₂)
+  ... | τs⁻ , eq₁
+    with subst₂ (_⊢_≤_ Δ) eq₁ eq lookup₁≤lookup₂
+  ... | tuple-≤ τs₁≤τs₂
+    with allzip-lookup₂ l τs₁≤τs₂
+  ... | (τ , init) , l' , τ⁻-≤ τ⋆ φ-≤-init
+    = _ , of-ld eq₁ l' , Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd (≤-refl τ⋆) regs₁≤regs₂)
+  instruction-subtype {Δ = Δ} ψ₁⋆ {ι = st ♯rd i ♯rs} (of-st eq lookup≤τ l₁ up₁)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with allzipᵥ-lookup ♯rd regs₁≤regs₂ | allzipᵥ-lookup ♯rs regs₁≤regs₂
+  ... | lookup-rd₁≤lookup-rd₂ | lookup-rs₁≤lookup-rs₁
+    with ≤tuple⇒≡tuple (subst₂ (_⊢_≤_ Δ) refl eq lookup-rd₁≤lookup-rd₂)
+  ... | τs⁻₂ , eq₁
+    with subst₂ (_⊢_≤_ Δ) eq₁ eq lookup-rd₁≤lookup-rd₂
+  ... | tuple-≤ τs⁻₁≤τs⁻₂
+    with allzip-lookup₂ l₁ τs⁻₁≤τs⁻₂
+  ... | (τ , φ) , l₂ , τ⁻-≤ τ⋆ φ₁≤φ₂
+    with <-to-← τs⁻₂ (τ , init) {i} (subst (λ len → i < len) (sym (AllZip-length τs⁻₁≤τs⁻₂)) (←-to-< up₁))
+  ... | τs⁻₂' , up₂
+    = _ , of-st eq₁ (≤-trans lookup-rs₁≤lookup-rs₁ lookup≤τ) l₂ up₂ , Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd (tuple-≤ (allzip-update up₂ up₁ (τ⁻-≤ τ⋆ φ-≤-init) τs⁻₁≤τs⁻₂)) regs₁≤regs₂)
+  instruction-subtype ψ₁⋆ {ι = malloc ♯rd τs} (of-malloc τs⋆)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    = _ , of-malloc τs⋆ , Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd (≤-refl (valid-tuple (All-map' valid-τ⁻ τs⋆))) regs₁≤regs₂)
+  instruction-subtype ψ₁⋆ {ι = mov ♯rd v} (of-mov v⋆)
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with vval-subtype ψ₁⋆ v⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+  ... | τ' , τ≤τ' , v⋆'
+    = _ , of-mov v⋆' , Γ-≤ sp₁≤sp₂ (allzipᵥ-update ♯rd τ≤τ' regs₁≤regs₂)
+  instruction-subtype ψ₁⋆ {ι = beq ♯r v} (of-beq eq v⋆ Γ₁≤Γ')
+                      (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+    with allzipᵥ-lookup ♯r regs₁≤regs₂
+       | vval-subtype ψ₁⋆ v⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+  ... | ♯r⋆ | ∀[ [] ] Γ'' , ∀-≤ Γ'≤Γ'' , v⋆'
+    rewrite eq
+    = _ , of-beq (≤int⇒≡int ♯r⋆) v⋆' (≤-trans (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) (≤-trans Γ₁≤Γ' Γ'≤Γ'')) , Γ-≤ sp₁≤sp₂ regs₁≤regs₂
 
-  stack-update-subtype : ∀ {Δ sp₁ sp₂ sp₂' i τ₁ τ₂} →
-                           Δ ⊢ sp₁ ≤ sp₂ →
-                           Δ ⊢ τ₁ ≤ τ₂ →
-                           stack-update i τ₂ sp₂ sp₂' →
-                           ∃ λ sp₁' →
-                               stack-update i τ₁ sp₁ sp₁' ×
-                               Δ ⊢ sp₁' ≤ sp₂'
-  stack-update-subtype (τ₁≤τ₂' ∷ sp₁≤sp₂) τ₁≤τ₂ here = _ , here , τ₁≤τ₂ ∷ sp₁≤sp₂
-  stack-update-subtype (τ₁≤τ₂' ∷ sp₁≤sp₂) τ₁≤τ₂ (there up)
-    with stack-update-subtype sp₁≤sp₂ τ₁≤τ₂ up
-  ... | sp₁' , up' , sp₁'≤sp₂' = _ , there up' , τ₁≤τ₂' ∷ sp₁'≤sp₂'
-
-  stack-append-subtype : ∀ {Δ τs₁ τs₂ σ₁ σ₂} →
-                           Δ ⊢ τs₁ ≤ τs₂ →
-                           Δ ⊢ σ₁ ≤ σ₂ →
-                           Δ ⊢ stack-append τs₁ σ₁ ≤ stack-append τs₂ σ₂
-  stack-append-subtype [] σ₁≤σ₂ = σ₁≤σ₂
-  stack-append-subtype (τ₁≤τ₂ ∷ τs₁≤τs₂) σ₁≤σ₂ = τ₁≤τ₂ ∷ stack-append-subtype τs₁≤τs₂ σ₁≤σ₂
-
-  stack-drop-subtype : ∀ {Δ i σ₁ σ₂ σ₂'} →
-                       Δ ⊢ σ₁ ≤ σ₂ →
-                       stack-drop i σ₂ σ₂' →
-                       ∃ λ σ₁' →
-                         stack-drop i σ₁ σ₁' ×
-                         Δ ⊢ σ₁' ≤ σ₂'
-  stack-drop-subtype (ρ⁼-≤ l) here = _ , here , ρ⁼-≤ l
-  stack-drop-subtype [] here = _ , here , []
-  stack-drop-subtype σ₁≤σ₂ here = _ , here , σ₁≤σ₂
-  stack-drop-subtype (τ₁≤τ₂ ∷ σ₁≤σ₂) (there drop₁) =
-    Σ-map _ (Σ-map there id) (stack-drop-subtype σ₁≤σ₂ drop₁)
-
-wval⁰-subtype : ∀ {ψ₁ ψ₂ w τ⁻₁ τ⁻₂} →
-                  ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰ →
-                  [] ⊢ τ⁻₁ ≤ τ⁻₂ →
-                  ψ₁ , ψ₂ ⊢ w of τ⁻₂ wval⁰
-wval⁰-subtype (of-uninit τs⋆) (τ⁻-≤ τ⋆ φ-≤-uninit) = of-uninit τ⋆
-wval⁰-subtype (of-init w⋆) (τ⁻-≤ τ⋆ τ₁≤τ₂) = of-init w⋆
-
-wvals⁰-subtype : ∀ {ψ₁ ψ₂ ws τs⁻₁ τs⁻₂} →
-                   AllZip (λ w τ⁻₁ → ψ₁ , ψ₂ ⊢ w of τ⁻₁ wval⁰) ws τs⁻₁ →
-                   [] ⊢ τs⁻₁ ≤ τs⁻₂ →
-                   AllZip (λ w τ⁻₂ → ψ₁ , ψ₂ ⊢ w of τ⁻₂ wval⁰) ws τs⁻₂
-wvals⁰-subtype [] [] = []
-wvals⁰-subtype (w⋆ ∷ ws⋆) (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂) = wval⁰-subtype w⋆ τ⁻₁≤τ⁻₂ ∷ wvals⁰-subtype ws⋆ τs⁻₁≤τs⁻₂
+instructionsequence-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ I} →
+                                [] ⊢ ψ₁ Valid →
+                                ψ₁ , Δ ⊢ I of Γ₂ instructionsequence →
+                                Δ ⊢ Γ₁ ≤ Γ₂ →
+                                ψ₁ , Δ ⊢ I of Γ₁ instructionsequence
+instructionsequence-subtype ψ₁⋆ (of-~> ι⋆ I⋆)  Γ₁≤Γ₂
+  with instruction-subtype ψ₁⋆ ι⋆ Γ₁≤Γ₂
+... | Γ₂' , ι⋆' , Γ₂'≤Γ₁'
+  with instructionsequence-subtype ψ₁⋆ I⋆ Γ₂'≤Γ₁'
+... | I⋆' = of-~> ι⋆' I⋆'
+instructionsequence-subtype ψ₁⋆ (of-jmp v⋆ Γ₁≤Γ')  Γ₁≤Γ₂
+  with vval-subtype ψ₁⋆ v⋆ Γ₁≤Γ₂
+... | ∀[ [] ] Γ'' , ∀-≤ Γ'≤Γ'' , v⋆' = of-jmp v⋆' (≤-trans Γ₁≤Γ₂ (≤-trans Γ₁≤Γ' Γ'≤Γ''))
+instructionsequence-subtype ψ₁⋆ of-halt Γ₁≤Γ₂ = of-halt
 
 wval-subtype : ∀ {ψ₁ ψ₂ w τ₁ τ₂} →
                  ψ₁ , ψ₂ ⊢ w of τ₁ wval →
@@ -92,137 +156,3 @@ wval-subtype of-int int-≤ = of-int
 wval-subtype of-ns ns-≤ = of-ns
 wval-subtype (of-Λ {Δ₂ = Δ₂} w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) (∀-≤ Γ₄≤Γ₃)
   rewrite List-++-right-identity Δ₂ = of-Λ w⋆ θs⋆ subs-Γ (≤-trans Γ₄≤Γ₃ Γ₃≤Γ₂)
-
-regs-subtype : ∀ {n ψ₁ ψ₂} {ws : Vec WordValue n} {τs₁ τs₂} →
-                 AllZipᵥ (λ w τ₁ → ψ₁ , ψ₂ ⊢ w of τ₁ wval) ws τs₁ →
-                 [] ⊢ τs₁ ≤ τs₂ →
-                 AllZipᵥ (λ w τ₂ → ψ₁ , ψ₂ ⊢ w of τ₂ wval) ws τs₂
-regs-subtype [] [] = []
-regs-subtype (w⋆ ∷ ws⋆) (τ₁≤τ₂ ∷ τs₁≤τs₂) = wval-subtype w⋆ τ₁≤τ₂ ∷ regs-subtype ws⋆ τs₁≤τs₂
-
-hval-subtype : ∀ {ψ₁ ψ₂ h τ₁ τ₂} →
-                 ψ₁ , ψ₂ ⊢ h of τ₁ hval →
-                 [] ⊢ τ₁ ≤ τ₂ →
-                 ψ₁ , ψ₂ ⊢ h of τ₂ hval
-hval-subtype (of-tuple ws⋆) (tuple-≤ τs⁻₁≤τs⁻₂) = of-tuple (wvals⁰-subtype ws⋆ τs⁻₁≤τs⁻₂)
-
-vval-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂} →
-                 [] ⊢ ψ₁ Valid →
-                 Δ ⊢ Γ₁ ≤ Γ₂ →
-                 {v : SmallValue} {τ₂ : Type} →
-                 ψ₁ , Δ , Γ₂ ⊢ v of τ₂ vval →
-                 ∃ λ τ₁ →
-                   Δ ⊢ τ₁ ≤ τ₂ ×
-                   ψ₁ , Δ , Γ₁ ⊢ v of τ₁ vval
-vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) {reg ♯r} of-reg
-  with allzipᵥ-lookup ♯r regs₁≤regs₂
-... | lookup₁≤lookup₂ = _ , lookup₁≤lookup₂ , of-reg
-vval-subtype ψ₁⋆ Γ₁≤Γ₂ (of-globval l) = _ , ≤-++ (≤-refl (All-lookup l ψ₁⋆)) , of-globval l
-vval-subtype ψ₁⋆ Γ₁≤Γ₂ of-int = int , int-≤ , of-int
-vval-subtype {Δ = Δ} ψ₁⋆ Γ₁≤Γ₂ {Λ Δₒ ∙ v ⟦ θs ⟧} {∀[ .Δₒ ] Γₒ₁} (of-Λ {Δ₁ = Δᵢ} .{Δₒ} {Γᵢ₁} .{Γₒ₁} v⋆ θs⋆ subs-Γ₁)
-  with vval-subtype ψ₁⋆ Γ₁≤Γ₂ v⋆
-... | ∀[ .Δᵢ ] Γᵢ₂ , ∀-≤ Γᵢ₁≤Γᵢ₂ , v⋆'
-  with subtype-subst-exists-many {A = RegisterAssignment} [] θs⋆ (subtype-weaken Δᵢ Δₒ Δ Γᵢ₁≤Γᵢ₂)
-... | Γₒ₁' , Γₒ₂ , subs-Γ₁' , subs-Γ₂ , Γₒ₁'≤Γₒ₂
-  rewrite subst-unique-many subs-Γ₁ subs-Γ₁' = ∀[ Δₒ ] Γₒ₂ , ∀-≤ Γₒ₁'≤Γₒ₂ , of-Λ v⋆' θs⋆ subs-Γ₂
-
-instruction-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ Γ₂'} →
-                        [] ⊢ ψ₁ Valid →
-                        Δ ⊢ Γ₁ ≤ Γ₂ →
-                        {ι : Instruction} →
-                        ψ₁ , Δ , Γ₂ ⊢ ι of Γ₂' instruction →
-                        ∃ λ Γ₁' →
-                          ψ₁ , Δ , Γ₁ ⊢ ι of Γ₁' instruction ×
-                          Δ ⊢ Γ₁' ≤ Γ₂'
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = add ♯rd ♯rs v} (of-add eq v⋆)
-  with vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) v⋆ | allzipᵥ-lookup ♯rs regs₁≤regs₂
-... | τ , int≤τ , v⋆' | int≤lookup
-  rewrite eq
-        | ≤int⇒≡int int≤τ =
-  _ , of-add (≤int⇒≡int int≤lookup) v⋆' ,
-      Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ int-≤)
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = sub ♯rd ♯rs v} (of-sub eq v⋆)
-  with vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) v⋆ | allzipᵥ-lookup ♯rs regs₁≤regs₂
-... | τ , int≤τ , v⋆' | int≤lookup
-  rewrite eq
-        | ≤int⇒≡int int≤τ =
-  _ , of-sub (≤int⇒≡int int≤lookup) v⋆' ,
-      Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ int-≤)
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = salloc n} of-salloc = _ , of-salloc , Γ-≤ (stack-append-subtype (replicate-subtype n) sp₁≤sp₂) regs₁≤regs₂
-  where replicate-subtype : ∀ {Δ} n →
-                              Δ ⊢ replicate n ns ≤ replicate n ns
-        replicate-subtype zero = []
-        replicate-subtype (suc n) = ns-≤ ∷ replicate-subtype n
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = sfree n} (of-sfree drop₁)
-  with stack-drop-subtype sp₁≤sp₂ drop₁
-... | sp₂' , drop₂ , sp₂'≤sp₁' = _ , of-sfree drop₂ , Γ-≤ sp₂'≤sp₁' regs₁≤regs₂
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = sld ♯rd i} (of-sld l)
-  with stack-lookup-subtype sp₁≤sp₂ l
-... | τ₂ , τ₂≤τ₁ , l' = _ , of-sld l' , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ τ₂≤τ₁)
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = sst i ♯rs} (of-sst up)
-  with stack-update-subtype sp₁≤sp₂ (allzipᵥ-lookup ♯rs regs₁≤regs₂) up
-... | sp₂' , up' , sp₂'≤sp₁' = _ , of-sst up' , Γ-≤ sp₂'≤sp₁' regs₁≤regs₂
-instruction-subtype {Δ = Δ} ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = ld ♯rd ♯rs i} (of-ld eq l)
-  with allzipᵥ-lookup ♯rs regs₁≤regs₂
-... | lookup₁≤lookup₂
-  with ≤tuple⇒≡tuple (subst₂ (_⊢_≤_ Δ) refl eq lookup₁≤lookup₂)
-... | τs⁻ , eq₁
-  with subst₂ (_⊢_≤_ Δ) eq₁ eq lookup₁≤lookup₂
-... | tuple-≤ τs₁≤τs₂
-  with allzip-lookup₂ l τs₁≤τs₂
-... | (τ , init) , l' , τ⁻-≤ τ⋆ φ-≤-init
-  = _ , of-ld eq₁ l' , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ (≤-refl τ⋆))
-instruction-subtype {Δ = Δ} {Γ₁ = registerₐ sp₁ regs₁} {Γ₂ = registerₐ sp₂ regs₂} ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = st ♯rd i ♯rs} (of-st eq lookup≤τ l₁ up₁)
-  with allzipᵥ-lookup ♯rd regs₁≤regs₂ | allzipᵥ-lookup ♯rs regs₁≤regs₂
-... | lookup-rd₁≤lookup-rd₂ | lookup-rs₁≤lookup-rs₁
-  with ≤tuple⇒≡tuple (subst₂ (_⊢_≤_ Δ) refl eq lookup-rd₁≤lookup-rd₂)
-... | τs⁻₂ , eq₁
-  with subst₂ (_⊢_≤_ Δ) eq₁ eq lookup-rd₁≤lookup-rd₂
-... | tuple-≤ τs⁻₁≤τs⁻₂
-  with allzip-lookup₂ l₁ τs⁻₁≤τs⁻₂
-... | (τ , φ) , l₂ , τ⁻-≤ τ⋆ φ₁≤φ₂
-  with <-to-← τs⁻₂ (τ , init) {i} (subst (λ len → i < len) (sym (AllZip-length τs⁻₁≤τs⁻₂)) (←-to-< up₁))
-... | τs⁻₂' , up₂ = registerₐ sp₁ (update ♯rd (tuple τs⁻₂') regs₁) , of-st eq₁ (≤-trans lookup-rs₁≤lookup-rs₁ lookup≤τ) l₂ up₂ , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ (tuple-≤ (allzip-update up₂ up₁ (τ⁻-≤ τ⋆ φ-≤-init) τs⁻₁≤τs⁻₂)))
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = malloc ♯rd τs} (of-malloc τs⋆) =
-  _ , of-malloc τs⋆ , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ (≤-refl (valid-tuple (help τs⋆))))
-    where help : ∀ {Δ} {τs : List Type} →
-                   All (λ τ → Δ ⊢ τ Valid) τs →
-                   All (λ τ⁻ → Δ ⊢ τ⁻ Valid) (map (λ τ → τ , uninit) τs)
-          help [] = []
-          help (τ⋆ ∷ τs⋆) = valid-τ⁻ τ⋆ ∷ help τs⋆
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = mov ♯rd v} (of-mov v⋆)
-  with vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) v⋆
-... | τ' , τ≤τ' , v⋆' =
-  _ , of-mov v⋆' , Γ-≤ sp₁≤sp₂ (regs-update-≤ ♯rd regs₁≤regs₂ τ≤τ')
-instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-                    {ι = beq ♯r v} (of-beq eq v⋆ Γ₁≤Γ')
-  with allzipᵥ-lookup ♯r regs₁≤regs₂
-     | vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) v⋆
-... | ♯r⋆ | ∀[ [] ] Γ'' , ∀-≤ Γ'≤Γ'' , v⋆'
-  rewrite eq
-  = _ , of-beq (≤int⇒≡int ♯r⋆) v⋆' (≤-trans (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) (≤-trans Γ₁≤Γ' Γ'≤Γ'')) , Γ-≤ sp₁≤sp₂ regs₁≤regs₂
-
-instructionsequence-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ I} →
-                                [] ⊢ ψ₁ Valid →
-                                Δ ⊢ Γ₁ ≤ Γ₂ →
-                                ψ₁ , Δ , Γ₂ ⊢ I instructionsequence →
-                                ψ₁ , Δ , Γ₁ ⊢ I instructionsequence
-instructionsequence-subtype ψ₁⋆ Γ₁≤Γ₂ (of-~> ι⋆ I⋆)
-  with instruction-subtype ψ₁⋆ Γ₁≤Γ₂ ι⋆
-... | Γ₂' , ι⋆' , Γ₂'≤Γ₁'
-  with instructionsequence-subtype ψ₁⋆ Γ₂'≤Γ₁' I⋆
-... | I⋆' = of-~> ι⋆' I⋆'
-instructionsequence-subtype ψ₁⋆ Γ₁≤Γ₂ (of-jmp v⋆ Γ₁≤Γ')
-  with vval-subtype ψ₁⋆ Γ₁≤Γ₂ v⋆
-... | ∀[ [] ] Γ'' , ∀-≤ Γ'≤Γ'' , v⋆' = of-jmp v⋆' (≤-trans Γ₁≤Γ₂ (≤-trans Γ₁≤Γ' Γ'≤Γ''))
-instructionsequence-subtype ψ₁⋆ Γ₁≤Γ₂ of-halt = of-halt

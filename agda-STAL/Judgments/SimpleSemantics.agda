@@ -6,7 +6,7 @@ open import Judgments.Grammar
 open SimpleGrammar
 
 -- The purpose of this file is to define the
--- small-step semantics for our assembler language
+-- small-step semantics for the simple grammar
 
 evalSmallValueₛ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₛ regs (reg ♯r) = lookup ♯r regs

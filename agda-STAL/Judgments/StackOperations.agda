@@ -3,6 +3,9 @@ module Judgments.StackOperations where
 open import Util
 open import Judgments.Grammar
 
+-- The purpose of this file is to introduce some stack operations.
+-- They are morally identical to similar constructions for lists.
+
 data stack-lookup : ℕ → StackType → Type → Set where
   here :
             ∀ {τ σ} →

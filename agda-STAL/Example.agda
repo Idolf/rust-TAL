@@ -20,7 +20,7 @@ foo-Δ = α ∷ α ∷ α ∷ α ∷ ρ ∷ []
 foo-τ : Type
 foo-τ = ∀[ foo-Δ ] foo-Γ
 
-foo-is : [ foo-τ ] , foo-Δ , foo-Γ ⊢ foo instructionsequence
+foo-is : [ foo-τ ] , foo-Δ ⊢ foo of foo-Γ instructionsequence
 foo-is = of-jmp (of-Λ (of-globval here) ((of-α (valid-α⁼ (there (there (there (there here)))))) ∷ ((of-α (valid-α⁼ (there (there (there (there here)))))) ∷ (of-α (valid-α⁼ (there (there (there (there here))))) ∷ of-α (valid-α⁼ (there (there (there (there here))))) ∷ of-ρ (valid-ρ⁼ (there (there (there (there here))))) ∷ []))) ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-> (s≤s z≤n) ∷ subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-≡ ∷ [])) Substitution.∷ ((subst-registerₐ subst-ρ-≡ (subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ Substitution.[])))))) (Γ-≤ (ρ⁼-≤ (there (there (there (there here))))) (α⁼-≤ here ∷ α⁼-≤ (there here) ∷ α⁼-≤ (there (there here)) ∷ α⁼-≤ (there (there (there here))) ∷ []))
 -- Dynamic type-checking
 foo-word' : SmallValue

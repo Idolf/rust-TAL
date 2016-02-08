@@ -36,6 +36,26 @@ data AllZipᵥ {a b p} {A : Set a} {B : Set b} (P : A → B → Set p) :
                           AllZipᵥ P {m} xs ys →
                           AllZipᵥ P (x ∷ xs) (y ∷ ys)
 
+AllZipᵥ-trans : ∀ {a b c p₁ p₂ q} {A : Set a} {B : Set b} {C : Set c}
+                  {P₁ : A → B → Set p₁}
+                  {P₂ : B → C → Set p₂}
+                  {Q : A → C → Set q}
+                  {m xs ys zs} →
+                  (f : ∀ {x y z} → P₁ x y → P₂ y z → Q x z) →
+                  AllZipᵥ P₁ xs ys →
+                  AllZipᵥ P₂ ys zs →
+                  AllZipᵥ Q {m} xs zs
+AllZipᵥ-trans f [] [] = []
+AllZipᵥ-trans f (p₁ ∷ ps₁) (p₂ ∷ ps₂) = f p₁ p₂ ∷ AllZipᵥ-trans f ps₁ ps₂
+
+AllZipᵥ-map : ∀ {a b p q} {A : Set a} {B : Set b}
+                {P : A → B → Set p} {Q : A → B → Set q}
+                {m xs ys} →
+                (f : ∀ {x y} → P x y → Q x y) →
+                AllZipᵥ P {m} xs ys → AllZipᵥ Q xs ys
+AllZipᵥ-map f [] = []
+AllZipᵥ-map f (p ∷ ps) = f p ∷ AllZipᵥ-map f ps
+
 allzipᵥ-lookup : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
                   {m} {xs : Vec A m} {ys : Vec B m} →
                   (i : Fin m) →

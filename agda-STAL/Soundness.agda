@@ -40,7 +40,7 @@ private
     = _ , _ , _ , refl , l' , l , τs'≤τs , ws⋆
 
   vval-helper' : ∀ {♯r ψ₁ τ σ τs} →
-                   ψ₁ , [] , registerₐ σ τs ⊢ reg ♯r of τ vval →
+                   ψ₁ , [] ⊢ reg ♯r of registerₐ σ τs ⇒ τ vval →
                    lookup ♯r τs ≡ τ
   vval-helper' of-reg = refl
 
@@ -48,7 +48,7 @@ private
                       ⊢ G of ψ₁ globals →
                       ψ₁ ⊢ H of ψ₂ heap →
                       AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
-                      ψ₁ , [] , registerₐ σ τs ⊢ v of int vval →
+                      ψ₁ , [] ⊢ v of registerₐ σ τs ⇒ int vval →
                       ∃ λ n →
                         evalSmallValue regs v ≡ int n
   vval-int-helper {v = reg ♯r} G⋆ H⋆ regs⋆ v⋆
@@ -123,7 +123,7 @@ eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs} →
                    [] ⊢ ψ₁ Valid →
                    AllZipᵥ (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval) regs τs →
                    {v : SmallValue} {τ : Type} →
-                   ψ₁ , [] , registerₐ σ τs ⊢ v of τ vval →
+                   ψ₁ , [] ⊢ v of registerₐ σ τs ⇒ τ vval →
                    ψ₁ , ψ₂ ⊢ evalSmallValue regs v of τ wval
 eval-reduction ψ₁⋆ regs⋆ {v = reg ♯r} of-reg = allzipᵥ-lookup ♯r regs⋆
 eval-reduction ψ₁⋆ regs⋆ (of-globval l) = of-globval l (≤-refl (All-lookup l ψ₁⋆))
@@ -146,13 +146,13 @@ instantiation-progress : ∀ {G ψ₁ H ψ₂ w Δ Γ} →
                              ψ₁ , ψ₂ ⊢ w of ∀[ Δ ] Γ wval →
                              ∃ λ I →
                                InstantiateGlobal G w I ×
-                               ψ₁ , Δ , Γ ⊢ I instructionsequence
+                               ψ₁ , Δ ⊢ I of Γ instructionsequence
 instantiation-progress (of-globals gs⋆) H⋆ (of-globval l τ≤τ')
   with allzip-lookup₂ l gs⋆
 instantiation-progress (of-globals gs⋆) H⋆ (of-globval l (∀-≤ Γ≤Γ'))
   | code[ Δ ] Γ ∙ I , l' , of-gval Γ⋆ I⋆
   rewrite List-++-right-identity Δ
-    = _ , instantiate-globval l' , instructionsequence-subtype (gvals-valid-type gs⋆) Γ≤Γ' I⋆
+    = _ , instantiate-globval l' , instructionsequence-subtype (gvals-valid-type gs⋆) I⋆ Γ≤Γ'
 instantiation-progress G⋆ (of-heap hs⋆) (of-heapval l τ≤τ')
   with allzip-lookup₂ l hs⋆
 ... | tuple ws , l' , of-tuple ws⋆
@@ -163,17 +163,18 @@ instantiation-progress G⋆ H⋆ (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ θs⋆ subs
 ... | I , ig , I⋆
   with instructionsequence-subst-many [] Δ₁ Δ₂ (globals-valid-type G⋆) θs⋆ subs-Γ (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
 ... | I' , subs-I , I'⋆
-  = I' , instantiate-Λ ig subs-I , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆
+  = I' , instantiate-Λ ig subs-I , instructionsequence-subtype (globals-valid-type G⋆) I'⋆ Γ≤Γ'
+
 step-progress' : ∀ {G ψ₁ H ψ₂ R Γ I} →
                    I ≢ halt →
                    ⊢ G of ψ₁ globals →
                    ψ₁ ⊢ H of ψ₂ heap →
                    ψ₁ , ψ₂ ⊢ R of Γ register →
-                   ψ₁ , [] , Γ ⊢ I instructionsequence →
+                   ψ₁ , [] ⊢ I of Γ instructionsequence →
                    ∃₂ λ H' ψ₂' → ∃₂ λ R' Γ' → ∃ λ I' →
                       ψ₁ ⊢ H' of ψ₂' heap ×
                       ψ₁ , ψ₂' ⊢ R' of Γ' register ×
-                      ψ₁ , [] , Γ' ⊢ I' instructionsequence ×
+                      ψ₁ , [] ⊢ I' of Γ' instructionsequence ×
                       G ⊢ (H , R , I) ⇒ (H' , R' , I')
 step-progress' {I = add ♯rd ♯rs v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-add eq v⋆) I⋆)
   with allzipᵥ-lookup ♯rs regs⋆
@@ -228,13 +229,13 @@ step-progress' {I = st ♯rd i ♯rs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-reg
 ... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
   with heap-helper (of-tuple ws'⋆) (of-heap hs⋆) l₂ (tuple-≤ τs⁻₃≤τs⁻₂)
 ... | H' , ψ₂' , up₃ , up₄ , H'⋆ , ψ₂'≤ψ₂
-  with (regs-helper₂ ♯rd (proj₁ (≤-valid ψ₂'≤ψ₂)) eq₁ (←-to-↓ up₄) (regs-helper ψ₂'≤ψ₂ regs⋆))
+  with (regs-helper₂ ♯rd (≤-valid₁ ψ₂'≤ψ₂) eq₁ (←-to-↓ up₄) (regs-helper ψ₂'≤ψ₂ regs⋆))
 ... | regs'⋆
-  with update-helper₃ (proj₂ (≤-valid lookup≤τ)) τs⁻₂≤τs⁻₁ up₂ up
+  with update-helper₃ (≤-valid₂ lookup≤τ) τs⁻₂≤τs⁻₁ up₂ up
 ... | τs⁻₃≤τs⁻₁'
-  = H' , ψ₂' , _ , _ , I , H'⋆ , of-register (stack-helper ψ₂'≤ψ₂ sp⋆) (regs-subtype regs'⋆ (allzipᵥ-update ♯rd (tuple-≤ τs⁻₃≤τs⁻₁') (≤-refl (regs-valid-type regs⋆)))) , I⋆ , step-st eq₁ l₁ up₁ up₃
+  = H' , ψ₂' , _ , _ , I , H'⋆ , of-register (stack-helper ψ₂'≤ψ₂ sp⋆) (AllZipᵥ-trans wval-subtype regs'⋆ (allzipᵥ-update ♯rd (tuple-≤ τs⁻₃≤τs⁻₁') (≤-refl (regs-valid-type regs⋆)))) , I⋆ , step-st eq₁ l₁ up₁ up₃
 step-progress' {H = H} {ψ₂ = ψ₂} {I = malloc ♯rd τs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-malloc τs⋆) I⋆)
-  = _ , _ , _ , _ , _ , heap-push (of-heap hs⋆) (of-tuple (map-uninit-helper τs⋆)) , of-register (stack-++ sp⋆) (allzipᵥ-update ♯rd (of-heapval (subst₂ (λ h i → ψ₂ ∷ʳ h ↓ i ⇒ h) refl (sym (AllZip-length hs⋆)) (↓-length ψ₂ (tuple (map (λ τ → τ , uninit) τs)))) (≤-refl (valid-tuple (map-uninit-helper₂ τs⋆)))) (regs-++ regs⋆)) , I⋆ , step-malloc
+  = _ , _ , _ , _ , _ , heap-push (of-heap hs⋆) (of-tuple (map-uninit-helper τs⋆)) , of-register (stack-++ sp⋆) (allzipᵥ-update ♯rd (of-heapval (subst₂ (λ h i → ψ₂ ∷ʳ h ↓ i ⇒ h) refl (sym (AllZip-length hs⋆)) (↓-length ψ₂ (tuple (map (λ τ → τ , uninit) τs)))) (≤-refl (valid-tuple (map-uninit-helper₂ τs⋆)))) (AllZipᵥ-map wval-++ regs⋆)) , I⋆ , step-malloc
 step-progress' {I = mov ♯rd v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-mov v⋆) I⋆)
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ (allzipᵥ-update ♯rd (eval-reduction (globals-valid-type G⋆) regs⋆ v⋆) regs⋆) , I⋆ , step-mov
 step-progress' {I = beq ♯r v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
@@ -246,14 +247,14 @@ step-progress' {I = beq ♯r v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs�
     | lookup⋆ | zero , eq₁
   with instantiation-progress G⋆ H⋆ (eval-reduction (globals-valid-type G⋆) regs⋆ v⋆)
 ... | I' , ig , I'⋆
-  = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆ , step-beq₀ eq₁ ig
+  = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , instructionsequence-subtype (globals-valid-type G⋆) I'⋆ Γ≤Γ' , step-beq₀ eq₁ ig
 step-progress' {I = beq ♯r v ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-beq eq v⋆ Γ≤Γ') I⋆)
     | lookup⋆ | suc n , eq₁
   = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , I⋆ , step-beq₁ eq₁ (λ ())
 step-progress' I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-jmp v⋆ Γ≤Γ')
   with instantiation-progress G⋆ H⋆ (eval-reduction (globals-valid-type G⋆) regs⋆ v⋆)
 ... | I' , ig , I'⋆
-  = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆ , step-jmp ig
+  = _ , _ , _ , _ , _ , H⋆ , of-register sp⋆ regs⋆ , instructionsequence-subtype (globals-valid-type G⋆) I'⋆ Γ≤Γ' , step-jmp ig
 step-progress' I≢halt G⋆ H⋆ R⋆ of-halt
   with I≢halt refl
 ... | ()

@@ -5,11 +5,14 @@ open import Judgments
 open import Lemmas.Substitution
 open import Lemmas.Types
 
-import Data.Nat as N
-import Data.Nat.Properties as NP
-
--- The purpose of this file is
--- to include instances of this record.
+-- The purpose of this file is to include proofs that:
+-- * Substituting or weakening outside the used context does not change the value
+-- * Subtyping and validity are preserved by weakening
+-- * Subtyping and validity are preserved by substitution,
+--     and if the substitution is valid in the context, then
+--     the substitution is always possible.
+-- * This implies that we can freely add additional assumptions
+--     without changing the values.
 record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
                                           {{T⁺ : TypeLike⁺ A {{T}}}} : Set where
   constructor typeSubstitution
@@ -41,7 +44,7 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
     ∀ Δ₁ Δ₂ Δ₃ {v : A} →
       Δ₁ ++ Δ₃ ⊢ v Valid →
       Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) v Valid
-  valid-weaken Δ₁ Δ₂ Δ₃ v⋆ = proj₁ (≤-valid (subtype-weaken Δ₁ Δ₂ Δ₃ (≤-refl v⋆)))
+  valid-weaken Δ₁ Δ₂ Δ₃ v⋆ = ≤-valid₁ (subtype-weaken Δ₁ Δ₂ Δ₃ (≤-refl v⋆))
 
   valid-subst-exists :
     ∀ Δ₁ {Δ₂ a θ} →
@@ -54,7 +57,7 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
   valid-subst-exists Δ₁ θ⋆ v⋆
     with subtype-subst-exists Δ₁ θ⋆ (≤-refl v⋆)
   ... | v₁ , v₂ , sub-v₁ , sub-v₂ , v₁≤v₂
-    = _ , sub-v₁ , proj₁ (≤-valid v₁≤v₂)
+    = _ , sub-v₁ , ≤-valid₁ v₁≤v₂
 
   subtype-subst-exists-many :
     ∀ Δ₁ {Δ₂ Δ₃ θs} →
@@ -95,21 +98,14 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
     with weaken-outside-ctx 0 inc v⋆
   ... | eq rewrite +-comm (length Δ) 0 = eq
 
-  valid-subst-exists-many :
-    ∀ Δ₁ {Δ₂ Δ₃ θs} →
-      Δ₃ ⊢ θs of Δ₂ instantiations →
-      {v : A} →
-      Δ₁ ++ Δ₂ ++ Δ₃ ⊢ v Valid →
-      ∃ λ v' →
-        v ⟦ θs / length Δ₁ ⟧many≡ v' ×
-        Δ₁ ++ Δ₃ ⊢ v' Valid
-  valid-subst-exists-many Δ₁ [] v⋆ = _ , [] , v⋆
-  valid-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} {θ ∷ θs} (θ⋆ ∷ θs⋆) v⋆
-    with valid-subst-exists Δ₁ θ⋆ v⋆
-  ... | v' , sub-v , v'⋆
-    with valid-subst-exists-many Δ₁ θs⋆ v'⋆
-  ... | vₑ , subs-v , vₑ⋆
-    = _ , sub-v ∷ subs-v , vₑ⋆
+  valid-subst :
+    ∀ Δ₁ {Δ₂ a θ} →
+      Δ₂ ⊢ θ of a instantiation →
+      {v v' : A} →
+      Δ₁ ++ a ∷ Δ₂ ⊢ v Valid →
+      v ⟦ θ / length Δ₁ ⟧≡ v' →
+      Δ₁ ++ Δ₂ ⊢ v' Valid
+  valid-subst Δ₁ θ⋆ v⋆ sub-v = ≤-valid₁ (subtype-subst Δ₁ θ⋆ (≤-refl v⋆) sub-v sub-v)
 
   valid-subst-many :
       ∀ Δ₁ {Δ₂ Δ₃ θs} →
@@ -118,10 +114,9 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
         Δ₁ ++ Δ₂ ++ Δ₃ ⊢ v Valid →
         v ⟦ θs / length Δ₁ ⟧many≡ v' →
         Δ₁ ++ Δ₃ ⊢ v' Valid
-  valid-subst-many Δ₁ θs⋆ v⋆ subs-v
-    with valid-subst-exists-many Δ₁ θs⋆ v⋆
-  ... | v'' , subs-v' , v''⋆
-    rewrite subst-unique-many subs-v subs-v' = v''⋆
+  valid-subst-many Δ₁ [] v⋆ [] = v⋆
+  valid-subst-many Δ₁ (θ⋆ ∷ θs⋆) v⋆ (sub-v ∷ subs-v)
+    = valid-subst-many Δ₁ θs⋆ (valid-subst Δ₁ θ⋆ v⋆ sub-v) subs-v
 
   ≤-++ : ∀ {Δ Δ'} {v₁ v₂ : A} →
            Δ ⊢ v₁ ≤ v₂ →
@@ -130,12 +125,12 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
     with subtype-weaken Δ Δ' [] (subst (λ Δ → Δ ⊢ v₁ ≤ v₂) (sym (List-++-right-identity Δ)) v₁≤v₂)
   ... | v₁'≤v₂'
     rewrite List-++-right-identity Δ'
-          | weaken-outside-ctx-0 (length Δ') (proj₁ (≤-valid v₁≤v₂))
-          | weaken-outside-ctx-0 (length Δ') (proj₂ (≤-valid v₁≤v₂))
+          | weaken-outside-ctx-0 (length Δ') (≤-valid₁ v₁≤v₂)
+          | weaken-outside-ctx-0 (length Δ') (≤-valid₂ v₁≤v₂)
     = v₁'≤v₂'
 
   valid-++ : ∀ {Δ Δ'} {v : A} → Δ ⊢ v Valid → Δ ++ Δ' ⊢ v Valid
-  valid-++ v⋆ = proj₁ (≤-valid (≤-++ (≤-refl v⋆)))
+  valid-++ v⋆ = ≤-valid₁ (≤-++ (≤-refl v⋆))
 
 open TypeSubstitution {{...}} public
 
@@ -152,7 +147,7 @@ private
       with ↓-to-< l | length Δ + ι₁ ≤? ι₂
     ... | ι₂<len | no len+ι₁≰ι₂ = refl
     ... | ι₂<len | yes len+ι₁≤ι₂
-      with NP.1+n≰n (Nat-≤-trans ι₂<len (Nat-≤-trans (NP.m≤m+n (length Δ) ι₁) len+ι₁≤ι₂))
+      with 1+n≰n (Nat-≤-trans ι₂<len (Nat-≤-trans (m≤m+n (length Δ) ι₁) len+ι₁≤ι₂))
     ... | ()
     τ-weaken-outside-ctx ι inc valid-int = refl
     τ-weaken-outside-ctx ι inc valid-ns = refl
@@ -175,7 +170,7 @@ private
       with ↓-to-< l | length Δ + ι₁ ≤? ι₂
     ... | ι₂<len | no len+ι₁≰ι₂ = refl
     ... | ι₂<len | yes len+ι₁≤ι₂
-      with NP.1+n≰n (Nat-≤-trans ι₂<len (Nat-≤-trans (NP.m≤m+n (length Δ) ι₁) len+ι₁≤ι₂))
+      with 1+n≰n (Nat-≤-trans ι₂<len (Nat-≤-trans (m≤m+n (length Δ) ι₁) len+ι₁≤ι₂))
     ... | ()
     σ-weaken-outside-ctx ι inc [] = refl
     σ-weaken-outside-ctx ι inc (τ⋆ ∷ σ⋆) = cong₂ _∷_ (τ-weaken-outside-ctx ι inc τ⋆) (σ-weaken-outside-ctx ι inc σ⋆)
@@ -208,7 +203,7 @@ private
       1 + length Δ
     ≤⟨ s≤s ι≥len ⟩
       suc ι
-    ∎ where open N.≤-Reasoning
+    ∎ where open ≤-Reasoning
 
   mutual
     subst-outside-ctxᵗ : ∀ A {{_ : Substitution A}}
@@ -219,7 +214,7 @@ private
 
     τ-subst-outside-ctx : subst-outside-ctxᵗ Type
     τ-subst-outside-ctx {Δ} {ι = ι} (valid-α⁼ l) =
-      subst-α-< (Nat-≤-trans (↓-to-< l) (NP.m≤m+n (length Δ) ι))
+      subst-α-< (Nat-≤-trans (↓-to-< l) (m≤m+n (length Δ) ι))
     τ-subst-outside-ctx valid-int = subst-int
     τ-subst-outside-ctx valid-ns = subst-ns
     τ-subst-outside-ctx {Δ} {ι = ι} {∀[ Δ' ] Γ} (valid-∀ Γ⋆)
@@ -238,7 +233,7 @@ private
 
     σ-subst-outside-ctx : subst-outside-ctxᵗ StackType
     σ-subst-outside-ctx {Δ} {ι = ι} (valid-ρ⁼ l) =
-      subst-ρ-< (Nat-≤-trans (↓-to-< l) (NP.m≤m+n (length Δ) ι))
+      subst-ρ-< (Nat-≤-trans (↓-to-< l) (m≤m+n (length Δ) ι))
     σ-subst-outside-ctx [] = []
     σ-subst-outside-ctx (τ⋆ ∷ σ⋆) = τ-subst-outside-ctx τ⋆ ∷ σ-subst-outside-ctx σ⋆
 
@@ -263,7 +258,7 @@ private
     τ-subtype-weaken : subtype-weakenᵗ Type
     τ-subtype-weaken Δ₁ Δ₂ Δ₃ {α⁼ ι} (α⁼-≤ l)
       with (length Δ₁) ≤? ι
-    ... | no len≰ι = α⁼-≤ (↓-add-right (Δ₂ ++ Δ₃) (↓-remove-right Δ₁ (NP.≰⇒> len≰ι) l))
+    ... | no len≰ι = α⁼-≤ (↓-add-right (Δ₂ ++ Δ₃) (↓-remove-right Δ₁ (≰⇒> len≰ι) l))
     ... | yes len≤ι
       with ↓-add-left Δ₁ (↓-add-left Δ₂ (↓-remove-left Δ₁ len≤ι l))
     ... | l'
@@ -276,7 +271,7 @@ private
           length Δ₂ + length Δ₁ + (ι ∸ length Δ₁)
         ≡⟨ +-assoc (length Δ₂) (length Δ₁) (ι ∸ length Δ₁) ⟩
           length Δ₂ + (length Δ₁ + (ι ∸ length Δ₁))
-        ≡⟨ NP.m+n∸m≡n len≤ι ∥ (λ v → length Δ₂ + v) ⟩
+        ≡⟨ m+n∸m≡n len≤ι ∥ (λ v → length Δ₂ + v) ⟩
           length Δ₂ + ι
         ∎ where open Eq-Reasoning
     ... | eq rewrite eq = α⁼-≤ l'
@@ -292,7 +287,7 @@ private
 
     τ⁻-subtype-weaken : subtype-weakenᵗ InitType
     τ⁻-subtype-weaken Δ₁ Δ₂ Δ₃ (τ⁻-≤ τ⋆ φ₁≤φ₂)
-      = τ⁻-≤ (proj₁ (≤-valid (τ-subtype-weaken Δ₁ Δ₂ Δ₃ (≤-refl τ⋆)))) φ₁≤φ₂
+      = τ⁻-≤ (≤-valid₁ (τ-subtype-weaken Δ₁ Δ₂ Δ₃ (≤-refl τ⋆))) φ₁≤φ₂
 
     τs⁻-subtype-weaken : subtype-weakenᵗ (List InitType)
     τs⁻-subtype-weaken Δ₁ Δ₂ Δ₃ [] = []
@@ -301,7 +296,7 @@ private
     σ-subtype-weaken : subtype-weakenᵗ StackType
     σ-subtype-weaken Δ₁ Δ₂ Δ₃ {ρ⁼ ι} (ρ⁼-≤ l)
       with (length Δ₁) ≤? ι
-    ... | no len≰ι = ρ⁼-≤ (↓-add-right (Δ₂ ++ Δ₃) (↓-remove-right Δ₁ (NP.≰⇒> len≰ι) l))
+    ... | no len≰ι = ρ⁼-≤ (↓-add-right (Δ₂ ++ Δ₃) (↓-remove-right Δ₁ (≰⇒> len≰ι) l))
     ... | yes len≤ι
       with ↓-add-left Δ₁ (↓-add-left Δ₂ (↓-remove-left Δ₁ len≤ι l))
     ... | l'
@@ -314,7 +309,7 @@ private
           length Δ₂ + length Δ₁ + (ι ∸ length Δ₁)
         ≡⟨ +-assoc (length Δ₂) (length Δ₁) (ι ∸ length Δ₁) ⟩
           length Δ₂ + (length Δ₁ + (ι ∸ length Δ₁))
-        ≡⟨ NP.m+n∸m≡n len≤ι ∥ (λ v → length Δ₂ + v) ⟩
+        ≡⟨ m+n∸m≡n len≤ι ∥ (λ v → length Δ₂ + v) ⟩
           length Δ₂ + ι
         ∎ where open Eq-Reasoning
     ... | eq rewrite eq = ρ⁼-≤ l'
@@ -350,9 +345,9 @@ private
         | tri≈ _ refl _ = _ , _ , subst-α-≡ , subst-α-≡ , τ-subtype-weaken [] Δ₁ Δ₂ (≤-refl τ⋆)
     τ-subtype-subst-exists Δ₁ {Δ₂} (of-ρ σ⋆) {α⁼ .(length Δ₁)} (α⁼-≤ l)
         | tri≈ _ refl _
-      with ↓-remove-left Δ₁ (NP.n≤m+n 0 (length Δ₁)) l
+      with ↓-remove-left Δ₁ (n≤m+n 0 (length Δ₁)) l
     ... | l'
-      rewrite NP.n∸n≡0 (length Δ₁)
+      rewrite n∸n≡0 (length Δ₁)
       with l'
     ... | ()
     τ-subtype-subst-exists Δ₁ {Δ₂} {a} {τ} θ⋆ {α⁼ (suc ι)} (α⁼-≤ l)
@@ -361,7 +356,7 @@ private
       with ↓-add-left Δ₁ (↓-remove-left (Δ₁ ++ [ a ]) (≤-help Δ₁ a ι≥len) l)
     ... | l'
       rewrite eq-help Δ₁ a
-            | NP.m+n∸m≡n ι≥len
+            | m+n∸m≡n ι≥len
         = _ , _ , subst-α-> (s≤s ι≥len) , subst-α-> (s≤s ι≥len) , α⁼-≤ l'
     τ-subtype-subst-exists Δ₁ θ⋆ int-≤ = int , int , subst-int , subst-int , int-≤
     τ-subtype-subst-exists Δ₁ θ⋆ ns-≤ = ns , ns , subst-ns , subst-ns , ns-≤
@@ -382,7 +377,7 @@ private
       with τ-subtype-subst-exists Δ₁ θ⋆ (≤-refl τ⋆)
     ... | τ₁ , τ₂ , sub-τ₁ , sub-τ₂ , τ₁≤τ₂
       rewrite subst-unique sub-τ₁ sub-τ₂
-      = _ , _ , subst-τ⁻ sub-τ₂ , subst-τ⁻ sub-τ₂ , τ⁻-≤ (proj₁ (≤-valid τ₁≤τ₂)) φ₁≤φ₂
+      = _ , _ , subst-τ⁻ sub-τ₂ , subst-τ⁻ sub-τ₂ , τ⁻-≤ (≤-valid₁ τ₁≤τ₂) φ₁≤φ₂
 
     τs⁻-subtype-subst-exists : subtype-subst-existsᵗ (List InitType)
     τs⁻-subtype-subst-exists Δ₁ θ⋆ [] = [] , [] , [] , [] , []
@@ -401,9 +396,9 @@ private
         | tri≈ _ refl _ = _ , _ , subst-ρ-≡ , subst-ρ-≡ , σ-subtype-weaken [] Δ₁ Δ₂ (≤-refl σ⋆)
     σ-subtype-subst-exists Δ₁ {Δ₂} (of-α τ⋆) {ρ⁼ .(length Δ₁)} (ρ⁼-≤ l)
         | tri≈ _ refl _
-      with ↓-remove-left Δ₁ (NP.n≤m+n 0 (length Δ₁)) l
+      with ↓-remove-left Δ₁ (n≤m+n 0 (length Δ₁)) l
     ... | l'
-      rewrite NP.n∸n≡0 (length Δ₁)
+      rewrite n∸n≡0 (length Δ₁)
       with l'
     ... | ()
     σ-subtype-subst-exists Δ₁ {Δ₂} {a} {σ} θ⋆ {ρ⁼ (suc ι)} (ρ⁼-≤ l)
@@ -412,7 +407,7 @@ private
       with ↓-add-left Δ₁ (↓-remove-left (Δ₁ ++ [ a ]) (≤-help Δ₁ a ι≥len) l)
     ... | l'
       rewrite eq-help Δ₁ a
-            | NP.m+n∸m≡n ι≥len
+            | m+n∸m≡n ι≥len
         = _ , _ , subst-ρ-> (s≤s ι≥len) , subst-ρ-> (s≤s ι≥len) , ρ⁼-≤ l'
     σ-subtype-subst-exists Δ₁ θ⋆ [] = [] , [] , [] , [] , []
     σ-subtype-subst-exists Δ₁ θ⋆ (τ₁≤τ₂ ∷ σ₁≤σ₂)

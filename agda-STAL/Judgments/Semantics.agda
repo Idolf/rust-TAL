@@ -3,6 +3,9 @@ module Judgments.Semantics where
 open import Util
 open import Judgments.Grammar
 
+-- The purpose of this file is to rename the
+-- values in SimpleSemantics and HighSemantics
+
 module SimpleSemantics where
   open import Judgments.SimpleSemantics
   open SimpleGrammar
