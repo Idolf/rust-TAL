@@ -12,7 +12,7 @@ private
   wval-++ {ψ₂⁺ = ψ₂⁺} (of-heapval l lookup≤τ) = of-heapval (↓-add-right ψ₂⁺ l) lookup≤τ
   wval-++ of-int = of-int
   wval-++ of-ns = of-ns
-  wval-++ (of-Λ w⋆ is⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-++ w⋆) is⋆ subs-Γ Γ₃≤Γ₂
+  wval-++ (of-Λ w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-++ w⋆) θs⋆ subs-Γ Γ₃≤Γ₂
 
   wval⁰-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ w τ⁻} →
                ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰ →

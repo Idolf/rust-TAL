@@ -7,7 +7,6 @@ open import Lemmas.Types
 
 import Data.Nat as N
 import Data.Nat.Properties as NP
-open import Data.List.Properties using (map-id)
 
 -- The purpose of this file is
 -- to include instances of this record.
@@ -20,22 +19,22 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
         Δ ⊢ v Valid →
         weaken (length Δ + ι) inc v ≡ v
     subst-outside-ctx :
-      ∀ {Δ i ι} {v : A} →
+      ∀ {Δ θ ι} {v : A} →
         Δ ⊢ v Valid →
-        v ⟦ i / length Δ + ι ⟧≡ v
+        v ⟦ θ / length Δ + ι ⟧≡ v
     subtype-weaken :
       ∀ Δ₁ Δ₂ Δ₃ →
         {v₁ v₂ : A} →
         Δ₁ ++ Δ₃ ⊢ v₁ ≤ v₂ →
         Δ₁ ++ Δ₂ ++ Δ₃ ⊢ weaken (length Δ₁) (length Δ₂) v₁ ≤ weaken (length Δ₁) (length Δ₂) v₂
     subtype-subst-exists :
-      ∀ Δ₁ {Δ₂ a i} →
-        Δ₂ ⊢ i of a instantiation →
+      ∀ Δ₁ {Δ₂ a θ} →
+        Δ₂ ⊢ θ of a instantiation →
         {v₁ v₂ : A} →
         Δ₁ ++ a ∷ Δ₂ ⊢ v₁ ≤ v₂ →
         ∃₂ λ v₁' v₂' →
-          v₁ ⟦ i / length Δ₁ ⟧≡ v₁' ×
-          v₂ ⟦ i / length Δ₁ ⟧≡ v₂' ×
+          v₁ ⟦ θ / length Δ₁ ⟧≡ v₁' ×
+          v₂ ⟦ θ / length Δ₁ ⟧≡ v₂' ×
           Δ₁ ++ Δ₂ ⊢ v₁' ≤ v₂'
 
   valid-weaken :
@@ -45,45 +44,45 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
   valid-weaken Δ₁ Δ₂ Δ₃ v⋆ = proj₁ (≤-valid (subtype-weaken Δ₁ Δ₂ Δ₃ (≤-refl v⋆)))
 
   valid-subst-exists :
-    ∀ Δ₁ {Δ₂ a i} →
-      Δ₂ ⊢ i of a instantiation →
+    ∀ Δ₁ {Δ₂ a θ} →
+      Δ₂ ⊢ θ of a instantiation →
       {v : A} →
       Δ₁ ++ a ∷ Δ₂ ⊢ v Valid →
       ∃ λ v' →
-        v ⟦ i / length Δ₁ ⟧≡ v' ×
+        v ⟦ θ / length Δ₁ ⟧≡ v' ×
         Δ₁ ++ Δ₂ ⊢ v' Valid
-  valid-subst-exists Δ₁ i⋆ v⋆
-    with subtype-subst-exists Δ₁ i⋆ (≤-refl v⋆)
+  valid-subst-exists Δ₁ θ⋆ v⋆
+    with subtype-subst-exists Δ₁ θ⋆ (≤-refl v⋆)
   ... | v₁ , v₂ , sub-v₁ , sub-v₂ , v₁≤v₂
     = _ , sub-v₁ , proj₁ (≤-valid v₁≤v₂)
 
   subtype-subst-exists-many :
-    ∀ Δ₁ {Δ₂ Δ₃ is} →
-      Δ₃ ⊢ is of Δ₂ instantiations →
+    ∀ Δ₁ {Δ₂ Δ₃ θs} →
+      Δ₃ ⊢ θs of Δ₂ instantiations →
       {v₁ v₂ : A} →
       Δ₁ ++ Δ₂ ++ Δ₃ ⊢ v₁ ≤ v₂ →
       ∃₂ λ v₁' v₂' →
-        v₁ ⟦ is / length Δ₁ ⟧many≡ v₁' ×
-        v₂ ⟦ is / length Δ₁ ⟧many≡ v₂' ×
+        v₁ ⟦ θs / length Δ₁ ⟧many≡ v₁' ×
+        v₂ ⟦ θs / length Δ₁ ⟧many≡ v₂' ×
         Δ₁ ++ Δ₃ ⊢ v₁' ≤ v₂'
   subtype-subst-exists-many Δ₁ [] v₁≤v₂ = _ , _ , [] , [] , v₁≤v₂
-  subtype-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} (i⋆ ∷ is⋆) v₁≤v₂
-    with subtype-subst-exists Δ₁ i⋆ v₁≤v₂
+  subtype-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} (θ⋆ ∷ θs⋆) v₁≤v₂
+    with subtype-subst-exists Δ₁ θ⋆ v₁≤v₂
   ... | v₁' , v₂' , sub-v₁ , sub-v₂ , v₁'≤v₂'
-    with subtype-subst-exists-many Δ₁ is⋆ v₁'≤v₂'
+    with subtype-subst-exists-many Δ₁ θs⋆ v₁'≤v₂'
   ... | v₁ₑ , v₂ₑ , subs-v₁ , subs-v₂ , v₁ₑ≤v₂ₑ
     = _ , _ , sub-v₁ ∷ subs-v₁ , sub-v₂ ∷ subs-v₂ , v₁ₑ≤v₂ₑ
 
   subtype-subst :
-    ∀ Δ₁ {Δ₂ a i} →
-      Δ₂ ⊢ i of a instantiation →
+    ∀ Δ₁ {Δ₂ a θ} →
+      Δ₂ ⊢ θ of a instantiation →
       {v₁ v₁' v₂ v₂' : A} →
       Δ₁ ++ a ∷ Δ₂ ⊢ v₁ ≤ v₂ →
-      v₁ ⟦ i / length Δ₁ ⟧≡ v₁' →
-      v₂ ⟦ i / length Δ₁ ⟧≡ v₂' →
+      v₁ ⟦ θ / length Δ₁ ⟧≡ v₁' →
+      v₂ ⟦ θ / length Δ₁ ⟧≡ v₂' →
       Δ₁ ++ Δ₂ ⊢ v₁' ≤ v₂'
-  subtype-subst Δ₁ i⋆ v₁≤v₂ sub-v₁ sub-v₂
-    with subtype-subst-exists Δ₁ i⋆ v₁≤v₂
+  subtype-subst Δ₁ θ⋆ v₁≤v₂ sub-v₁ sub-v₂
+    with subtype-subst-exists Δ₁ θ⋆ v₁≤v₂
   ... | v₁'' , v₂'' , sub-v₁' , sub-v₂' , v₁''≤v₂''
     rewrite subst-unique sub-v₁ sub-v₁'
           | subst-unique sub-v₂ sub-v₂' = v₁''≤v₂''
@@ -97,30 +96,30 @@ record TypeSubstitution (A : Set) {S} {T} {{S⁺ : Substitution⁺ A {{S}}}}
   ... | eq rewrite +-comm (length Δ) 0 = eq
 
   valid-subst-exists-many :
-    ∀ Δ₁ {Δ₂ Δ₃ is} →
-      Δ₃ ⊢ is of Δ₂ instantiations →
+    ∀ Δ₁ {Δ₂ Δ₃ θs} →
+      Δ₃ ⊢ θs of Δ₂ instantiations →
       {v : A} →
       Δ₁ ++ Δ₂ ++ Δ₃ ⊢ v Valid →
       ∃ λ v' →
-        v ⟦ is / length Δ₁ ⟧many≡ v' ×
+        v ⟦ θs / length Δ₁ ⟧many≡ v' ×
         Δ₁ ++ Δ₃ ⊢ v' Valid
   valid-subst-exists-many Δ₁ [] v⋆ = _ , [] , v⋆
-  valid-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} {i ∷ is}(i⋆ ∷ is⋆) v⋆
-    with valid-subst-exists Δ₁ i⋆ v⋆
+  valid-subst-exists-many Δ₁ {a ∷ Δ₂} {Δ₃} {θ ∷ θs} (θ⋆ ∷ θs⋆) v⋆
+    with valid-subst-exists Δ₁ θ⋆ v⋆
   ... | v' , sub-v , v'⋆
-    with valid-subst-exists-many Δ₁ is⋆ v'⋆
+    with valid-subst-exists-many Δ₁ θs⋆ v'⋆
   ... | vₑ , subs-v , vₑ⋆
     = _ , sub-v ∷ subs-v , vₑ⋆
 
   valid-subst-many :
-      ∀ Δ₁ {Δ₂ Δ₃ is} →
-        Δ₃ ⊢ is of Δ₂ instantiations →
+      ∀ Δ₁ {Δ₂ Δ₃ θs} →
+        Δ₃ ⊢ θs of Δ₂ instantiations →
         {v v' : A} →
         Δ₁ ++ Δ₂ ++ Δ₃ ⊢ v Valid →
-        v ⟦ is / length Δ₁ ⟧many≡ v' →
+        v ⟦ θs / length Δ₁ ⟧many≡ v' →
         Δ₁ ++ Δ₃ ⊢ v' Valid
-  valid-subst-many Δ₁ is⋆ v⋆ subs-v
-    with valid-subst-exists-many Δ₁ is⋆ v⋆
+  valid-subst-many Δ₁ θs⋆ v⋆ subs-v
+    with valid-subst-exists-many Δ₁ θs⋆ v⋆
   ... | v'' , subs-v' , v''⋆
     rewrite subst-unique-many subs-v subs-v' = v''⋆
 
@@ -214,16 +213,16 @@ private
   mutual
     subst-outside-ctxᵗ : ∀ A {{_ : Substitution A}}
                        {{_ : TypeLike A}} → Set
-    subst-outside-ctxᵗ A = ∀ {Δ i ι} {v : A} →
+    subst-outside-ctxᵗ A = ∀ {Δ θ ι} {v : A} →
                        Δ ⊢ v Valid →
-                       v ⟦ i / length Δ + ι ⟧≡ v
+                       v ⟦ θ / length Δ + ι ⟧≡ v
 
     τ-subst-outside-ctx : subst-outside-ctxᵗ Type
     τ-subst-outside-ctx {Δ} {ι = ι} (valid-α⁼ l) =
       subst-α-< (Nat-≤-trans (↓-to-< l) (NP.m≤m+n (length Δ) ι))
     τ-subst-outside-ctx valid-int = subst-int
     τ-subst-outside-ctx valid-ns = subst-ns
-    τ-subst-outside-ctx {Δ} {i} {ι} {∀[ Δ' ] Γ} (valid-∀ Γ⋆)
+    τ-subst-outside-ctx {Δ} {ι = ι} {∀[ Δ' ] Γ} (valid-∀ Γ⋆)
       with Γ-subst-outside-ctx {Δ' ++ Δ} {ι = ι} Γ⋆
     ... | sub-Γ
       rewrite List-length-++ Δ' {Δ}
@@ -333,18 +332,18 @@ private
     ∀ A {{_ : Substitution A}}
         {{_ : TypeLike A}} → Set
   subtype-subst-existsᵗ A =
-      ∀ Δ₁ {Δ₂ a i} →
-        Δ₂ ⊢ i of a instantiation →
+      ∀ Δ₁ {Δ₂ a θ} →
+        Δ₂ ⊢ θ of a instantiation →
         {v₁ v₂ : A} →
         Δ₁ ++ a ∷ Δ₂ ⊢ v₁ ≤ v₂ →
         ∃₂ λ v₁' v₂' →
-          v₁ ⟦ i / length Δ₁ ⟧≡ v₁' ×
-          v₂ ⟦ i / length Δ₁ ⟧≡ v₂' ×
+          v₁ ⟦ θ / length Δ₁ ⟧≡ v₁' ×
+          v₂ ⟦ θ / length Δ₁ ⟧≡ v₂' ×
           Δ₁ ++ Δ₂ ⊢ v₁' ≤ v₂'
 
   mutual
     τ-subtype-subst-exists : subtype-subst-existsᵗ Type
-    τ-subtype-subst-exists Δ₁ {Δ₂} i⋆ {α⁼ ι} (α⁼-≤ l)
+    τ-subtype-subst-exists Δ₁ {Δ₂} θ⋆ {α⁼ ι} (α⁼-≤ l)
       with Nat-cmp ι (length Δ₁)
     ... | tri< ι<len _ _ = _ , _ , subst-α-< ι<len , subst-α-< ι<len , α⁼-≤ (↓-add-right Δ₂ (↓-remove-right Δ₁ ι<len l))
     τ-subtype-subst-exists Δ₁ {Δ₂} (of-α τ⋆) {α⁼ .(length Δ₁)} (α⁼-≤ l)
@@ -356,7 +355,7 @@ private
       rewrite NP.n∸n≡0 (length Δ₁)
       with l'
     ... | ()
-    τ-subtype-subst-exists Δ₁ {Δ₂} {a} {τ} i⋆ {α⁼ (suc ι)} (α⁼-≤ l)
+    τ-subtype-subst-exists Δ₁ {Δ₂} {a} {τ} θ⋆ {α⁼ (suc ι)} (α⁼-≤ l)
         | tri> _ _ (s≤s ι≥len)
       rewrite sym (List-++-assoc Δ₁ [ a ] Δ₂)
       with ↓-add-left Δ₁ (↓-remove-left (Δ₁ ++ [ a ]) (≤-help Δ₁ a ι≥len) l)
@@ -364,38 +363,38 @@ private
       rewrite eq-help Δ₁ a
             | NP.m+n∸m≡n ι≥len
         = _ , _ , subst-α-> (s≤s ι≥len) , subst-α-> (s≤s ι≥len) , α⁼-≤ l'
-    τ-subtype-subst-exists Δ₁ i⋆ int-≤ = int , int , subst-int , subst-int , int-≤
-    τ-subtype-subst-exists Δ₁ i⋆ ns-≤ = ns , ns , subst-ns , subst-ns , ns-≤
-    τ-subtype-subst-exists Δ₁ {Δ₂} {a} i⋆ {∀[ Δ ] Γ} (∀-≤ Γ₂≤Γ₁)
+    τ-subtype-subst-exists Δ₁ θ⋆ int-≤ = int , int , subst-int , subst-int , int-≤
+    τ-subtype-subst-exists Δ₁ θ⋆ ns-≤ = ns , ns , subst-ns , subst-ns , ns-≤
+    τ-subtype-subst-exists Δ₁ {Δ₂} {a} θ⋆ {∀[ Δ ] Γ} (∀-≤ Γ₂≤Γ₁)
       rewrite sym (List-++-assoc Δ Δ₁ (a ∷ Δ₂))
-      with Γ-subtype-subst-exists (Δ ++ Δ₁) i⋆ Γ₂≤Γ₁
+      with Γ-subtype-subst-exists (Δ ++ Δ₁) θ⋆ Γ₂≤Γ₁
     ... | Γ₂' , Γ₁' , sub-Γ₂ , sub-Γ₁ , Γ₂'≤Γ₁'
       rewrite List-length-++ Δ {Δ₁}
             | List-++-assoc Δ Δ₁ Δ₂ =
         _ , _ , subst-∀ sub-Γ₁ , subst-∀ sub-Γ₂ , ∀-≤ Γ₂'≤Γ₁'
-    τ-subtype-subst-exists Δ₁ i⋆ (tuple-≤ τs⁻₁≤τs⁻₂)
-      with τs⁻-subtype-subst-exists Δ₁ i⋆ τs⁻₁≤τs⁻₂
+    τ-subtype-subst-exists Δ₁ θ⋆ (tuple-≤ τs⁻₁≤τs⁻₂)
+      with τs⁻-subtype-subst-exists Δ₁ θ⋆ τs⁻₁≤τs⁻₂
     ... | τs⁻₁' , τs⁻₂' , sub-τs⁻₁ , sub-τs⁻₂ , τs⁻₁'≤τs⁻₂'
       = _ , _ , subst-tuple sub-τs⁻₁ , subst-tuple sub-τs⁻₂ , tuple-≤ τs⁻₁'≤τs⁻₂'
 
     τ⁻-subtype-subst-exists : subtype-subst-existsᵗ InitType
-    τ⁻-subtype-subst-exists Δ₁ i⋆ (τ⁻-≤ τ⋆ φ₁≤φ₂)
-      with τ-subtype-subst-exists Δ₁ i⋆ (≤-refl τ⋆)
+    τ⁻-subtype-subst-exists Δ₁ θ⋆ (τ⁻-≤ τ⋆ φ₁≤φ₂)
+      with τ-subtype-subst-exists Δ₁ θ⋆ (≤-refl τ⋆)
     ... | τ₁ , τ₂ , sub-τ₁ , sub-τ₂ , τ₁≤τ₂
       rewrite subst-unique sub-τ₁ sub-τ₂
       = _ , _ , subst-τ⁻ sub-τ₂ , subst-τ⁻ sub-τ₂ , τ⁻-≤ (proj₁ (≤-valid τ₁≤τ₂)) φ₁≤φ₂
 
     τs⁻-subtype-subst-exists : subtype-subst-existsᵗ (List InitType)
-    τs⁻-subtype-subst-exists Δ₁ i⋆ [] = [] , [] , [] , [] , []
-    τs⁻-subtype-subst-exists Δ₁ i⋆ (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂)
-      with τ⁻-subtype-subst-exists Δ₁ i⋆ τ⁻₁≤τ⁻₂
+    τs⁻-subtype-subst-exists Δ₁ θ⋆ [] = [] , [] , [] , [] , []
+    τs⁻-subtype-subst-exists Δ₁ θ⋆ (τ⁻₁≤τ⁻₂ ∷ τs⁻₁≤τs⁻₂)
+      with τ⁻-subtype-subst-exists Δ₁ θ⋆ τ⁻₁≤τ⁻₂
     ... | τ⁻₁' , τ⁻₂' , sub-τ⁻₁ , sub-τ⁻₂ , τ⁻₁'≤τ⁻₂'
-      with τs⁻-subtype-subst-exists Δ₁ i⋆ τs⁻₁≤τs⁻₂
+      with τs⁻-subtype-subst-exists Δ₁ θ⋆ τs⁻₁≤τs⁻₂
     ... | τs⁻₁' , τs⁻₂' , sub-τs⁻₁ , sub-τs⁻₂ , τs⁻₁'≤τs⁻₂'
       = _ , _ , sub-τ⁻₁ ∷ sub-τs⁻₁ , sub-τ⁻₂ ∷ sub-τs⁻₂ , τ⁻₁'≤τ⁻₂' ∷ τs⁻₁'≤τs⁻₂'
 
     σ-subtype-subst-exists : subtype-subst-existsᵗ StackType
-    σ-subtype-subst-exists Δ₁ {Δ₂} i⋆ {ρ⁼ ι} (ρ⁼-≤ l)
+    σ-subtype-subst-exists Δ₁ {Δ₂} θ⋆ {ρ⁼ ι} (ρ⁼-≤ l)
       with Nat-cmp ι (length Δ₁)
     ... | tri< ι<len _ _ = _ , _ , subst-ρ-< ι<len , subst-ρ-< ι<len , ρ⁼-≤ (↓-add-right Δ₂ (↓-remove-right Δ₁ ι<len l))
     σ-subtype-subst-exists Δ₁ {Δ₂} (of-ρ σ⋆) {ρ⁼ .(length Δ₁)} (ρ⁼-≤ l)
@@ -407,7 +406,7 @@ private
       rewrite NP.n∸n≡0 (length Δ₁)
       with l'
     ... | ()
-    σ-subtype-subst-exists Δ₁ {Δ₂} {a} {σ} i⋆ {ρ⁼ (suc ι)} (ρ⁼-≤ l)
+    σ-subtype-subst-exists Δ₁ {Δ₂} {a} {σ} θ⋆ {ρ⁼ (suc ι)} (ρ⁼-≤ l)
         | tri> _ _ (s≤s ι≥len)
       rewrite sym (List-++-assoc Δ₁ [ a ] Δ₂)
       with ↓-add-left Δ₁ (↓-remove-left (Δ₁ ++ [ a ]) (≤-help Δ₁ a ι≥len) l)
@@ -415,19 +414,19 @@ private
       rewrite eq-help Δ₁ a
             | NP.m+n∸m≡n ι≥len
         = _ , _ , subst-ρ-> (s≤s ι≥len) , subst-ρ-> (s≤s ι≥len) , ρ⁼-≤ l'
-    σ-subtype-subst-exists Δ₁ i⋆ [] = [] , [] , [] , [] , []
-    σ-subtype-subst-exists Δ₁ i⋆ (τ₁≤τ₂ ∷ σ₁≤σ₂)
-      with τ-subtype-subst-exists Δ₁ i⋆ τ₁≤τ₂
+    σ-subtype-subst-exists Δ₁ θ⋆ [] = [] , [] , [] , [] , []
+    σ-subtype-subst-exists Δ₁ θ⋆ (τ₁≤τ₂ ∷ σ₁≤σ₂)
+      with τ-subtype-subst-exists Δ₁ θ⋆ τ₁≤τ₂
     ... | τ₁' , τ₂' , sub-τ₁ , sub-τ₂ , τ₁'≤τ₂'
-      with σ-subtype-subst-exists Δ₁ i⋆ σ₁≤σ₂
+      with σ-subtype-subst-exists Δ₁ θ⋆ σ₁≤σ₂
     ... | σ₁' , σ₂' , sub-σ₁ , sub-σ₂ , σ₁'≤σ₂'
       = _ , _ , sub-τ₁ ∷ sub-σ₁ , sub-τ₂ ∷ sub-σ₂ , τ₁'≤τ₂' ∷ σ₁'≤σ₂'
 
     Γ-subtype-subst-exists : subtype-subst-existsᵗ RegisterAssignment
-    Γ-subtype-subst-exists Δ₁ i⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
-      with σ-subtype-subst-exists Δ₁ i⋆ sp₁≤sp₂
+    Γ-subtype-subst-exists Δ₁ θ⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
+      with σ-subtype-subst-exists Δ₁ θ⋆ sp₁≤sp₂
     ... | sp₁' , sp₂' , sub-sp₁ , sub-sp₂ , sp₁'≤sp₂'
-      with regs-subtype-subst-exists Δ₁ i⋆ regs₁≤regs₂
+      with regs-subtype-subst-exists Δ₁ θ⋆ regs₁≤regs₂
     ... | regs₁' , regs₂' , sub-regs₁ , sub-regs₂ , regs₁'≤regs₂'
       = _ , _ ,
         subst-registerₐ sub-sp₁ sub-regs₁ ,
@@ -435,11 +434,11 @@ private
         Γ-≤ sp₁'≤sp₂' regs₁'≤regs₂'
 
     regs-subtype-subst-exists : ∀ {n} → subtype-subst-existsᵗ (Vec Type n)
-    regs-subtype-subst-exists Δ₁ i⋆ [] = [] , [] , [] , [] , []
-    regs-subtype-subst-exists Δ₁ i⋆ (τ₁≤τ₂ ∷ τs₁≤τs₂)
-      with τ-subtype-subst-exists Δ₁ i⋆ τ₁≤τ₂
+    regs-subtype-subst-exists Δ₁ θ⋆ [] = [] , [] , [] , [] , []
+    regs-subtype-subst-exists Δ₁ θ⋆ (τ₁≤τ₂ ∷ τs₁≤τs₂)
+      with τ-subtype-subst-exists Δ₁ θ⋆ τ₁≤τ₂
     ... | τ₁' , τ₂' , sub-τ₁ , sub-τ₂ , τ₁'≤τ₂'
-      with regs-subtype-subst-exists Δ₁ i⋆ τs₁≤τs₂
+      with regs-subtype-subst-exists Δ₁ θ⋆ τs₁≤τs₂
     ... | τs₁' , τs₂' , sub-τs₁ , sub-τs₂ , τs₁'≤τs₂'
       = _ , _ , sub-τ₁ ∷ sub-τs₁ , sub-τ₂ ∷ sub-τs₂ , τ₁'≤τ₂' ∷ τs₁'≤τs₂'
 
@@ -450,7 +449,7 @@ List-TypeSubstitution A {S} {T} {S⁺} {T⁺} {{TS}} = typeSubstitution
     (λ ι inc → All-≡-left (weaken _ inc) ∘ All-map (weaken-outside-ctx ι inc))
     (All→AllZip ∘ All-map subst-outside-ctx)
     (λ Δ₁ Δ₂ Δ₃ → AllZip-map' _ _ (subtype-weaken Δ₁ Δ₂ Δ₃))
-    (λ Δ₁ i⋆ → AllZip-∃₂→ ∘ AllZip-map (subtype-subst-exists Δ₁ i⋆))
+    (λ Δ₁ θ⋆ → AllZip-∃₂→ ∘ AllZip-map (subtype-subst-exists Δ₁ θ⋆))
 
 instance
   Type-TypeSubstitution : TypeSubstitution Type

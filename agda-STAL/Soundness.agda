@@ -60,7 +60,7 @@ private
     with allzip-lookup₂ l gs⋆
   ... | g , l' , ()
   vval-int-helper {v = int n} G⋆ H⋆ regs⋆ v⋆ = n , refl
-  vval-int-helper {v = Λ Δ ∙ v ⟦ is ⟧} G⋆ H⋆ regs⋆ ()
+  vval-int-helper {v = Λ Δ ∙ v ⟦ θs ⟧} G⋆ H⋆ regs⋆ ()
 
   replicate-helper : ∀ {ψ₁ ψ₂ sp σ} n →
                        ψ₁ , ψ₂ ⊢ sp of σ stack →
@@ -128,7 +128,7 @@ eval-reduction : ∀ {ψ₁ ψ₂ regs σ τs} →
 eval-reduction ψ₁⋆ regs⋆ {v = reg ♯r} of-reg = allzipᵥ-lookup ♯r regs⋆
 eval-reduction ψ₁⋆ regs⋆ (of-globval l) = of-globval l (≤-refl (All-lookup l ψ₁⋆))
 eval-reduction ψ₁⋆ regs⋆ of-int = of-int
-eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} {Γ₁ = Γ₁} v⋆ is⋆ subs-Γ)
+eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ θs ⟧} {∀[ .Δ₂ ] Γ₃} (of-Λ {Δ₁ = Δ₁} {Γ₁ = Γ₁} v⋆ θs⋆ subs-Γ)
   with eval-reduction ψ₁⋆ regs⋆ v⋆
 ... | w⋆
   with wval-valid-type w⋆
@@ -138,7 +138,7 @@ eval-reduction ψ₁⋆ regs⋆ {v = Λ Δ₂ ∙ w ⟦ is ⟧} {∀[ .Δ₂ ] �
   rewrite List-++-right-identity Δ₁
         | List-++-right-identity Δ₂
         | weaken-outside-ctx-0 (length Δ₂) Γ₁⋆
-        = of-Λ w⋆ is⋆ subs-Γ (≤-refl (valid-subst-many [] is⋆ Γ₁'⋆ subs-Γ))
+        = of-Λ w⋆ θs⋆ subs-Γ (≤-refl (valid-subst-many [] θs⋆ Γ₁'⋆ subs-Γ))
 
 instantiation-progress : ∀ {G ψ₁ H ψ₂ w Δ Γ} →
                              ⊢ G of ψ₁ globals →
@@ -158,10 +158,10 @@ instantiation-progress G⋆ (of-heap hs⋆) (of-heapval l τ≤τ')
 ... | tuple ws , l' , of-tuple ws⋆
   with τ≤τ'
 ... | ()
-instantiation-progress G⋆ H⋆ (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ is⋆ subs-Γ Γ≤Γ')
+instantiation-progress G⋆ H⋆ (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ θs⋆ subs-Γ Γ≤Γ')
   with instantiation-progress G⋆ H⋆ w⋆
 ... | I , ig , I⋆
-  with instructionsequence-subst-many [] Δ₁ Δ₂ (globals-valid-type G⋆) is⋆ subs-Γ (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
+  with instructionsequence-subst-many [] Δ₁ Δ₂ (globals-valid-type G⋆) θs⋆ subs-Γ (instructionsequence-weaken-right Δ₁ Δ₂ I⋆)
 ... | I' , subs-I , I'⋆
   = I' , instantiate-Λ ig subs-I , instructionsequence-subtype (globals-valid-type G⋆) Γ≤Γ' I'⋆
 step-progress' : ∀ {G ψ₁ H ψ₂ R Γ I} →

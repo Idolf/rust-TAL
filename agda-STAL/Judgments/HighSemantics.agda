@@ -12,7 +12,7 @@ evalSmallValueₕ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₕ regs (reg ♯r) = lookup ♯r regs
 evalSmallValueₕ regs (globval lab) = globval lab
 evalSmallValueₕ regs (int i) = int i
-evalSmallValueₕ regs Λ Δ ∙ v ⟦ is ⟧ = Λ Δ ∙ evalSmallValueₕ regs v ⟦ is ⟧
+evalSmallValueₕ regs Λ Δ ∙ v ⟦ θs ⟧ = Λ Δ ∙ evalSmallValueₕ regs v ⟦ θs ⟧
 
 data InstantiateGlobalₕ (G : Globals) : WordValue → InstructionSequence → Set where
   instantiate-globval :
@@ -22,11 +22,11 @@ data InstantiateGlobalₕ (G : Globals) : WordValue → InstructionSequence → 
     InstantiateGlobalₕ G (globval lab) I
 
   instantiate-Λ :
-               ∀ {w I I' Δ is} →
+               ∀ {w I I' Δ θs} →
             InstantiateGlobalₕ G w I →
-              I ⟦ is / 0 ⟧many≡ I' →
+              I ⟦ θs / 0 ⟧many≡ I' →
     ---------------------------------------
-    InstantiateGlobalₕ G (Λ Δ ∙ w ⟦ is ⟧) I'
+    InstantiateGlobalₕ G (Λ Δ ∙ w ⟦ θs ⟧) I'
 
 infix 3 _⊢ₕ_⇒_
 data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where

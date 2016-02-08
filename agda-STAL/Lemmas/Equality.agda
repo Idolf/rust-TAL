@@ -259,7 +259,7 @@ instance
           from (node 1 (labₕ ∷ _)) = heapval <$> fromTree labₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
           from (node 3 _) = just uninit
-          from (node 4 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
+          from (node 4 (Δ ∷ w ∷ θs ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree θs
           from _ = nothing
           sur : IsSurjective from
           sur (globval lab) = T₁ 0 lab ,
@@ -267,8 +267,8 @@ instance
           sur (heapval labₕ) = T₁ 1 labₕ , heapval <$=> invTree labₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
           sur uninit = T₀ 3 , refl
-          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 4 Δ (proj₁ (sur w)) is ,
-            Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is
+          sur (Λ Δ ∙ w ⟦ θs ⟧) = T₃ 4 Δ (proj₁ (sur w)) θs ,
+            Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree θs
 
   SmallValueₕ-Tree : ToTree H.SmallValue
   SmallValueₕ-Tree = tree⋆ from sur
@@ -276,14 +276,14 @@ instance
           from (node 0 (♯r ∷ _)) = reg <$> fromTree ♯r
           from (node 1 (lab ∷ _)) = globval <$> fromTree lab
           from (node 2 (n ∷ _)) = int <$> fromTree n
-          from (node 3 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
+          from (node 3 (Δ ∷ w ∷ θs ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree θs
           from _ = nothing
           sur : IsSurjective from
           sur (reg ♯r) = T₁ 0 ♯r , reg <$=> invTree ♯r
           sur (globval lab) = T₁ 1 lab , globval <$=> invTree lab
           sur (int n) = T₁ 2 n , int <$=> invTree n
-          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 3 Δ (proj₁ (sur w)) is ,
-            Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is
+          sur (Λ Δ ∙ w ⟦ θs ⟧) = T₃ 3 Δ (proj₁ (sur w)) θs ,
+            Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree θs
 
   Instructionₕ-Tree : ToTree H.Instruction
   Instructionₕ-Tree = tree⋆ from sur

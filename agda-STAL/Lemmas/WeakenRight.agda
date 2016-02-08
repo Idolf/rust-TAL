@@ -4,21 +4,21 @@ open import Util
 open import Judgments
 open import Lemmas.TypeSubstitution
 
-instantiation-weaken-right : ∀ Δ₁ Δ₂ {i a} →
-                         Δ₁ ⊢ i of a instantiation →
-                         Δ₁ ++ Δ₂ ⊢ i of a instantiation
+instantiation-weaken-right : ∀ Δ₁ Δ₂ {θ a} →
+                         Δ₁ ⊢ θ of a instantiation →
+                         Δ₁ ++ Δ₂ ⊢ θ of a instantiation
 instantiation-weaken-right Δ₁ Δ₂ (of-α τ⋆) = of-α (valid-++ τ⋆)
 instantiation-weaken-right Δ₁ Δ₂ (of-ρ σ⋆) = of-ρ (valid-++ σ⋆)
 
-instantiations-weaken-right : ∀ Δ₁ Δ₂ {is Δ} →
-                          Δ₁ ⊢ is of Δ instantiations →
-                          Δ₁ ++ Δ₂ ⊢ is of Δ instantiations
+instantiations-weaken-right : ∀ Δ₁ Δ₂ {θs Δ} →
+                          Δ₁ ⊢ θs of Δ instantiations →
+                          Δ₁ ++ Δ₂ ⊢ θs of Δ instantiations
 instantiations-weaken-right Δ₁ Δ₂ [] = []
-instantiations-weaken-right Δ₁ Δ₂ (_∷_ {Δ' = Δ'} i⋆ is⋆)
-  with instantiation-weaken-right (Δ' ++ Δ₁) Δ₂ i⋆
-... | i⋆'
+instantiations-weaken-right Δ₁ Δ₂ (_∷_ {Δ' = Δ'} θ⋆ θs⋆)
+  with instantiation-weaken-right (Δ' ++ Δ₁) Δ₂ θ⋆
+... | θ⋆'
   rewrite List-++-assoc Δ' Δ₁ Δ₂
-    = i⋆' ∷ instantiations-weaken-right Δ₁ Δ₂ is⋆
+    = θ⋆' ∷ instantiations-weaken-right Δ₁ Δ₂ θs⋆
 
 vval-weaken-right : ∀ Δ₁ Δ₂ {ψ₁ Γ v τ} →
                       ψ₁ , Δ₁ , Γ ⊢ v of τ vval →
@@ -26,11 +26,11 @@ vval-weaken-right : ∀ Δ₁ Δ₂ {ψ₁ Γ v τ} →
 vval-weaken-right Δ₁ Δ₂ of-reg = of-reg
 vval-weaken-right Δ₁ Δ₂ (of-globval l) = of-globval l
 vval-weaken-right Δ₁ Δ₂ of-int = of-int
-vval-weaken-right Δ₁ Δ₂ (of-Λ {Δ₂ = Δ} v⋆ is⋆ subs-Γ)
-  with instantiations-weaken-right (Δ ++ Δ₁) Δ₂ is⋆
-... | is⋆'
+vval-weaken-right Δ₁ Δ₂ (of-Λ {Δ₂ = Δ} v⋆ θs⋆ subs-Γ)
+  with instantiations-weaken-right (Δ ++ Δ₁) Δ₂ θs⋆
+... | θs⋆'
   rewrite List-++-assoc Δ Δ₁ Δ₂
-  = of-Λ (vval-weaken-right Δ₁ Δ₂ v⋆) is⋆' subs-Γ
+  = of-Λ (vval-weaken-right Δ₁ Δ₂ v⋆) θs⋆' subs-Γ
 
 instruction-weaken-right : ∀ {ψ₁} Δ₁ Δ₂ {ι Γ Γ'} →
                        ψ₁ , Δ₁ , Γ ⊢ ι of Γ' instruction →

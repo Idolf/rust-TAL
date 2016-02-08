@@ -37,14 +37,14 @@ private
   is-int (heapval labₕ) = no (λ { (_ , ()) })
   is-int (int n) = yes (n , refl)
   is-int uninit = no (λ { (_ , ()) })
-  is-int (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
+  is-int (Λ Δ ∙ w ⟦ θs ⟧) = no (λ { (_ , ()) })
 
   is-heapval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ heapval labₕ)
   is-heapval (globval lab) = no (λ { (_ , ()) })
   is-heapval (heapval labₕ) = yes (labₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval uninit = no (λ { (_ , ()) })
-  is-heapval (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
+  is-heapval (Λ Δ ∙ w ⟦ θs ⟧) = no (λ { (_ , ()) })
 
 instantiate-uniqueₕ : ∀ {G w I₁ I₂} →
                         InstantiateGlobal G w I₁ →
@@ -138,14 +138,14 @@ instantiate-decₕ G (globval lab)
 instantiate-decₕ G (heapval lab) = no (λ { (_ , ()) })
 instantiate-decₕ G (int n) = no (λ { (_ , ()) })
 instantiate-decₕ G uninit = no (λ { (_ , ()) })
-instantiate-decₕ G (Λ Δ ∙ w ⟦ is ⟧)
+instantiate-decₕ G (Λ Δ ∙ w ⟦ θs ⟧)
   with instantiate-decₕ G w
 ... | no ¬ig = no (λ { (_ , instantiate-Λ ig subs-I) → ¬ig (_ , ig)})
 ... | yes (I , ig)
-  with I ⟦ is / 0 ⟧many?
+  with I ⟦ θs / 0 ⟧many?
 ... | yes (Iₑ , subs-I) = yes (Iₑ , instantiate-Λ ig subs-I)
 ... | no ¬subs-I = no help
-  where help : ¬ (∃ λ I → InstantiateGlobal G (Λ Δ ∙ w ⟦ is ⟧) I)
+  where help : ¬ (∃ λ I → InstantiateGlobal G (Λ Δ ∙ w ⟦ θs ⟧) I)
         help (Iₑ , instantiate-Λ {I = I'} ig' subs-I)
           with instantiate-uniqueₕ ig ig'
         help (Iₑ , instantiate-Λ {I = .I} ig' subs-I)

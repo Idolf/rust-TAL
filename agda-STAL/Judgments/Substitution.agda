@@ -24,11 +24,11 @@ record Substitution (A : Set) : Set1 where
       v ⟦ [] / n ⟧many≡ v
 
     _∷_ :
-        ∀ {v v' vₑ i is n} →
-         v ⟦ i / n ⟧≡ v' →
-       v' ⟦ is / n ⟧many≡ vₑ →
+        ∀ {v v' vₑ θ θs n} →
+         v ⟦ θ / n ⟧≡ v' →
+       v' ⟦ θs / n ⟧many≡ vₑ →
       ------------------------
-      v ⟦ i ∷ is / n ⟧many≡ vₑ
+      v ⟦ θ ∷ θs / n ⟧many≡ vₑ
 open Substitution {{...}} public
 
 data InstantiationMatch : Instantiation → TypeAssumptionValue → Set where
@@ -66,22 +66,22 @@ mutual
   weaken-regs pos inc [] = []
   weaken-regs pos inc (τ ∷ τs) = weaken-τ pos inc τ ∷ weaken-regs pos inc τs
 
-  weaken-i : ℕ → ℕ → Instantiation → Instantiation
-  weaken-i pos inc (α τ) = α (weaken-τ pos inc τ)
-  weaken-i pos inc (ρ σ) = ρ (weaken-σ pos inc σ)
+  weaken-θ : ℕ → ℕ → Instantiation → Instantiation
+  weaken-θ pos inc (α τ) = α (weaken-τ pos inc τ)
+  weaken-θ pos inc (ρ σ) = ρ (weaken-σ pos inc σ)
 
-  weaken-is : ℕ → ℕ → Instantiations → Instantiations
-  weaken-is pos inc [] = []
-  weaken-is pos inc (i ∷ is) = weaken-i (length is + pos) inc i ∷ weaken-is pos inc is
+  weaken-θs : ℕ → ℕ → Instantiations → Instantiations
+  weaken-θs pos inc [] = []
+  weaken-θs pos inc (θ ∷ θs) = weaken-θ (length θs + pos) inc θ ∷ weaken-θs pos inc θs
 
 mutual
   infix 3 _⟦_/_⟧τ≡_
   data _⟦_/_⟧τ≡_ : Type → Instantiation → ℕ → Type → Set where
     subst-α-> :
-              ∀ {ι₁ ι₂ i} →
+              ∀ {ι₁ ι₂ θ} →
                 ι₁ > ι₂ →
       -------------------------------
-      α⁼ ι₁ ⟦ i / ι₂ ⟧τ≡ α⁼ (pred ι₁)
+      α⁼ ι₁ ⟦ θ / ι₂ ⟧τ≡ α⁼ (pred ι₁)
 
     subst-α-≡ :
             ∀ {τ ι} →
@@ -89,55 +89,55 @@ mutual
       α⁼ ι ⟦ α τ / ι ⟧τ≡ weaken-τ 0 ι τ
 
     subst-α-< :
-          ∀ {ι₁ ι₂ i} →
+          ∀ {ι₁ ι₂ θ} →
             ι₁ < ι₂ →
       ------------------------
-      α⁼ ι₁ ⟦ i / ι₂ ⟧τ≡ α⁼ ι₁
+      α⁼ ι₁ ⟦ θ / ι₂ ⟧τ≡ α⁼ ι₁
 
 
     subst-int :
-            ∀ {i ι} →
+            ∀ {θ ι} →
       -------------------
-      int ⟦ i / ι ⟧τ≡ int
+      int ⟦ θ / ι ⟧τ≡ int
 
     subst-ns :
-           ∀ {i ι} →
+           ∀ {θ ι} →
       -----------------
-      ns ⟦ i / ι ⟧τ≡ ns
+      ns ⟦ θ / ι ⟧τ≡ ns
 
     subst-∀ :
-              ∀ {Δ Γ Γ' i ι} →
-      Γ ⟦ i / length Δ + ι ⟧Γ≡ Γ' →
+              ∀ {Δ Γ Γ' θ ι} →
+      Γ ⟦ θ / length Δ + ι ⟧Γ≡ Γ' →
       ------------------------------
-      ∀[ Δ ] Γ ⟦ i / ι ⟧τ≡ ∀[ Δ ] Γ'
+      ∀[ Δ ] Γ ⟦ θ / ι ⟧τ≡ ∀[ Δ ] Γ'
 
     subst-tuple :
-            ∀ {i ι τs τs'} →
-           τs ⟦ i / ι ⟧τs⁻≡ τs' →
+            ∀ {θ ι τs τs'} →
+           τs ⟦ θ / ι ⟧τs⁻≡ τs' →
       ------------------------------
-      tuple τs ⟦ i / ι ⟧τ≡ tuple τs'
+      tuple τs ⟦ θ / ι ⟧τ≡ tuple τs'
 
   infix 3 _⟦_/_⟧τ⁻≡_
   data _⟦_/_⟧τ⁻≡_ : InitType → Instantiation → ℕ → InitType → Set where
     subst-τ⁻ :
-             ∀ {φ τ τ' i ι} →
-            τ ⟦ i / ι ⟧τ≡ τ' →
+             ∀ {φ τ τ' θ ι} →
+            τ ⟦ θ / ι ⟧τ≡ τ' →
       -----------------------------
-      (τ , φ) ⟦ i / ι ⟧τ⁻≡ (τ' , φ)
+      (τ , φ) ⟦ θ / ι ⟧τ⁻≡ (τ' , φ)
 
   infix 3 _⟦_/_⟧τs⁻≡_
   _⟦_/_⟧τs⁻≡_ : List InitType → Instantiation → ℕ → List InitType → Set
-  τs⁻ ⟦ i / ι ⟧τs⁻≡ τs⁻' =
-    AllZip (λ τ⁻ τ⁻' → τ⁻ ⟦ i / ι ⟧τ⁻≡ τ⁻') τs⁻ τs⁻'
+  τs⁻ ⟦ θ / ι ⟧τs⁻≡ τs⁻' =
+    AllZip (λ τ⁻ τ⁻' → τ⁻ ⟦ θ / ι ⟧τ⁻≡ τ⁻') τs⁻ τs⁻'
 
   infix 3 _⟦_/_⟧σ≡_
   infixr 5 _∷_
   data _⟦_/_⟧σ≡_ : StackType → Instantiation → ℕ → StackType → Set where
     subst-ρ-> :
-              ∀ {ι₁ ι₂ i} →
+              ∀ {ι₁ ι₂ θ} →
                 ι₁ > ι₂ →
       -------------------------------
-      ρ⁼ ι₁ ⟦ i / ι₂ ⟧σ≡ ρ⁼ (pred ι₁)
+      ρ⁼ ι₁ ⟦ θ / ι₂ ⟧σ≡ ρ⁼ (pred ι₁)
 
     subst-ρ-≡ :
                   ∀ {σ ι} →
@@ -145,176 +145,176 @@ mutual
       ρ⁼ ι ⟦ ρ σ / ι ⟧σ≡ weaken-σ 0 ι σ
 
     subst-ρ-< :
-            ∀ {ι₁ ι₂ i} →
+            ∀ {ι₁ ι₂ θ} →
               ι₁ < ι₂ →
       ------------------------
-      ρ⁼ ι₁ ⟦ i / ι₂ ⟧σ≡ ρ⁼ ι₁
+      ρ⁼ ι₁ ⟦ θ / ι₂ ⟧σ≡ ρ⁼ ι₁
 
     [] :
-          ∀ {i ι} →
+          ∀ {θ ι} →
       -----------------
-      [] ⟦ i / ι ⟧σ≡ []
+      [] ⟦ θ / ι ⟧σ≡ []
 
     _∷_ :
-         ∀ {τ τ' σ σ' i ι} →
-          τ ⟦ i / ι ⟧τ≡ τ' →
-          σ ⟦ i / ι ⟧σ≡ σ' →
+         ∀ {τ τ' σ σ' θ ι} →
+          τ ⟦ θ / ι ⟧τ≡ τ' →
+          σ ⟦ θ / ι ⟧σ≡ σ' →
       -------------------------
-      τ ∷ σ ⟦ i / ι ⟧σ≡ τ' ∷ σ'
+      τ ∷ σ ⟦ θ / ι ⟧σ≡ τ' ∷ σ'
 
   infix 3 _⟦_/_⟧Γ≡_
   data _⟦_/_⟧Γ≡_ : RegisterAssignment → Instantiation → ℕ →
                    RegisterAssignment → Set where
     subst-registerₐ :
-                 ∀ {regs regs' sp sp' i ι} →
-                     sp ⟦ i / ι ⟧σ≡ sp' →
-                  regs ⟦ i / ι ⟧regs≡ regs' →
+                 ∀ {regs regs' sp sp' θ ι} →
+                     sp ⟦ θ / ι ⟧σ≡ sp' →
+                  regs ⟦ θ / ι ⟧regs≡ regs' →
       -------------------------------------------------
-      registerₐ sp regs ⟦ i / ι ⟧Γ≡ registerₐ sp' regs'
+      registerₐ sp regs ⟦ θ / ι ⟧Γ≡ registerₐ sp' regs'
 
   infix 3 _⟦_/_⟧regs≡_
   _⟦_/_⟧regs≡_ : ∀ {m} → Vec Type m → Instantiation → ℕ → Vec Type m → Set
-  τs ⟦ i / ι ⟧regs≡ τs' = AllZipᵥ (λ τ τ' → τ ⟦ i / ι ⟧τ≡ τ') τs τs'
+  τs ⟦ θ / ι ⟧regs≡ τs' = AllZipᵥ (λ τ τ' → τ ⟦ θ / ι ⟧τ≡ τ') τs τs'
 
-infix 3 _⟦_/_⟧i≡_
-data _⟦_/_⟧i≡_ : Instantiation → Instantiation → ℕ → Instantiation → Set where
+infix 3 _⟦_/_⟧θ≡_
+data _⟦_/_⟧θ≡_ : Instantiation → Instantiation → ℕ → Instantiation → Set where
   subst-α :
-      ∀ {τ τ' i ι} →
-     τ ⟦ i / ι ⟧τ≡ τ' →
+      ∀ {τ τ' θ ι} →
+     τ ⟦ θ / ι ⟧τ≡ τ' →
     --------------------
-    α τ ⟦ i / ι ⟧i≡ α τ'
+    α τ ⟦ θ / ι ⟧θ≡ α τ'
 
   subst-ρ :
-      ∀ {σ σ' i ι} →
-     σ ⟦ i / ι ⟧σ≡ σ' →
+      ∀ {σ σ' θ ι} →
+     σ ⟦ θ / ι ⟧σ≡ σ' →
     --------------------
-    ρ σ ⟦ i / ι ⟧i≡ ρ σ'
+    ρ σ ⟦ θ / ι ⟧θ≡ ρ σ'
 
-infix 3 _⟦_/_⟧is≡_
-data _⟦_/_⟧is≡_ : Instantiations → Instantiation → ℕ → Instantiations → Set where
+infix 3 _⟦_/_⟧θs≡_
+data _⟦_/_⟧θs≡_ : Instantiations → Instantiation → ℕ → Instantiations → Set where
   [] :
-        ∀ {i ι} →
+        ∀ {θ ι} →
     ------------------
-    [] ⟦ i / ι ⟧is≡ []
+    [] ⟦ θ / ι ⟧θs≡ []
 
   _∷_ :
-         ∀ {i ι i₁ i₂ is₁ is₂} →
-    i₁ ⟦ i / length is₁ + ι ⟧i≡ i₂ →
-         is₁ ⟦ i / ι ⟧is≡ is₂ →
+         ∀ {θ ι θ₁ θ₂ θs₁ θs₂} →
+    θ₁ ⟦ θ / length θs₁ + ι ⟧θ≡ θ₂ →
+         θs₁ ⟦ θ / ι ⟧θs≡ θs₂ →
     --------------------------------
-     i₁ ∷ is₁ ⟦ i / ι ⟧is≡ i₂ ∷ is₂
+     θ₁ ∷ θs₁ ⟦ θ / ι ⟧θs≡ θ₂ ∷ θs₂
 
 infix 3 _⟦_/_⟧v≡_
 data _⟦_/_⟧v≡_ : SmallValueₕ → Instantiation → ℕ → SmallValueₕ → Set where
   subst-reg :
-          ∀ {♯r i ι} →
+          ∀ {♯r θ ι} →
     -------------------------
-    reg ♯r ⟦ i / ι ⟧v≡ reg ♯r
+    reg ♯r ⟦ θ / ι ⟧v≡ reg ♯r
 
   subst-globval :
-               ∀ {lab i ι} →
+               ∀ {lab θ ι} →
     -----------------------------------
-    globval lab ⟦ i / ι ⟧v≡ globval lab
+    globval lab ⟦ θ / ι ⟧v≡ globval lab
 
   subst-int :
-         ∀ {n i ι} →
+         ∀ {n θ ι} →
     -----------------------
-    int n ⟦ i / ι ⟧v≡ int n
+    int n ⟦ θ / ι ⟧v≡ int n
 
   subst-Λ :
-                ∀ {Δ v v' is is' i ι} →
-                  v ⟦ i / ι ⟧v≡ v' →
-           is ⟦ i / length Δ + ι ⟧is≡ is' →
+                ∀ {Δ v v' θs θs' θ ι} →
+                  v ⟦ θ / ι ⟧v≡ v' →
+           θs ⟦ θ / length Δ + ι ⟧θs≡ θs' →
     ----------------------------------------------
-    (Λ Δ ∙ v ⟦ is ⟧) ⟦ i / ι ⟧v≡ (Λ Δ ∙ v' ⟦ is' ⟧)
+    (Λ Δ ∙ v ⟦ θs ⟧) ⟦ θ / ι ⟧v≡ (Λ Δ ∙ v' ⟦ θs' ⟧)
 
 infix 3 _⟦_/_⟧ι≡_
 data _⟦_/_⟧ι≡_ : Instructionₕ → Instantiation → ℕ → Instructionₕ → Set where
   subst-add :
-           ∀ {♯rd ♯rs v v' i ι} →
-               v ⟦ i / ι ⟧v≡ v' →
-    ------------------------------------
-    add ♯rd ♯rs v ⟦ i / ι ⟧ι≡ add ♯rd ♯rs v'
+           ∀ {♯rd ♯rs v v' θ ι} →
+               v ⟦ θ / ι ⟧v≡ v' →
+    ----------------------------------------
+    add ♯rd ♯rs v ⟦ θ / ι ⟧ι≡ add ♯rd ♯rs v'
 
   subst-sub :
-           ∀ {♯rd ♯rs v v' i ι} →
-               v ⟦ i / ι ⟧v≡ v' →
-    ------------------------------------
-    sub ♯rd ♯rs v ⟦ i / ι ⟧ι≡ sub ♯rd ♯rs v'
+           ∀ {♯rd ♯rs v v' θ ι} →
+               v ⟦ θ / ι ⟧v≡ v' →
+    ----------------------------------------
+    sub ♯rd ♯rs v ⟦ θ / ι ⟧ι≡ sub ♯rd ♯rs v'
 
   subst-salloc :
-             ∀ {n i ι} →
+             ∀ {n θ ι} →
     -----------------------------
-    salloc n ⟦ i / ι ⟧ι≡ salloc n
+    salloc n ⟦ θ / ι ⟧ι≡ salloc n
 
   subst-sfree :
-             ∀ {n i ι} →
+             ∀ {n θ ι} →
     ---------------------------
-    sfree n ⟦ i / ι ⟧ι≡ sfree n
+    sfree n ⟦ θ / ι ⟧ι≡ sfree n
 
   subst-sld :
-           ∀ {♯rd pos i ι} →
-    ---------------------------
-    sld ♯rd pos ⟦ i / ι ⟧ι≡ sld ♯rd pos
+           ∀ {♯rd pos θ ι} →
+    -----------------------------------
+    sld ♯rd pos ⟦ θ / ι ⟧ι≡ sld ♯rd pos
 
   subst-sst :
-           ∀ {♯rs pos i ι} →
+           ∀ {♯rs pos θ ι} →
     -----------------------------------
-    sst pos ♯rs ⟦ i / ι ⟧ι≡ sst pos ♯rs
+    sst pos ♯rs ⟦ θ / ι ⟧ι≡ sst pos ♯rs
 
   subst-ld :
-             ∀ {♯rd ♯rs pos i ι} →
+             ∀ {♯rd ♯rs pos θ ι} →
     -----------------------------------------
-    ld ♯rd ♯rs pos ⟦ i / ι ⟧ι≡ ld ♯rd ♯rs pos
+    ld ♯rd ♯rs pos ⟦ θ / ι ⟧ι≡ ld ♯rd ♯rs pos
 
   subst-st :
-             ∀ {♯rd ♯rs pos i ι} →
-    ---------------------------------
-    st ♯rd pos ♯rs ⟦ i / ι ⟧ι≡ st ♯rd pos ♯rs
+             ∀ {♯rd ♯rs pos θ ι} →
+    -----------------------------------------
+    st ♯rd pos ♯rs ⟦ θ / ι ⟧ι≡ st ♯rd pos ♯rs
 
   subst-malloc :
-             ∀ {♯rd τs τs' i ι} →
-    AllZip (λ τ τ' → τ ⟦ i / ι ⟧τ≡ τ') τs τs' →
-    ---------------------------------------
-      malloc ♯rd τs ⟦ i / ι ⟧ι≡ malloc ♯rd τs'
+             ∀ {♯rd τs τs' θ ι} →
+    AllZip (λ τ τ' → τ ⟦ θ / ι ⟧τ≡ τ') τs τs' →
+    -------------------------------------------
+      malloc ♯rd τs ⟦ θ / ι ⟧ι≡ malloc ♯rd τs'
 
   subst-mov :
-         ∀ {♯rd v v' i ι} →
-          v ⟦ i / ι ⟧v≡ v' →
-    ----------------------------
-    mov ♯rd v ⟦ i / ι ⟧ι≡ mov ♯rd v'
+         ∀ {♯rd v v' θ ι} →
+          v ⟦ θ / ι ⟧v≡ v' →
+    --------------------------------
+    mov ♯rd v ⟦ θ / ι ⟧ι≡ mov ♯rd v'
 
   subst-beq :
-          ∀ {♯r v v' i ι} →
-           v ⟦ i / ι ⟧v≡ v' →
-    --------------------------
-    beq ♯r v ⟦ i / ι ⟧ι≡ beq ♯r v'
+          ∀ {♯r v v' θ ι} →
+           v ⟦ θ / ι ⟧v≡ v' →
+    ------------------------------
+    beq ♯r v ⟦ θ / ι ⟧ι≡ beq ♯r v'
 
 infix 3 _⟦_/_⟧I≡_
 data _⟦_/_⟧I≡_ : InstructionSequenceₕ → Instantiation → ℕ →
                  InstructionSequenceₕ → Set where
   subst-~> :
-        ∀ {ι ι' I I' i ιₚ} →
-         ι ⟦ i / ιₚ ⟧ι≡ ι' →
-         I ⟦ i / ιₚ ⟧I≡ I' →
+        ∀ {ι ι' I I' θ ιₚ} →
+         ι ⟦ θ / ιₚ ⟧ι≡ ι' →
+         I ⟦ θ / ιₚ ⟧I≡ I' →
     -----------------------
-    ι ~> I ⟦ i / ιₚ ⟧I≡ ι' ~> I'
+    ι ~> I ⟦ θ / ιₚ ⟧I≡ ι' ~> I'
 
   subst-jmp :
-        ∀ {v v' i ι} →
-       v ⟦ i / ι ⟧v≡ v' →
+        ∀ {v v' θ ι} →
+       v ⟦ θ / ι ⟧v≡ v' →
     --------------------
-    jmp v ⟦ i / ι ⟧I≡ jmp v'
+    jmp v ⟦ θ / ι ⟧I≡ jmp v'
 
   subst-halt :
-          ∀ {i ι} →
+          ∀ {θ ι} →
     ---------------------
-    halt ⟦ i / ι ⟧I≡ halt
+    halt ⟦ θ / ι ⟧I≡ halt
 
 List-Substitution : ∀ A {{_ : Substitution A}} → Substitution (List A)
 List-Substitution A = substitution
   (λ pos inc xs → map (weaken pos inc) xs)
-  (λ xs i ι xs' → AllZip (λ x x' → x ⟦ i / ι ⟧≡ x') xs xs')
+  (λ xs θ ι xs' → AllZip (λ x x' → x ⟦ θ / ι ⟧≡ x') xs xs')
 
 instance
   Type-Substitution : Substitution Type
@@ -339,10 +339,10 @@ instance
   RegisterAssignment-Substitution = substitution weaken-Γ _⟦_/_⟧Γ≡_
 
   Instantiation-Substitution : Substitution Instantiation
-  Instantiation-Substitution = substitution weaken-i _⟦_/_⟧i≡_
+  Instantiation-Substitution = substitution weaken-θ _⟦_/_⟧θ≡_
 
   Instantiations-Substitution : Substitution Instantiations
-  Instantiations-Substitution = substitution weaken-is _⟦_/_⟧is≡_
+  Instantiations-Substitution = substitution weaken-θs _⟦_/_⟧θs≡_
 
   SmallValue-Substitution : Substitution SmallValueₕ
   SmallValue-Substitution = substitution weaken-v _⟦_/_⟧v≡_
@@ -350,7 +350,7 @@ instance
           weaken-v pos inc (reg ♯r) = reg ♯r
           weaken-v pos inc (globval l) = globval l
           weaken-v pos inc (int i) = int i
-          weaken-v pos inc (Λ Δ ∙ v ⟦ is ⟧) = Λ Δ ∙ weaken-v pos inc v ⟦ weaken (length Δ + pos) inc is ⟧
+          weaken-v pos inc (Λ Δ ∙ v ⟦ θs ⟧) = Λ Δ ∙ weaken-v pos inc v ⟦ weaken (length Δ + pos) inc θs ⟧
 
   Instruction-Substitution : Substitution Instructionₕ
   Instruction-Substitution = substitution weaken-ι _⟦_/_⟧ι≡_

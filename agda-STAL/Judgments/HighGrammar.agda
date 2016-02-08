@@ -61,12 +61,12 @@ HeapLabelAssignment = List Type
 LabelAssignment : Set
 LabelAssignment = GlobalLabelAssignment × HeapLabelAssignment
 
--- Instantiation, i
+-- Instantiation, θ
 data Instantiation : Set where
   α : Type → Instantiation
   ρ : StackType → Instantiation
 
--- Instantiations, is
+-- Instantiations, θs
 Instantiations : Set
 Instantiations = List Instantiation
 

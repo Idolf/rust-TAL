@@ -8,8 +8,8 @@ open import Lemmas.TypeSubstitution
 open import Lemmas.Equality
 open HighGrammar
 
-instantiation-dec : ∀ {Δ} i a →
-                      Dec (Δ ⊢ i of a instantiation)
+instantiation-dec : ∀ {Δ} θ a →
+                      Dec (Δ ⊢ θ of a instantiation)
 instantiation-dec {Δ} (α τ) α
   = dec-inj of-α (λ { (of-α τ⋆) → τ⋆ }) (Δ ⊢? τ Valid)
 instantiation-dec (α τ) ρ = no (λ ())
@@ -17,16 +17,16 @@ instantiation-dec (ρ σ) α = no (λ ())
 instantiation-dec {Δ} (ρ σ) ρ
   = dec-inj of-ρ (λ { (of-ρ σ⋆) → σ⋆ }) (Δ ⊢? σ Valid)
 
-instantiations-dec : ∀ {Δ₁} is Δ₂ →
-                       Dec (Δ₁ ⊢ is of Δ₂ instantiations)
+instantiations-dec : ∀ {Δ₁} θs Δ₂ →
+                       Dec (Δ₁ ⊢ θs of Δ₂ instantiations)
 instantiations-dec [] [] = yes []
 instantiations-dec [] (a ∷ Δ₂) = no (λ ())
-instantiations-dec (i ∷ is) [] = no (λ ())
-instantiations-dec (i ∷ is) (a ∷ Δ₂)
-  with instantiation-dec i a | instantiations-dec is Δ₂
-... | yes i⋆ | yes is⋆ = yes (i⋆ ∷ is⋆)
-... | no ¬i⋆ | _ = no (λ { (i⋆ ∷ is⋆) → ¬i⋆ i⋆})
-... | _ | no ¬is⋆ = no (λ { (i⋆ ∷ is⋆) → ¬is⋆ is⋆})
+instantiations-dec (θ ∷ θs) [] = no (λ ())
+instantiations-dec (θ ∷ θs) (a ∷ Δ₂)
+  with instantiation-dec θ a | instantiations-dec θs Δ₂
+... | yes θ⋆ | yes θs⋆ = yes (θ⋆ ∷ θs⋆)
+... | no ¬θ⋆ | _ = no (λ { (θ⋆ ∷ θs⋆) → ¬θ⋆ θ⋆})
+... | _ | no ¬θs⋆ = no (λ { (θ⋆ ∷ θs⋆) → ¬θs⋆ θs⋆})
 
 vval-unique : ∀ {ψ₁ Δ Γ v τ₁ τ₂} →
                 ψ₁ , Δ , Γ ⊢ v of τ₁ vval →
@@ -35,11 +35,11 @@ vval-unique : ∀ {ψ₁ Δ Γ v τ₁ τ₂} →
 vval-unique of-reg of-reg = refl
 vval-unique (of-globval l₁) (of-globval l₂) = ↓-unique l₁ l₂
 vval-unique of-int of-int = refl
-vval-unique (of-Λ v⋆₁ is⋆₁ subs-Γ₁) (of-Λ v⋆₂ is⋆₂ subs-Γ₂)
+vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
   with vval-unique v⋆₁ v⋆₂
-vval-unique (of-Λ v⋆₁ is⋆₁ subs-Γ₁) (of-Λ v⋆₂ is⋆₂ subs-Γ₂)
+vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
     | refl with subst-unique-many subs-Γ₁ subs-Γ₂
-vval-unique (of-Λ v⋆₁ is⋆₁ subs-Γ₁) (of-Λ v⋆₂ is⋆₂ subs-Γ₂)
+vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
     | refl | refl
     = refl
 
@@ -60,42 +60,42 @@ vval-dec {ψ₁} (globval lab)
 ... | yes (τ , l) = yes (τ , of-globval l)
 ... | no ¬l = no (λ { (_ , of-globval l) → ¬l (_ , l)})
 vval-dec (int n) = yes (int , of-int)
-vval-dec {ψ₁} {Δ} {Γ} (Λ Δₒ ∙ v ⟦ is ⟧)
+vval-dec {ψ₁} {Δ} {Γ} (Λ Δₒ ∙ v ⟦ θs ⟧)
   with vval-dec {ψ₁} {Δ} {Γ} v
-... | no ¬v⋆ = no (λ { (_ , of-Λ v⋆ is⋆ subs-Γ) → ¬v⋆ (_ , v⋆) })
-... | yes (α⁼ ι , v⋆) = no (λ { (_ , of-Λ v⋆' is⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (int , v⋆) = no (λ { (_ , of-Λ v⋆' is⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (ns , v⋆) = no (λ { (_ , of-Λ v⋆' is⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (tuple τs , v⋆) = no (λ { (_ , of-Λ v⋆' is⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+... | no ¬v⋆ = no (λ { (_ , of-Λ v⋆ θs⋆ subs-Γ) → ¬v⋆ (_ , v⋆) })
+... | yes (α⁼ ι , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+... | yes (int , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+... | yes (ns , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+... | yes (tuple τs , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
 ... | yes (∀[ Δᵢ ] Γᵢ , v⋆)
-  with instantiations-dec {Δₒ ++ Δ} is Δᵢ
-... | no ¬is⋆ = no (help v⋆ ¬is⋆)
-  where help : ∀ {v is Δᵢ Γᵢ} →
+  with instantiations-dec {Δₒ ++ Δ} θs Δᵢ
+... | no ¬θs⋆ = no (help v⋆ ¬θs⋆)
+  where help : ∀ {v θs Δᵢ Γᵢ} →
                  ψ₁ , Δ , Γ ⊢ v of ∀[ Δᵢ ] Γᵢ vval →
-                 ¬ Δₒ ++ Δ ⊢ is of Δᵢ instantiations →
-                 ¬ ∃ λ τ → (ψ₁ , Δ , Γ ⊢ Λ Δₒ ∙ v ⟦ is ⟧ of τ vval)
-        help v⋆ ¬is⋆ (._ , of-Λ v⋆' is⋆ subs-Γ)
+                 ¬ Δₒ ++ Δ ⊢ θs of Δᵢ instantiations →
+                 ¬ ∃ λ τ → (ψ₁ , Δ , Γ ⊢ Λ Δₒ ∙ v ⟦ θs ⟧ of τ vval)
+        help v⋆ ¬θs⋆ (._ , of-Λ v⋆' θs⋆ subs-Γ)
           with vval-unique v⋆ v⋆'
-        help v⋆ ¬is⋆ (._ , of-Λ v⋆' is⋆ subs-Γ)
+        help v⋆ ¬θs⋆ (._ , of-Λ v⋆' θs⋆ subs-Γ)
             | refl
-          = ¬is⋆ is⋆
-... | yes is⋆
-  with weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ is / 0 ⟧many?
-... | yes (Γₒ , subs-Γ) = yes (_ , of-Λ v⋆ is⋆ subs-Γ)
+          = ¬θs⋆ θs⋆
+... | yes θs⋆
+  with weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ θs / 0 ⟧many?
+... | yes (Γₒ , subs-Γ) = yes (_ , of-Λ v⋆ θs⋆ subs-Γ)
 ... | no ¬subs-Γ = no (help v⋆ ¬subs-Γ)
-  where help : ∀ {v is Δᵢ Γᵢ} →
+  where help : ∀ {v θs Δᵢ Γᵢ} →
                  ψ₁ , Δ , Γ ⊢ v of ∀[ Δᵢ ] Γᵢ vval →
-                 ¬ (∃ λ Γₒ → weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ is / 0 ⟧many≡ Γₒ) →
-                 ¬ ∃ λ τ → (ψ₁ , Δ , Γ ⊢ Λ Δₒ ∙ v ⟦ is ⟧ of τ vval)
-        help v⋆ ¬subs-Γ (._ , of-Λ v⋆' is⋆ subs-Γ)
+                 ¬ (∃ λ Γₒ → weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ θs / 0 ⟧many≡ Γₒ) →
+                 ¬ ∃ λ τ → (ψ₁ , Δ , Γ ⊢ Λ Δₒ ∙ v ⟦ θs ⟧ of τ vval)
+        help v⋆ ¬subs-Γ (._ , of-Λ v⋆' θs⋆ subs-Γ)
           with vval-unique v⋆ v⋆'
-        help v⋆ ¬subs-Γ (._ , of-Λ v⋆' is⋆ subs-Γ)
+        help v⋆ ¬subs-Γ (._ , of-Λ v⋆' θs⋆ subs-Γ)
             | refl
           = ¬subs-Γ (_ , subs-Γ)
 
 instruction-unique : ∀ {ψ₁ Δ Γ ι Γ₁ Γ₂} →
-                       ψ₁ , Δ , Γ ⊢ ι ⇒ Γ₁ instruction →
-                       ψ₁ , Δ , Γ ⊢ ι ⇒ Γ₂ instruction →
+                       ψ₁ , Δ , Γ ⊢ ι of Γ₁ instruction →
+                       ψ₁ , Δ , Γ ⊢ ι of Γ₂ instruction →
                        Γ₁ ≡ Γ₂
 instruction-unique (of-add eq₁ v⋆₁) (of-add eq₂ v⋆₂) = refl
 instruction-unique (of-sub eq₁ v⋆₁) (of-sub eq₂ v⋆₂) = refl

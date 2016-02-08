@@ -56,7 +56,7 @@ wval-helper ψ₂'≤ψ₂ (of-heapval l τ'≤τ)
 ... | τ' , l' , τ''≤τ' = of-heapval l' (≤-trans τ''≤τ' τ'≤τ)
 wval-helper ψ₂'≤ψ₂ of-int = of-int
 wval-helper ψ₂'≤ψ₂ of-ns = of-ns
-wval-helper ψ₂'≤ψ₂ (of-Λ w⋆ is⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-helper ψ₂'≤ψ₂ w⋆) is⋆ subs-Γ Γ₃≤Γ₂
+wval-helper ψ₂'≤ψ₂ (of-Λ w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-helper ψ₂'≤ψ₂ w⋆) θs⋆ subs-Γ Γ₃≤Γ₂
 
 wval⁰-helper : ∀ {ψ₁ ψ₂ ψ₂' w τ⁻} →
                  [] ⊢ ψ₂' ≤ ψ₂ →

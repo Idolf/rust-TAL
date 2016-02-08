@@ -34,11 +34,11 @@ data _⊢_of_instantiations (Δ : TypeAssumptions) : Instantiations → TypeAssu
     Δ ⊢ [] of [] instantiations
 
   _∷_ :
-             ∀ {i is a Δ'} →
-      Δ' ++ Δ ⊢ i of a instantiation →
-        Δ ⊢ is of Δ' instantiations →
+             ∀ {θ θs a Δ'} →
+      Δ' ++ Δ ⊢ θ of a instantiation →
+        Δ ⊢ θs of Δ' instantiations →
     -----------------------------------
-    Δ ⊢ i ∷ is of a ∷ Δ' instantiations
+    Δ ⊢ θ ∷ θs of a ∷ Δ' instantiations
 
 infix 3 _⊢_of_wval
 data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment →
@@ -68,13 +68,13 @@ data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment →
     ψ₁ , ψ₂ ⊢ uninit of ns wval
 
   of-Λ :
-          ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
+          ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w θs} →
          ψ₁ , ψ₂ ⊢ w of ∀[ Δ₁ ] Γ₁ wval →
-           Δ₂ ⊢ is of Δ₁ instantiations →
-                Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+           Δ₂ ⊢ θs of Δ₁ instantiations →
+                Γ₁ ⟦ θs / 0 ⟧many≡ Γ₂ →
                   Δ₂ ⊢ Γ₃ ≤ Γ₂ →
     --------------------------------------------
-    ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ is ⟧ of ∀[ Δ₂ ] Γ₃ wval
+    ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ θs ⟧ of ∀[ Δ₂ ] Γ₃ wval
 
 infix 3 _⊢_of_wval⁰
 data _⊢_of_wval⁰ : GlobalLabelAssignment × HeapLabelAssignment →
@@ -112,12 +112,12 @@ data _⊢_of_vval : GlobalLabelAssignment ×
     ψ₁ , Δ , Γ ⊢ int n of int vval
 
   of-Λ :
-              ∀ {ψ₁ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ v is} →
+              ∀ {ψ₁ Δ Γ Δ₁ Δ₂ Γ₁ Γ₂ v θs} →
              ψ₁ , Δ , Γ ⊢ v of ∀[ Δ₁ ] Γ₁ vval →
-             Δ₂ ++ Δ ⊢ is of Δ₁ instantiations →
-    weaken (length Δ₁) (length Δ₂) Γ₁ ⟦ is / 0 ⟧many≡ Γ₂ →
+             Δ₂ ++ Δ ⊢ θs of Δ₁ instantiations →
+    weaken (length Δ₁) (length Δ₂) Γ₁ ⟦ θs / 0 ⟧many≡ Γ₂ →
     ------------------------------------------------------
-       ψ₁ , Δ , Γ ⊢ Λ Δ₂ ∙ v ⟦ is ⟧ of ∀[ Δ₂ ] Γ₂ vval
+       ψ₁ , Δ , Γ ⊢ Λ Δ₂ ∙ v ⟦ θs ⟧ of ∀[ Δ₂ ] Γ₂ vval
 
 infix 3 _⊢_of_hval
 data _⊢_of_hval : GlobalLabelAssignment × HeapLabelAssignment →

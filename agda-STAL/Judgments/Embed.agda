@@ -35,7 +35,7 @@ instance
           f (heapval labₕ) = heapval labₕ
           f (int n) = int n
           f uninit = uninit
-          f (Λ Δ ∙ w ⟦ is ⟧) = f w
+          f (Λ Δ ∙ w ⟦ θs ⟧) = f w
 
   embedListWordValue : Embed (List H.WordValue) (List S.WordValue)
   embedListWordValue = ListEmbed embedWordValue
@@ -49,7 +49,7 @@ instance
           f (reg ♯r) = reg ♯r
           f (globval lab) = globval lab
           f (int n) = int n
-          f (Λ Δ ∙ v ⟦ is ⟧) = f v
+          f (Λ Δ ∙ v ⟦ θs ⟧) = f v
 
   embedInstruction : Embed H.Instruction S.Instruction
   embedInstruction = mkEmbed f

@@ -90,8 +90,8 @@ wval-subtype (of-globval l τ≤τ₁) τ₁≤τ₂ = of-globval l (≤-trans �
 wval-subtype (of-heapval l τ≤τ₁) τ₁≤τ₂ = of-heapval l (≤-trans τ≤τ₁ τ₁≤τ₂)
 wval-subtype of-int int-≤ = of-int
 wval-subtype of-ns ns-≤ = of-ns
-wval-subtype (of-Λ {Δ₂ = Δ₂} w⋆ is⋆ subs-Γ Γ₃≤Γ₂) (∀-≤ Γ₄≤Γ₃)
-  rewrite List-++-right-identity Δ₂ = of-Λ w⋆ is⋆ subs-Γ (≤-trans Γ₄≤Γ₃ Γ₃≤Γ₂)
+wval-subtype (of-Λ {Δ₂ = Δ₂} w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) (∀-≤ Γ₄≤Γ₃)
+  rewrite List-++-right-identity Δ₂ = of-Λ w⋆ θs⋆ subs-Γ (≤-trans Γ₄≤Γ₃ Γ₃≤Γ₂)
 
 regs-subtype : ∀ {n ψ₁ ψ₂} {ws : Vec WordValue n} {τs₁ τs₂} →
                  AllZipᵥ (λ w τ₁ → ψ₁ , ψ₂ ⊢ w of τ₁ wval) ws τs₁ →
@@ -119,12 +119,12 @@ vval-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂) {reg ♯r} of-reg
 ... | lookup₁≤lookup₂ = _ , lookup₁≤lookup₂ , of-reg
 vval-subtype ψ₁⋆ Γ₁≤Γ₂ (of-globval l) = _ , ≤-++ (≤-refl (All-lookup l ψ₁⋆)) , of-globval l
 vval-subtype ψ₁⋆ Γ₁≤Γ₂ of-int = int , int-≤ , of-int
-vval-subtype {Δ = Δ} ψ₁⋆ Γ₁≤Γ₂ {Λ Δₒ ∙ v ⟦ is ⟧} {∀[ .Δₒ ] Γₒ₁} (of-Λ {Δ₁ = Δᵢ} .{Δₒ} {Γᵢ₁} .{Γₒ₁} v⋆ is⋆ subs-Γ₁)
+vval-subtype {Δ = Δ} ψ₁⋆ Γ₁≤Γ₂ {Λ Δₒ ∙ v ⟦ θs ⟧} {∀[ .Δₒ ] Γₒ₁} (of-Λ {Δ₁ = Δᵢ} .{Δₒ} {Γᵢ₁} .{Γₒ₁} v⋆ θs⋆ subs-Γ₁)
   with vval-subtype ψ₁⋆ Γ₁≤Γ₂ v⋆
 ... | ∀[ .Δᵢ ] Γᵢ₂ , ∀-≤ Γᵢ₁≤Γᵢ₂ , v⋆'
-  with subtype-subst-exists-many {A = RegisterAssignment} [] is⋆ (subtype-weaken Δᵢ Δₒ Δ Γᵢ₁≤Γᵢ₂)
+  with subtype-subst-exists-many {A = RegisterAssignment} [] θs⋆ (subtype-weaken Δᵢ Δₒ Δ Γᵢ₁≤Γᵢ₂)
 ... | Γₒ₁' , Γₒ₂ , subs-Γ₁' , subs-Γ₂ , Γₒ₁'≤Γₒ₂
-  rewrite subst-unique-many subs-Γ₁ subs-Γ₁' = ∀[ Δₒ ] Γₒ₂ , ∀-≤ Γₒ₁'≤Γₒ₂ , of-Λ v⋆' is⋆ subs-Γ₂
+  rewrite subst-unique-many subs-Γ₁ subs-Γ₁' = ∀[ Δₒ ] Γₒ₂ , ∀-≤ Γₒ₁'≤Γₒ₂ , of-Λ v⋆' θs⋆ subs-Γ₂
 
 instruction-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ Γ₂'} →
                         [] ⊢ ψ₁ Valid →

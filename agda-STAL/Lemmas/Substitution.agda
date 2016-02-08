@@ -13,30 +13,30 @@ open HighGrammar
 record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
   constructor substitution⁺
   field
-    subst-unique : ∀ {v v₁ v₂ : A} {i ι} →
-                     v ⟦ i / ι ⟧≡ v₁ →
-                     v ⟦ i / ι ⟧≡ v₂ →
+    subst-unique : ∀ {v v₁ v₂ : A} {θ ι} →
+                     v ⟦ θ / ι ⟧≡ v₁ →
+                     v ⟦ θ / ι ⟧≡ v₂ →
                      v₁ ≡ v₂
-    subst-dec : ∀ i ι (v : A) → Dec (∃ λ v' → v ⟦ i / ι ⟧≡ v')
+    subst-dec : ∀ θ ι (v : A) → Dec (∃ λ v' → v ⟦ θ / ι ⟧≡ v')
     weaken-subst :
       ∀ {pos₁ pos₂} inc →
         pos₂ ≤ pos₁ →
-        ∀ {i} {v₁ v₂ : A} →
-        v₁ ⟦ i / pos₁ ⟧≡ v₂ →
-        weaken pos₂ inc v₁ ⟦ i / pos₁ + inc ⟧≡ weaken pos₂ inc v₂
+        ∀ {θ} {v₁ v₂ : A} →
+        v₁ ⟦ θ / pos₁ ⟧≡ v₂ →
+        weaken pos₂ inc v₁ ⟦ θ / pos₁ + inc ⟧≡ weaken pos₂ inc v₂
     subst-subst :
-      ∀ {pos₁ pos₂ i₁ i₁' i₂} →
-        i₁ ⟦ i₂ / pos₂ ⟧≡ i₁' →
+      ∀ {pos₁ pos₂ θ₁ θ₁' θ₂} →
+        θ₁ ⟦ θ₂ / pos₂ ⟧≡ θ₁' →
         {v₁ v₂ v₁' : A} →
-        v₁ ⟦ i₂ / suc pos₁ + pos₂ ⟧≡ v₁' →
-        v₁ ⟦ i₁ / pos₁ ⟧≡ v₂ →
+        v₁ ⟦ θ₂ / suc pos₁ + pos₂ ⟧≡ v₁' →
+        v₁ ⟦ θ₁ / pos₁ ⟧≡ v₂ →
         ∃ λ v₂' →
-        v₂  ⟦ i₂ / pos₁ + pos₂ ⟧≡ v₂' ×
-        v₁' ⟦ i₁' / pos₁ ⟧≡ v₂'
+        v₂  ⟦ θ₂ / pos₁ + pos₂ ⟧≡ v₂' ×
+        v₁' ⟦ θ₁' / pos₁ ⟧≡ v₂'
 
-  subst-unique-many : ∀ {v v₁ v₂ : A} {is ι} →
-                        v ⟦ is / ι ⟧many≡ v₁ →
-                        v ⟦ is / ι ⟧many≡ v₂ →
+  subst-unique-many : ∀ {v v₁ v₂ : A} {θs ι} →
+                        v ⟦ θs / ι ⟧many≡ v₁ →
+                        v ⟦ θs / ι ⟧many≡ v₂ →
                         v₁ ≡ v₂
   subst-unique-many [] [] = refl
   subst-unique-many (sub-v₁ ∷ subs-v₁) (sub-v₂ ∷ subs-v₂)
@@ -47,48 +47,48 @@ record Substitution⁺ (A : Set) {{S : Substitution A}} : Set1 where
   subst-unique-many (sub-v₁ ∷ subs-v₁) (sub-v₂ ∷ subs-v₂)
       | refl | refl = refl
 
-  _⟦_/_⟧many? : ∀ (v : A) is ι → Dec (∃ λ v' → v ⟦ is / ι ⟧many≡ v')
+  _⟦_/_⟧many? : ∀ (v : A) θs ι → Dec (∃ λ v' → v ⟦ θs / ι ⟧many≡ v')
   v ⟦ [] / ι ⟧many? = yes (v , [])
-  v ⟦ i ∷ is / ι ⟧many?
-    with subst-dec i ι v
+  v ⟦ θ ∷ θs / ι ⟧many?
+    with subst-dec θ ι v
   ... | no ¬sub-v = no (λ { (vₑ , sub-v ∷ subs-v) → ¬sub-v (_ , sub-v)})
   ... | yes (v' , sub-v)
-    with v' ⟦ is / ι ⟧many?
+    with v' ⟦ θs / ι ⟧many?
   ... | yes (vₑ , subs-v) = yes (vₑ , sub-v ∷ subs-v)
   ... | no ¬subs-v = no help
-    where help : ¬ (∃ λ vₑ → v ⟦ i ∷ is / ι ⟧many≡ vₑ)
+    where help : ¬ (∃ λ vₑ → v ⟦ θ ∷ θs / ι ⟧many≡ vₑ)
           help (vₑ , sub-v' ∷ subs-v)
             with subst-unique sub-v sub-v'
           help (vₑ , sub-v' ∷ subs-v)
               | refl = ¬subs-v (vₑ , subs-v)
 
   subst-subst-many : ∀ {vᵢ₁ vᵢ₂ vₒ₁ : A}
-                       {i is₁ is₂ pos₁ pos₂} →
-                       is₁ ⟦ i / pos₁ ⟧≡ is₂ →
-                       vᵢ₁ ⟦ i / pos₂ + length is₁ + pos₁ ⟧≡ vᵢ₂ →
-                       vᵢ₁ ⟦ is₁ / pos₂ ⟧many≡ vₒ₁ →
+                       {θ θs₁ θs₂ pos₁ pos₂} →
+                       θs₁ ⟦ θ / pos₁ ⟧≡ θs₂ →
+                       vᵢ₁ ⟦ θ / pos₂ + length θs₁ + pos₁ ⟧≡ vᵢ₂ →
+                       vᵢ₁ ⟦ θs₁ / pos₂ ⟧many≡ vₒ₁ →
                        ∃ λ vₒ₂ →
-                         vₒ₁ ⟦ i / pos₂ + pos₁ ⟧≡ vₒ₂ ×
-                         vᵢ₂ ⟦ is₂ / pos₂ ⟧many≡ vₒ₂
+                         vₒ₁ ⟦ θ / pos₂ + pos₁ ⟧≡ vₒ₂ ×
+                         vᵢ₂ ⟦ θs₂ / pos₂ ⟧many≡ vₒ₂
   subst-subst-many {pos₂ = pos₂} [] sub-vᵢ []
     rewrite +-comm pos₂ 0
     = _ , sub-vᵢ , []
-  subst-subst-many {is₁ = i₁ ∷ is₁} {is₂ = i₂ ∷ is₂} {pos₁} {pos₂} (sub-i ∷ sub-is) sub-vᵢ (sub₁-v ∷ subs₁-v)
+  subst-subst-many {θs₁ = θ₁ ∷ θs₁} {θs₂ = θ₂ ∷ θs₂} {pos₁} {pos₂} (sub-θ ∷ sub-θs) sub-vᵢ (sub₁-v ∷ subs₁-v)
     with begin
-      (pos₂ + suc (length is₁)) + pos₁
-    ≡⟨ +-comm pos₂ (suc (length is₁)) ∥ (λ v → v + pos₁) ⟩
-      (suc (length is₁) + pos₂) + pos₁
-    ≡⟨ +-comm (length is₁) pos₂ ∥ (λ v → suc v + pos₁) ⟩
-      (suc pos₂ + length is₁) + pos₁
-    ≡⟨ +-assoc (suc pos₂) (length is₁) pos₁ ⟩
-      suc pos₂ + (length is₁ + pos₁)
+      (pos₂ + suc (length θs₁)) + pos₁
+    ≡⟨ +-comm pos₂ (suc (length θs₁)) ∥ (λ v → v + pos₁) ⟩
+      (suc (length θs₁) + pos₂) + pos₁
+    ≡⟨ +-comm (length θs₁) pos₂ ∥ (λ v → suc v + pos₁) ⟩
+      (suc pos₂ + length θs₁) + pos₁
+    ≡⟨ +-assoc (suc pos₂) (length θs₁) pos₁ ⟩
+      suc pos₂ + (length θs₁ + pos₁)
     ∎ where open Eq-Reasoning
   ... | eq
     rewrite eq
-    with subst-subst {pos₁ = pos₂} {pos₂ = length is₁ + pos₁} sub-i sub-vᵢ sub₁-v
+    with subst-subst {pos₁ = pos₂} {pos₂ = length θs₁ + pos₁} sub-θ sub-vᵢ sub₁-v
   ... | vₘ₂ , sub-vₘ , sub₂-v
-    rewrite sym (+-assoc pos₂ (length is₁) pos₁)
-    with subst-subst-many sub-is sub-vₘ subs₁-v
+    rewrite sym (+-assoc pos₂ (length θs₁) pos₁)
+    with subst-subst-many sub-θs sub-vₘ subs₁-v
   ... | vₒ₂ , sub-vₒ , subs₂-v
     = vₒ₂ , sub-vₒ , sub₂-v ∷ subs₂-v
 
@@ -97,9 +97,9 @@ open Substitution⁺ {{...}} public
 private
   mutual
     subst-uniqueᵗ : ∀ A {{S : Substitution A}} → Set
-    subst-uniqueᵗ A = ∀ {v v₁ v₂ : A} {i ι} →
-                        v ⟦ i / ι ⟧≡ v₁ →
-                        v ⟦ i / ι ⟧≡ v₂ →
+    subst-uniqueᵗ A = ∀ {v v₁ v₂ : A} {θ ι} →
+                        v ⟦ θ / ι ⟧≡ v₁ →
+                        v ⟦ θ / ι ⟧≡ v₂ →
                         v₁ ≡ v₂
 
     τ-subst-unique : subst-uniqueᵗ Type
@@ -183,10 +183,10 @@ private
 
   mutual
     subst-decᵗ : ∀ A {{S : Substitution A}} → Set
-    subst-decᵗ A = ∀ i ι (v : A) → Dec (∃ λ v' → v ⟦ i / ι ⟧≡ v')
+    subst-decᵗ A = ∀ θ ι (v : A) → Dec (∃ λ v' → v ⟦ θ / ι ⟧≡ v')
 
     τ-subst-dec : subst-decᵗ Type
-    τ-subst-dec i ι₂ (α⁼ ι₁)
+    τ-subst-dec θ ι₂ (α⁼ ι₁)
       with Nat-cmp ι₁ ι₂
     ... | tri< ι₁<ι₂ _ _ = yes (α⁼ ι₁ , subst-α-< ι₁<ι₂)
     τ-subst-dec (α τ) .ι (α⁼ ι)
@@ -196,29 +196,29 @@ private
       no (λ { (._ , subst-α-> ι>ι) → NP.1+n≰n ι>ι
             ; (._ , subst-α-< ι<ι) → NP.1+n≰n ι<ι })
     ... | tri> _ _ ι₁>ι₂ = yes (α⁼ (pred ι₁) , subst-α-> ι₁>ι₂)
-    τ-subst-dec i ι int = yes (int , subst-int)
-    τ-subst-dec i ι ns = yes (ns , subst-ns)
-    τ-subst-dec i ι (∀[ Δ ] Γ)
-      with Γ-subst-dec i (length Δ + ι) Γ
+    τ-subst-dec θ ι int = yes (int , subst-int)
+    τ-subst-dec θ ι ns = yes (ns , subst-ns)
+    τ-subst-dec θ ι (∀[ Δ ] Γ)
+      with Γ-subst-dec θ (length Δ + ι) Γ
     ... | yes (Γ' , sub-Γ) = yes (∀[ Δ ] Γ' , subst-∀ sub-Γ)
     ... | no ¬sub-Γ = no (λ { (._ , subst-∀ sub-Γ) → ¬sub-Γ (_ , sub-Γ)})
-    τ-subst-dec i ι (tuple τs)
-      with τs⁻-subst-dec i ι τs
+    τ-subst-dec θ ι (tuple τs)
+      with τs⁻-subst-dec θ ι τs
     ... | yes (τs' , sub-τs) =
           yes (tuple τs' , subst-tuple sub-τs)
     ... | no ¬sub-τs =
       no (λ { (._ , subst-tuple sub-τs) → ¬sub-τs (_ , sub-τs) })
 
     τ⁻-subst-dec : subst-decᵗ InitType
-    τ⁻-subst-dec i ι (τ , φ)
-      with τ-subst-dec i ι τ
+    τ⁻-subst-dec θ ι (τ , φ)
+      with τ-subst-dec θ ι τ
     ... | yes (τ' , sub-τ) = yes ((τ' , φ) , subst-τ⁻ sub-τ)
     ... | no ¬sub-τ = no (λ { (._ , subst-τ⁻ sub-τ) → ¬sub-τ (_ , sub-τ) })
 
     τs⁻-subst-dec : subst-decᵗ (List InitType)
-    τs⁻-subst-dec i ι [] = yes ([] , [])
-    τs⁻-subst-dec i ι (τ⁻ ∷ τs⁻)
-      with τ⁻-subst-dec i ι τ⁻ | τs⁻-subst-dec i ι τs⁻
+    τs⁻-subst-dec θ ι [] = yes ([] , [])
+    τs⁻-subst-dec θ ι (τ⁻ ∷ τs⁻)
+      with τ⁻-subst-dec θ ι τ⁻ | τs⁻-subst-dec θ ι τs⁻
     ... | yes (τ⁻' , sub-τ⁻) | yes (τs⁻' , sub-τs⁻) =
       yes (τ⁻' ∷ τs⁻' , sub-τ⁻ ∷ sub-τs⁻)
     ... | no ¬sub-τ⁻ | _ =
@@ -227,7 +227,7 @@ private
       no (λ { (τ⁻' ∷ τs⁻' , sub-τ⁻ ∷ sub-τs⁻) → ¬sub-τs⁻ (τs⁻' , sub-τs⁻) })
 
     σ-subst-dec : subst-decᵗ StackType
-    σ-subst-dec i ι₂ (ρ⁼ ι₁)
+    σ-subst-dec θ ι₂ (ρ⁼ ι₁)
       with Nat-cmp ι₁ ι₂
     ... | tri< ι₁<ι₂ _ _ = yes (ρ⁼ ι₁ , subst-ρ-< ι₁<ι₂)
     σ-subst-dec (α τ) .ι (ρ⁼ ι)
@@ -237,9 +237,9 @@ private
     σ-subst-dec (ρ σ) .ι (ρ⁼ ι)
         | tri≈ _ refl _ = yes (weaken 0 ι σ , subst-ρ-≡)
     ... | tri> _ _ ι₁>ι₂ = yes (ρ⁼ (pred ι₁) , subst-ρ-> ι₁>ι₂)
-    σ-subst-dec i ι [] = yes ([] , [])
-    σ-subst-dec i ι (τ ∷ σ)
-      with τ-subst-dec i ι τ | σ-subst-dec i ι σ
+    σ-subst-dec θ ι [] = yes ([] , [])
+    σ-subst-dec θ ι (τ ∷ σ)
+      with τ-subst-dec θ ι τ | σ-subst-dec θ ι σ
     ... | yes (τ' , sub-τ) | yes (σ' , sub-σ) =
       yes (τ' ∷ σ' , sub-τ ∷ sub-σ)
     ... | no ¬sub-τ | _ =
@@ -248,8 +248,8 @@ private
       no (λ { (._ , sub-τ ∷ sub-σ) → ¬sub-σ (_ , sub-σ) })
 
     Γ-subst-dec : subst-decᵗ RegisterAssignment
-    Γ-subst-dec i ι (registerₐ sp regs)
-      with σ-subst-dec i ι sp | regs-subst-dec i ι regs
+    Γ-subst-dec θ ι (registerₐ sp regs)
+      with σ-subst-dec θ ι sp | regs-subst-dec θ ι regs
     ... | yes (sp' , sub-sp) | yes (regs' , sub-regs) =
       yes (registerₐ sp' regs' , subst-registerₐ sub-sp sub-regs)
     ... | no ¬sub-sp | _ =
@@ -259,9 +259,9 @@ private
          ¬sub-regs (_ , sub-regs) })
 
     regs-subst-dec : ∀ {n} → subst-decᵗ (Vec Type n)
-    regs-subst-dec i ι [] = yes ([] , [])
-    regs-subst-dec i ι (τ ∷ τs)
-      with τ-subst-dec i ι τ | regs-subst-dec i ι τs
+    regs-subst-dec θ ι [] = yes ([] , [])
+    regs-subst-dec θ ι (τ ∷ τs)
+      with τ-subst-dec θ ι τ | regs-subst-dec θ ι τs
     ... | yes (τ' , sub-τ) | yes (τs' , sub-τs) =
       yes (τ' ∷ τs' , sub-τ ∷ sub-τs)
     ... | no ¬sub-τ | _ =
@@ -367,9 +367,9 @@ private
     weaken-substᵗ : ∀ A {{S : Substitution A}} → Set
     weaken-substᵗ A = ∀ {pos₁ pos₂} inc →
                         pos₂ ≤ pos₁ →
-                        ∀ {i} {v₁ v₂ : A} →
-                        v₁ ⟦ i / pos₁ ⟧≡ v₂ →
-                        weaken pos₂ inc v₁ ⟦ i / pos₁ + inc ⟧≡ weaken pos₂ inc v₂
+                        ∀ {θ} {v₁ v₂ : A} →
+                        v₁ ⟦ θ / pos₁ ⟧≡ v₂ →
+                        weaken pos₂ inc v₁ ⟦ θ / pos₁ + inc ⟧≡ weaken pos₂ inc v₂
     τ-weaken-subst : weaken-substᵗ Type
     τ-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = α⁼ ι} (subst-α-> ι>pos₁)
       with pos₂ ≤? ι | pos₂ ≤? pred ι
@@ -469,8 +469,8 @@ private
     subst-weakenᵗ A = ∀ {pos₁ pos₂} inc →
                         pos₁ ≤ pos₂ →
                         pos₂ ≤ inc + pos₁ →
-                        ∀ {i} (v : A) →
-                        weaken pos₁ (suc inc) v ⟦ i / pos₂ ⟧≡ weaken pos₁ inc v
+                        ∀ {θ} (v : A) →
+                        weaken pos₁ (suc inc) v ⟦ θ / pos₂ ⟧≡ weaken pos₁ inc v
 
     τ-subst-weaken : subst-weakenᵗ Type
     τ-subst-weaken {pos₁} inc pos₁≤pos₂ pos₂≤inc+pos₁ (α⁼ ι)
@@ -524,9 +524,9 @@ private
       = τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ τ ∷ regs-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ τs
 
   sub-α-helper :
-    ∀ {ι pos i τ} →
+    ∀ {ι pos θ τ} →
       ι > pos →
-      α⁼ ι ⟦ i / pos ⟧≡ τ →
+      α⁼ ι ⟦ θ / pos ⟧≡ τ →
       ∃ λ ι' →
         ι ≡ suc ι' ×
         τ ≡ α⁼ ι'
@@ -539,9 +539,9 @@ private
   ... | ()
 
   sub-ρ-helper :
-    ∀ {ι pos i σ} →
+    ∀ {ι pos θ σ} →
       ι > pos →
-      ρ⁼ ι ⟦ i / pos ⟧≡ σ →
+      ρ⁼ ι ⟦ θ / pos ⟧≡ σ →
       ∃ λ ι' →
         ι ≡ suc ι' ×
         σ ≡ ρ⁼ ι'
@@ -555,42 +555,42 @@ private
 
   mutual
     subst-substᵗ : ∀ A {{_ : Substitution A}} → Set
-    subst-substᵗ A = ∀ {pos₁ pos₂ i₁ i₁' i₂} →
-                       i₁ ⟦ i₂ / pos₂ ⟧≡ i₁' →
+    subst-substᵗ A = ∀ {pos₁ pos₂ θ₁ θ₁' θ₂} →
+                       θ₁ ⟦ θ₂ / pos₂ ⟧≡ θ₁' →
                        {v₁ v₂ v₁' : A} →
-                       v₁ ⟦ i₂ / suc pos₁ + pos₂ ⟧≡ v₁' →
-                       v₁ ⟦ i₁ / pos₁ ⟧≡ v₂ →
+                       v₁ ⟦ θ₂ / suc pos₁ + pos₂ ⟧≡ v₁' →
+                       v₁ ⟦ θ₁ / pos₁ ⟧≡ v₂ →
                        ∃ λ v₂' →
-                         v₂  ⟦ i₂ / pos₁ + pos₂ ⟧≡ v₂' ×
-                         v₁' ⟦ i₁' / pos₁ ⟧≡ v₂'
+                         v₂  ⟦ θ₂ / pos₁ + pos₂ ⟧≡ v₂' ×
+                         v₁' ⟦ θ₁' / pos₁ ⟧≡ v₂'
 
     τ-subst-subst : subst-substᵗ Type
-    τ-subst-subst {pos₁} {pos₂} sub-i (subst-α-> (s≤s ι>pos)) (subst-α-> (s≤s ι>pos'))
+    τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-> (s≤s ι>pos)) (subst-α-> (s≤s ι>pos'))
       rewrite +-comm pos₁ (suc pos₂)
             | +-comm pos₂ pos₁
       = _ , subst-α-> ι>pos , subst-α-> (Nat-≤-trans (s≤s (NP.m≤m+n pos₁ pos₂)) ι>pos)
-    τ-subst-subst {pos₁} {pos₂} sub-i (subst-α-> ι>pos) subst-α-≡
+    τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-> ι>pos) subst-α-≡
       with NP.1+n≰n (Nat-≤-trans (s≤s (NP.≤-step (NP.m≤m+n pos₁ pos₂))) ι>pos)
     ... | ()
-    τ-subst-subst {pos₁} {pos₂} sub-i (subst-α-> ι>pos) (subst-α-< ι<pos)
+    τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-> ι>pos) (subst-α-< ι<pos)
       with NP.1+n≰n (Nat-≤-trans ι<pos (Nat-≤-trans (NP.≤-steps 2 (NP.m≤m+n pos₁ pos₂)) ι>pos))
     ... | ()
-    τ-subst-subst {pos₁} {pos₂} {i₂ = α τ} sub-i subst-α-≡ sub-τ₁'
+    τ-subst-subst {pos₁} {pos₂} {θ₂ = α τ} sub-θ subst-α-≡ sub-τ₁'
       with sub-α-helper (s≤s (NP.m≤m+n pos₁ pos₂)) sub-τ₁'
     ... | ι' , eq₁ , eq₂
       rewrite sym (cong pred eq₁)
             | eq₂
         = _ , subst-α-≡ , τ-subst-weaken (pos₁ + pos₂) z≤n (Nat-≤-trans (NP.m≤m+n pos₁ pos₂) (NP.m≤m+n (pos₁ + pos₂) zero)) τ
-    τ-subst-subst {pos₁} {pos₂} sub-i (subst-α-< (s≤s ι≤pos)) (subst-α-> (s≤s ι≥pos'))
+    τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-< (s≤s ι≤pos)) (subst-α-> (s≤s ι≥pos'))
         = _ , subst-α-< ι≤pos , subst-α-> (s≤s ι≥pos')
     τ-subst-subst {pos₁} {pos₂} (subst-α sub-τ) (subst-α-< ι<pos) subst-α-≡
       rewrite +-comm pos₁ pos₂
         = _ , τ-weaken-subst pos₁ z≤n sub-τ , subst-α-≡
-    τ-subst-subst {pos₁} {pos₂} sub-i (subst-α-< ι<pos) (subst-α-< ι<pos')
+    τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-< ι<pos) (subst-α-< ι<pos')
       = _ , subst-α-< (Nat-≤-trans ι<pos' (NP.m≤m+n pos₁ pos₂)) , subst-α-< ι<pos'
-    τ-subst-subst sub-i subst-int subst-int = int , subst-int , subst-int
-    τ-subst-subst sub-i subst-ns subst-ns = ns , subst-ns , subst-ns
-    τ-subst-subst {pos₁} {pos₂} sub-i {∀[ Δ ] Γ₁} (subst-∀ sub-Γ₁) (subst-∀ sub-Γ₁')
+    τ-subst-subst sub-θ subst-int subst-int = int , subst-int , subst-int
+    τ-subst-subst sub-θ subst-ns subst-ns = ns , subst-ns , subst-ns
+    τ-subst-subst {pos₁} {pos₂} sub-θ {∀[ Δ ] Γ₁} (subst-∀ sub-Γ₁) (subst-∀ sub-Γ₁')
       with begin
         length Δ + suc (pos₁ + pos₂)
       ⟨ +-assoc (length Δ) 1 (pos₁ + pos₂) ⟩≡
@@ -604,76 +604,76 @@ private
       ∎ where open Eq-Reasoning
     ... | eq
       rewrite eq
-      with Γ-subst-subst sub-i sub-Γ₁ sub-Γ₁'
+      with Γ-subst-subst sub-θ sub-Γ₁ sub-Γ₁'
     ... | Γ₂' , sub-Γ₂ , sub-Γ₂'
       rewrite +-assoc (length Δ) pos₁ pos₂
       = ∀[ Δ ] Γ₂' , subst-∀ sub-Γ₂ , subst-∀ sub-Γ₂'
-    τ-subst-subst sub-i (subst-tuple sub-τs⁻₁) (subst-tuple sub-τs⁻₁')
-      with τs⁻-subst-subst sub-i sub-τs⁻₁ sub-τs⁻₁'
+    τ-subst-subst sub-θ (subst-tuple sub-τs⁻₁) (subst-tuple sub-τs⁻₁')
+      with τs⁻-subst-subst sub-θ sub-τs⁻₁ sub-τs⁻₁'
     ... | τs⁻₂ , sub-τs⁻₂ , sub-τs⁻₂'
       = _ , subst-tuple sub-τs⁻₂ , subst-tuple sub-τs⁻₂'
 
     τ⁻-subst-subst : subst-substᵗ InitType
-    τ⁻-subst-subst sub-i (subst-τ⁻ sub-τ₁) (subst-τ⁻ sub-τ₁')
-      with τ-subst-subst sub-i sub-τ₁ sub-τ₁'
+    τ⁻-subst-subst sub-θ (subst-τ⁻ sub-τ₁) (subst-τ⁻ sub-τ₁')
+      with τ-subst-subst sub-θ sub-τ₁ sub-τ₁'
     ... | τ⁻₂ , sub-τ⁻₂ , sub-τ⁻₂'
       = _ , subst-τ⁻ sub-τ⁻₂ , subst-τ⁻ sub-τ⁻₂'
 
     τs⁻-subst-subst : subst-substᵗ (List InitType)
-    τs⁻-subst-subst sub-i [] [] = [] , [] , []
-    τs⁻-subst-subst sub-i (sub-τ₁⁻ ∷ sub-τs₁⁻) (sub-τ₁⁻' ∷ sub-τs₁⁻')
-      with τ⁻-subst-subst sub-i sub-τ₁⁻ sub-τ₁⁻'
+    τs⁻-subst-subst sub-θ [] [] = [] , [] , []
+    τs⁻-subst-subst sub-θ (sub-τ₁⁻ ∷ sub-τs₁⁻) (sub-τ₁⁻' ∷ sub-τs₁⁻')
+      with τ⁻-subst-subst sub-θ sub-τ₁⁻ sub-τ₁⁻'
     ... | τ⁻₂ , sub-τ⁻₂ , sub-τ⁻₂'
-      with τs⁻-subst-subst sub-i sub-τs₁⁻ sub-τs₁⁻'
+      with τs⁻-subst-subst sub-θ sub-τs₁⁻ sub-τs₁⁻'
     ... | τs⁻₂ , sub-τs⁻₂ , sub-τs⁻₂'
       = _ , sub-τ⁻₂ ∷ sub-τs⁻₂ , sub-τ⁻₂' ∷ sub-τs⁻₂'
 
     σ-subst-subst : subst-substᵗ StackType
-    σ-subst-subst {pos₁} {pos₂} sub-i (subst-ρ-> (s≤s ι>pos)) (subst-ρ-> (s≤s ι>pos'))
+    σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-> (s≤s ι>pos)) (subst-ρ-> (s≤s ι>pos'))
       rewrite +-comm pos₁ (suc pos₂)
             | +-comm pos₂ pos₁
       = _ , subst-ρ-> ι>pos , subst-ρ-> (Nat-≤-trans (s≤s (NP.m≤m+n pos₁ pos₂)) ι>pos)
-    σ-subst-subst {pos₁} {pos₂} sub-i (subst-ρ-> ι>pos) subst-ρ-≡
+    σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-> ι>pos) subst-ρ-≡
       with NP.1+n≰n (Nat-≤-trans (s≤s (NP.≤-step (NP.m≤m+n pos₁ pos₂))) ι>pos)
     ... | ()
-    σ-subst-subst {pos₁} {pos₂} sub-i (subst-ρ-> ι>pos) (subst-ρ-< ι<pos)
+    σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-> ι>pos) (subst-ρ-< ι<pos)
       with NP.1+n≰n (Nat-≤-trans ι<pos (Nat-≤-trans (NP.≤-steps 2 (NP.m≤m+n pos₁ pos₂)) ι>pos))
     ... | ()
-    σ-subst-subst {pos₁} {pos₂} {i₂ = ρ σ} sub-i subst-ρ-≡ sub-σ₁'
+    σ-subst-subst {pos₁} {pos₂} {θ₂ = ρ σ} sub-θ subst-ρ-≡ sub-σ₁'
       with sub-ρ-helper (s≤s (NP.m≤m+n pos₁ pos₂)) sub-σ₁'
     ... | ι' , eq₁ , eq₂
       rewrite sym (cong pred eq₁)
             | eq₂
         = _ , subst-ρ-≡ , σ-subst-weaken (pos₁ + pos₂) z≤n (Nat-≤-trans (NP.m≤m+n pos₁ pos₂) (NP.m≤m+n (pos₁ + pos₂) zero)) σ
-    σ-subst-subst {pos₁} {pos₂} sub-i (subst-ρ-< (s≤s ι≤pos)) (subst-ρ-> (s≤s ι≥pos'))
+    σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-< (s≤s ι≤pos)) (subst-ρ-> (s≤s ι≥pos'))
         = _ , subst-ρ-< ι≤pos , subst-ρ-> (s≤s ι≥pos')
     σ-subst-subst {pos₁} {pos₂} (subst-ρ sub-σ) (subst-ρ-< ι<pos) subst-ρ-≡
       rewrite +-comm pos₁ pos₂
         = _ , σ-weaken-subst pos₁ z≤n sub-σ , subst-ρ-≡
-    σ-subst-subst {pos₁} {pos₂} sub-i (subst-ρ-< ι<pos) (subst-ρ-< ι<pos')
+    σ-subst-subst {pos₁} {pos₂} sub-θ (subst-ρ-< ι<pos) (subst-ρ-< ι<pos')
       = _ , subst-ρ-< (Nat-≤-trans ι<pos' (NP.m≤m+n pos₁ pos₂)) , subst-ρ-< ι<pos'
-    σ-subst-subst sub-i [] [] = [] , [] , []
-    σ-subst-subst sub-i (sub-τ₁ ∷ sub-σ₁) (sub-τ₁' ∷ sub-σ₁')
-      with τ-subst-subst sub-i sub-τ₁ sub-τ₁'
+    σ-subst-subst sub-θ [] [] = [] , [] , []
+    σ-subst-subst sub-θ (sub-τ₁ ∷ sub-σ₁) (sub-τ₁' ∷ sub-σ₁')
+      with τ-subst-subst sub-θ sub-τ₁ sub-τ₁'
     ... | τ₂ , sub-τ₂ , sub-τ₂'
-      with σ-subst-subst sub-i sub-σ₁ sub-σ₁'
+      with σ-subst-subst sub-θ sub-σ₁ sub-σ₁'
     ... | σ₂ , sub-σ₂ , sub-σ₂'
       = _ , sub-τ₂ ∷ sub-σ₂ , sub-τ₂' ∷ sub-σ₂'
 
     Γ-subst-subst : subst-substᵗ RegisterAssignment
-    Γ-subst-subst sub-i (subst-registerₐ sub-σ₁ sub-τs₁) (subst-registerₐ sub-σ₁' sub-τs₁')
-      with σ-subst-subst sub-i sub-σ₁ sub-σ₁'
+    Γ-subst-subst sub-θ (subst-registerₐ sub-σ₁ sub-τs₁) (subst-registerₐ sub-σ₁' sub-τs₁')
+      with σ-subst-subst sub-θ sub-σ₁ sub-σ₁'
     ... | σ₂ , sub-σ₂ , sub-σ₂'
-      with regs-subst-subst sub-i sub-τs₁ sub-τs₁'
+      with regs-subst-subst sub-θ sub-τs₁ sub-τs₁'
     ... | τs₂ , sub-τs₂ , sub-τs₂'
       = _ , subst-registerₐ sub-σ₂ sub-τs₂ , subst-registerₐ sub-σ₂' sub-τs₂'
 
     regs-subst-subst : ∀ {n} → subst-substᵗ (Vec Type n)
-    regs-subst-subst sub-i [] [] = [] , [] , []
-    regs-subst-subst sub-i (sub-τ₁ ∷ sub-τs₁) (sub-τ₁' ∷ sub-τs₁')
-      with τ-subst-subst sub-i sub-τ₁ sub-τ₁'
+    regs-subst-subst sub-θ [] [] = [] , [] , []
+    regs-subst-subst sub-θ (sub-τ₁ ∷ sub-τs₁) (sub-τ₁' ∷ sub-τs₁')
+      with τ-subst-subst sub-θ sub-τ₁ sub-τ₁'
     ... | τ₂ , sub-τ₂ , sub-τ₂'
-      with regs-subst-subst sub-i sub-τs₁ sub-τs₁'
+      with regs-subst-subst sub-θ sub-τs₁ sub-τs₁'
     ... | τs₂ , sub-τs₂ , sub-τs₂'
       = _ , sub-τ₂ ∷ sub-τs₂ , sub-τ₂' ∷ sub-τs₂'
 
@@ -681,9 +681,9 @@ List-Substitution⁺ : ∀ A {S : Substitution A} {{S⁺ : Substitution⁺ A}} �
                          Substitution⁺ (List A) {{List-Substitution A}}
 List-Substitution⁺ A = substitution⁺
   (AllZip-≡ ∘₂ AllZip-zip subst-unique)
-  (λ i ι → dec-inj All-∃→ All-∃← ∘ All-dec (subst-dec i ι))
+  (λ θ ι → dec-inj All-∃→ All-∃← ∘ All-dec (subst-dec θ ι))
   (λ inc pos₂≤pos₁ → AllZip-map' _ _ (weaken-subst inc pos₂≤pos₁))
-  (λ sub-i → AllZip-∃→ ∘₂ AllZip-swap ∘₂ AllZip-zip (subst-subst sub-i))
+  (λ sub-θ → AllZip-∃→ ∘₂ AllZip-swap ∘₂ AllZip-zip (subst-subst sub-θ))
 
 instance
   Type-Substitution⁺ : Substitution⁺ Type
@@ -712,7 +712,7 @@ instance
     substitution⁺ Γ-subst-unique Γ-subst-dec Γ-weaken-subst Γ-subst-subst
 
   Instantiation-Substitution⁺ : Substitution⁺ Instantiation
-  Instantiation-Substitution⁺ = substitution⁺ unique dec i-weaken-subst i-subst-subst
+  Instantiation-Substitution⁺ = substitution⁺ unique dec θ-weaken-subst θ-subst-subst
     where unique : subst-uniqueᵗ Instantiation
           unique (subst-α sub-τ₁) (subst-α sub-τ₂) =
             cong α (subst-unique sub-τ₁ sub-τ₂)
@@ -720,111 +720,111 @@ instance
             cong ρ (subst-unique sub-σ₁ sub-σ₂)
 
           dec : subst-decᵗ Instantiation
-          dec iₚ ι (α τ) with subst-dec iₚ ι τ
+          dec θ ι (α τ) with subst-dec θ ι τ
           ... | yes (τ' , sub-τ) = yes (α τ' , subst-α sub-τ)
           ... | no ¬sub-τ =
             no (λ { (α τ' , subst-α sub-τ) → ¬sub-τ (τ' , sub-τ) })
-          dec iₚ ι (ρ σ) with subst-dec iₚ ι σ
+          dec θ ι (ρ σ) with subst-dec θ ι σ
           ... | yes (σ' , sub-σ) = yes (ρ σ' , subst-ρ sub-σ)
           ... | no ¬sub-σ =
             no (λ { (ρ σ' , subst-ρ sub-σ) → ¬sub-σ (σ' , sub-σ) })
 
-          i-weaken-subst : weaken-substᵗ Instantiation
-          i-weaken-subst inc pos₂≤pos₁ (subst-α sub-τ) =
+          θ-weaken-subst : weaken-substᵗ Instantiation
+          θ-weaken-subst inc pos₂≤pos₁ (subst-α sub-τ) =
             subst-α (τ-weaken-subst inc pos₂≤pos₁ sub-τ)
-          i-weaken-subst inc pos₂≤pos₁ (subst-ρ sub-σ) =
+          θ-weaken-subst inc pos₂≤pos₁ (subst-ρ sub-σ) =
             subst-ρ (σ-weaken-subst inc pos₂≤pos₁ sub-σ)
 
-          i-subst-subst : subst-substᵗ Instantiation
-          i-subst-subst sub-i (subst-α sub-τ₁) (subst-α sub-τ₁')
-            with subst-subst sub-i sub-τ₁ sub-τ₁'
+          θ-subst-subst : subst-substᵗ Instantiation
+          θ-subst-subst sub-θ (subst-α sub-τ₁) (subst-α sub-τ₁')
+            with subst-subst sub-θ sub-τ₁ sub-τ₁'
           ... | τ₂ , sub-τ₂ , sub-τ₂'
             = _ , subst-α sub-τ₂ , subst-α sub-τ₂'
-          i-subst-subst sub-i (subst-ρ sub-σ₁) (subst-ρ sub-σ₁')
-            with subst-subst sub-i sub-σ₁ sub-σ₁'
+          θ-subst-subst sub-θ (subst-ρ sub-σ₁) (subst-ρ sub-σ₁')
+            with subst-subst sub-θ sub-σ₁ sub-σ₁'
           ... | σ₂ , sub-σ₂ , sub-σ₂'
             = _ , subst-ρ sub-σ₂ , subst-ρ sub-σ₂'
 
   Instantiations-Substitution⁺ : Substitution⁺ Instantiations
-  Instantiations-Substitution⁺ = substitution⁺ unique dec is-weaken-subst is-subst-subst
+  Instantiations-Substitution⁺ = substitution⁺ unique dec θs-weaken-subst θs-subst-subst
     where unique : subst-uniqueᵗ Instantiations
           unique [] [] = refl
-          unique (sub-i₁ ∷ sub-is₁) (sub-i₂ ∷ sub-is₂)
-            rewrite subst-unique sub-i₁ sub-i₂
-                  | unique sub-is₁ sub-is₂ = refl
+          unique (sub-θ₁ ∷ sub-θs₁) (sub-θ₂ ∷ sub-θs₂)
+            rewrite subst-unique sub-θ₁ sub-θ₂
+                  | unique sub-θs₁ sub-θs₂ = refl
 
           dec : subst-decᵗ Instantiations
-          dec i ι [] = yes ([] , [])
-          dec i ι (i₁ ∷ is₁)
-            with subst-dec i (length is₁ + ι) i₁ | dec i ι is₁
-          ... | yes (i₂ , sub-i) | yes (is₂ , sub-is) = yes (i₂ ∷ is₂ , sub-i ∷ sub-is)
-          ... | no ¬sub-i | _ = no ( λ { (._ , sub-i ∷ sub-is) → ¬sub-i (_ , sub-i) })
-          ... | _ | no ¬sub-is = no ( λ { (._ , sub-i ∷ sub-is) → ¬sub-is (_ , sub-is) })
+          dec θ ι [] = yes ([] , [])
+          dec θ ι (θ₁ ∷ θs₁)
+            with subst-dec θ (length θs₁ + ι) θ₁ | dec θ ι θs₁
+          ... | yes (θ₂ , sub-θ) | yes (θs₂ , sub-θs) = yes (θ₂ ∷ θs₂ , sub-θ ∷ sub-θs)
+          ... | no ¬sub-θ | _ = no ( λ { (._ , sub-θ ∷ sub-θs) → ¬sub-θ (_ , sub-θ) })
+          ... | _ | no ¬sub-θs = no ( λ { (._ , sub-θ ∷ sub-θs) → ¬sub-θs (_ , sub-θs) })
 
-          is-weaken-length : ∀ pos inc is →
-                               length (weaken-is pos inc is) ≡ length is
-          is-weaken-length pos inc [] = refl
-          is-weaken-length pos inc (i ∷ is)
-            rewrite is-weaken-length pos inc is = refl
+          θs-weaken-length : ∀ pos inc θs →
+                               length (weaken-θs pos inc θs) ≡ length θs
+          θs-weaken-length pos inc [] = refl
+          θs-weaken-length pos inc (θ ∷ θs)
+            rewrite θs-weaken-length pos inc θs = refl
 
-          is-subst-length : ∀ {is₁ is₂ : Instantiations} {i pos} →
-                              is₁ ⟦ i / pos ⟧≡ is₂ →
-                              length is₁ ≡ length is₂
-          is-subst-length [] = refl
-          is-subst-length (sub-i ∷ sub-is) = cong suc (is-subst-length sub-is)
+          θs-subst-length : ∀ {θs₁ θs₂ : Instantiations} {θ pos} →
+                              θs₁ ⟦ θ / pos ⟧≡ θs₂ →
+                              length θs₁ ≡ length θs₂
+          θs-subst-length [] = refl
+          θs-subst-length (sub-θ ∷ sub-θs) = cong suc (θs-subst-length sub-θs)
 
-          is-weaken-subst : weaken-substᵗ Instantiations
-          is-weaken-subst inc pos₂≤pos₁ [] = []
-          is-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = i₁ ∷ is₁} {v₂ = i₂ ∷ is₂} (sub-i ∷ sub-is)
-            with weaken-subst inc (l+m≤l+n (length is₁) pos₂≤pos₁) sub-i
-          ... | sub-i'
+          θs-weaken-subst : weaken-substᵗ Instantiations
+          θs-weaken-subst inc pos₂≤pos₁ [] = []
+          θs-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = θ₁ ∷ θs₁} {v₂ = θ₂ ∷ θs₂} (sub-θ ∷ sub-θs)
+            with weaken-subst inc (l+m≤l+n (length θs₁) pos₂≤pos₁) sub-θ
+          ... | sub-θ'
             with begin
-              length is₁ + pos₂
-            ≡⟨ is-subst-length sub-is ∥ (λ v → v + pos₂) ⟩
-              length is₂ + pos₂
+              length θs₁ + pos₂
+            ≡⟨ θs-subst-length sub-θs ∥ (λ v → v + pos₂) ⟩
+              length θs₂ + pos₂
             ∎ | begin
-              (length is₁ + pos₁) + inc
-            ≡⟨ +-assoc (length is₁) pos₁ inc ⟩
-              length is₁ + (pos₁ + inc)
-            ⟨ is-weaken-length pos₂ inc is₁ ∥ (λ v → v + (pos₁ + inc)) ⟩≡
-              length (weaken pos₂ inc is₁) + (pos₁ + inc)
+              (length θs₁ + pos₁) + inc
+            ≡⟨ +-assoc (length θs₁) pos₁ inc ⟩
+              length θs₁ + (pos₁ + inc)
+            ⟨ θs-weaken-length pos₂ inc θs₁ ∥ (λ v → v + (pos₁ + inc)) ⟩≡
+              length (weaken pos₂ inc θs₁) + (pos₁ + inc)
             ∎ where open Eq-Reasoning
           ... | eq₁ | eq₂
             rewrite eq₁ | eq₂
-            = sub-i' ∷ is-weaken-subst inc pos₂≤pos₁ sub-is
+            = sub-θ' ∷ θs-weaken-subst inc pos₂≤pos₁ sub-θs
 
-          is-subst-subst : subst-substᵗ Instantiations
-          is-subst-subst sub-i [] [] = [] , [] , []
-          is-subst-subst {pos₁} {pos₂} sub-i {v₁ = i₁ ∷ is₁} {i₂ ∷ is₂} {i₁' ∷ is₁'} (sub-i₁ ∷ sub-is₁) (sub-i₁' ∷ sub-is₁')
+          θs-subst-subst : subst-substᵗ Instantiations
+          θs-subst-subst sub-θ [] [] = [] , [] , []
+          θs-subst-subst {pos₁} {pos₂} sub-θ {v₁ = θ₁ ∷ θs₁} {θ₂ ∷ θs₂} {θ₁' ∷ θs₁'} (sub-θ₁ ∷ sub-θs₁) (sub-θ₁' ∷ sub-θs₁')
             with begin
-              length is₁ + suc (pos₁ + pos₂)
-            ⟨ +-assoc (length is₁) (suc pos₁) pos₂ ⟩≡
-              (length is₁ + suc pos₁) + pos₂
-            ≡⟨ +-comm (length is₁) (suc pos₁) ∥ (λ v → v + pos₂) ⟩
-              (suc pos₁ + length is₁) + pos₂
-            ≡⟨ +-comm pos₁ (length is₁) ∥ (λ v → suc v + pos₂) ⟩
-              (suc (length is₁ + pos₁)) + pos₂
+              length θs₁ + suc (pos₁ + pos₂)
+            ⟨ +-assoc (length θs₁) (suc pos₁) pos₂ ⟩≡
+              (length θs₁ + suc pos₁) + pos₂
+            ≡⟨ +-comm (length θs₁) (suc pos₁) ∥ (λ v → v + pos₂) ⟩
+              (suc pos₁ + length θs₁) + pos₂
+            ≡⟨ +-comm pos₁ (length θs₁) ∥ (λ v → suc v + pos₂) ⟩
+              (suc (length θs₁ + pos₁)) + pos₂
             ≡⟨ refl ⟩
-              suc ((length is₁ + pos₁) + pos₂)
+              suc ((length θs₁ + pos₁) + pos₂)
             ∎ | begin
-              (length is₁ + pos₁) + pos₂
-            ≡⟨ +-assoc (length is₁) pos₁ pos₂ ⟩
-              length is₁ + (pos₁ + pos₂)
-            ≡⟨ is-subst-length sub-is₁' ∥ (λ v → v + (pos₁ + pos₂)) ⟩
-              length is₂ + (pos₁ + pos₂)
+              (length θs₁ + pos₁) + pos₂
+            ≡⟨ +-assoc (length θs₁) pos₁ pos₂ ⟩
+              length θs₁ + (pos₁ + pos₂)
+            ≡⟨ θs-subst-length sub-θs₁' ∥ (λ v → v + (pos₁ + pos₂)) ⟩
+              length θs₂ + (pos₁ + pos₂)
             ∎ | begin
-              length is₁ + pos₁
-            ≡⟨ is-subst-length sub-is₁ ∥ (λ v → v + pos₁) ⟩
-              length is₁' + pos₁
+              length θs₁ + pos₁
+            ≡⟨ θs-subst-length sub-θs₁ ∥ (λ v → v + pos₁) ⟩
+              length θs₁' + pos₁
             ∎ where open Eq-Reasoning
           ... | eq₁ | eq₂ | eq₃
             rewrite eq₁
-            with subst-subst sub-i sub-i₁ sub-i₁'
-          ... | i₂' , sub-i₂ , sub-i₂'
-            with is-subst-subst sub-i sub-is₁ sub-is₁'
-          ... | is₂' , sub-is₂ , sub-is₂'
+            with subst-subst sub-θ sub-θ₁ sub-θ₁'
+          ... | θ₂' , sub-θ₂ , sub-θ₂'
+            with θs-subst-subst sub-θ sub-θs₁ sub-θs₁'
+          ... | θs₂' , sub-θs₂ , sub-θs₂'
             rewrite eq₂ | eq₃
-            = i₂' ∷ is₂' , sub-i₂ ∷ sub-is₂ , sub-i₂' ∷ sub-is₂'
+            = θ₂' ∷ θs₂' , sub-θ₂ ∷ sub-θs₂ , sub-θ₂' ∷ sub-θs₂'
 
   SmallValue-Substitution⁺ : Substitution⁺ SmallValue
   SmallValue-Substitution⁺ = substitution⁺ unique dec v-weaken-subst v-subst-subst
@@ -832,36 +832,36 @@ instance
           unique subst-reg subst-reg = refl
           unique subst-globval subst-globval = refl
           unique subst-int subst-int = refl
-          unique (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₂ sub-is₂)
+          unique (subst-Λ sub-v₁ sub-θs₁) (subst-Λ sub-v₂ sub-θs₂)
             rewrite unique sub-v₁ sub-v₂
-                  | subst-unique sub-is₁ sub-is₂ = refl
+                  | subst-unique sub-θs₁ sub-θs₂ = refl
 
           dec : subst-decᵗ SmallValue
-          dec i  ι (reg ♯r) = yes (reg ♯r , subst-reg)
-          dec i  ι (globval lab) = yes (globval lab , subst-globval)
-          dec iₚ ι (int i) = yes (int i , subst-int)
-          dec i  ι (Λ Δ ∙ v ⟦ is ⟧)
-            with dec i ι v | subst-dec i (length Δ + ι) is
-          ... | yes (v' , sub-v) | yes (is' , sub-is) = yes (Λ Δ ∙ v' ⟦ is' ⟧ , subst-Λ sub-v sub-is)
-          ... | no ¬sub-v | _ = no (λ { (._ , subst-Λ sub-v sub-is) → ¬sub-v (_ , sub-v) })
-          ... | _ | no ¬sub-is = no (λ { (._ , subst-Λ sub-v sub-is) → ¬sub-is (_ , sub-is) })
+          dec θ ι (reg ♯r) = yes (reg ♯r , subst-reg)
+          dec θ ι (globval lab) = yes (globval lab , subst-globval)
+          dec θ ι (int i) = yes (int i , subst-int)
+          dec θ ι (Λ Δ ∙ v ⟦ θs ⟧)
+            with dec θ ι v | subst-dec θ (length Δ + ι) θs
+          ... | yes (v' , sub-v) | yes (θs' , sub-θs) = yes (Λ Δ ∙ v' ⟦ θs' ⟧ , subst-Λ sub-v sub-θs)
+          ... | no ¬sub-v | _ = no (λ { (._ , subst-Λ sub-v sub-θs) → ¬sub-v (_ , sub-v) })
+          ... | _ | no ¬sub-θs = no (λ { (._ , subst-Λ sub-v sub-θs) → ¬sub-θs (_ , sub-θs) })
 
           v-weaken-subst : weaken-substᵗ SmallValue
           v-weaken-subst inc pos₂≤pos₁ subst-reg = subst-reg
           v-weaken-subst inc pos₂≤pos₁ subst-globval = subst-globval
           v-weaken-subst inc pos₂≤pos₁ subst-int = subst-int
-          v-weaken-subst {pos₁} inc pos₂≤pos₁ {v₁ = Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v sub-is)
-            with weaken-subst inc (l+m≤l+n (length Δ) pos₂≤pos₁) sub-is
-          ... | sub-is'
+          v-weaken-subst {pos₁} inc pos₂≤pos₁ {v₁ = Λ Δ ∙ v ⟦ θs ⟧} (subst-Λ sub-v sub-θs)
+            with weaken-subst inc (l+m≤l+n (length Δ) pos₂≤pos₁) sub-θs
+          ... | sub-θs'
             rewrite +-assoc (length Δ) pos₁ inc
-            = subst-Λ (v-weaken-subst inc pos₂≤pos₁ sub-v) sub-is'
+            = subst-Λ (v-weaken-subst inc pos₂≤pos₁ sub-v) sub-θs'
 
           v-subst-subst : subst-substᵗ SmallValue
-          v-subst-subst sub-i subst-reg subst-reg = _ , subst-reg , subst-reg
-          v-subst-subst sub-i subst-globval subst-globval = _ , subst-globval , subst-globval
-          v-subst-subst sub-i subst-int subst-int = _ , subst-int , subst-int
-          v-subst-subst {pos₁} {pos₂} sub-i {Λ Δ ∙ v ⟦ is ⟧} (subst-Λ sub-v₁ sub-is₁) (subst-Λ sub-v₁' sub-is₁')
-            with v-subst-subst sub-i sub-v₁ sub-v₁'
+          v-subst-subst sub-θ subst-reg subst-reg = _ , subst-reg , subst-reg
+          v-subst-subst sub-θ subst-globval subst-globval = _ , subst-globval , subst-globval
+          v-subst-subst sub-θ subst-int subst-int = _ , subst-int , subst-int
+          v-subst-subst {pos₁} {pos₂} sub-θ {Λ Δ ∙ v ⟦ θs ⟧} (subst-Λ sub-v₁ sub-θs₁) (subst-Λ sub-v₁' sub-θs₁')
+            with v-subst-subst sub-θ sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             with begin
               length Δ + suc (pos₁ + pos₂)
@@ -874,10 +874,10 @@ instance
             ∎ where open Eq-Reasoning
           ... | eq
             rewrite eq
-            with subst-subst {{Instantiations-Substitution⁺}} {length Δ + pos₁} {pos₂} sub-i sub-is₁ sub-is₁'
-          ... | is₂ , sub-is₂ , sub-is₂'
+            with subst-subst {{Instantiations-Substitution⁺}} {length Δ + pos₁} {pos₂} sub-θ sub-θs₁ sub-θs₁'
+          ... | θs₂ , sub-θs₂ , sub-θs₂'
             rewrite +-assoc (length Δ) pos₁ pos₂
-            = _ , subst-Λ sub-v₂ sub-is₂ , subst-Λ sub-v₂' sub-is₂'
+            = _ , subst-Λ sub-v₂ sub-θs₂ , subst-Λ sub-v₂' sub-θs₂'
 
   Instruction-Substitution⁺ : Substitution⁺ Instruction
   Instruction-Substitution⁺ = substitution⁺ unique dec ι-weaken-subst ι-subst-subst
@@ -900,39 +900,39 @@ instance
             rewrite subst-unique sub-v₁ sub-v₂ = refl
 
           dec : subst-decᵗ Instruction
-          dec i ιₚ (add ♯rd ♯rs v)
-            with subst-dec i ιₚ v
+          dec θ ιₚ (add ♯rd ♯rs v)
+            with subst-dec θ ιₚ v
           ... | yes (v' , sub-v) = yes (add ♯rd ♯rs v' , subst-add sub-v)
           ... | no ¬sub-v =
             no (λ { (add .♯rd .♯rs v' , subst-add sub-v) →
               ¬sub-v (v' , sub-v) })
-          dec i ιₚ (sub ♯rd ♯rs v)
-            with subst-dec i ιₚ v
+          dec θ ιₚ (sub ♯rd ♯rs v)
+            with subst-dec θ ιₚ v
           ... | yes (v' , sub-v) = yes (sub ♯rd ♯rs v' , subst-sub sub-v)
           ... | no ¬sub-v =
             no (λ { (sub .♯rd .♯rs v' , subst-sub sub-v) →
               ¬sub-v (v' , sub-v) })
-          dec i ιₚ (sfree n) = yes (sfree n , subst-sfree)
-          dec i ιₚ (salloc n) = yes (salloc n , subst-salloc)
-          dec iₚ ιₚ (sld ♯rd i) = yes (sld ♯rd i , subst-sld)
-          dec iₚ ιₚ (sst i ♯rs) = yes (sst i ♯rs , subst-sst)
-          dec iₚ ιₚ (ld ♯rd ♯rs i) = yes (ld ♯rd ♯rs i , subst-ld)
-          dec iₚ ιₚ (st ♯rd i ♯rs) = yes (st ♯rd i ♯rs , subst-st)
-          dec i ιₚ (malloc ♯rd τs)
-            with subst-dec i ιₚ τs
+          dec θ ιₚ (sfree n) = yes (sfree n , subst-sfree)
+          dec θ ιₚ (salloc n) = yes (salloc n , subst-salloc)
+          dec θ ιₚ (sld ♯rd i) = yes (sld ♯rd i , subst-sld)
+          dec θ ιₚ (sst i ♯rs) = yes (sst i ♯rs , subst-sst)
+          dec θ ιₚ (ld ♯rd ♯rs i) = yes (ld ♯rd ♯rs i , subst-ld)
+          dec θ ιₚ (st ♯rd i ♯rs) = yes (st ♯rd i ♯rs , subst-st)
+          dec θ ιₚ (malloc ♯rd τs)
+            with subst-dec θ ιₚ τs
           ... | yes (τs' , sub-τs) =
             yes (malloc ♯rd τs' , subst-malloc sub-τs)
           ... | no ¬sub-τs =
             no (λ { (malloc .♯rd τs' , subst-malloc sub-τs) →
               ¬sub-τs (τs' , sub-τs) })
-          dec i ιₚ (mov ♯rd v)
-            with subst-dec i ιₚ v
+          dec θ ιₚ (mov ♯rd v)
+            with subst-dec θ ιₚ v
           ... | yes (v' , sub-v) = yes (mov ♯rd v' , subst-mov sub-v)
           ... | no ¬sub-v =
             no (λ { (mov .♯rd v' , subst-mov sub-v) →
               ¬sub-v (v' , sub-v) })
-          dec i ιₚ (beq ♯r v)
-            with subst-dec i ιₚ v
+          dec θ ιₚ (beq ♯r v)
+            with subst-dec θ ιₚ v
           ... | yes (v' , sub-v) = yes (beq ♯r v' , subst-beq sub-v)
           ... | no ¬sub-v =
             no (λ { (beq .♯r v' , subst-beq sub-v) →
@@ -952,30 +952,30 @@ instance
           ι-weaken-subst inc pos₂≤pos₁ (subst-beq sub-v) = subst-beq (weaken-subst inc pos₂≤pos₁ sub-v)
 
           ι-subst-subst : subst-substᵗ Instruction
-          ι-subst-subst sub-i (subst-add sub-v₁) (subst-add sub-v₁')
-            with subst-subst sub-i sub-v₁ sub-v₁'
+          ι-subst-subst sub-θ (subst-add sub-v₁) (subst-add sub-v₁')
+            with subst-subst sub-θ sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             = _ , subst-add sub-v₂ , subst-add sub-v₂'
-          ι-subst-subst sub-i (subst-sub sub-v₁) (subst-sub sub-v₁')
-            with subst-subst sub-i sub-v₁ sub-v₁'
+          ι-subst-subst sub-θ (subst-sub sub-v₁) (subst-sub sub-v₁')
+            with subst-subst sub-θ sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             = _ , subst-sub sub-v₂ , subst-sub sub-v₂'
-          ι-subst-subst sub-i subst-salloc subst-salloc = _ , subst-salloc , subst-salloc
-          ι-subst-subst sub-i subst-sfree subst-sfree = _ , subst-sfree , subst-sfree
-          ι-subst-subst sub-i subst-sld subst-sld = _ , subst-sld , subst-sld
-          ι-subst-subst sub-i subst-sst subst-sst = _ , subst-sst , subst-sst
-          ι-subst-subst sub-i subst-ld subst-ld = _ , subst-ld , subst-ld
-          ι-subst-subst sub-i subst-st subst-st = _ , subst-st , subst-st
-          ι-subst-subst sub-i (subst-malloc sub-τs₁) (subst-malloc sub-τs₁')
-            with subst-subst sub-i sub-τs₁ sub-τs₁'
+          ι-subst-subst sub-θ subst-salloc subst-salloc = _ , subst-salloc , subst-salloc
+          ι-subst-subst sub-θ subst-sfree subst-sfree = _ , subst-sfree , subst-sfree
+          ι-subst-subst sub-θ subst-sld subst-sld = _ , subst-sld , subst-sld
+          ι-subst-subst sub-θ subst-sst subst-sst = _ , subst-sst , subst-sst
+          ι-subst-subst sub-θ subst-ld subst-ld = _ , subst-ld , subst-ld
+          ι-subst-subst sub-θ subst-st subst-st = _ , subst-st , subst-st
+          ι-subst-subst sub-θ (subst-malloc sub-τs₁) (subst-malloc sub-τs₁')
+            with subst-subst sub-θ sub-τs₁ sub-τs₁'
           ... | τs₂ , sub-τs₂ , sub-τs₂'
             = _ , subst-malloc sub-τs₂ , subst-malloc sub-τs₂'
-          ι-subst-subst sub-i (subst-mov sub-v₁) (subst-mov sub-v₁')
-            with subst-subst sub-i sub-v₁ sub-v₁'
+          ι-subst-subst sub-θ (subst-mov sub-v₁) (subst-mov sub-v₁')
+            with subst-subst sub-θ sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             = _ , subst-mov sub-v₂ , subst-mov sub-v₂'
-          ι-subst-subst sub-i (subst-beq sub-v₁) (subst-beq sub-v₁')
-            with subst-subst sub-i sub-v₁ sub-v₁'
+          ι-subst-subst sub-θ (subst-beq sub-v₁) (subst-beq sub-v₁')
+            with subst-subst sub-θ sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             = _ , subst-beq sub-v₂ , subst-beq sub-v₂'
 
@@ -989,20 +989,20 @@ instance
           unique subst-halt subst-halt = refl
 
           dec : subst-decᵗ InstructionSequence
-          dec i ιₚ (ι ~> I)
-            with subst-dec i ιₚ ι | dec i ιₚ I
+          dec θ ιₚ (ι ~> I)
+            with subst-dec θ ιₚ ι | dec θ ιₚ I
           ... | yes (ι' , sub-ι) | yes (I' , sub-I) =
             yes (ι' ~> I' , subst-~> sub-ι sub-I)
           ... | no ¬sub-ι | _ =
             no (λ { (ι' ~> I' , subst-~> sub-ι sub-I) → ¬sub-ι (ι' , sub-ι)})
           ... | _ | no ¬sub-I =
             no (λ { (ι' ~> I' , subst-~> sub-ι sub-I) → ¬sub-I (I' , sub-I)})
-          dec i ι (jmp v)
-            with subst-dec i ι v
+          dec θ ι (jmp v)
+            with subst-dec θ ι v
           ... | yes (v' , sub-v) = yes (jmp v' , subst-jmp sub-v)
           ... | no ¬sub-v =
             no (λ { (jmp v' , subst-jmp sub-v) → ¬sub-v (v' , sub-v)})
-          dec i ι halt = yes (halt , subst-halt)
+          dec θ ι halt = yes (halt , subst-halt)
 
           I-weaken-subst : weaken-substᵗ InstructionSequence
           I-weaken-subst inc pos₂≤pos₁ (subst-~> sub-v sub-I) = subst-~> (weaken-subst inc pos₂≤pos₁ sub-v) (I-weaken-subst inc pos₂≤pos₁ sub-I)
@@ -1010,15 +1010,15 @@ instance
           I-weaken-subst inc pos₂≤pos₁ subst-halt = subst-halt
 
           I-subst-subst : subst-substᵗ InstructionSequence
-          I-subst-subst sub-i (subst-~> sub-ι₁ sub-I₁) (subst-~> sub-ι₁' sub-I₁')
-            with subst-subst sub-i sub-ι₁ sub-ι₁'
+          I-subst-subst sub-θ (subst-~> sub-ι₁ sub-I₁) (subst-~> sub-ι₁' sub-I₁')
+            with subst-subst sub-θ sub-ι₁ sub-ι₁'
           ... | ι₂ , sub-ι₂ , sub-ι₂'
-            with I-subst-subst sub-i sub-I₁ sub-I₁'
+            with I-subst-subst sub-θ sub-I₁ sub-I₁'
           ... | I₂ , sub-I₂ , sub-I₂'
             = _ , subst-~> sub-ι₂ sub-I₂ , subst-~> sub-ι₂' sub-I₂'
-          I-subst-subst sub-i (subst-jmp sub-v₁) (subst-jmp sub-v₁')
-            with subst-subst sub-i sub-v₁ sub-v₁'
+          I-subst-subst sub-θ (subst-jmp sub-v₁) (subst-jmp sub-v₁')
+            with subst-subst sub-θ sub-v₁ sub-v₁'
           ... | v₂ , sub-v₂ , sub-v₂'
             = _ , subst-jmp sub-v₂ , subst-jmp sub-v₂'
-          I-subst-subst sub-i subst-halt subst-halt
+          I-subst-subst sub-θ subst-halt subst-halt
             = halt , subst-halt , subst-halt
