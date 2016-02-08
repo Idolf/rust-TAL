@@ -126,7 +126,7 @@ mutual
     of-ns :
             ∀ {ψ₁ ψ₂} →
       -----------------------
-      ψ₁ , ψ₂ ⊢ ns of ns wval
+      ψ₁ , ψ₂ ⊢ uninit of ns wval
 
     of-Λ :
             ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w is} →
@@ -143,8 +143,8 @@ mutual
     of-uninit :
                   ∀ {ψ₁ ψ₂ τ} →
                  [] ⊢ τ Valid →
-      --------------------------------------
-      ψ₁ , ψ₂ ⊢ uninit τ of τ , uninit wval⁰
+      ------------------------------------
+      ψ₁ , ψ₂ ⊢ uninit of τ , uninit wval⁰
 
     of-init :
            ∀ {ψ₁ ψ₂ w τ φ} →

@@ -110,13 +110,13 @@ instance
           from (node 0 (lab ∷ _)) = globval <$> fromTree lab
           from (node 1 (labₕ ∷ _)) = heapval <$> fromTree labₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
-          from (node 3 _) = just ns
+          from (node 3 _) = just uninit
           from _ = nothing
           sur : IsSurjective from
           sur (globval lab) = T₁ 0 lab , globval <$=> invTree lab
           sur (heapval labₕ) = T₁ 1 labₕ , heapval <$=> invTree labₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
-          sur ns = T₀ 3 , refl
+          sur uninit = T₀ 3 , refl
 
   SmallValueₛ-Tree : ToTree S.SmallValue
   SmallValueₛ-Tree = tree⋆ from sur
@@ -258,18 +258,16 @@ instance
           from (node 0 (lab ∷ _)) = globval <$> fromTree lab
           from (node 1 (labₕ ∷ _)) = heapval <$> fromTree labₕ
           from (node 2 (n ∷ _)) = int <$> fromTree n
-          from (node 3 _) = just ns
-          from (node 4 (τ ∷ _)) = uninit <$> fromTree τ
-          from (node 5 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
+          from (node 3 _) = just uninit
+          from (node 4 (Δ ∷ w ∷ is ∷ _)) = Λ_∙_⟦_⟧ <$> fromTree Δ <*> from w <*> fromTree is
           from _ = nothing
           sur : IsSurjective from
           sur (globval lab) = T₁ 0 lab ,
             globval <$=> invTree lab
           sur (heapval labₕ) = T₁ 1 labₕ , heapval <$=> invTree labₕ
           sur (int n) = T₁ 2 n , int <$=> invTree n
-          sur ns = T₀ 3 , refl
-          sur (uninit τ) = T₁ 4 τ , uninit <$=> invTree τ
-          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 5 Δ (proj₁ (sur w)) is ,
+          sur uninit = T₀ 3 , refl
+          sur (Λ Δ ∙ w ⟦ is ⟧) = T₃ 4 Δ (proj₁ (sur w)) is ,
             Λ_∙_⟦_⟧ <$=> invTree Δ <*=> proj₂ (sur w) <*=> invTree is
 
   SmallValueₕ-Tree : ToTree H.SmallValue

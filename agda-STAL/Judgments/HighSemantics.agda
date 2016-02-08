@@ -50,7 +50,7 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                       ∀ {H sp regs I n} →
       -------------------------------------------------
       G ⊢ₕ H , register sp regs , salloc n ~> I ⇒
-           H , register (replicate n ns ++ sp) regs , I
+           H , register (replicate n uninit ++ sp) regs , I
 
     step-sfree :
                   ∀ {H sp sp' regs I n} →
@@ -69,7 +69,7 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
     step-sst :
              ∀ {H sp sp' regs I ♯rs i} →
            sp ⟦ i ⟧← lookup ♯rs regs ⇒ sp' →
-      --------------------------------------------
+      ---------------------------------------------
       G ⊢ₕ H , register sp  regs , sst i ♯rs ~> I ⇒
            H , register sp' regs , I
 
@@ -96,7 +96,7 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                     ∀ {H sp regs I ♯rd τs} →
       -----------------------------------------------------------
       G ⊢ₕ H , register sp regs , malloc ♯rd τs ~> I ⇒
-           H ∷ʳ tuple (map uninit τs) ,
+           H ∷ʳ tuple (replicate (length τs) uninit) ,
            register sp (update ♯rd (heapval (length H)) regs) , I
 
     step-mov :
@@ -133,12 +133,12 @@ data ⊢ₕ_⇒_ : Program → Program → Set where
   step-running :
           ∀ {G P P'} →
           G ⊢ₕ P ⇒ P' →
-    -------------------------
+    -----------------------------
     ⊢ₕ running G P ⇒ running G P'
 
   step-halting :
                ∀ {G H R} →
-    ----------------------------------
+    ------------------------------------
     ⊢ₕ running G (H , R , halt) ⇒ halted
 
   step-halted :

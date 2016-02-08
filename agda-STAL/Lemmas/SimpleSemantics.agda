@@ -43,19 +43,19 @@ private
   is-int (globval lab) = no (λ { (_ , ()) })
   is-int (heapval labₕ) = no (λ { (_ , ()) })
   is-int (int n) = yes (n , refl)
-  is-int ns = no (λ { (_ , ()) })
+  is-int uninit = no (λ { (_ , ()) })
 
   is-heapval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ heapval labₕ)
   is-heapval (globval lab) = no (λ { (_ , ()) })
   is-heapval (heapval labₕ) = yes (labₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
-  is-heapval ns = no (λ { (_ , ()) })
+  is-heapval uninit = no (λ { (_ , ()) })
 
   is-globval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ globval labₕ)
   is-globval (globval lab) = yes (lab , refl)
   is-globval (heapval labₕ) = no (λ { (_ , ()) })
   is-globval (int n) = no (λ { (_ , ()) })
-  is-globval ns = no (λ { (_ , ()) })
+  is-globval uninit = no (λ { (_ , ()) })
 
 instantiate-uniqueₛ : ∀ {G w I₁ I₂} →
                         InstantiateGlobal G w I₁ →
@@ -141,7 +141,7 @@ instantiate-decₛ G (globval lab)
 ... | yes (code I , l') = yes (I , instantiate-globval l')
 instantiate-decₛ G (heapval lab) = no (λ { (_ , ()) })
 instantiate-decₛ G (int n) = no (λ { (_ , ()) })
-instantiate-decₛ G ns = no (λ { (_ , ()) })
+instantiate-decₛ G uninit = no (λ { (_ , ()) })
 
 step-decₛ : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
 step-decₛ G (H , register sp regs , add ♯rd ♯rs v ~> I)

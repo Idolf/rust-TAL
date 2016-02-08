@@ -64,7 +64,7 @@ private
 
   replicate-helper : ∀ {ψ₁ ψ₂ sp σ} n →
                        ψ₁ , ψ₂ ⊢ sp of σ stack →
-                       ψ₁ , ψ₂ ⊢ replicate n ns ++ sp of stack-append (replicate n ns) σ stack
+                       ψ₁ , ψ₂ ⊢ replicate n uninit ++ sp of stack-append (replicate n ns) σ stack
   replicate-helper zero sp⋆ = sp⋆
   replicate-helper (suc n) sp⋆ = of-ns ∷ replicate-helper n sp⋆
 
@@ -82,7 +82,7 @@ private
 
   map-uninit-helper : ∀ {ψ₁ ψ₂ τs} →
                         [] ⊢ τs Valid →
-                        AllZip (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval⁰) (map uninit τs) (map (λ τ → τ , uninit) τs)
+                        AllZip (λ w τ → ψ₁ , ψ₂ ⊢ w of τ wval⁰) (replicate (length τs) uninit) (map (λ τ → τ , uninit) τs)
   map-uninit-helper [] = []
   map-uninit-helper (τ⋆ ∷ τs⋆) = of-uninit τ⋆ ∷ map-uninit-helper τs⋆
 

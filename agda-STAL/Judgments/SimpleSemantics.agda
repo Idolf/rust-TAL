@@ -5,6 +5,9 @@ open import Util
 open import Judgments.Grammar
 open SimpleGrammar
 
+-- The purpose of this file is to define the
+-- small-step semantics for our assembler language
+
 evalSmallValueₛ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₛ regs (reg ♯r) = lookup ♯r regs
 evalSmallValueₛ regs (globval lab) = globval lab
@@ -13,7 +16,7 @@ evalSmallValueₛ regs (int i) = int i
 data InstantiateGlobalₛ (G : Globals) : WordValue → InstructionSequence → Set where
   instantiate-globval :
                ∀ {lab I} →
-           G ↓ lab ⇒ (code I) →
+           G ↓ lab ⇒ code I →
     -----------------------------------
     InstantiateGlobalₛ G (globval lab) I
 
@@ -23,7 +26,7 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
                 lookup ♯rs regs ≡ int n₁ →
           evalSmallValueₛ regs v ≡ int n₂ →
-      ---------------------------------------------------------
+      ----------------------------------------------------------
       G ⊢ₛ H , register sp regs , add ♯rd ♯rs v ~> I ⇒
            H , register sp (update ♯rd (int (n₁ + n₂)) regs) , I
 
@@ -39,7 +42,7 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                       ∀ {H sp regs I n} →
       -------------------------------------------------
       G ⊢ₛ H , register sp regs , salloc n ~> I ⇒
-           H , register (replicate n ns ++ sp) regs , I
+           H , register (replicate n uninit ++ sp) regs , I
 
     step-sfree :
                 ∀ {H sp regs I n} →
@@ -62,9 +65,9 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
            H , register sp' regs , I
 
     step-ld :
-          ∀ {H sp regs I ♯rd ♯rs i labₕ ws w} →
+           ∀ {H sp regs I ♯rd ♯rs i labₕ ws w} →
              lookup ♯rs regs ≡ heapval labₕ →
-                  H ↓ labₕ ⇒ tuple ws →
+                   H ↓ labₕ ⇒ tuple ws →
                      ws ↓ i ⇒ w →
       -----------------------------------------------
       G ⊢ₛ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒
@@ -72,8 +75,8 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
 
     step-st :
           ∀ {H H' sp regs I ♯rd i ♯rs labₕ ws ws'} →
-              lookup ♯rd regs ≡ heapval labₕ →
-                    H ↓ labₕ ⇒ tuple ws →
+             lookup ♯rd regs ≡ heapval labₕ →
+                   H ↓ labₕ ⇒ tuple ws →
               ws ⟦ i ⟧← lookup ♯rs regs ⇒ ws' →
                  H ⟦ labₕ ⟧← tuple ws' ⇒ H' →
       ------------------------------------------------
@@ -84,7 +87,7 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                     ∀ {H sp regs I ♯rd n} →
       -----------------------------------------------------------
       G ⊢ₛ H , register sp regs , malloc ♯rd n ~> I ⇒
-           H ∷ʳ tuple (replicate n ns) ,
+           H ∷ʳ tuple (replicate n uninit) ,
            register sp (update ♯rd (heapval (length H)) regs) , I
 
     step-mov :
@@ -92,7 +95,6 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
       -------------------------------------------------------------------
       G ⊢ₛ H , register sp regs , mov ♯rd v ~> I ⇒
            H , register sp (update ♯rd (evalSmallValueₛ regs v) regs) , I
-
 
     step-beq₀ :
                   ∀ {H sp regs ♯r v I₁ I₂} →
@@ -122,16 +124,16 @@ data ⊢ₛ_⇒_ : Program → Program → Set where
   step-running :
           ∀ {G P P'} →
           G ⊢ₛ P ⇒ P' →
-    -------------------------
+    -----------------------------
     ⊢ₛ running G P ⇒ running G P'
 
   step-halting :
                ∀ {G H R} →
-    ----------------------------------
+    ------------------------------------
     ⊢ₛ running G (H , R , halt) ⇒ halted
 
   step-halted :
-    -----------------
+    ------------------
     ⊢ₛ halted ⇒ halted
 
 infix 3 ⊢ₛ_⇒ₙ_/_
@@ -139,7 +141,7 @@ infixr 5 _∷_
 data ⊢ₛ_⇒ₙ_/_ : Program → ℕ → Program → Set where
   []  :
        ∀ {P} →
-    ------------
+    -------------
     ⊢ₛ P ⇒ₙ 0 / P
 
   _∷_ :

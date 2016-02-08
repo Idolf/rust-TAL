@@ -34,8 +34,7 @@ instance
           f (globval lab) = globval lab
           f (heapval labₕ) = heapval labₕ
           f (int n) = int n
-          f ns = ns
-          f (uninit τ) = ns
+          f uninit = uninit
           f (Λ Δ ∙ w ⟦ is ⟧) = f w
 
   embedListWordValue : Embed (List H.WordValue) (List S.WordValue)

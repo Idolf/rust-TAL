@@ -76,8 +76,7 @@ data WordValueₕ : Set where
   globval : GlobLabel → WordValueₕ
   heapval : HeapLabel → WordValueₕ
   int     : ℕ → WordValueₕ
-  ns      : WordValueₕ
-  uninit  : Type → WordValueₕ
+  uninit  : WordValueₕ
   Λ_∙_⟦_⟧ : TypeAssumptions → WordValueₕ → Instantiations → WordValueₕ
 
 -- Small values, v

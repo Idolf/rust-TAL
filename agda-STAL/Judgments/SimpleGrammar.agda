@@ -11,7 +11,7 @@ data WordValueₛ : Set where
   globval : GlobLabel → WordValueₛ
   heapval : HeapLabel → WordValueₛ
   int     : ℕ → WordValueₛ
-  ns      : WordValueₛ
+  uninit  : WordValueₛ
 
 -- Small values, v
 data SmallValueₛ : Set where
@@ -38,7 +38,7 @@ infixr 6 _~>_
 data InstructionSequenceₛ : Set where
   _~>_ : Instructionₛ → InstructionSequenceₛ → InstructionSequenceₛ
   jmp : SmallValueₛ → InstructionSequenceₛ
-  halt   : InstructionSequenceₛ
+  halt : InstructionSequenceₛ
 
 -- Global values, g
 data GlobalValueₛ : Set where

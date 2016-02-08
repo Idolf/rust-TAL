@@ -41,7 +41,7 @@ private
   embed-update (suc i) w (w' ∷ ws) = cong₂ _∷_ refl (embed-update i w ws)
 
   replicate-ns : ∀ n (sp : H.Stack) →
-                   embed (replicate n ns ++ sp) ≡ replicate n ns ++ embed sp
+                   embed (replicate n uninit ++ sp) ≡ replicate n uninit ++ embed sp
   replicate-ns zero sp = refl
   replicate-ns (suc n) sp = cong₂ _∷_ refl (replicate-ns n sp)
 
@@ -52,12 +52,12 @@ private
   drop-helper (there drop) = drop-helper drop
 
   uninit-helper : ∀ (τs : List Type) →
-                    embed {{ListEmbed embedWordValue}} (map uninit τs) ≡ replicate (length τs) ns
+                    embed {{ListEmbed embedWordValue}} (replicate (length τs) uninit) ≡ replicate (length τs) uninit
   uninit-helper [] = refl
   uninit-helper (τ ∷ τs) = cong₂ _∷_ refl (uninit-helper τs)
 
-  malloc-helper : ∀ (H : H.Heap) τs →
-                    embed (H ∷ʳ tuple (map uninit τs)) ≡ embed H ∷ʳ tuple (replicate (length τs) ns)
+  malloc-helper : ∀ (H : H.Heap) (τs : List Type) →
+                    embed (H ∷ʳ tuple (replicate (length τs) uninit)) ≡ embed H ∷ʳ tuple (replicate (length τs) uninit)
   malloc-helper [] τs = cong (λ w → [ tuple w ]) (uninit-helper τs)
   malloc-helper (h ∷ H) τs = cong₂ _∷_ refl (malloc-helper H τs)
 
