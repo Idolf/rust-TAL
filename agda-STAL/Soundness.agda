@@ -229,9 +229,9 @@ step-progress' {I = st ♯rd i ♯rs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-reg
 ... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
   with heap-helper (of-tuple ws'⋆) (of-heap hs⋆) l₂ (tuple-≤ τs⁻₃≤τs⁻₂)
 ... | H' , ψ₂' , up₃ , up₄ , H'⋆ , ψ₂'≤ψ₂
-  with (regs-helper₂ ♯rd (≤-valid₁ ψ₂'≤ψ₂) eq₁ (←-to-↓ up₄) (regs-helper ψ₂'≤ψ₂ regs⋆))
+  with (regs-helper₂ ♯rd (≤-valid₁ ψ₂'≤ψ₂) eq₁ (←-to-↓ up₄) (AllZipᵥ-map (wval-helper ψ₂'≤ψ₂) regs⋆))
 ... | regs'⋆
-  with update-helper₃ (≤-valid₂ lookup≤τ) τs⁻₂≤τs⁻₁ up₂ up
+  with allzip-update up₂ up (≤-refl (valid-τ⁻ (≤-valid₂ lookup≤τ))) τs⁻₂≤τs⁻₁
 ... | τs⁻₃≤τs⁻₁'
   = H' , ψ₂' , _ , _ , I , H'⋆ , of-register (stack-helper ψ₂'≤ψ₂ sp⋆) (AllZipᵥ-trans wval-subtype regs'⋆ (allzipᵥ-update ♯rd (tuple-≤ τs⁻₃≤τs⁻₁') (≤-refl (regs-valid-type regs⋆)))) , I⋆ , step-st eq₁ l₁ up₁ up₃
 step-progress' {H = H} {ψ₂ = ψ₂} {I = malloc ♯rd τs ~> I} I≢halt G⋆ (of-heap hs⋆) (of-register sp⋆ regs⋆) (of-~> (of-malloc τs⋆) I⋆)
