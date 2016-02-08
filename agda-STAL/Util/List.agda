@@ -10,7 +10,9 @@ open import Data.List.All
   renaming (all to All-dec ; map to All-map) public
 open import Data.List.Properties using ()
   renaming ( ∷-injective to List-∷-injective
-           ; length-++ to List-length-++) public
+           ; length-++ to List-length-++
+           ; length-map to List-length-map
+           ; map-++-commute to List-map-++-commute) public
 
 -- Local imports
 open import Util.Maybe

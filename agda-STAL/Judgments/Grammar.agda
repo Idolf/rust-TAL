@@ -3,6 +3,9 @@ module Judgments.Grammar where
 open import Judgments.SimpleGrammar public
 open import Judgments.HighGrammar public
 
+-- The purpose of this file is to rename the
+-- values in SimpleGrammar and HighGrammar
+
 module SimpleGrammar where
   open import Judgments.SimpleGrammar
 

@@ -5,6 +5,14 @@ open import Judgments.Grammar
 private module S = SimpleGrammar
 private module H = HighGrammar
 
+-- The purpose of this file is
+-- to include instances of this record.
+-- It includes just a single function, embed, which
+-- will translate from high grammar to simple grammar.
+
+-- The second element of the record can safely be
+-- ignored -- it only exists because of a bug in Agda.
+
 record Embed (H : Set) (S : Set) : Set where
   constructor mkEmbed'
   field
@@ -12,20 +20,9 @@ record Embed (H : Set) (S : Set) : Set where
     bogus : ⊤
 open Embed {{...}} public
 
-mkEmbed : ∀ {H S} → (H → S) → Embed H S
-mkEmbed f = mkEmbed' f tt
-
-VecEmbed : ∀ {H S n} → Embed H S → Embed (Vec H n) (Vec S n)
-VecEmbed {H} {S} (mkEmbed' f _) = mkEmbed f'
-  where f' : ∀ {n} → Vec H n → Vec S n
-        f' [] = []
-        f' (x ∷ xs) = f x ∷ f' xs
-
-ListEmbed : ∀ {H S} → Embed H S → Embed (List H) (List S)
-ListEmbed {H} {S} (mkEmbed' f _) = mkEmbed f'
-  where f' : List H → List S
-        f' [] = []
-        f' (x ∷ xs) = f x ∷ f' xs
+private
+  mkEmbed : ∀ {H S} → (H → S) → Embed H S
+  mkEmbed f = mkEmbed' f tt
 
 instance
   embedWordValue : Embed H.WordValue S.WordValue
@@ -38,10 +35,10 @@ instance
           f (Λ Δ ∙ w ⟦ θs ⟧) = f w
 
   embedListWordValue : Embed (List H.WordValue) (List S.WordValue)
-  embedListWordValue = ListEmbed embedWordValue
+  embedListWordValue = mkEmbed (map embed)
 
   embedVecWordValues : ∀ {n} → Embed (Vec H.WordValue n) (Vec S.WordValue n)
-  embedVecWordValues = VecEmbed embedWordValue
+  embedVecWordValues = mkEmbed (Vec-map embed)
 
   embedSmallValue : Embed H.SmallValue S.SmallValue
   embedSmallValue = mkEmbed f
@@ -79,7 +76,7 @@ instance
           f (code[ Δ ] Γ ∙ I) = code (embed I)
 
   embedGlobals : Embed H.Globals S.Globals
-  embedGlobals = ListEmbed embedGlobalValue
+  embedGlobals = mkEmbed (map embed)
 
   embedHeapValue : Embed H.HeapValue S.HeapValue
   embedHeapValue = mkEmbed f
@@ -87,11 +84,12 @@ instance
           f (tuple ws) = tuple (embed ws)
 
   embedHeap : Embed H.Heap S.Heap
-  embedHeap = ListEmbed embedHeapValue
+  embedHeap = mkEmbed (map embed)
 
-  -- This is already covered earlier and only included for completeness
+  -- This is already covered earlier, since Stack == List WordValue.
+  -- It is only included for completeness.
   -- embedStack : Embed H.Stack S.Stack
-  -- embedStack = ListEmbed embedWordValue
+  -- embedStack = mkEmbed (map embed)
 
   embedRegisterFile : Embed H.RegisterFile S.RegisterFile
   embedRegisterFile = mkEmbed f

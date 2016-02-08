@@ -761,8 +761,8 @@ instance
           ... | no ¬sub-θ | _ = no ( λ { (._ , sub-θ ∷ sub-θs) → ¬sub-θ (_ , sub-θ) })
           ... | _ | no ¬sub-θs = no ( λ { (._ , sub-θ ∷ sub-θs) → ¬sub-θs (_ , sub-θs) })
 
-          θs-weaken-length : ∀ pos inc θs →
-                               length (weaken-θs pos inc θs) ≡ length θs
+          θs-weaken-length : ∀ pos inc (θs : Instantiations) →
+                               length (weaken pos inc θs) ≡ length θs
           θs-weaken-length pos inc [] = refl
           θs-weaken-length pos inc (θ ∷ θs)
             rewrite θs-weaken-length pos inc θs = refl

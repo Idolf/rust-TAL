@@ -15,35 +15,30 @@ private
 
 private
   embed-↓ : ∀ {A B : Set} {{E : Embed A B}}
-                 {xs : List A} {i x} →
-                 xs ↓ i ⇒ x →
-                 embed {{ListEmbed E}} xs ↓ i ⇒ embed x
+              {xs : List A} {i x} →
+              xs ↓ i ⇒ x →
+              map embed xs ↓ i ⇒ embed x
   embed-↓ here = here
   embed-↓ (there l) = there (embed-↓ l)
 
   embed-← : ∀ {A B : Set} {{E : Embed A B}}
                  {xs xs' : List A} {i x} →
                  xs ⟦ i ⟧← x ⇒ xs' →
-                 embed {{ListEmbed E}} xs ⟦ i ⟧← embed x ⇒ embed {{ListEmbed E}} xs'
+                 map embed xs ⟦ i ⟧← embed x ⇒ map embed xs'
   embed-← here = here
   embed-← (there l) = there (embed-← l)
 
   embed-lookup : ∀ {A B : Set} {{E : Embed A B}}
                 {n} i (xs : Vec A n) →
-                embed (lookup i xs) ≡ lookup i (embed {{VecEmbed E}} xs)
+                embed (lookup i xs) ≡ lookup i (Vec-map embed xs)
   embed-lookup zero (x ∷ xs) = refl
   embed-lookup (suc i) (x ∷ xs) = embed-lookup i xs
 
   embed-update : ∀ {A B : Set} {{E : Embed A B}}
                    {n} i x (xs : Vec A n) →
-                   embed {{VecEmbed E}} (update i x xs) ≡ update i (embed x) (embed {{VecEmbed E}} xs)
+                   Vec-map embed (update i x xs) ≡ update i (embed x) (Vec-map embed xs)
   embed-update zero w (w' ∷ ws) = refl
   embed-update (suc i) w (w' ∷ ws) = cong₂ _∷_ refl (embed-update i w ws)
-
-  replicate-ns : ∀ n (sp : H.Stack) →
-                   embed (replicate n uninit ++ sp) ≡ replicate n uninit ++ embed sp
-  replicate-ns zero sp = refl
-  replicate-ns (suc n) sp = cong₂ _∷_ refl (replicate-ns n sp)
 
   drop-helper : ∀ {n} {sp sp' : H.Stack} →
                   Drop n sp sp' →
@@ -51,20 +46,9 @@ private
   drop-helper here = refl
   drop-helper (there drop) = drop-helper drop
 
-  uninit-helper : ∀ (τs : List Type) →
-                    embed {{ListEmbed embedWordValue}} (replicate (length τs) uninit) ≡ replicate (length τs) uninit
-  uninit-helper [] = refl
-  uninit-helper (τ ∷ τs) = cong₂ _∷_ refl (uninit-helper τs)
-
-  malloc-helper : ∀ (H : H.Heap) (τs : List Type) →
-                    embed (H ∷ʳ tuple (replicate (length τs) uninit)) ≡ embed H ∷ʳ tuple (replicate (length τs) uninit)
-  malloc-helper [] τs = cong (λ w → [ tuple w ]) (uninit-helper τs)
-  malloc-helper (h ∷ H) τs = cong₂ _∷_ refl (malloc-helper H τs)
-
-  embed-length : ∀ {A B : Set} {{E : Embed A B}} xs →
-                   length (embed {{ListEmbed E}} xs) ≡ length xs
-  embed-length [] = refl
-  embed-length (x ∷ xs) = cong suc (embed-length xs)
+  replicate-helper : ∀ n → embed {{embedListWordValue}} (replicate n uninit) ≡ replicate n uninit
+  replicate-helper zero = refl
+  replicate-helper (suc n) = cong₂ _∷_ refl (replicate-helper n)
 
   embed-subst-v : ∀ {v v' : H.SmallValue} {θ pos} →
                     v ⟦ θ / pos ⟧≡ v' →
@@ -139,7 +123,8 @@ embed-step (step-sub {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq�
         = step-sub (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
                    (trans (sym (embed-eval regs v)) (cong embed eq₂))
 embed-step (step-salloc {sp = sp} {n = n})
-  rewrite replicate-ns n sp
+  rewrite List-map-++-commute embed (replicate n uninit) sp
+        | replicate-helper n
     = step-salloc
 embed-step (step-sfree drop)
   rewrite drop-helper drop
@@ -161,9 +146,10 @@ embed-step (step-st {regs = regs} {♯rd = ♯rd} {♯rs = ♯rs} eq l up₁ up�
   rewrite embed-lookup ♯rs regs
   = step-st (trans (sym (embed-lookup ♯rd regs)) (cong embed eq)) (embed-↓ l) up₁' (embed-← up₂)
 embed-step (step-malloc {H = H} {regs = regs} {♯rd = ♯rd} {τs = τs})
-  rewrite malloc-helper H τs
+  rewrite List-map-++-commute embed H [ tuple (replicate (length τs) uninit) ]
+        | replicate-helper (length τs)
         | embed-update ♯rd (heapval (length H)) regs
-        | sym (embed-length H)
+        | sym (List-length-map embed H)
     = step-malloc
 embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v})
   rewrite embed-update ♯rd (H.evalSmallValue regs v) regs

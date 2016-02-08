@@ -31,48 +31,37 @@ record Substitution (A : Set) : Set1 where
       v ⟦ θ ∷ θs / n ⟧many≡ vₑ
 open Substitution {{...}} public
 
-data InstantiationMatch : Instantiation → TypeAssumptionValue → Set where
-  match-α : ∀ {τ} → InstantiationMatch (α τ) α
-  match-ρ : ∀ {σ} → InstantiationMatch (ρ σ) ρ
+private
+  mutual
+    weaken-τ : ℕ → ℕ → Type → Type
+    weaken-τ pos inc (α⁼ ι) with pos ≤? ι
+    ... | yes pos≤ι = α⁼ (inc + ι)
+    ... | no pos≰ι = α⁼ ι
+    weaken-τ pos inc int = int
+    weaken-τ pos inc ns = ns
+    weaken-τ pos inc (∀[ Δ ] Γ) = ∀[ Δ ] (weaken-Γ (length Δ + pos) inc Γ)
+    weaken-τ pos inc (tuple τs⁻) = tuple (weaken-τs⁻ pos inc τs⁻)
 
-mutual
-  weaken-τ : ℕ → ℕ → Type → Type
-  weaken-τ pos inc (α⁼ ι) with pos ≤? ι
-  ... | yes pos≤ι = α⁼ (inc + ι)
-  ... | no pos≰ι = α⁼ ι
-  weaken-τ pos inc int = int
-  weaken-τ pos inc ns = ns
-  weaken-τ pos inc (∀[ Δ ] Γ) = ∀[ Δ ] (weaken-Γ (length Δ + pos) inc Γ)
-  weaken-τ pos inc (tuple τs⁻) = tuple (weaken-τs⁻ pos inc τs⁻)
+    weaken-τ⁻ : ℕ → ℕ → InitType → InitType
+    weaken-τ⁻ pos inc (τ , φ) = weaken-τ pos inc τ , φ
 
-  weaken-τ⁻ : ℕ → ℕ → InitType → InitType
-  weaken-τ⁻ pos inc (τ , φ) = weaken-τ pos inc τ , φ
+    weaken-τs⁻ : ℕ → ℕ → List InitType → List InitType
+    weaken-τs⁻ pos inc [] = []
+    weaken-τs⁻ pos inc (τ⁻ ∷ τs⁻) = weaken-τ⁻ pos inc τ⁻ ∷ weaken-τs⁻ pos inc τs⁻
 
-  weaken-τs⁻ : ℕ → ℕ → List InitType → List InitType
-  weaken-τs⁻ pos inc [] = []
-  weaken-τs⁻ pos inc (τ⁻ ∷ τs⁻) = weaken-τ⁻ pos inc τ⁻ ∷ weaken-τs⁻ pos inc τs⁻
+    weaken-σ : ℕ → ℕ → StackType → StackType
+    weaken-σ pos inc (ρ⁼ ι) with pos ≤? ι
+    ... | yes pos≤ι = ρ⁼ (inc + ι)
+    ... | no pos≰ι = ρ⁼ ι
+    weaken-σ pos inc [] = []
+    weaken-σ pos inc (τ ∷ σ) = weaken-τ pos inc τ ∷ weaken-σ pos inc σ
 
-  weaken-σ : ℕ → ℕ → StackType → StackType
-  weaken-σ pos inc (ρ⁼ ι) with pos ≤? ι
-  ... | yes pos≤ι = ρ⁼ (inc + ι)
-  ... | no pos≰ι = ρ⁼ ι
-  weaken-σ pos inc [] = []
-  weaken-σ pos inc (τ ∷ σ) = weaken-τ pos inc τ ∷ weaken-σ pos inc σ
+    weaken-Γ : ℕ → ℕ → RegisterAssignment → RegisterAssignment
+    weaken-Γ pos inc (registerₐ sp regs) = registerₐ (weaken-σ pos inc sp) (weaken-regs pos inc regs)
 
-  weaken-Γ : ℕ → ℕ → RegisterAssignment → RegisterAssignment
-  weaken-Γ pos inc (registerₐ sp regs) = registerₐ (weaken-σ pos inc sp) (weaken-regs pos inc regs)
-
-  weaken-regs : ∀ {n} → ℕ → ℕ → Vec Type n → Vec Type n
-  weaken-regs pos inc [] = []
-  weaken-regs pos inc (τ ∷ τs) = weaken-τ pos inc τ ∷ weaken-regs pos inc τs
-
-  weaken-θ : ℕ → ℕ → Instantiation → Instantiation
-  weaken-θ pos inc (α τ) = α (weaken-τ pos inc τ)
-  weaken-θ pos inc (ρ σ) = ρ (weaken-σ pos inc σ)
-
-  weaken-θs : ℕ → ℕ → Instantiations → Instantiations
-  weaken-θs pos inc [] = []
-  weaken-θs pos inc (θ ∷ θs) = weaken-θ (length θs + pos) inc θ ∷ weaken-θs pos inc θs
+    weaken-regs : ∀ {n} → ℕ → ℕ → Vec Type n → Vec Type n
+    weaken-regs pos inc [] = []
+    weaken-regs pos inc (τ ∷ τs) = weaken-τ pos inc τ ∷ weaken-regs pos inc τs
 
 mutual
   infix 3 _⟦_/_⟧τ≡_
@@ -313,7 +302,7 @@ data _⟦_/_⟧I≡_ : InstructionSequenceₕ → Instantiation → ℕ →
 
 List-Substitution : ∀ A {{_ : Substitution A}} → Substitution (List A)
 List-Substitution A = substitution
-  (λ pos inc xs → map (weaken pos inc) xs)
+  (map ∘₂ weaken)
   (λ xs θ ι xs' → AllZip (λ x x' → x ⟦ θ / ι ⟧≡ x') xs xs')
 
 instance
@@ -340,9 +329,15 @@ instance
 
   Instantiation-Substitution : Substitution Instantiation
   Instantiation-Substitution = substitution weaken-θ _⟦_/_⟧θ≡_
+    where weaken-θ : ℕ → ℕ → Instantiation → Instantiation
+          weaken-θ pos inc (α τ) = α (weaken-τ pos inc τ)
+          weaken-θ pos inc (ρ σ) = ρ (weaken-σ pos inc σ)
 
   Instantiations-Substitution : Substitution Instantiations
   Instantiations-Substitution = substitution weaken-θs _⟦_/_⟧θs≡_
+    where weaken-θs : ℕ → ℕ → Instantiations → Instantiations
+          weaken-θs pos inc [] = []
+          weaken-θs pos inc (θ ∷ θs) = weaken (length θs + pos) inc θ ∷ weaken-θs pos inc θs
 
   SmallValue-Substitution : Substitution SmallValueₕ
   SmallValue-Substitution = substitution weaken-v _⟦_/_⟧v≡_
