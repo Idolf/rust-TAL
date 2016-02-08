@@ -6,6 +6,11 @@ open import Lemmas.Equality
 open SimpleGrammar
 open SimpleSemantics
 
+-- The purpose of this file is to prove
+-- determinism and decidibibly of evaluation
+-- of smallvalue, stepping of instructions
+-- and execution of instructions.
+
 private
   int-helper : ∀ {n₁ n₂} {w : WordValue} →
                  w ≡ int n₁ →
@@ -19,24 +24,11 @@ private
                      labₕ₁ ≡ labₕ₂
   heapval-helper refl refl = refl
 
-  globval-helper : ∀ {lab₁ lab₂} {w : WordValue} →
-                     w ≡ globval lab₁ →
-                     w ≡ globval lab₂ →
-                     lab₁ ≡ lab₂
-  globval-helper refl refl = refl
-
   ↓-unique-heap : ∀ {H : Heap} {labₕ ws₁ ws₂} →
                     H ↓ labₕ ⇒ tuple ws₁ →
                     H ↓ labₕ ⇒ tuple ws₂ →
                     ws₁ ≡ ws₂
   ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
-  ... | refl = refl
-
-  ↓-unique-globals : ∀ {G : Globals} {l I₁ I₂} →
-                       G ↓ l ⇒ code I₁ →
-                       G ↓ l ⇒ code I₂ →
-                       I₁ ≡ I₂
-  ↓-unique-globals l₁ l₂ with ↓-unique l₁ l₂
   ... | refl = refl
 
   is-int : ∀ (w : WordValue) → Dec (∃ λ n → w ≡ int n)
@@ -50,12 +42,6 @@ private
   is-heapval (heapval labₕ) = yes (labₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval uninit = no (λ { (_ , ()) })
-
-  is-globval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ globval labₕ)
-  is-globval (globval lab) = yes (lab , refl)
-  is-globval (heapval labₕ) = no (λ { (_ , ()) })
-  is-globval (int n) = no (λ { (_ , ()) })
-  is-globval uninit = no (λ { (_ , ()) })
 
 instantiate-uniqueₛ : ∀ {G w I₁ I₂} →
                         InstantiateGlobal G w I₁ →
@@ -73,11 +59,11 @@ step-uniqueₛ : ∀ {G P P₁ P₂} →
 step-uniqueₛ (step-add eq₁₁ eq₁₂) (step-add eq₂₁ eq₂₂)
   rewrite int-helper eq₁₁ eq₂₁
         | int-helper eq₁₂ eq₂₂
-        = refl
+  = refl
 step-uniqueₛ (step-sub eq₁₁ eq₁₂) (step-sub eq₂₁ eq₂₂)
   rewrite int-helper eq₁₁ eq₂₁
         | int-helper eq₁₂ eq₂₂
-        = refl
+  = refl
 step-uniqueₛ step-salloc step-salloc = refl
 step-uniqueₛ step-sfree step-sfree = refl
 step-uniqueₛ (step-sld l₁) (step-sld l₂)
@@ -88,13 +74,13 @@ step-uniqueₛ (step-ld eq₁ l₁₁ l₁₂) (step-ld eq₂ l₂₁ l₂₂)
   rewrite heapval-helper eq₁ eq₂
         | ↓-unique-heap l₁₁ l₂₁
         | ↓-unique l₁₂ l₂₂
-        = refl
+  = refl
 step-uniqueₛ (step-st eq₁ l₁ up₁₁ up₁₂) (step-st eq₂ l₂ up₂₁ up₂₂)
   rewrite heapval-helper eq₁ eq₂
         | ↓-unique-heap l₁ l₂
         | ←-unique up₁₁ up₂₁
         | ←-unique up₁₂ up₂₂
-        = refl
+  = refl
 step-uniqueₛ step-malloc step-malloc = refl
 step-uniqueₛ step-mov step-mov = refl
 step-uniqueₛ (step-beq₀ eq₁ ig₁) (step-beq₀ eq₂ ig₂)

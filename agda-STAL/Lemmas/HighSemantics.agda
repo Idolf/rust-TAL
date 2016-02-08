@@ -14,20 +14,20 @@ open HighSemantics
 
 private
   int-helper : ∀ {n₁ n₂} {w : WordValue} →
-                   w ≡ int n₁ →
-                   w ≡ int n₂ →
-                   n₁ ≡ n₂
+                 w ≡ int n₁ →
+                 w ≡ int n₂ →
+                 n₁ ≡ n₂
   int-helper refl refl = refl
 
   heapval-helper : ∀ {labₕ₁ labₕ₂} {w : WordValue} →
-                   w ≡ heapval labₕ₁ →
-                   w ≡ heapval labₕ₂ →
-                   labₕ₁ ≡ labₕ₂
+                     w ≡ heapval labₕ₁ →
+                     w ≡ heapval labₕ₂ →
+                     labₕ₁ ≡ labₕ₂
   heapval-helper refl refl = refl
 
-  ↓-unique-heap : ∀ {H : Heap} {lₕ ws₁ ws₂} →
-                    H ↓ lₕ ⇒ tuple ws₁ →
-                    H ↓ lₕ ⇒ tuple ws₂ →
+  ↓-unique-heap : ∀ {H : Heap} {labₕ ws₁ ws₂} →
+                    H ↓ labₕ ⇒ tuple ws₁ →
+                    H ↓ labₕ ⇒ tuple ws₂ →
                     ws₁ ≡ ws₂
   ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
   ... | refl = refl
@@ -39,26 +39,12 @@ private
   is-int uninit = no (λ { (_ , ()) })
   is-int (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
 
-  ↓-is-int : ∀ regs ♯r → Dec (∃ λ n → regs ↓ ♯r ⇒ int n)
-  ↓-is-int regs ♯r with ↓-dec regs ♯r
-  ... | no ¬l = no (λ { (n , l) → ¬l (_ , l)})
-  ... | yes (v , l) with is-int v
-  ... | yes (n , eq) rewrite eq = yes (n , l)
-  ... | no ¬eq = no (λ { (n , l') → ¬eq (n , ↓-unique l l')})
-
   is-heapval : ∀ (w : WordValue) → Dec (∃ λ labₕ → w ≡ heapval labₕ)
   is-heapval (globval lab) = no (λ { (_ , ()) })
   is-heapval (heapval labₕ) = yes (labₕ , refl)
   is-heapval (int n) = no (λ { (_ , ()) })
   is-heapval uninit = no (λ { (_ , ()) })
   is-heapval (Λ Δ ∙ w ⟦ is ⟧) = no (λ { (_ , ()) })
-
-  ↓-is-heapval : ∀ regs ♯r → Dec (∃ λ labₕ → regs ↓ ♯r ⇒ heapval labₕ)
-  ↓-is-heapval regs ♯r with ↓-dec regs ♯r
-  ... | no ¬l = no (λ { (lₕ , l) → ¬l (_ , l)})
-  ... | yes (v , l) with is-heapval v
-  ... | yes (lₕ , eq) rewrite eq = yes (lₕ , l)
-  ... | no ¬eq = no (λ { (lₕ , l') → ¬eq (lₕ , ↓-unique l l')})
 
 instantiate-uniqueₕ : ∀ {G w I₁ I₂} →
                         InstantiateGlobal G w I₁ →
@@ -76,42 +62,47 @@ instantiate-uniqueₕ (instantiate-Λ ig₁ subs-I₁) (instantiate-Λ ig₂ sub
   | refl | refl = refl
 
 step-uniqueₕ : ∀ {G P P₁ P₂} →
-                G ⊢ P ⇒ P₁ →
-                G ⊢ P ⇒ P₂ →
-                P₁ ≡ P₂
+                 G ⊢ P ⇒ P₁ →
+                 G ⊢ P ⇒ P₂ →
+                 P₁ ≡ P₂
 step-uniqueₕ (step-add eq₁₁ eq₁₂) (step-add eq₂₁ eq₂₂)
   rewrite int-helper eq₁₁ eq₂₁
-        | int-helper eq₁₂ eq₂₂ = refl
+        | int-helper eq₁₂ eq₂₂
+  = refl
 step-uniqueₕ (step-sub eq₁₁ eq₁₂) (step-sub eq₂₁ eq₂₂)
   rewrite int-helper eq₁₁ eq₂₁
-        | int-helper eq₁₂ eq₂₂ = refl
+        | int-helper eq₁₂ eq₂₂
+  = refl
 step-uniqueₕ step-salloc step-salloc = refl
 step-uniqueₕ (step-sfree drop₁) (step-sfree drop₂)
   rewrite drop-unique drop₁ drop₂ = refl
 step-uniqueₕ (step-sld l₁) (step-sld l₂)
   rewrite ↓-unique l₁ l₂ = refl
-step-uniqueₕ (step-sst u₁) (step-sst u₂)
-  rewrite ←-unique u₁ u₂ = refl
+step-uniqueₕ (step-sst up₁) (step-sst up₂)
+  rewrite ←-unique up₁ up₂ = refl
 step-uniqueₕ (step-ld eq₁ l₁₁ l₁₂) (step-ld eq₂ l₂₁ l₂₂)
   rewrite heapval-helper eq₁ eq₂
         | ↓-unique-heap l₁₁ l₂₁
-        | ↓-unique l₁₂ l₂₂ = refl
-step-uniqueₕ (step-st eq₁ l₁ u₁₁ u₁₂) (step-st eq₂ l₂ u₂₁ u₂₂)
+        | ↓-unique l₁₂ l₂₂
+  = refl
+step-uniqueₕ (step-st eq₁ l₁ up₁₁ up₁₂) (step-st eq₂ l₂ up₂₁ up₂₂)
   rewrite heapval-helper eq₁ eq₂
         | ↓-unique-heap l₁ l₂
-        | ←-unique u₁₁ u₂₁
-        | ←-unique u₁₂ u₂₂
+        | ←-unique up₁₁ up₂₁
+        | ←-unique up₁₂ up₂₂
   = refl
-step-uniqueₕ step-mov step-mov = refl
 step-uniqueₕ step-malloc step-malloc = refl
+step-uniqueₕ step-mov step-mov = refl
 step-uniqueₕ (step-beq₀ eq₁ ig₁) (step-beq₀ eq₂ ig₂)
   with instantiate-uniqueₕ ig₁ ig₂
 ... | refl = refl
 step-uniqueₕ (step-beq₀ eq₁ ig₁) (step-beq₁ eq₂ neq₂)
-  rewrite int-helper eq₁ eq₂ with neq₂ refl
+  rewrite int-helper eq₁ eq₂
+  with neq₂ refl
 ... | ()
 step-uniqueₕ (step-beq₁ eq₁ neq₁) (step-beq₀ eq₂ ig₂)
-  rewrite int-helper eq₁ eq₂ with neq₁ refl
+  rewrite int-helper eq₁ eq₂
+  with neq₁ refl
 ... | ()
 step-uniqueₕ (step-beq₁ eq₁ neq₁) (step-beq₁ eq₂ neq₂) = refl
 step-uniqueₕ (step-jmp ig₁) (step-jmp ig₂)
@@ -171,7 +162,8 @@ step-decₕ G (H , register sp regs , sub ♯rd ♯rs v ~> I)
 ... | yes (n₁ , eq₁) | yes (n₂ , eq₂) = yes (_ , step-sub eq₁ eq₂)
 ... | no ¬eq₁ | _ = no (λ { (._ , step-sub eq₁ eq₂) → ¬eq₁ (_ , eq₁)})
 ... | _ | no ¬eq₂ = no (λ { (._ , step-sub eq₁ eq₂) → ¬eq₂ (_ , eq₂)})
-step-decₕ G (H , register sp regs , salloc n ~> I) = yes (_ , step-salloc)
+step-decₕ G (H , register sp regs , salloc n ~> I)
+  = yes (_ , step-salloc)
 step-decₕ G (H , register sp regs , sfree n ~> I)
   with drop-dec n sp
 ... | yes (sp' , drop) = yes (_ , step-sfree drop)
@@ -221,8 +213,10 @@ step-decₕ G (H , register sp regs , st ♯rd i ♯rs ~> I)
         ... | refl with ←-unique up₁ up₁'
         ... | refl = ¬up₂ (_ , up₂)
 ... | yes (H' , up₂) = yes (_ , step-st eq l up₁ up₂)
-step-decₕ G (H , register sp regs , malloc ♯rd τs ~> I) = yes (_ , step-malloc)
-step-decₕ G (H , register sp regs , mov ♯rd v ~> I) = yes (_ , step-mov)
+step-decₕ G (H , register sp regs , malloc ♯rd τs ~> I)
+  = yes (_ , step-malloc)
+step-decₕ G (H , register sp regs , mov ♯rd v ~> I)
+  = yes (_ , step-mov)
 step-decₕ G (H , register sp regs , beq ♯r v ~> I)
   with is-int (lookup ♯r regs)
 ... | no ¬eq = no (λ { (._ , step-beq₀ eq ig) → ¬eq (_ , eq)
