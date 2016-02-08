@@ -37,36 +37,36 @@ record Bisimulation (A : Set) (B : Set) : Set₁ where
 EmbedBisimulation : Bisimulation H.Program S.Program
 EmbedBisimulation = bisimulation embed-rel H.⊢_⇒_ S.⊢_⇒_ forwards backwards
   where embed-rel : Rel H.Program S.Program
-        embed-rel HP SP = embed HP ≡ SP ×
-                          ⊢ HP program
+        embed-rel ℒₚ ℒₛ = embed ℒₚ ≡ ℒₛ ×
+                          ⊢ ℒₚ program
 
-        forwards : ∀ {HP HP' SP} →
-                     embed-rel HP SP →
-                     H.⊢ HP ⇒ HP' →
-                     ∃ λ SP' →
-                         embed-rel HP' SP' ×
-                         S.⊢ SP ⇒ SP'
-        forwards (refl , HP⋆) step
-          = _ , (refl , step-reduction HP⋆ step) , embed-step-prg step
+        forwards : ∀ {ℒₚ ℒₚ' ℒₛ} →
+                     embed-rel ℒₚ ℒₛ →
+                     H.⊢ ℒₚ ⇒ ℒₚ' →
+                     ∃ λ ℒₛ' →
+                         embed-rel ℒₚ' ℒₛ' ×
+                         S.⊢ ℒₛ ⇒ ℒₛ'
+        forwards (refl , ℒₚ⋆) step
+          = _ , (refl , step-reduction ℒₚ⋆ step) , embed-step-prg step
 
-        backwards : ∀ {HP SP SP'} →
-                     embed-rel HP SP →
-                     S.⊢ SP ⇒ SP' →
-                     ∃ λ HP' →
-                         embed-rel HP' SP' ×
-                         H.⊢ HP ⇒ HP'
-        backwards (refl , HP⋆) sstep
-          with step-progress HP⋆
-        ... | HP' , HP'⋆ , hstep
+        backwards : ∀ {ℒₚ ℒₛ ℒₛ'} →
+                     embed-rel ℒₚ ℒₛ →
+                     S.⊢ ℒₛ ⇒ ℒₛ' →
+                     ∃ λ ℒₚ' →
+                         embed-rel ℒₚ' ℒₛ' ×
+                         H.⊢ ℒₚ ⇒ ℒₚ'
+        backwards (refl , ℒₚ⋆) sstep
+          with step-progress ℒₚ⋆
+        ... | ℒₚ' , ℒₚ'⋆ , hstep
           with embed-step-prg hstep
         ... | sstep'
           rewrite step-prg-uniqueₛ sstep sstep'
-            = _ , (refl , HP'⋆) , hstep
+            = _ , (refl , ℒₚ'⋆) , hstep
 
 -- TODO
--- steps-soundness : ∀ {n P₁ P₂} →
---                     ⊢ P₁ program →
---                     ⊢ embed P₁ ⇒ₙ n / P₂ →
---                     ∃ λ P₃ →
---                       ⊢ P₂ ⇒ P₃
--- steps-soundness P⋆ steps = step-progress (steps-reduction P⋆ steps)
+-- steps-soundness : ∀ {n ℒ₁ ℒ₂} →
+--                     ⊢ ℒ₁ program →
+--                     ⊢ embed ℒ₁ ⇒ₙ n / ℒ₂ →
+--                     ∃ λ ℒ₃ →
+--                       ⊢ ℒ₂ ⇒ ℒ₃
+-- steps-soundness ℒ⋆ steps = step-progress (steps-reduction ℒ⋆ steps)

@@ -182,9 +182,9 @@ embed-step (step-jmp {regs = regs} {v = v} ig)
   rewrite embed-eval regs v
   = step-jmp ig'
 
-embed-step-prg : ∀ {P P'} →
-                   H.⊢ P ⇒ P' →
-                   S.⊢ embed P ⇒ embed P'
+embed-step-prg : ∀ {ℒ ℒ'} →
+                   H.⊢ ℒ ⇒ ℒ' →
+                   S.⊢ embed ℒ ⇒ embed ℒ'
 embed-step-prg (step-running step) = step-running (embed-step step)
 embed-step-prg step-halting = step-halting
 embed-step-prg step-halted = step-halted

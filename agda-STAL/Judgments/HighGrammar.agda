@@ -3,8 +3,7 @@ module Judgments.HighGrammar where
 open import Util
 open import Judgments.CommonGrammar public
 
--- The purpose of this file is to introduce the base grammar
--- on which every other file depends.
+-- The purpose of this file is to define the high grammar.
 
 -- Assignment index, ι
 AssignmentIndex : Set
@@ -133,10 +132,11 @@ Stackₕ = List WordValueₕ
 data RegisterFileₕ : Set where
   register : Stackₕ → Vec WordValueₕ ♯regs → RegisterFileₕ
 
--- P
+-- Program states, P
 ProgramStateₕ : Set
 ProgramStateₕ = Heapₕ × RegisterFileₕ × InstructionSequenceₕ
 
+-- Programs, ℒ
 data Programₕ : Set where
   running : Globalsₕ → ProgramStateₕ → Programₕ
   halted : Programₕ

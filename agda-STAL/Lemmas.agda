@@ -1,14 +1,15 @@
 module Lemmas where
 
-open import Lemmas.Embed public
-
--- Equality is decidable for the base grammar
+-- Step 5 requirements:
+-- Desidibility and effectiveness lemmas for equality, typing,
+-- subtyping and substitution.
 open import Lemmas.Equality public
-
--- Lemmas about types, substitutions and how they interact
 open import Lemmas.Types public
 open import Lemmas.Substitution public
 open import Lemmas.TypeSubstitution public
+
+open import Lemmas.Embed public
+
 
 -- Lemmas about the interaction between substitutions
 -- and subtyping. The main result is that substitution

@@ -99,10 +99,10 @@ step-uniqueₛ (step-jmp ig₁) (step-jmp ig₂)
   with instantiate-uniqueₛ ig₁ ig₂
 ... | refl = refl
 
-step-prg-uniqueₛ : ∀ {P P₁ P₂} →
-                    ⊢ P ⇒ P₁ →
-                    ⊢ P ⇒ P₂ →
-                    P₁ ≡ P₂
+step-prg-uniqueₛ : ∀ {ℒ ℒ₁ ℒ₂} →
+                    ⊢ ℒ ⇒ ℒ₁ →
+                    ⊢ ℒ ⇒ ℒ₂ →
+                    ℒ₁ ≡ ℒ₂
 step-prg-uniqueₛ (step-running step₁) (step-running step₂)
   rewrite step-uniqueₛ step₁ step₂
     = refl
@@ -111,10 +111,10 @@ step-prg-uniqueₛ step-halting (step-running ())
 step-prg-uniqueₛ step-halting step-halting = refl
 step-prg-uniqueₛ step-halted step-halted = refl
 
-exec-uniqueₛ : ∀ {P P₁ P₂ n} →
-                 ⊢ P ⇒ₙ n / P₁ →
-                 ⊢ P ⇒ₙ n / P₂ →
-                 P₁ ≡ P₂
+exec-uniqueₛ : ∀ {ℒ ℒ₁ ℒ₂ n} →
+                 ⊢ ℒ ⇒ₙ n / ℒ₁ →
+                 ⊢ ℒ ⇒ₙ n / ℒ₂ →
+                 ℒ₁ ≡ ℒ₂
 exec-uniqueₛ [] [] = refl
 exec-uniqueₛ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
   rewrite step-prg-uniqueₛ step₁ step₂
@@ -209,7 +209,7 @@ step-decₛ G (H , register sp regs , jmp v)
 ... | yes (I' , ig) = yes (_ , step-jmp ig)
 step-decₛ G (H , R , halt) = no (λ { (_ , ()) })
 
-step-prg-decₛ : ∀ P → Dec (∃ λ P' → ⊢ P ⇒ P')
+step-prg-decₛ : ∀ ℒ → Dec (∃ λ ℒ' → ⊢ ℒ ⇒ ℒ')
 step-prg-decₛ (running G (H , R , I))
   with I ≟ halt | step-decₛ G (H , R , I)
 step-prg-decₛ (running G (H , R , .halt))
@@ -219,18 +219,18 @@ step-prg-decₛ (running G (H , R , .halt))
   where help : ∀ {G H R I} →
                  I ≢ halt →
                  ¬ ∃ (λ P' → (G ⊢ (H , R , I) ⇒ P')) →
-                 ¬ ∃ (λ P' → (⊢ running G (H , R , I) ⇒ P'))
+                 ¬ ∃ (λ ℒ' → (⊢ running G (H , R , I) ⇒ ℒ'))
         help I≢halt ¬step (_ , step-running step) = ¬step (_ , step)
         help I≢halt ¬step (_ , step-halting) = I≢halt refl
 step-prg-decₛ halted = yes (halted , step-halted)
 
-exec-decₛ : ∀ P n → Dec (∃ λ P' → ⊢ P ⇒ₙ n / P')
-exec-decₛ P zero = yes (P , [])
-exec-decₛ P (suc n) with step-prg-decₛ P
-... | no ¬step = no (λ { (P'' , step ∷ exec) → ¬step (_ , step)})
-... | yes (P' , step) with exec-decₛ P' n
+exec-decₛ : ∀ ℒ n → Dec (∃ λ ℒ' → ⊢ ℒ ⇒ₙ n / ℒ')
+exec-decₛ ℒ zero = yes (ℒ , [])
+exec-decₛ ℒ (suc n) with step-prg-decₛ ℒ
+... | no ¬step = no (λ { (ℒ'' , step ∷ exec) → ¬step (_ , step)})
+... | yes (ℒ' , step) with exec-decₛ ℒ' n
 ... | no ¬exec = no (λ
-  { (P'' , step' ∷ exec) → ¬exec (P'' ,
-    subst (λ P → ⊢ P ⇒ₙ n / P'') (step-prg-uniqueₛ step' step) exec
+  { (ℒ'' , step' ∷ exec) → ¬exec (ℒ'' ,
+    subst (λ ℒ → ⊢ ℒ ⇒ₙ n / ℒ'') (step-prg-uniqueₛ step' step) exec
   )})
-... | yes (P'' , exec) = yes (P'' , step ∷ exec)
+... | yes (ℒ'' , exec) = yes (ℒ'' , step ∷ exec)

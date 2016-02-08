@@ -3,8 +3,7 @@ module Judgments.SimpleGrammar where
 open import Util
 open import Judgments.CommonGrammar public
 
--- The purpose of this file is to introduce the base grammar
--- on which every other file depends.
+-- The purpose of this file is to define the simple grammar.
 
 -- Word value, w
 data WordValueₛ : Set where
@@ -64,10 +63,11 @@ Stackₛ = List WordValueₛ
 data RegisterFileₛ : Set where
   register : Stackₛ → Vec WordValueₛ ♯regs → RegisterFileₛ
 
--- P
+-- Program states, P
 ProgramStateₛ : Set
 ProgramStateₛ = Heapₛ × RegisterFileₛ × InstructionSequenceₛ
 
+-- Programs, ℒ
 data Programₛ : Set where
   running : Globalsₛ → ProgramStateₛ → Programₛ
   halted : Programₛ
