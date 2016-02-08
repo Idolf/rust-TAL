@@ -102,7 +102,7 @@ $\infer{
     {\simple H, \simple R[r_1 \mapsto \mathtt{int}\ (i_1 - i_2)], \simple I}
 } \and
 \infer{
-  \simple S = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: \simple R[\mathtt{sp}]
+  \simple S = \overbrace{\mathtt{uninit} :: \dots :: \mathtt{uninit}}^n :: \simple R[\mathtt{sp}]
 }{
   \execis{\simple G}
     {\simple H, \simple R, (\mathtt{salloc}\ n) ; \simple I}
@@ -208,7 +208,7 @@ $\infer{
     {\high H, \high R[r_1 \mapsto \mathtt{int}\ (i_1 - i_2)], \high I}
 } \and
 \infer{
-  \high S = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: \high R[\mathtt{sp}]
+  \high S = \overbrace{\mathtt{uninit} :: \dots :: \mathtt{uninit}}^n :: \high R[\mathtt{sp}]
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{salloc}\ n) ; \high I}
@@ -255,7 +255,7 @@ $\infer{
 } \and
 \infer{
   \text{$\ell_h$ is a fresh variable} \and
-  \high h = \langle \mathtt{uninit}\ \tau_1, \dots, \mathtt{uninit}\ \tau_n \rangle
+  \high h = \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) ; \high I}
@@ -305,3 +305,18 @@ Agda-implementation\footnote{The relevant files are
   use in later files.} for this is more or less a direct transcription of this
 section. The biggest difference is that some judgments have been turned into
 functions in the Agda-code and vice-versa.
+
+Additionally there is the issue of the substitutions present in
+$\evalcode{\high G}{\high w}{I}$. While these substitutions are fairly
+straightforward in the paper-notation, this is very much not the case in the
+Agda-version.
+
+In the file \texttt{Judgments/Substitution.agda} we have defined a function
+\texttt{weaken} and a relation $\mathtt{\_\llbracket\_/\_\rrbracket\equiv\_}$
+for each of the datatypes in \highlang that can include assumptions from a
+context.
+
+We will postpone a more detailed description of these two primitives until step
+???.
+
+\todo{Which step?}

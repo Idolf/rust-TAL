@@ -4,7 +4,6 @@
 Some notes for judgments:
 
 \begin{itemize}
-\item $|- \dots$: Valid without assumption (duh).
 \item $\Delta |- \dots$: The ``normal'' interpretation: If
   $\Delta = a_1 :: \dots :: \mathtt{nil}$, then right-hand side is allowed to
   use the variable $a_1, \dots$.
@@ -46,6 +45,11 @@ Some notes for judgments:
       {\valid{\Delta}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}}
 \end{mathpar}
 
+\fbox{$\valid{\Delta}{\tau^\phi}$}
+\begin{mathpar}
+\infer{\valid{\Delta}{\tau}}{\valid{\Delta}{\tau^\phi}}
+\end{mathpar}
+
 \fbox{$\valid{\Delta}{\sigma}$}
 \begin{mathpar}
 \infer{\rho \in \Delta}{\valid{\Delta}{\rho}} \and
@@ -58,55 +62,7 @@ Some notes for judgments:
 \infer{\valid{\Delta}{\sigma} \and \valid{\Delta}{\tau_1} \and \dots \and \valid{\Delta}{\tau_{max}}}{\valid{\Delta}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{max} |-> \tau_{max}\}}}
 \end{mathpar}
 
-\fbox{$\valid{}{\Psi_g}$}
-\begin{mathpar}
-\infer
-  {\valid{\mathtt{nil}}{\tau_1} \and
-    \dots \and
-    \valid{\mathtt{nil}}{\tau_n}}
-  {\valid{}{\{\ell_{g,1} |-> \tau_1, \dots, \ell_{g,n} |-> \tau_{n}\}}}
-\end{mathpar}
-
-\fbox{$\valid{}{\Psi_h}$}
-\begin{mathpar}
-\infer
-  {\valid{\mathtt{nil}}{\tau_1} \and
-  \dots \and
-  \valid{\mathtt{nil}}{\tau_n}}
-  {\valid{}{\{\ell_{h,1} |-> \tau_1, \dots, \ell_{h,n} |-> \tau_{n}\}}}
-\end{mathpar}
-
-\fbox{$\ofinstantiation{\Delta}{\theta}{a}$}
-\begin{mathpar}
-\infer{
-  \valid{\Delta}{\tau}
-}{
-  \ofinstantiation{\Delta}{\tau/\alpha}{\alpha}
-} \and
-\infer{
-  \valid{\Delta}{\sigma}
-}{
-  \ofinstantiation{\Delta}{\sigma/\rho}{\rho}
-}
-\end{mathpar}
-
-\fbox{$\ofinstantiations{\Delta}{[\theta, \dots, \theta]}{\Delta}$}
-\begin{mathpar}
-\infer{
-}{
-  \ofinstantiation{\Delta}{[]}{\mathtt{nil}}
-} \and
-\infer{
-  \ofinstantiation{\Delta}{[\theta_2, \dots]}{\Delta'} \and
-  \ofinstantiation{\Delta', \Delta}{\theta_1}{a} \and
-}{
-  \ofinstantiation{\Delta}{[\theta_1, \theta_2, \dots]}{a :: \Delta'}
-}
-\end{mathpar}
-
 \subsection{Subtype-judgments for type-like objects}
-
-\todo{Insert them}
 
 \subsection{Judgments for value-like objects}
 

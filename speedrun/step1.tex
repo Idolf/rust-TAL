@@ -19,7 +19,7 @@ Common definitions: \\
 \textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{max}$ \\\\
 
 The grammar for \simplelang: \\
-\textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns}$ \\
+\textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{uninit}$ \\
 \textit{small values}       & $\simple v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i$ \\
 \textit{global values}      & $\simple g$ & ::= & $\mathtt{code}\ \simple I$ \\
 \textit{global collections} & $\simple G$ & ::= & $\{\ell_g |-> \simple{g}, \dots, \ell_g |-> \simple{g}\}$ \\
@@ -50,7 +50,7 @@ The type system for \highlang: \\
 \textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\\\
 
 The grammar for \highlang: \\
-\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{ns} \mid \mathtt{uninit}\ \tau \mid \Lambda\ \Delta \cdot \high{w}[\theta, \dots, \theta]$ \\
+\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{heapval}\ \ell_h \mid \mathtt{int}\ i \mid \mathtt{uninit} \mid \Lambda\ \Delta \cdot \high{w}[\theta, \dots, \theta]$ \\
 \textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_g \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\theta, \dots, \theta]$ \\
 \textit{global values}            & $\high g$ & ::= & $\mathtt{code}[ \Delta ] \Gamma \cdot \high I$ \\
 \textit{global collections}       & $\high G$ & ::= & $\{\ell_g |-> \high{g}, \dots, \ell_g |-> \high{g}\}$ \\
