@@ -7,6 +7,7 @@ open import Lemmas.Types
 
 import Data.Nat as N
 import Data.Nat.Properties as NP
+open import Data.List.Properties using (map-id)
 
 -- The purpose of this file is
 -- to include instances of this record.
@@ -445,53 +446,11 @@ private
 List-TypeSubstitution :
   ∀ A {S S⁺ T T⁺} {{TS : TypeSubstitution A {S} {T} {{S⁺}} {{T⁺}}}} →
     TypeSubstitution (List A) {{List-Substitution⁺ A}} {{List-TypeLike⁺ A}}
-List-TypeSubstitution A {S} {T} {S⁺} {T⁺} {{TS}} =
-    typeSubstitution xs-weaken-outside-ctx xs-subst-outside-ctx xs-subtype-weaken xs-subtype-subst-exists
-  where xs-valid-weaken :
-          ∀ (Δ₁ Δ₂ Δ₃ : TypeAssumptions) {xs : List A} →
-            _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₃) xs →
-            _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₂ ++ Δ₃)
-              (weaken {{List-Substitution A}} (length Δ₁) (length Δ₂) xs)
-        xs-valid-weaken Δ₁ Δ₂ Δ₃ [] = []
-        xs-valid-weaken Δ₁ Δ₂ Δ₃ (x⋆ ∷ xs⋆) =
-          valid-weaken {{TS}} Δ₁ Δ₂ Δ₃ x⋆ ∷ xs-valid-weaken Δ₁ Δ₂ Δ₃ xs⋆
-
-        xs-weaken-outside-ctx : weaken-outside-ctxᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
-        xs-weaken-outside-ctx ι inc [] = refl
-        xs-weaken-outside-ctx ι inc (x⋆ ∷ xs⋆) = cong₂ _∷_ (weaken-outside-ctx {{TS}} ι inc x⋆) (xs-weaken-outside-ctx ι inc xs⋆)
-
-        xs-valid-subst-exists :
-          ∀ Δ₁ {Δ₂ a i} →
-            Δ₂ ⊢ i of a instantiation →
-            {xs : List A} →
-            _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ a ∷ Δ₂) xs →
-            ∃ λ xs' →
-              _⟦_/_⟧≡_ {{List-Substitution A}} xs i (length Δ₁) xs' ×
-              _⊢_Valid {{List-TypeLike A}} (Δ₁ ++ Δ₂) xs'
-        xs-valid-subst-exists Δ₁ i⋆ [] = [] , [] , []
-        xs-valid-subst-exists Δ₁ i⋆ (x⋆ ∷ xs⋆) =
-          Σ-zip _∷_ (Σ-zip _∷_ _∷_) (valid-subst-exists {{TS}} Δ₁ i⋆ x⋆) (xs-valid-subst-exists Δ₁ i⋆ xs⋆)
-
-        xs-subst-outside-ctx :
-          ∀ {Δ i ι} {xs : List A} →
-            _⊢_Valid {{List-TypeLike A}} Δ xs →
-            _⟦_/_⟧≡_ {{List-Substitution A}} xs i (length Δ + ι) xs
-        xs-subst-outside-ctx [] = []
-        xs-subst-outside-ctx (x⋆ ∷ xs⋆) = subst-outside-ctx {{TS}} x⋆ ∷ xs-subst-outside-ctx xs⋆
-
-        xs-subtype-weaken : subtype-weakenᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
-        xs-subtype-weaken Δ₁ Δ₂ Δ₃ [] = []
-        xs-subtype-weaken Δ₁ Δ₂ Δ₃ (x₁≤x₂ ∷ xs₁≤xs₂) =
-          subtype-weaken Δ₁ Δ₂ Δ₃ x₁≤x₂ ∷ xs-subtype-weaken Δ₁ Δ₂ Δ₃ xs₁≤xs₂
-
-        xs-subtype-subst-exists : subtype-subst-existsᵗ (List A) {{List-Substitution A}} {{List-TypeLike A}}
-        xs-subtype-subst-exists Δ₁ i⋆ [] = [] , [] , [] , [] , []
-        xs-subtype-subst-exists Δ₁ i⋆ (x₁≤x₂ ∷ xs₁≤xs₂)
-          with subtype-subst-exists Δ₁ i⋆ x₁≤x₂
-        ... | x₁' , x₂' , sub-x₁ , sub-x₂ , x₁'≤x₂'
-          with xs-subtype-subst-exists Δ₁ i⋆ xs₁≤xs₂
-        ... | xs₁' , xs₂' , sub-xs₁ , sub-xs₂ , xs₁'≤xs₂'
-            = _ , _ , sub-x₁ ∷ sub-xs₁ , sub-x₂ ∷ sub-xs₂ , x₁'≤x₂' ∷ xs₁'≤xs₂'
+List-TypeSubstitution A {S} {T} {S⁺} {T⁺} {{TS}} = typeSubstitution
+    (λ ι inc → All-≡-left (weaken _ inc) ∘ All-map (weaken-outside-ctx ι inc))
+    (All→AllZip ∘ All-map subst-outside-ctx)
+    (λ Δ₁ Δ₂ Δ₃ → AllZip-map' _ _ (subtype-weaken Δ₁ Δ₂ Δ₃))
+    (λ Δ₁ i⋆ → AllZip-∃₂→ ∘ AllZip-map (subtype-subst-exists Δ₁ i⋆))
 
 instance
   Type-TypeSubstitution : TypeSubstitution Type

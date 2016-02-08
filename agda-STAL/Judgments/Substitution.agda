@@ -311,19 +311,10 @@ data _⟦_/_⟧I≡_ : InstructionSequenceₕ → Instantiation → ℕ →
     ---------------------
     halt ⟦ i / ι ⟧I≡ halt
 
-Vec-Substitution : ∀ A {{S : Substitution A}} m → Substitution (Vec A m)
-Vec-Substitution A m =
-    substitution weaken-xs (λ xs i ι xs' → AllZipᵥ (λ x x' → x ⟦ i / ι ⟧≡ x') xs xs')
-  where weaken-xs : ∀ {n} → ℕ → ℕ → Vec A n → Vec A n
-        weaken-xs pos inc [] = []
-        weaken-xs pos inc (x ∷ xs) = weaken pos inc x ∷ weaken-xs pos inc xs
-
-List-Substitution : ∀ A {{s : Substitution A}} → Substitution (List A)
-List-Substitution A =
-    substitution weaken-xs (λ xs i ι xs' → AllZip (λ x x' → x ⟦ i / ι ⟧≡ x') xs xs')
-  where weaken-xs : ℕ → ℕ → List A → List A
-        weaken-xs pos inc [] = []
-        weaken-xs pos inc (x ∷ xs) = weaken pos inc x ∷ weaken-xs pos inc xs
+List-Substitution : ∀ A {{_ : Substitution A}} → Substitution (List A)
+List-Substitution A = substitution
+  (λ pos inc xs → map (weaken pos inc) xs)
+  (λ xs i ι xs' → AllZip (λ x x' → x ⟦ i / ι ⟧≡ x') xs xs')
 
 instance
   Type-Substitution : Substitution Type
@@ -337,9 +328,6 @@ instance
 
   InitType-Substitution : Substitution InitType
   InitType-Substitution = substitution weaken-τ⁻ _⟦_/_⟧τ⁻≡_
-
-  InitTypeVec-Substitution : ∀ {n} → Substitution (Vec InitType n)
-  InitTypeVec-Substitution = Vec-Substitution InitType _
 
   InitTypeList-Substitution : Substitution (List InitType)
   InitTypeList-Substitution = substitution weaken-τs⁻ _⟦_/_⟧τs⁻≡_

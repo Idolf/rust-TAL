@@ -1,7 +1,7 @@
 module Util.Function where
 
 -- Re-exports
-open import Function using (_∘_ ; id ; const) public
+open import Function using (_∘_ ; id ; const ; flip) public
 
 -- Local imports
 open import Util.Maybe
@@ -46,3 +46,13 @@ HasInverse→IsInjective {f = f} (g , eq₁) {x₁} {x₂} eq₂ =
 IsSurjective : ∀ {a b} {A : Set a} {B : Set b}
                  (f : A → Maybe B) → Set (a ⊔ b)
 IsSurjective {A = A} {B} f = ∀ x → ∃ λ y → f y ≡ just x
+
+infixr 9 _∘₂_
+_∘₂_ : ∀ {a b c d}
+         {A : Set a} {B : A → Set b}
+         {C : (x : A) → (y : B x) → Set c}
+         {D : {x : A} {y : B x} → C x y → Set d} →
+         (f : ∀ {x y} (z : C x y) → D z) →
+         (g : ∀ x y → C x y) →
+         (∀ x y → D (g x y))
+f ∘₂ g = λ x y → f (g x y)

@@ -5,8 +5,9 @@ open import Data.List
   using (List ; [] ; _∷_ ; _∷ʳ_ ; [_] ; map ;
         length ; zip ; _++_ ; replicate)
   public
-open import Data.List.All using (All ; [] ; _∷_)
-                          renaming (all to All-dec) public
+open import Data.List.All
+  using (All ; [] ; _∷_)
+  renaming (all to All-dec ; map to All-map) public
 open import Data.List.Properties using ()
   renaming ( ∷-injective to List-∷-injective
            ; length-++ to List-length-++) public
@@ -17,7 +18,7 @@ open import Util.Function
 open import Util.Dec
 open import Util.Tree
 open import Data.Nat hiding (_≟_ ; _⊔_)
-open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_ ; ∃)
+open import Data.Product using (_,_ ; proj₁ ; proj₂ ; _×_ ; ∃ ; ∃₂)
 open import Relation.Binary.PropositionalEquality
 open import Level using (_⊔_)
 import Algebra as A
@@ -42,6 +43,168 @@ AllZip-length : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
                   AllZip P xs ys → length xs ≡ length ys
 AllZip-length [] = refl
 AllZip-length (p ∷ ps) rewrite AllZip-length ps = refl
+
+All→AllZip : ∀ {p a} {A : Set a} {P : A → A → Set p}
+               {xs} →
+               All (λ x → P x x) xs → AllZip P xs xs
+All→AllZip [] = []
+All→AllZip (p ∷ ps) = p ∷ All→AllZip ps
+
+All→AllZip' : ∀ {a b c p} {A : Set a}
+                {B : Set b} {C : Set c}
+                {P : B → C → Set p}
+                {xs : List A} f g →
+                All (λ x → P (f x) (g x)) xs →
+                AllZip P (map f xs) (map g xs)
+All→AllZip' f g [] = []
+All→AllZip' f g (p ∷ ps) = p ∷ All→AllZip' f g ps
+
+All-≡-left : ∀ {a} {A : Set a}
+               (f : A → A) {xs} →
+               All (λ x → f x ≡ x) xs →
+               map f xs ≡ xs
+All-≡-left f [] = refl
+All-≡-left f (eq ∷ eqs) = cong₂ _∷_ eq (All-≡-left f eqs)
+
+All-∃→ : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+           {xs} →
+           All (λ x → ∃ λ y → P x y) xs →
+           ∃ λ ys → AllZip P xs ys
+All-∃→ [] = [] , []
+All-∃→ ((y , p) ∷ ps)
+  with All-∃→ ps
+... | ys , ps'
+  = y ∷ ys , p ∷ ps'
+
+AllZip-∃→ : ∀ {a b c p₁ p₂}
+              {A : Set a} {B : Set b} {C : Set c}
+              {P₁ : A → C → Set p₁}
+              {P₂ : B → C → Set p₂}
+              {xs₁ xs₂} →
+              AllZip (λ x₁ x₂ → ∃ λ y → P₁ x₁ y × P₂ x₂ y) xs₁ xs₂ →
+              ∃ λ ys → AllZip P₁ xs₁ ys × AllZip P₂ xs₂ ys
+AllZip-∃→ [] = [] , [] , []
+AllZip-∃→ ((y , p₁ , p₂) ∷ ps)
+  with AllZip-∃→ ps
+... | ys , ps₁ , ps₂ = y ∷ ys , p₁ ∷ ps₁ , p₂ ∷ ps₂
+
+AllZip-∃₂→ : ∀ {a b c d p₁ p₂ p₃}
+               {A : Set a} {B : Set b} {C : Set c} {D : Set d}
+               {P₁ : A → C → Set p₁}
+               {P₂ : B → D → Set p₂}
+               {P₃ : C → D → Set p₃}
+               {xs₁ xs₂} →
+               AllZip (λ x₁ x₂ → ∃₂ λ y₁ y₂ → P₁ x₁ y₁ × P₂ x₂ y₂ × P₃ y₁ y₂) xs₁ xs₂ →
+               ∃₂ λ ys₁ ys₂ → AllZip P₁ xs₁ ys₁ × AllZip P₂ xs₂ ys₂ × AllZip P₃ ys₁ ys₂
+AllZip-∃₂→ [] = [] , [] , [] , [] , []
+AllZip-∃₂→ ((y₁ , y₂ , p₁ , p₂ , p₃) ∷ ps)
+  with AllZip-∃₂→ ps
+... | ys₁ , ys₂ , ps₁ , ps₂ , ps₃
+  = y₁ ∷ ys₁ , y₂ ∷ ys₂ , p₁ ∷ ps₁ , p₂ ∷ ps₂ , p₃ ∷ ps₃
+
+AllZip-split : ∀ {a b p₁ p₂}
+                 {A : Set a} {B : Set b}
+                 {P₁ : A → B → Set p₁}
+                 {P₂ : A → B → Set p₂}
+                 {xs ys} →
+                 AllZip (λ x y → P₁ x y × P₂ x y) xs ys →
+                 AllZip P₁ xs ys × AllZip P₂ xs ys
+AllZip-split [] = [] , []
+AllZip-split ((p₁ , p₂) ∷ ps)
+  with AllZip-split ps
+... | ps₁ , ps₂ = p₁ ∷ ps₁ , p₂ ∷ ps₂
+
+AllZip-split' : ∀ {a b p₁ p₂}
+                  {A : Set a} {B : Set b}
+                  {P₁ : A → Set p₁}
+                  {P₂ : B → Set p₂}
+                  {xs ys} →
+                  AllZip (λ x y → P₁ x × P₂ y) xs ys →
+                  All P₁ xs × All P₂ ys
+AllZip-split' [] = [] , []
+AllZip-split' ((p₁ , p₂) ∷ ps)
+  with AllZip-split' ps
+... | ps₁ , ps₂ = p₁ ∷ ps₁ , p₂ ∷ ps₂
+
+All-∃← : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+           {xs} →
+           (∃ λ ys → AllZip P xs ys) →
+           All (λ x → ∃ λ y → P x y) xs
+All-∃← ([] , []) = []
+All-∃← (y ∷ ys , p ∷ ps) = (y , p) ∷ All-∃← (ys , ps)
+
+AllZip-map : ∀ {a b p q} {A : Set a} {B : Set b}
+               {P : A → B → Set p} {Q : A → B → Set q}
+               {xs ys} →
+               (f : ∀ {x y} → P x y → Q x y) →
+               AllZip P xs ys → AllZip Q xs ys
+AllZip-map f [] = []
+AllZip-map f (p ∷ ps) = f p ∷ AllZip-map f ps
+
+AllZip-map' : ∀ {a₁ a₂ b₁ b₂ p q}
+                {A₁ : Set a₁} {B₁ : Set b₁}
+                {A₂ : Set a₂} {B₂ : Set b₂}
+                {P : A₁ → B₁ → Set p} {Q : A₂ → B₂ → Set q}
+                (f₁ : A₁ → A₂) (f₂ : B₁ → B₂)
+                {xs ys} →
+                (f : ∀ {x y} → P x y → Q (f₁ x) (f₂ y)) →
+                AllZip P xs ys → AllZip Q (map f₁ xs) (map f₂ ys)
+AllZip-map' f₁ f₂ f [] = []
+AllZip-map' f₁ f₂ f (p ∷ ps) = f p ∷ AllZip-map' f₁ f₂ f ps
+
+AllZip-zip : ∀ {a b c p₁ p₂ q} {A : Set a} {B : Set b} {C : Set c}
+               {P₁ : A → B → Set p₁}
+               {P₂ : A → C → Set p₂}
+               {Q : B → C → Set q}
+               {xs ys zs} →
+               (f : ∀ {x y z} → P₁ x y → P₂ x z → Q y z) →
+               AllZip P₁ xs ys →
+               AllZip P₂ xs zs →
+               AllZip Q ys zs
+AllZip-zip f [] [] = []
+AllZip-zip f (p₁ ∷ ps₁) (p₂ ∷ ps₂) = f p₁ p₂ ∷ AllZip-zip f ps₁ ps₂
+
+AllZip-trans : ∀ {a b c p₁ p₂ q} {A : Set a} {B : Set b} {C : Set c}
+                 {P₁ : A → B → Set p₁}
+                 {P₂ : B → C → Set p₂}
+                 {Q : A → C → Set q}
+                 {xs ys zs} →
+                 (f : ∀ {x y z} → P₁ x y → P₂ y z → Q x z) →
+                 AllZip P₁ xs ys →
+                 AllZip P₂ ys zs →
+                 AllZip Q xs zs
+AllZip-trans f [] [] = []
+AllZip-trans f (p₁ ∷ ps₁) (p₂ ∷ ps₂) = f p₁ p₂ ∷ AllZip-trans f ps₁ ps₂
+
+AllZip-swap : ∀ {a b p} {A : Set a} {B : Set b} {P : A → B → Set p}
+                {xs ys} →
+                AllZip P xs ys →
+                AllZip (flip P) ys xs
+AllZip-swap [] = []
+AllZip-swap (p ∷ ps) = p ∷ AllZip-swap ps
+
+AllZip-≡ : ∀ {a} {A : Set a} →
+             {xs xs' : List A} →
+             AllZip _≡_ xs xs' →
+             xs ≡ xs'
+AllZip-≡ [] = refl
+AllZip-≡ (p ∷ ps) = cong₂ _∷_ p (AllZip-≡ ps)
+
+AllZip-dec : ∀ {a b p} {A : Set a} {B : Set b}
+               {P : A → B → Set p} →
+               (f : ∀ x y → Dec (P x y)) →
+               (xs : List A) →
+               (ys : List B) →
+               Dec (AllZip P xs ys)
+AllZip-dec f [] [] = yes []
+AllZip-dec f [] (y ∷ ys) = no (λ ())
+AllZip-dec f (x ∷ xs) [] = no (λ ())
+AllZip-dec f (x ∷ xs) (y ∷ ys)
+  with f x y | AllZip-dec f xs ys
+... | yes p | yes ps = yes (p ∷ ps)
+... | no ¬p | _ = no (λ { (p ∷ ps) → ¬p p})
+... | _ | no ¬ps = no (λ { (p ∷ ps) → ¬ps ps})
+
 
 List-++-assoc : ∀ {ℓ} {A : Set ℓ} (xs₁ xs₂ xs₃ : List A) →
                   (xs₁ ++ xs₂) ++ xs₃ ≡ xs₁ ++ xs₂ ++ xs₃
