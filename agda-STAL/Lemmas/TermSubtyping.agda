@@ -130,9 +130,9 @@ instruction-subtype : ∀ {ψ₁ Δ Γ₁ Γ₂ Γ₂'} →
                         [] ⊢ ψ₁ Valid →
                         Δ ⊢ Γ₁ ≤ Γ₂ →
                         {ι : Instruction} →
-                        ψ₁ , Δ , Γ₂ ⊢ ι ⇒ Γ₂' instruction →
+                        ψ₁ , Δ , Γ₂ ⊢ ι of Γ₂' instruction →
                         ∃ λ Γ₁' →
-                          ψ₁ , Δ , Γ₁ ⊢ ι ⇒ Γ₁' instruction ×
+                          ψ₁ , Δ , Γ₁ ⊢ ι of Γ₁' instruction ×
                           Δ ⊢ Γ₁' ≤ Γ₂'
 instruction-subtype ψ₁⋆ (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
                     {ι = add ♯rd ♯rs v} (of-add eq v⋆)

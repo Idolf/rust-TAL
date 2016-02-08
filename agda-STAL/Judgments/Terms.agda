@@ -163,54 +163,54 @@ data _⊢_of_register : GlobalLabelAssignment ×
     ------------------------------------------------------
      ψ₁ , ψ₂ ⊢ register sp regs of registerₐ σ τs register
 
-infix 3 _⊢_⇒_instruction
-data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssumptions ×
+infix 3 _⊢_of_instruction
+data _⊢_of_instruction : GlobalLabelAssignment × TypeAssumptions ×
                         RegisterAssignment →
                         Instruction → RegisterAssignment → Set where
   of-add :
                    ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
                   lookup-regs ♯rs Γ ≡ int →
                  ψ₁ , Δ , Γ ⊢ v of int vval →
-    --------------------------------------------------------------
-    ψ₁ , Δ , Γ ⊢ add ♯rd ♯rs v ⇒ update-regs ♯rd int Γ instruction
+    ---------------------------------------------------------------
+    ψ₁ , Δ , Γ ⊢ add ♯rd ♯rs v of update-regs ♯rd int Γ instruction
 
   of-sub :
                      ∀ {ψ₁ Δ Γ ♯rd ♯rs v} →
                    lookup-regs ♯rs Γ ≡ int →
                   ψ₁ , Δ , Γ ⊢ v of int vval →
-    --------------------------------------------------------------
-    ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v ⇒ update-regs ♯rd int Γ instruction
+    ---------------------------------------------------------------
+    ψ₁ , Δ , Γ ⊢ sub ♯rd ♯rs v of update-regs ♯rd int Γ instruction
 
   of-salloc :
               ∀ {ψ₁ Δ sp regs n} →
     ----------------------------------------------------------------------
-    ψ₁ , Δ , registerₐ sp regs ⊢ salloc n ⇒
+    ψ₁ , Δ , registerₐ sp regs ⊢ salloc n of
              registerₐ (stack-append (replicate n ns) sp) regs instruction
 
   of-sfree :
                            ∀ {ψ₁ Δ sp sp' regs n} →
                              stack-drop n sp sp' →
     ----------------------------------------------------------------------
-    ψ₁ , Δ , registerₐ sp regs ⊢ sfree n ⇒ registerₐ sp' regs instruction
+    ψ₁ , Δ , registerₐ sp regs ⊢ sfree n of registerₐ sp' regs instruction
 
   of-sld :
                        ∀ {ψ₁ Δ sp regs ♯rd i τ} →
                           stack-lookup i sp τ →
-    -------------------------------------------------------------------------------------
-    ψ₁ , Δ , registerₐ sp regs ⊢ sld ♯rd i ⇒ registerₐ sp (update ♯rd τ regs) instruction
+    --------------------------------------------------------------------------------------
+    ψ₁ , Δ , registerₐ sp regs ⊢ sld ♯rd i of registerₐ sp (update ♯rd τ regs) instruction
 
   of-sst :
                     ∀ {ψ₁ Δ sp sp' regs i ♯rs} →
                   stack-update i (lookup ♯rs regs) sp sp' →
-    -----------------------------------------------------------------------
-    ψ₁ , Δ , registerₐ sp regs ⊢ sst i ♯rs ⇒ registerₐ sp' regs instruction
+    ------------------------------------------------------------------------
+    ψ₁ , Δ , registerₐ sp regs ⊢ sst i ♯rs of registerₐ sp' regs instruction
 
   of-ld :
                   ∀ {ψ₁ Δ Γ ♯rd ♯rs i τs⁻ τ} →
                  lookup-regs ♯rs Γ ≡ tuple τs⁻ →
                       τs⁻ ↓ i ⇒ τ , init →
-    -----------------------------------------------------------
-    ψ₁ , Δ , Γ ⊢ ld ♯rd ♯rs i ⇒ update-regs ♯rd τ Γ instruction
+    ------------------------------------------------------------
+    ψ₁ , Δ , Γ ⊢ ld ♯rd ♯rs i of update-regs ♯rd τ Γ instruction
 
   of-st :
                  ∀ {ψ₁ Δ Γ ♯rd i ♯rs τ τs⁻ τs⁻' φ} →
@@ -218,21 +218,21 @@ data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssumptions ×
                        Δ ⊢ lookup-regs ♯rs Γ ≤ τ →
                          τs⁻ ↓ i ⇒ τ , φ →
                     τs⁻ ⟦ i ⟧← τ , init ⇒ τs⁻' →
-    ----------------------------------------------------------------------
-    ψ₁ , Δ , Γ ⊢ st ♯rd i ♯rs ⇒ update-regs ♯rd (tuple τs⁻') Γ instruction
+    -----------------------------------------------------------------------
+    ψ₁ , Δ , Γ ⊢ st ♯rd i ♯rs of update-regs ♯rd (tuple τs⁻') Γ instruction
 
   of-malloc :
                     ∀ {ψ₁ Δ Γ ♯rd τs} →
                       Δ ⊢ τs Valid →
     -------------------------------------------------------------------
-    ψ₁ , Δ , Γ ⊢ malloc ♯rd τs ⇒
+    ψ₁ , Δ , Γ ⊢ malloc ♯rd τs of
       update-regs ♯rd (tuple (map (λ τ → τ , uninit) τs)) Γ instruction
 
   of-mov :
                     ∀ {ψ₁ Δ Γ ♯rd v τ} →
                   ψ₁ , Δ , Γ ⊢ v of τ vval →
-    --------------------------------------------------------
-    ψ₁ , Δ , Γ ⊢ mov ♯rd v ⇒ update-regs ♯rd τ Γ instruction
+    ---------------------------------------------------------
+    ψ₁ , Δ , Γ ⊢ mov ♯rd v of update-regs ♯rd τ Γ instruction
 
   of-beq :
            ∀ {ψ₁ Δ ♯r v Γ Γ'} →
@@ -240,7 +240,7 @@ data _⊢_⇒_instruction : GlobalLabelAssignment × TypeAssumptions ×
     ψ₁ , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
                Δ ⊢ Γ ≤ Γ' →
     -------------------------------------
-    ψ₁ , Δ , Γ ⊢ beq ♯r v ⇒ Γ instruction
+    ψ₁ , Δ , Γ ⊢ beq ♯r v of Γ instruction
 
 infix 3 _⊢_instructionsequence
 data _⊢_instructionsequence : GlobalLabelAssignment ×
@@ -249,7 +249,7 @@ data _⊢_instructionsequence : GlobalLabelAssignment ×
                               InstructionSequence → Set where
   of-~> :
           ∀ {ψ₁ Δ Γ Γ' ι I} →
-    ψ₁ , Δ , Γ  ⊢ ι ⇒ Γ' instruction →
+    ψ₁ , Δ , Γ  ⊢ ι of Γ' instruction →
     ψ₁ , Δ , Γ' ⊢ I instructionsequence →
     ---------------------------------------
     ψ₁ , Δ , Γ ⊢ ι ~> I instructionsequence
@@ -283,24 +283,24 @@ data ⊢_of_globals (G : Globals) (ψ₁ : GlobalLabelAssignment) : Set where
     ----------------------------------------
              ⊢ G of ψ₁ globals
 
-infix 3 _⊢_programstate
-data _⊢_programstate : GlobalLabelAssignment → ProgramState → Set where
+infix 3 _⊢_of_programstate
+data _⊢_of_programstate : GlobalLabelAssignment → ProgramState → HeapLabelAssignment × RegisterAssignment → Set where
   of-programstate :
             ∀ {ψ₁ ψ₂ Γ H R I} →
              ψ₁ ⊢ H of ψ₂ heap →
          ψ₁ , ψ₂ ⊢ R of Γ register →
     ψ₁ , [] , Γ ⊢ I instructionsequence →
     -------------------------------------
-          ψ₁ ⊢ H , R , I programstate
+    ψ₁ ⊢ H , R , I of ψ₂ , Γ programstate
 
 infix 3 ⊢_program
 data ⊢_program : Program → Set where
   of-running :
-         ∀ {G ψ₁ P} →
-     ⊢ G of ψ₁ globals →
-    ψ₁ ⊢ P programstate →
-    ---------------------
-     ⊢ running G P program
+            ∀ {G ψ₁ ψ₂ Γ P} →
+           ⊢ G of ψ₁ globals →
+    ψ₁ ⊢ P of ψ₂ , Γ programstate →
+    -------------------------------
+        ⊢ running G P program
 
   of-halted :
     ----------------

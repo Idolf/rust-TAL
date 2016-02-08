@@ -33,8 +33,8 @@ vval-weaken-right Δ₁ Δ₂ (of-Λ {Δ₂ = Δ} v⋆ is⋆ subs-Γ)
   = of-Λ (vval-weaken-right Δ₁ Δ₂ v⋆) is⋆' subs-Γ
 
 instruction-weaken-right : ∀ {ψ₁} Δ₁ Δ₂ {ι Γ Γ'} →
-                       ψ₁ , Δ₁ , Γ ⊢ ι ⇒ Γ' instruction →
-                       ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ ι ⇒ Γ' instruction
+                       ψ₁ , Δ₁ , Γ ⊢ ι of Γ' instruction →
+                       ψ₁ , Δ₁ ++ Δ₂ , Γ ⊢ ι of Γ' instruction
 instruction-weaken-right Δ₁ Δ₂ (of-add eq v⋆) = of-add eq (vval-weaken-right Δ₁ Δ₂ v⋆)
 instruction-weaken-right Δ₁ Δ₂ (of-sub eq v⋆) = of-sub eq (vval-weaken-right Δ₁ Δ₂ v⋆)
 instruction-weaken-right Δ₁ Δ₂ of-salloc = of-salloc

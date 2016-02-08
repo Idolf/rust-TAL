@@ -366,11 +366,11 @@ instruction-subst : ∀ {ψ₁} Δ₁ Δ₂ {i a Γ₁ Γ₂} →
                       Δ₂ ⊢ i of a instantiation →
                       Γ₁ ⟦ i / length Δ₁ ⟧≡ Γ₂ →
                       ∀ {ι₁ Γᵣ₁} →
-                      ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ ι₁ ⇒ Γᵣ₁ instruction →
+                      ψ₁ , Δ₁ ++ a ∷ Δ₂ , Γ₁ ⊢ ι₁ of Γᵣ₁ instruction →
                       ∃₂ λ ι₂ Γᵣ₂ →
                            ι₁ ⟦ i / length Δ₁ ⟧≡ ι₂ ×
                            Γᵣ₁ ⟦ i / length Δ₁ ⟧≡ Γᵣ₂ ×
-                           ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ ι₂ ⇒ Γᵣ₂ instruction
+                           ψ₁ , Δ₁ ++ Δ₂ , Γ₂ ⊢ ι₂ of Γᵣ₂ instruction
 instruction-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ {add ♯rd ♯rs v} (of-add eq v⋆)
   with vval-subst Δ₁ Δ₂ ψ₁⋆ i⋆ sub-Γ v⋆
 ... | v' , int , sub-v , subst-int , v'⋆
