@@ -27,6 +27,9 @@ module SimpleSemantics where
   ⊢_⇒ₙ_/_ : Program → ℕ → Program → Set
   ⊢_⇒ₙ_/_ = ⊢ₛ_⇒ₙ_/_
 
+  Stuck : Program → Set
+  Stuck = Stuckₛ
+
 module HighSemantics where
   open import Judgments.HighSemantics
   open HighGrammar
@@ -47,3 +50,6 @@ module HighSemantics where
 
   ⊢_⇒ₙ_/_ : Program → ℕ → Program → Set
   ⊢_⇒ₙ_/_ = ⊢ₕ_⇒ₙ_/_
+
+  Stuck : Program → Set
+  Stuck = Stuckₕ

@@ -149,3 +149,17 @@ data ⊢ₛ_⇒ₙ_/_ : Program → ℕ → Program → Set where
        ⊢ₛ ℒ₂ ⇒ₙ n / ℒ₃ →
       -------------------
       ⊢ₛ ℒ₁ ⇒ₙ suc n / ℒ₃
+
+data Stuckₛ : Program → Set where
+  here :
+            ∀ {ℒ} →
+    ¬ (∃ λ ℒ' → ⊢ₛ ℒ ⇒ ℒ') →
+    ------------------------
+           Stuckₛ ℒ
+
+  there :
+    ∀ {ℒ ℒ'} →
+    ⊢ₛ ℒ ⇒ ℒ' →
+    Stuckₛ ℒ' →
+    -----------
+     Stuckₛ ℒ

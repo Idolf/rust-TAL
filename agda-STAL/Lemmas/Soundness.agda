@@ -14,6 +14,9 @@ open import Lemmas.MallocStep using (malloc-step)
 open HighGrammar
 open HighSemantics
 
+-- The purpose if this file is to prove soundness.
+-- Specifically we prove that valid programs cannot get stuck.
+
 private
   wval-int-helper : ∀ {G ψ₁ H ψ₂ w} →
                       ⊢ G of ψ₁ globals →
@@ -269,21 +272,6 @@ steps-soundness : ∀ {n ℒ₁ ℒ₂} →
                     ⊢ ℒ₁ ⇒ₙ n / ℒ₂ →
                     ∃ λ ℒ₃ → ⊢ ℒ₂ ⇒ ℒ₃
 steps-soundness ℒ⋆ steps = step-progress (steps-reduction ℒ⋆ steps)
-
-
-data Stuck : Program → Set where
-  here :
-            ∀ {ℒ} →
-    ¬ (∃ λ ℒ' → ⊢ ℒ ⇒ ℒ') →
-    -----------------------
-           Stuck ℒ
-
-  there :
-    ∀ {ℒ ℒ'} →
-    ⊢ ℒ ⇒ ℒ' →
-    Stuck ℒ' →
-    ----------
-     Stuck ℒ
 
 Valid→¬Stuck : ∀ {ℒ} → ⊢ ℒ program → ¬ Stuck ℒ
 Valid→¬Stuck ℒ⋆ (here ¬step) = ¬step (step-progress ℒ⋆)

@@ -244,3 +244,12 @@ exec-decₛ ℒ (suc n) with step-prg-decₛ ℒ
     subst (λ ℒ → ⊢ ℒ ⇒ₙ n / ℒ'') (step-prg-uniqueₛ step' step) exec
   )})
 ... | yes (ℒ'' , exec) = yes (ℒ'' , step ∷ exec)
+
+¬Stuck→stepₛ : ∀  {ℒ} → ¬ Stuck ℒ →
+               ∃ λ ℒ' → ⊢ ℒ ⇒ ℒ' × ¬ Stuck ℒ'
+¬Stuck→stepₛ {ℒ} ¬stuck
+  with step-prg-decₛ ℒ
+... | yes (ℒ' , step) = ℒ' , step , (λ stuck → ¬stuck (there step stuck))
+... | no ¬step
+  with ¬stuck (here ¬step)
+... | ()

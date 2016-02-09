@@ -61,13 +61,11 @@ EmbedBisimulation = bisimulation forwards backwards
         backwards (refl , ℒₕ⋆) sstep
           with step-progress⁺ ℒₕ⋆
         ... | ℒₕ' , ℒₕ'⋆ , hstep
-          with embed-step-prg hstep
-        ... | sstep'
-          rewrite step-prg-uniqueₛ sstep sstep'
+          rewrite step-prg-uniqueₛ sstep (embed-step-prg hstep)
             = _ , (refl , ℒₕ'⋆) , hstep
 
 alt-bisim : Rel H.Program S.Program
-alt-bisim ℒₕ ℒₛ = embed ℒₕ ≡ ℒₛ × ¬ Stuck ℒₕ
+alt-bisim ℒₕ ℒₛ = embed ℒₕ ≡ ℒₛ × ¬ H.Stuck ℒₕ
 
 AltEmbedBisimulation : IsBisimulation alt-bisim H.⊢_⇒_ S.⊢_⇒_
 AltEmbedBisimulation = bisimulation forwards backwards
@@ -86,14 +84,8 @@ AltEmbedBisimulation = bisimulation forwards backwards
                      ∃ λ ℒₕ' →
                          alt-bisim ℒₕ' ℒₛ' ×
                          H.⊢ ℒₕ ⇒ ℒₕ'
-        backwards {ℒₕ} (refl , ¬stuck) sstep
-          with step-prg-decₕ ℒₕ
-        ... | no ¬hstep
-          with ¬stuck (here ¬hstep)
-        ... | ()
-        backwards {ℒₕ} (refl , ¬stuck) sstep
-            | yes (ℒₕ' , hstep)
-          with embed-step-prg hstep
-        ... | sstep'
-          rewrite step-prg-uniqueₛ sstep sstep'
-          = _ , (refl , (λ stuck → ¬stuck (there hstep stuck))) , hstep
+        backwards  (refl , ¬stuck) sstep
+          with ¬Stuck→stepₕ ¬stuck
+        ... | ℒₕ' , hstep , ¬stuck'
+          rewrite step-prg-uniqueₛ sstep (embed-step-prg hstep)
+            = ℒₕ' , (refl , ¬stuck') , hstep

@@ -2,6 +2,8 @@ module Lemmas.EmbedSimulation where
 
 open import Util
 open import Judgments
+open import Lemmas.HighSemantics
+open import Lemmas.SimpleSemantics
 
 -- The purpose of this module is to prove that
 -- the relation {(ℒₕ, embed ℒₕ)} is a simulation.
@@ -174,3 +176,12 @@ embed-step-prg : ∀ {ℒ ℒ'} →
 embed-step-prg (step-running step) = step-running (embed-step step)
 embed-step-prg step-halting = step-halting
 embed-step-prg step-halted = step-halted
+
+embed-stuck : ∀ {ℒ} →
+              ¬ H.Stuck ℒ →
+              ¬ S.Stuck (embed ℒ)
+embed-stuck ¬stuck stuck with ¬Stuck→stepₕ ¬stuck
+embed-stuck ¬stuck (here ¬step)       | ℒ' , step' , ¬stuck' = ¬step (_ , embed-step-prg step')
+embed-stuck ¬stuck (there step stuck) | ℒ' , step' , ¬stuck'
+  rewrite step-prg-uniqueₛ step (embed-step-prg step')
+    = embed-stuck ¬stuck' stuck

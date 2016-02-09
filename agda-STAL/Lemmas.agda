@@ -37,5 +37,5 @@ open import Lemmas.Soundness public
 open import Lemmas.EmbedSimulation public
 open import Lemmas.EmbedBisimulation public
 
--- Step 8
+-- Step 8:
 open import Lemmas.TermDec public
