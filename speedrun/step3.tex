@@ -49,16 +49,16 @@ $\infer{
   \steps{\running(\high G, \high P)}{\running(\high G, \high P')}
 }$ \\&\\
 $\infer{ }{
-  \steps{\running(\simple G, \simple H, \simple R, \mathtt{halt})}{\halted}
+  \steps{\running(\simple G, \simple H, \simple R, \mathtt{halt})}{\simple\halted}
 }$ &
 $\infer{ }{
-  \steps{\running(\high G, \high H, \high R, \mathtt{halt})}{\halted}
+  \steps{\running(\high G, \high H, \high R, \mathtt{halt})}{\high\halted}
 }$ \\&\\
 $\infer{ }{
-  \steps{\halted}{\halted}
+  \steps{\simple\halted}{\simple\halted}
 }$ &
 $\infer{ }{
-  \steps{\halted}{\halted}
+  \steps{\high\halted}{\high\halted}
 }$\\&\\\hline &\\
 \fbox{$\evalcode{\simple G}{\simple w}{I}$} &
 \fbox{$\evalcode{\high G}{\high w}{I}$} \\&\\
