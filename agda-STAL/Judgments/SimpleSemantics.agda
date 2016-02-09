@@ -1,6 +1,5 @@
 module Judgments.SimpleSemantics where
 
-open import Data.List using (drop)
 open import Util
 open import Judgments.Grammar
 open SimpleGrammar

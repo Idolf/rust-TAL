@@ -2,10 +2,11 @@ module Util.Vec where
 
 -- Re-exports
 open import Data.Vec
-  using (Vec ; [] ; _∷_ ; toList ; fromList ; lookup)
+  using (Vec ; [] ; _∷_ ; toList ; fromList ; lookup ; _[_]≔_ )
   renaming (map to Vec-map ; zip to Vec-zip) public
 open import Data.Vec.Properties
-  using () renaming (∷-injective to Vec-∷-injective) public
+  using ([]≔-lookup ; map-[]≔)
+  renaming (∷-injective to Vec-∷-injective) public
 
 -- Local imports
 open import Util.Maybe
@@ -25,8 +26,7 @@ repeat {m = suc i} x = x ∷ repeat x
 
 update : ∀ {a} {A : Set a} {m} →
            Fin m → A → Vec A m → Vec A m
-update zero    xᵥ (_ ∷ xs) = xᵥ ∷ xs
-update (suc i) xᵥ (x ∷ xs) = x ∷ update i xᵥ xs
+update i x xs = xs [ i ]≔ x
 
 infixr 5 _∷_
 data AllZipᵥ {a b p} {A : Set a} {B : Set b} (P : A → B → Set p) :
@@ -80,6 +80,22 @@ data Allᵥ {a p} {A : Set a} (P : A → Set p) :
           ∀ {m} (L : Vec A m) → Set (a ⊔ p) where
   [] : Allᵥ P []
   _∷_ : ∀ {m x xs} → P x → Allᵥ P {m} xs → Allᵥ P (x ∷ xs)
+
+AllZipᵥ-extract← : ∀ {a b p q} {A : Set a} {B : Set b}
+                     {P : A → B → Set p} {Q : A → Set q}
+                     {m xs ys} →
+                     (f : ∀ {x y} → P x y → Q x) →
+                     AllZipᵥ P {m} xs ys → Allᵥ Q xs
+AllZipᵥ-extract← f [] = []
+AllZipᵥ-extract← f (p ∷ ps) = f p ∷ AllZipᵥ-extract← f ps
+
+AllZipᵥ-extract→ : ∀ {a b p q} {A : Set a} {B : Set b}
+                     {P : A → B → Set p} {Q : B → Set q}
+                     {m xs ys} →
+                     (f : ∀ {x y} → P x y → Q y) →
+                     AllZipᵥ P {m} xs ys → Allᵥ Q ys
+AllZipᵥ-extract→ f [] = []
+AllZipᵥ-extract→ f (p ∷ ps) = f p ∷ AllZipᵥ-extract→ f ps
 
 tabulate : ∀ {a p} {A : Set a} {P : A → Set p} {m xs} →
              (∀ x → P x) → Allᵥ P {m} xs

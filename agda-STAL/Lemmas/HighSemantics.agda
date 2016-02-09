@@ -2,8 +2,8 @@ module Lemmas.HighSemantics where
 
 open import Util
 open import Judgments
-open import Lemmas.Equality
-open import Lemmas.Substitution
+open import Lemmas.Equality using ()
+open import Lemmas.Substitution using (subst-unique-many ; _⟦_/_⟧many?)
 open HighGrammar
 open HighSemantics
 
@@ -61,6 +61,27 @@ instantiate-uniqueₕ (instantiate-Λ ig₁ subs-I₁) (instantiate-Λ ig₂ sub
 instantiate-uniqueₕ (instantiate-Λ ig₁ subs-I₁) (instantiate-Λ ig₂ subs-I₂)
   | refl | refl = refl
 
+instantiate-decₕ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
+instantiate-decₕ G (globval lab)
+  with ↓-dec G lab
+... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
+... | yes (code[ Δ ] Γ ∙ I , l') = yes (I , instantiate-globval l')
+instantiate-decₕ G (heapval lab) = no (λ { (_ , ()) })
+instantiate-decₕ G (int n) = no (λ { (_ , ()) })
+instantiate-decₕ G uninit = no (λ { (_ , ()) })
+instantiate-decₕ G (Λ Δ ∙ w ⟦ θs ⟧)
+  with instantiate-decₕ G w
+... | no ¬ig = no (λ { (_ , instantiate-Λ ig subs-I) → ¬ig (_ , ig)})
+... | yes (I , ig)
+  with I ⟦ θs / 0 ⟧many?
+... | yes (Iₑ , subs-I) = yes (Iₑ , instantiate-Λ ig subs-I)
+... | no ¬subs-I = no help
+  where help : ¬ (∃ λ I → InstantiateGlobal G (Λ Δ ∙ w ⟦ θs ⟧) I)
+        help (Iₑ , instantiate-Λ {I = I'} ig' subs-I)
+          with instantiate-uniqueₕ ig ig'
+        help (Iₑ , instantiate-Λ {I = .I} ig' subs-I)
+            | refl = ¬subs-I (Iₑ , subs-I)
+
 step-uniqueₕ : ∀ {G P P₁ P₂} →
                  G ⊢ P ⇒ P₁ →
                  G ⊢ P ⇒ P₂ →
@@ -108,48 +129,6 @@ step-uniqueₕ (step-beq₁ eq₁ neq₁) (step-beq₁ eq₂ neq₂) = refl
 step-uniqueₕ (step-jmp ig₁) (step-jmp ig₂)
   with instantiate-uniqueₕ ig₁ ig₂
 ... | refl = refl
-
-step-prg-uniqueₕ : ∀ {ℒ ℒ₁ ℒ₂} →
-                    ⊢ ℒ ⇒ ℒ₁ →
-                    ⊢ ℒ ⇒ ℒ₂ →
-                    ℒ₁ ≡ ℒ₂
-step-prg-uniqueₕ (step-running step₁) (step-running step₂)
-  rewrite step-uniqueₕ step₁ step₂
-    = refl
-step-prg-uniqueₕ (step-running ()) step-halting
-step-prg-uniqueₕ step-halting (step-running ())
-step-prg-uniqueₕ step-halting step-halting = refl
-step-prg-uniqueₕ step-halted step-halted = refl
-
-exec-uniqueₕ : ∀ {ℒ ℒ₁ ℒ₂ n} →
-                 ⊢ ℒ ⇒ₙ n / ℒ₁ →
-                 ⊢ ℒ ⇒ₙ n / ℒ₂ →
-                 ℒ₁ ≡ ℒ₂
-exec-uniqueₕ [] [] = refl
-exec-uniqueₕ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
-  rewrite step-prg-uniqueₕ step₁ step₂
-        | exec-uniqueₕ exec₁ exec₂ = refl
-
-instantiate-decₕ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
-instantiate-decₕ G (globval lab)
-  with ↓-dec G lab
-... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
-... | yes (code[ Δ ] Γ ∙ I , l') = yes (I , instantiate-globval l')
-instantiate-decₕ G (heapval lab) = no (λ { (_ , ()) })
-instantiate-decₕ G (int n) = no (λ { (_ , ()) })
-instantiate-decₕ G uninit = no (λ { (_ , ()) })
-instantiate-decₕ G (Λ Δ ∙ w ⟦ θs ⟧)
-  with instantiate-decₕ G w
-... | no ¬ig = no (λ { (_ , instantiate-Λ ig subs-I) → ¬ig (_ , ig)})
-... | yes (I , ig)
-  with I ⟦ θs / 0 ⟧many?
-... | yes (Iₑ , subs-I) = yes (Iₑ , instantiate-Λ ig subs-I)
-... | no ¬subs-I = no help
-  where help : ¬ (∃ λ I → InstantiateGlobal G (Λ Δ ∙ w ⟦ θs ⟧) I)
-        help (Iₑ , instantiate-Λ {I = I'} ig' subs-I)
-          with instantiate-uniqueₕ ig ig'
-        help (Iₑ , instantiate-Λ {I = .I} ig' subs-I)
-            | refl = ¬subs-I (Iₑ , subs-I)
 
 step-decₕ : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
 step-decₕ G (H , register sp regs , add ♯rd ♯rs v ~> I)
@@ -233,6 +212,28 @@ step-decₕ G (H , register sp regs , jmp v)
 ... | yes (I' , ig) = yes (_ , step-jmp ig)
 step-decₕ G (H , R , halt) = no (λ { (_ , ()) })
 
+step-dec-specificₕ : ∀ G P P' → Dec (G ⊢ P ⇒ P')
+step-dec-specificₕ G P P'
+  with step-decₕ G P
+... | no ¬step = no (λ step → ¬step (P' , step))
+... | yes (P'' , step)
+  with P' ≟ P''
+... | no ¬eq = no (λ step' → ¬eq (step-uniqueₕ step' step))
+step-dec-specificₕ G P P'
+    | yes (.P' , step) | yes refl = yes step
+
+step-prg-uniqueₕ : ∀ {ℒ ℒ₁ ℒ₂} →
+                    ⊢ ℒ ⇒ ℒ₁ →
+                    ⊢ ℒ ⇒ ℒ₂ →
+                    ℒ₁ ≡ ℒ₂
+step-prg-uniqueₕ (step-running step₁) (step-running step₂)
+  rewrite step-uniqueₕ step₁ step₂
+    = refl
+step-prg-uniqueₕ (step-running ()) step-halting
+step-prg-uniqueₕ step-halting (step-running ())
+step-prg-uniqueₕ step-halting step-halting = refl
+step-prg-uniqueₕ step-halted step-halted = refl
+
 step-prg-decₕ : ∀ ℒ → Dec (∃ λ ℒ' → ⊢ ℒ ⇒ ℒ')
 step-prg-decₕ (running G (H , R , I))
   with I ≟ halt | step-decₕ G (H , R , I)
@@ -247,6 +248,15 @@ step-prg-decₕ (running G (H , R , .halt))
         help I≢halt ¬step (_ , step-running step) = ¬step (_ , step)
         help I≢halt ¬step (_ , step-halting) = I≢halt refl
 step-prg-decₕ halted = yes (halted , step-halted)
+
+exec-uniqueₕ : ∀ {ℒ ℒ₁ ℒ₂ n} →
+                 ⊢ ℒ ⇒ₙ n / ℒ₁ →
+                 ⊢ ℒ ⇒ₙ n / ℒ₂ →
+                 ℒ₁ ≡ ℒ₂
+exec-uniqueₕ [] [] = refl
+exec-uniqueₕ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
+  rewrite step-prg-uniqueₕ step₁ step₂
+        | exec-uniqueₕ exec₁ exec₂ = refl
 
 exec-decₕ : ∀ ℒ n → Dec (∃ λ ℒ' → ⊢ ℒ ⇒ₙ n / ℒ')
 exec-decₕ ℒ zero = yes (ℒ , [])

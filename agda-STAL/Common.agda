@@ -10,9 +10,4 @@ open import Judgments
 -- Most lemmas are in this directory
 open import Lemmas
 
--- Step 5: High soundness
-open import Soundness
-
--- Step 6: Bisimulation and simple soundness
-open import Bisimulation
 open import Example

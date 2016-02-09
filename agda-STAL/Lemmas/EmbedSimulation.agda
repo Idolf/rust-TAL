@@ -1,8 +1,10 @@
-module Lemmas.Embed where
+module Lemmas.EmbedSimulation where
 
 open import Util
 open import Judgments
-open import Data.List using (drop)
+
+-- The purpose of this module is to prove that
+-- the relation {(ℒₕ, embed ℒₕ)} is a simulation.
 
 private
   module S where
@@ -13,7 +15,6 @@ private
     open HighGrammar public
     open HighSemantics public
 
-private
   embed-↓ : ∀ {A B : Set} {{E : Embed A B}}
               {xs : List A} {i x} →
               xs ↓ i ⇒ x →
@@ -37,8 +38,7 @@ private
   embed-update : ∀ {A B : Set} {{E : Embed A B}}
                    {n} i x (xs : Vec A n) →
                    Vec-map embed (update i x xs) ≡ update i (embed x) (Vec-map embed xs)
-  embed-update zero w (w' ∷ ws) = refl
-  embed-update (suc i) w (w' ∷ ws) = cong₂ _∷_ refl (embed-update i w ws)
+  embed-update i x xs = map-[]≔ embed xs i
 
   drop-helper : ∀ {n} {sp sp' : H.Stack} →
                   Drop n sp sp' →
@@ -94,79 +94,79 @@ private
     rewrite embed-subst-I sub-I
       = embed-subst-I-many subs-I
 
-embed-eval : ∀ regs v →
-               embed (H.evalSmallValue regs v) ≡ S.evalSmallValue (embed regs) (embed v)
-embed-eval regs (reg ♯r) = embed-lookup ♯r regs
-embed-eval regs (globval lab) = refl
-embed-eval regs (int i) = refl
-embed-eval regs Λ Δ ∙ v ⟦ θs ⟧ = embed-eval regs v
+  embed-eval : ∀ regs v →
+                 embed (H.evalSmallValue regs v) ≡ S.evalSmallValue (embed regs) (embed v)
+  embed-eval regs (reg ♯r) = embed-lookup ♯r regs
+  embed-eval regs (globval lab) = refl
+  embed-eval regs (int i) = refl
+  embed-eval regs Λ Δ ∙ v ⟦ θs ⟧ = embed-eval regs v
 
-embed-instantiate : ∀ {G w I} →
-                      H.InstantiateGlobal G w I →
-                      S.InstantiateGlobal (embed G) (embed w) (embed I)
-embed-instantiate (instantiate-globval l) = instantiate-globval (embed-↓ l)
-embed-instantiate (instantiate-Λ ig subs-I)
-  with embed-instantiate ig
-... | ig'
-  rewrite embed-subst-I-many subs-I
-    = ig'
+  embed-instantiate : ∀ {G w I} →
+                        H.InstantiateGlobal G w I →
+                        S.InstantiateGlobal (embed G) (embed w) (embed I)
+  embed-instantiate (instantiate-globval l) = instantiate-globval (embed-↓ l)
+  embed-instantiate (instantiate-Λ ig subs-I)
+    with embed-instantiate ig
+  ... | ig'
+    rewrite embed-subst-I-many subs-I
+      = ig'
 
-embed-step : ∀ {G P P'} →
-               G H.⊢ P ⇒ P' →
-               embed G S.⊢ embed P ⇒ embed P'
-embed-step (step-add {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
-  rewrite embed-update ♯rd (int (n₁ + n₂)) regs
-        = step-add (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
-                   (trans (sym (embed-eval regs v)) (cong embed eq₂))
-embed-step (step-sub {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
-  rewrite embed-update ♯rd (int (n₁ ∸ n₂)) regs
-        = step-sub (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
-                   (trans (sym (embed-eval regs v)) (cong embed eq₂))
-embed-step (step-salloc {sp = sp} {n = n})
-  rewrite List-map-++-commute embed (replicate n uninit) sp
-        | replicate-helper n
-    = step-salloc
-embed-step (step-sfree drop)
-  rewrite drop-helper drop
-    = step-sfree
-embed-step (step-sld {regs = regs} {♯rd = ♯rd} {w = w} l)
-  rewrite embed-update ♯rd w regs
-    = step-sld (embed-↓ l)
-embed-step (step-sst {regs = regs} {♯rs = ♯rs} up)
-  with embed-← up
-... | up'
-  rewrite embed-lookup ♯rs regs
-    = step-sst up'
-embed-step (step-ld {regs = regs} {♯rd = ♯rd} {♯rs} {w = w} eq l₁ l₂)
-  rewrite embed-update ♯rd w regs
-  = step-ld (trans (sym (embed-lookup ♯rs regs)) (cong embed eq)) (embed-↓ l₁) (embed-↓ l₂)
-embed-step (step-st {regs = regs} {♯rd = ♯rd} {♯rs = ♯rs} eq l up₁ up₂)
-  with embed-← up₁
-... | up₁'
-  rewrite embed-lookup ♯rs regs
-  = step-st (trans (sym (embed-lookup ♯rd regs)) (cong embed eq)) (embed-↓ l) up₁' (embed-← up₂)
-embed-step (step-malloc {H = H} {regs = regs} {♯rd = ♯rd} {τs = τs})
-  rewrite List-map-++-commute embed H [ tuple (replicate (length τs) uninit) ]
-        | replicate-helper (length τs)
-        | embed-update ♯rd (heapval (length H)) regs
-        | sym (List-length-map embed H)
-    = step-malloc
-embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v})
-  rewrite embed-update ♯rd (H.evalSmallValue regs v) regs
-        | embed-eval regs v
-  = step-mov
-embed-step (step-beq₀ {regs = regs} {♯r = ♯r} {v = v} eq ig)
-  with embed-instantiate ig
-... | ig'
-  rewrite embed-eval regs v
-  = step-beq₀ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) ig'
-embed-step (step-beq₁ {regs = regs} {♯r = ♯r} eq neq)
-  = step-beq₁ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) neq
-embed-step (step-jmp {regs = regs} {v = v} ig)
-  with embed-instantiate ig
-... | ig'
-  rewrite embed-eval regs v
-  = step-jmp ig'
+  embed-step : ∀ {G P P'} →
+                 G H.⊢ P ⇒ P' →
+                 embed G S.⊢ embed P ⇒ embed P'
+  embed-step (step-add {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
+    rewrite embed-update ♯rd (int (n₁ + n₂)) regs
+          = step-add (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
+                     (trans (sym (embed-eval regs v)) (cong embed eq₂))
+  embed-step (step-sub {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
+    rewrite embed-update ♯rd (int (n₁ ∸ n₂)) regs
+          = step-sub (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
+                     (trans (sym (embed-eval regs v)) (cong embed eq₂))
+  embed-step (step-salloc {sp = sp} {n = n})
+    rewrite List-map-++-commute embed (replicate n uninit) sp
+          | replicate-helper n
+      = step-salloc
+  embed-step (step-sfree drop)
+    rewrite drop-helper drop
+      = step-sfree
+  embed-step (step-sld {regs = regs} {♯rd = ♯rd} {w = w} l)
+    rewrite embed-update ♯rd w regs
+      = step-sld (embed-↓ l)
+  embed-step (step-sst {regs = regs} {♯rs = ♯rs} up)
+    with embed-← up
+  ... | up'
+    rewrite embed-lookup ♯rs regs
+      = step-sst up'
+  embed-step (step-ld {regs = regs} {♯rd = ♯rd} {♯rs} {w = w} eq l₁ l₂)
+    rewrite embed-update ♯rd w regs
+    = step-ld (trans (sym (embed-lookup ♯rs regs)) (cong embed eq)) (embed-↓ l₁) (embed-↓ l₂)
+  embed-step (step-st {regs = regs} {♯rd = ♯rd} {♯rs = ♯rs} eq l up₁ up₂)
+    with embed-← up₁
+  ... | up₁'
+    rewrite embed-lookup ♯rs regs
+    = step-st (trans (sym (embed-lookup ♯rd regs)) (cong embed eq)) (embed-↓ l) up₁' (embed-← up₂)
+  embed-step (step-malloc {H = H} {regs = regs} {♯rd = ♯rd} {τs = τs})
+    rewrite List-map-++-commute embed H [ tuple (replicate (length τs) uninit) ]
+          | replicate-helper (length τs)
+          | embed-update ♯rd (heapval (length H)) regs
+          | sym (List-length-map embed H)
+      = step-malloc
+  embed-step (step-mov {regs = regs} {♯rd = ♯rd} {v = v})
+    rewrite embed-update ♯rd (H.evalSmallValue regs v) regs
+          | embed-eval regs v
+    = step-mov
+  embed-step (step-beq₀ {regs = regs} {♯r = ♯r} {v = v} eq ig)
+    with embed-instantiate ig
+  ... | ig'
+    rewrite embed-eval regs v
+    = step-beq₀ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) ig'
+  embed-step (step-beq₁ {regs = regs} {♯r = ♯r} eq neq)
+    = step-beq₁ (trans (sym (embed-lookup ♯r regs)) (cong embed eq)) neq
+  embed-step (step-jmp {regs = regs} {v = v} ig)
+    with embed-instantiate ig
+  ... | ig'
+    rewrite embed-eval regs v
+    = step-jmp ig'
 
 embed-step-prg : ∀ {ℒ ℒ'} →
                    H.⊢ ℒ ⇒ ℒ' →

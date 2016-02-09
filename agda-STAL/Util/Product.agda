@@ -2,7 +2,7 @@ module Util.Product where
 
 -- Re-exports
 open import Data.Product
-  using ( _×_ ; _,_ ; Σ ; Σ-syntax ; proj₁ ; proj₂ ; ∃ ; ∃₂)
+  using ( _×_ ; _,_ ; <_,_> ; Σ ; Σ-syntax ; proj₁ ; proj₂ ; ∃ ; ∃₂)
   renaming (map to Σ-map ; zip to Σ-zip) public
 
 -- Local imports
@@ -26,3 +26,14 @@ instance
           from _ = nothing
           eq : IsInverse to from
           eq (x , y) rewrite invTree x | invTree y = refl
+
+infixr 3 ,_
+,_ : ∀ {a b} {A : Set a} {B : A → Set b} {x} → B x → ∃ B
+, y = _ , y
+
+infix 4 ⟨_,_⟩
+⟨_,_⟩ : ∀ {a b p q}
+          {A : Set a} {B : Set b} {P : A → Set p} {Q : B → Set q} →
+          (f : A → B) → (∀ {x} → P x → Q (f x)) →
+          Σ A P → Σ B Q
+⟨_,_⟩ = Σ-map

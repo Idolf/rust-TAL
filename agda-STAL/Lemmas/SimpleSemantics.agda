@@ -2,7 +2,7 @@ module Lemmas.SimpleSemantics where
 
 open import Util
 open import Judgments
-open import Lemmas.Equality
+open import Lemmas.Equality using ()
 open SimpleGrammar
 open SimpleSemantics
 
@@ -52,6 +52,15 @@ instantiate-uniqueₛ (instantiate-globval l₁) (instantiate-globval l₂)
 instantiate-uniqueₛ (instantiate-globval l₁) (instantiate-globval l₂)
   | refl = refl
 
+instantiate-decₛ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
+instantiate-decₛ G (globval lab)
+  with ↓-dec G lab
+... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
+... | yes (code I , l') = yes (I , instantiate-globval l')
+instantiate-decₛ G (heapval lab) = no (λ { (_ , ()) })
+instantiate-decₛ G (int n) = no (λ { (_ , ()) })
+instantiate-decₛ G uninit = no (λ { (_ , ()) })
+
 step-uniqueₛ : ∀ {G P P₁ P₂} →
                  G ⊢ P ⇒ P₁ →
                  G ⊢ P ⇒ P₂ →
@@ -98,36 +107,6 @@ step-uniqueₛ (step-beq₁ eq₁ neq₁) (step-beq₁ eq₂ neq₂) = refl
 step-uniqueₛ (step-jmp ig₁) (step-jmp ig₂)
   with instantiate-uniqueₛ ig₁ ig₂
 ... | refl = refl
-
-step-prg-uniqueₛ : ∀ {ℒ ℒ₁ ℒ₂} →
-                    ⊢ ℒ ⇒ ℒ₁ →
-                    ⊢ ℒ ⇒ ℒ₂ →
-                    ℒ₁ ≡ ℒ₂
-step-prg-uniqueₛ (step-running step₁) (step-running step₂)
-  rewrite step-uniqueₛ step₁ step₂
-    = refl
-step-prg-uniqueₛ (step-running ()) step-halting
-step-prg-uniqueₛ step-halting (step-running ())
-step-prg-uniqueₛ step-halting step-halting = refl
-step-prg-uniqueₛ step-halted step-halted = refl
-
-exec-uniqueₛ : ∀ {ℒ ℒ₁ ℒ₂ n} →
-                 ⊢ ℒ ⇒ₙ n / ℒ₁ →
-                 ⊢ ℒ ⇒ₙ n / ℒ₂ →
-                 ℒ₁ ≡ ℒ₂
-exec-uniqueₛ [] [] = refl
-exec-uniqueₛ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
-  rewrite step-prg-uniqueₛ step₁ step₂
-        | exec-uniqueₛ exec₁ exec₂ = refl
-
-instantiate-decₛ : ∀ G w → Dec (∃ λ I → InstantiateGlobal G w I)
-instantiate-decₛ G (globval lab)
-  with ↓-dec G lab
-... | no ¬l' = no (λ { (._ , instantiate-globval l) → ¬l' (_ , l) })
-... | yes (code I , l') = yes (I , instantiate-globval l')
-instantiate-decₛ G (heapval lab) = no (λ { (_ , ()) })
-instantiate-decₛ G (int n) = no (λ { (_ , ()) })
-instantiate-decₛ G uninit = no (λ { (_ , ()) })
 
 step-decₛ : ∀ G P → Dec (∃ λ P' → G ⊢ P ⇒ P')
 step-decₛ G (H , register sp regs , add ♯rd ♯rs v ~> I)
@@ -209,6 +188,28 @@ step-decₛ G (H , register sp regs , jmp v)
 ... | yes (I' , ig) = yes (_ , step-jmp ig)
 step-decₛ G (H , R , halt) = no (λ { (_ , ()) })
 
+step-dec-specificₛ : ∀ G P P' → Dec (G ⊢ P ⇒ P')
+step-dec-specificₛ G P P'
+  with step-decₛ G P
+... | no ¬step = no (λ step → ¬step (P' , step))
+... | yes (P'' , step)
+  with P' ≟ P''
+... | no ¬eq = no (λ step' → ¬eq (step-uniqueₛ step' step))
+step-dec-specificₛ G P P'
+    | yes (.P' , step) | yes refl = yes step
+
+step-prg-uniqueₛ : ∀ {ℒ ℒ₁ ℒ₂} →
+                    ⊢ ℒ ⇒ ℒ₁ →
+                    ⊢ ℒ ⇒ ℒ₂ →
+                    ℒ₁ ≡ ℒ₂
+step-prg-uniqueₛ (step-running step₁) (step-running step₂)
+  rewrite step-uniqueₛ step₁ step₂
+    = refl
+step-prg-uniqueₛ (step-running ()) step-halting
+step-prg-uniqueₛ step-halting (step-running ())
+step-prg-uniqueₛ step-halting step-halting = refl
+step-prg-uniqueₛ step-halted step-halted = refl
+
 step-prg-decₛ : ∀ ℒ → Dec (∃ λ ℒ' → ⊢ ℒ ⇒ ℒ')
 step-prg-decₛ (running G (H , R , I))
   with I ≟ halt | step-decₛ G (H , R , I)
@@ -223,6 +224,15 @@ step-prg-decₛ (running G (H , R , .halt))
         help I≢halt ¬step (_ , step-running step) = ¬step (_ , step)
         help I≢halt ¬step (_ , step-halting) = I≢halt refl
 step-prg-decₛ halted = yes (halted , step-halted)
+
+exec-uniqueₛ : ∀ {ℒ ℒ₁ ℒ₂ n} →
+                 ⊢ ℒ ⇒ₙ n / ℒ₁ →
+                 ⊢ ℒ ⇒ₙ n / ℒ₂ →
+                 ℒ₁ ≡ ℒ₂
+exec-uniqueₛ [] [] = refl
+exec-uniqueₛ (step₁ ∷ exec₁) (step₂ ∷ exec₂)
+  rewrite step-prg-uniqueₛ step₁ step₂
+        | exec-uniqueₛ exec₁ exec₂ = refl
 
 exec-decₛ : ∀ ℒ n → Dec (∃ λ ℒ' → ⊢ ℒ ⇒ₙ n / ℒ')
 exec-decₛ ℒ zero = yes (ℒ , [])

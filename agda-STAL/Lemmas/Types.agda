@@ -2,7 +2,7 @@ module Lemmas.Types where
 
 open import Util
 open import Judgments
-open import Lemmas.Equality
+open import Lemmas.Equality using () -- only instances
 
 -- The purpose of this file is to include proofs that:
 -- * Subtyping is a preorder when restricted to valid terms.

@@ -3,7 +3,7 @@ module Util.List where
 -- Re-exports
 open import Data.List
   using (List ; [] ; _∷_ ; _∷ʳ_ ; [_] ; map ;
-        length ; zip ; _++_ ; replicate)
+        length ; zip ; _++_ ; replicate ; drop)
   public
 open import Data.List.All
   using (All ; [] ; _∷_)
@@ -207,6 +207,21 @@ AllZip-dec f (x ∷ xs) (y ∷ ys)
 ... | no ¬p | _ = no (λ { (p ∷ ps) → ¬p p})
 ... | _ | no ¬ps = no (λ { (p ∷ ps) → ¬ps ps})
 
+AllZip-extract← : ∀ {a b p q} {A : Set a} {B : Set b}
+                    {P : A → B → Set p} {Q : A → Set q}
+                    {xs ys} →
+                    (f : ∀ {x y} → P x y → Q x) →
+                    AllZip P xs ys → All Q xs
+AllZip-extract← f [] = []
+AllZip-extract← f (p ∷ ps) = f p ∷ AllZip-extract← f ps
+
+AllZip-extract→ : ∀ {a b p q} {A : Set a} {B : Set b}
+                    {P : A → B → Set p} {Q : B → Set q}
+                    {xs ys} →
+                    (f : ∀ {x y} → P x y → Q y) →
+                    AllZip P xs ys → All Q ys
+AllZip-extract→ f [] = []
+AllZip-extract→ f (p ∷ ps) = f p ∷ AllZip-extract→ f ps
 
 All-map' : ∀ {a b p q}
              {A : Set a} {P : A → Set p}

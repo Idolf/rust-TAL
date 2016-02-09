@@ -114,8 +114,9 @@ mutual
   infix 3 _≤φ_
   data _≤φ_ : InitializationFlag → InitializationFlag → Set where
     φ-≤-init :
-      ------------
-      init ≤φ init
+       ∀ {φ} →
+      ---------
+      init ≤φ φ
 
     φ-≤-uninit :
         ∀ {φ} →
