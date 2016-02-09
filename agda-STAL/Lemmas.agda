@@ -32,7 +32,8 @@ open import Lemmas.MallocStep public
 open import Lemmas.HeapSteps public
 open import Lemmas.Soundness public
 
--- Step 6
+-- Step 6:
+-- Prove a bisimulation between the high and simple languages
 open import Lemmas.EmbedSimulation public
 open import Lemmas.EmbedBisimulation public
 
