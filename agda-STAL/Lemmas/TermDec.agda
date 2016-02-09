@@ -2,216 +2,560 @@ module Lemmas.TermDec where
 
 open import Util
 open import Judgments
+open import Lemmas.Equality using ()
 open import Lemmas.Substitution
 open import Lemmas.Types
 open import Lemmas.TypeSubstitution
-open import Lemmas.Equality
+open import Lemmas.HighSemantics
+open import Lemmas.TermCasting
 open HighGrammar
 
-instantiation-dec : ∀ {Δ} θ a →
-                      Dec (Δ ⊢ θ of a instantiation)
-instantiation-dec {Δ} (α τ) α
-  = dec-inj of-α (λ { (of-α τ⋆) → τ⋆ }) (Δ ⊢? τ Valid)
-instantiation-dec (α τ) ρ = no (λ ())
-instantiation-dec (ρ σ) α = no (λ ())
-instantiation-dec {Δ} (ρ σ) ρ
-  = dec-inj of-ρ (λ { (of-ρ σ⋆) → σ⋆ }) (Δ ⊢? σ Valid)
+-- The purpose of this file is to prove that type-checking
+-- is decidable. I does not have a lot of interference, but
+-- it does have validation.
 
-instantiations-dec : ∀ {Δ₁} θs Δ₂ →
-                       Dec (Δ₁ ⊢ θs of Δ₂ instantiations)
-instantiations-dec [] [] = yes []
-instantiations-dec [] (a ∷ Δ₂) = no (λ ())
-instantiations-dec (θ ∷ θs) [] = no (λ ())
-instantiations-dec (θ ∷ θs) (a ∷ Δ₂)
-  with instantiation-dec θ a | instantiations-dec θs Δ₂
-... | yes θ⋆ | yes θs⋆ = yes (θ⋆ ∷ θs⋆)
-... | no ¬θ⋆ | _ = no (λ { (θ⋆ ∷ θs⋆) → ¬θ⋆ θ⋆})
-... | _ | no ¬θs⋆ = no (λ { (θ⋆ ∷ θs⋆) → ¬θs⋆ θs⋆})
+private
+  stack-lookup-unique : ∀ {n σ τ₁ τ₂} →
+                        stack-lookup n σ τ₁ →
+                        stack-lookup n σ τ₂ →
+                        τ₁ ≡ τ₂
+  stack-lookup-unique here here = refl
+  stack-lookup-unique (there l₁) (there l₂) = stack-lookup-unique l₁ l₂
 
-vval-unique : ∀ {ψ₁ Δ Γ v τ₁ τ₂} →
-                ψ₁ , Δ , Γ ⊢ v of τ₁ vval →
-                ψ₁ , Δ , Γ ⊢ v of τ₂ vval →
-                τ₁ ≡ τ₂
-vval-unique of-reg of-reg = refl
-vval-unique (of-globval l₁) (of-globval l₂) = ↓-unique l₁ l₂
-vval-unique of-int of-int = refl
-vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
-  with vval-unique v⋆₁ v⋆₂
-vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
-    | refl with subst-unique-many subs-Γ₁ subs-Γ₂
-vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
-    | refl | refl
-    = refl
+  stack-lookup-dec : ∀ n σ → Dec (∃ λ τ → stack-lookup n σ τ)
+  stack-lookup-dec n (ρ⁼ ι) = no (λ { (_ , ()) })
+  stack-lookup-dec n [] = no (λ { (_ , ()) })
+  stack-lookup-dec zero (τ ∷ σ) = yes (τ , here)
+  stack-lookup-dec (suc n) (τ' ∷ σ)
+    with stack-lookup-dec n σ
+  ... | yes (τ , lookup) = yes (τ , there lookup)
+  ... | no ¬lookup = no (λ { (τ , there lookup) → ¬lookup (τ , lookup)})
 
-vval-helper : ∀ {ψ₁ Δ Γ v τ₁ τ₂} →
-                ψ₁ , Δ , Γ ⊢ v of τ₁ vval →
-                ψ₁ , Δ , Γ ⊢ v of τ₂ vval →
-                τ₁ ≢ τ₂ →
-                ⊥
-vval-helper v⋆₁ v⋆₂ τ₁≢τ₂
-  with τ₁≢τ₂ (vval-unique v⋆₁ v⋆₂)
-... | ()
+  stack-update-unique : ∀ {n σ τ σ₁ σ₂} →
+                        stack-update n τ σ σ₁ →
+                        stack-update n τ σ σ₂ →
+                        σ₁ ≡ σ₂
+  stack-update-unique here here = refl
+  stack-update-unique (there up₁) (there up₂) = cong₂ _∷_ refl (stack-update-unique up₁ up₂)
 
-vval-dec : ∀ {ψ₁ Δ Γ} v →
-             Dec (∃ λ τ → ψ₁ , Δ , Γ ⊢ v of τ vval)
-vval-dec (reg ♯r) = yes (_ , of-reg)
-vval-dec {ψ₁} (globval lab)
-  with ↓-dec ψ₁ lab
-... | yes (τ , l) = yes (τ , of-globval l)
-... | no ¬l = no (λ { (_ , of-globval l) → ¬l (_ , l)})
-vval-dec (int n) = yes (int , of-int)
-vval-dec {ψ₁} {Δ} {Γ} (Λ Δₒ ∙ v ⟦ θs ⟧)
-  with vval-dec {ψ₁} {Δ} {Γ} v
-... | no ¬v⋆ = no (λ { (_ , of-Λ v⋆ θs⋆ subs-Γ) → ¬v⋆ (_ , v⋆) })
-... | yes (α⁼ ι , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (int , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (ns , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (tuple τs , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-... | yes (∀[ Δᵢ ] Γᵢ , v⋆)
-  with instantiations-dec {Δₒ ++ Δ} θs Δᵢ
-... | no ¬θs⋆ = no (help v⋆ ¬θs⋆)
-  where help : ∀ {v θs Δᵢ Γᵢ} →
-                 ψ₁ , Δ , Γ ⊢ v of ∀[ Δᵢ ] Γᵢ vval →
-                 ¬ Δₒ ++ Δ ⊢ θs of Δᵢ instantiations →
-                 ¬ ∃ λ τ → (ψ₁ , Δ , Γ ⊢ Λ Δₒ ∙ v ⟦ θs ⟧ of τ vval)
-        help v⋆ ¬θs⋆ (._ , of-Λ v⋆' θs⋆ subs-Γ)
-          with vval-unique v⋆ v⋆'
-        help v⋆ ¬θs⋆ (._ , of-Λ v⋆' θs⋆ subs-Γ)
-            | refl
-          = ¬θs⋆ θs⋆
-... | yes θs⋆
-  with weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ θs / 0 ⟧many?
-... | yes (Γₒ , subs-Γ) = yes (_ , of-Λ v⋆ θs⋆ subs-Γ)
-... | no ¬subs-Γ = no (help v⋆ ¬subs-Γ)
-  where help : ∀ {v θs Δᵢ Γᵢ} →
-                 ψ₁ , Δ , Γ ⊢ v of ∀[ Δᵢ ] Γᵢ vval →
-                 ¬ (∃ λ Γₒ → weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ θs / 0 ⟧many≡ Γₒ) →
-                 ¬ ∃ λ τ → (ψ₁ , Δ , Γ ⊢ Λ Δₒ ∙ v ⟦ θs ⟧ of τ vval)
-        help v⋆ ¬subs-Γ (._ , of-Λ v⋆' θs⋆ subs-Γ)
-          with vval-unique v⋆ v⋆'
-        help v⋆ ¬subs-Γ (._ , of-Λ v⋆' θs⋆ subs-Γ)
-            | refl
-          = ¬subs-Γ (_ , subs-Γ)
+  stack-update-dec : ∀ n τ σ → Dec (∃ λ σ' → stack-update n τ σ σ')
+  stack-update-dec n τ (ρ⁼ ι) = no (λ { (_ , ()) })
+  stack-update-dec n τ [] = no (λ { (_ , ()) })
+  stack-update-dec zero τ (τ' ∷ σ) = yes (τ ∷ σ , here)
+  stack-update-dec (suc n) τ (τ' ∷ σ)
+    with stack-update-dec n τ σ
+  ... | yes (σ' , update) = yes (τ' ∷ σ' , there update)
+  ... | no ¬update = no (λ { (_ , there update) → ¬update (_ , update)})
 
-instruction-unique : ∀ {ψ₁ Δ Γ ι Γ₁ Γ₂} →
-                       ψ₁ , Δ , Γ ⊢ ι of Γ₁ instruction →
-                       ψ₁ , Δ , Γ ⊢ ι of Γ₂ instruction →
-                       Γ₁ ≡ Γ₂
-instruction-unique (of-add eq₁ v⋆₁) (of-add eq₂ v⋆₂) = refl
-instruction-unique (of-sub eq₁ v⋆₁) (of-sub eq₂ v⋆₂) = refl
-instruction-unique of-salloc of-salloc = refl
-instruction-unique (of-sfree drop₁) (of-sfree drop₂) = {!!}
-  -- rewrite stack-drop-unique drop₁ drop₂ = refl
-instruction-unique (of-sld x) (of-sld x₁) = {!!}
-instruction-unique (of-sst x) (of-sst x₁) = {!!}
-instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
-  with trans (sym eq₁) eq₂
-instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
-    | refl with ↓-unique l₁ l₂
-instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
-    | refl | refl = refl
-instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
-  with trans (sym eq₁) eq₂
-instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
-    | refl with ↓-unique l₁ l₂
-instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
-    | refl | refl with ←-unique up₁ up₂
-instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
-    | refl | refl | refl = refl
-instruction-unique (of-malloc τs⋆₁) (of-malloc τs⋆₂) = refl
-instruction-unique (of-mov v⋆₁) (of-mov v⋆₂)
-  with vval-unique v⋆₁ v⋆₂
-instruction-unique (of-mov v⋆₁) (of-mov v⋆₂)
-    | refl = refl
-instruction-unique (of-beq eq₁ v⋆₁ Γ≤₁Γ') (of-beq eq₂ v⋆₂ Γ≤₂Γ') = refl
+  stack-drop-unique : ∀ {n σ σ₁ σ₂} →
+                        stack-drop n σ σ₁ →
+                        stack-drop n σ σ₂ →
+                        σ₁ ≡ σ₂
+  stack-drop-unique here here = refl
+  stack-drop-unique (there drop₁) (there drop₂) = stack-drop-unique drop₁ drop₂
+  stack-drop-dec : ∀ n σ → Dec (∃ λ σ' → stack-drop n σ σ')
+  stack-drop-dec zero σ = yes (σ , here)
+  stack-drop-dec (suc n) (ρ⁼ ι) = no (λ { (_ , ()) })
+  stack-drop-dec (suc n) [] = no (λ { (_ , ()) })
+  stack-drop-dec (suc n) (τ ∷ σ)
+    with stack-drop-dec n σ
+  ... | yes (σ' , drop) = yes (σ' , there drop)
+  ... | no ¬drop = no (λ { (σ' , there drop) → ¬drop (σ' , drop)})
 
+  is-tuple : ∀ (τ : Type) → Dec (∃ λ τs⁻ → τ ≡ tuple τs⁻)
+  is-tuple (α⁼ ι) = no (λ { (_ , ()) })
+  is-tuple int = no (λ { (_ , ()) })
+  is-tuple ns = no (λ { (_ , ()) })
+  is-tuple (∀[ Δ ] Γ) = no (λ { (_ , ()) })
+  is-tuple (tuple τs⁻) = yes (τs⁻ , refl)
 
-instructionsequence-dec : ∀ {ψ₁ Δ Γ} I →
-                            Dec (ψ₁ , Δ , Γ ⊢ I instructionsequence)
-instructionsequence-dec (ι ~> I) = {!!}
-instructionsequence-dec {ψ₁} {Δ} {Γ} (jmp v)
-  with vval-dec {ψ₁} {Δ} {Γ} v
-... | no ¬v⋆ = no (λ { (of-jmp v⋆ Γ≤Γ') → ¬v⋆ (_ , v⋆)})
-... | yes (α⁼ ι , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
-... | yes (int , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
-... | yes (ns , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
-... | yes (tuple x , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
-... | yes (∀[ a ∷ Δ' ] Γ' , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
-... | yes (∀[ [] ] Γ' , v⋆)
-  with Δ ⊢ Γ ≤? Γ'
-... | yes Γ≤Γ' = yes (of-jmp v⋆ Γ≤Γ')
-... | no Γ≰Γ' = no (help v⋆ Γ≰Γ')
-  where help : ψ₁ , Δ , Γ ⊢ v of ∀[ [] ] Γ' vval →
-               ¬ (Δ ⊢ Γ ≤ Γ') →
-               ¬ (ψ₁ , Δ , Γ ⊢ jmp v instructionsequence)
-        help v⋆ Γ≰Γ' (of-jmp v⋆' Γ≤Γ')
-          with vval-unique v⋆ v⋆'
-        help v⋆ Γ≰Γ' (of-jmp v⋆' Γ≤Γ')
-            | refl = Γ≰Γ' Γ≤Γ'
-instructionsequence-dec halt = yes of-halt
+  is-∀ : ∀ τ → Dec (∃₂ λ Δ Γ → τ ≡ ∀[ Δ ] Γ)
+  is-∀ (α⁼ ι) = no (λ { (_ , _ , ()) })
+  is-∀ int = no (λ { (_ , _ , ()) })
+  is-∀ ns = no (λ { (_ , _ , ()) })
+  is-∀ (∀[ Δ ] Γ) = yes (Δ , Γ , refl)
+  is-∀ (tuple τs) = no (λ { (_ , _ , ()) })
 
-gval-dec : ∀ {ψ₁} g τ → Dec (ψ₁ ⊢ g of τ gval)
-gval-dec (code[ Δ ] Γ ∙ I) (α⁼ ι) = no (λ ())
-gval-dec (code[ Δ ] Γ ∙ I) int = no (λ ())
-gval-dec (code[ Δ ] Γ ∙ I) ns = no (λ ())
-gval-dec (code[ Δ₁ ] Γ₁ ∙ I) (∀[ Δ₂ ] Γ₂)
-  with Δ₁ ≟ Δ₂ | Γ₁ ≟ Γ₂
-... | no Δ₁≢Δ₂ | _ = no (help Δ₁≢Δ₂)
-  where help : ∀ {ψ₁ Δ₁ Γ₁ I Δ₂ Γ₂} →
-                 Δ₁ ≢ Δ₂ →
-                 ¬ (ψ₁ ⊢ code[ Δ₁ ] Γ₁ ∙ I of ∀[ Δ₂ ] Γ₂ gval)
-        help neq (of-gval Γ⋆ I⋆) = neq refl
-... | _ | no Γ₁≢Γ₂ = no (help Γ₁≢Γ₂)
-  where help : ∀ {ψ₁ Δ₁ Γ₁ I Δ₂ Γ₂} →
-                 Γ₁ ≢ Γ₂ →
-                 ¬ (ψ₁ ⊢ code[ Δ₁ ] Γ₁ ∙ I of ∀[ Δ₂ ] Γ₂ gval)
-        help neq (of-gval Γ⋆ I⋆) = neq refl
-gval-dec {ψ₁} (code[ Δ ] Γ ∙ I) (∀[ .Δ ] .Γ)
-    | yes refl | yes refl
-    with Δ ⊢? Γ Valid | instructionsequence-dec I
-... | yes Γ⋆ | yes I⋆ = yes (of-gval Γ⋆ I⋆)
-... | no ¬Γ⋆ | _ = no (λ { (of-gval Γ⋆ I⋆) → ¬Γ⋆ Γ⋆})
-... | _ | no ¬I⋆ = no (λ { (of-gval Γ⋆ I⋆) → ¬I⋆ I⋆})
-gval-dec (code[ Δ ] Γ ∙ I) (tuple τs) = no (λ ())
+  instantiation-dec : ∀ {Δ} θ a →
+                        Dec (Δ ⊢ θ of a instantiation)
+  instantiation-dec {Δ} (α τ) α
+    = dec-inj of-α (λ { (of-α τ⋆) → τ⋆ }) (Δ ⊢? τ Valid)
+  instantiation-dec (α τ) ρ = no (λ ())
+  instantiation-dec (ρ σ) α = no (λ ())
+  instantiation-dec {Δ} (ρ σ) ρ
+    = dec-inj of-ρ (λ { (of-ρ σ⋆) → σ⋆ }) (Δ ⊢? σ Valid)
 
-gvals-dec : ∀ {ψ₁} gs τs → Dec (AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs)
-gvals-dec [] [] = yes []
-gvals-dec [] (τ ∷ τs) = no (λ ())
-gvals-dec (g ∷ gs) [] = no (λ ())
-gvals-dec (g ∷ gs) (τ ∷ τs)
-  with gval-dec g τ | gvals-dec gs τs
-... | yes g⋆ | yes gs⋆ = yes (g⋆ ∷ gs⋆)
-... | no ¬g⋆ | _ = no (λ { (g⋆ ∷ gs⋆) → ¬g⋆ g⋆ })
-... | _ | no ¬gs⋆ = no (λ { (g⋆ ∷ gs⋆) → ¬gs⋆ gs⋆ })
+  instantiations-dec : ∀ {Δ₁} θs Δ₂ →
+                         Dec (Δ₁ ⊢ θs of Δ₂ instantiations)
+  instantiations-dec [] [] = yes []
+  instantiations-dec [] (a ∷ Δ₂) = no (λ ())
+  instantiations-dec (θ ∷ θs) [] = no (λ ())
+  instantiations-dec (θ ∷ θs) (a ∷ Δ₂)
+    with instantiation-dec θ a | instantiations-dec θs Δ₂
+  ... | yes θ⋆ | yes θs⋆ = yes (θ⋆ ∷ θs⋆)
+  ... | no ¬θ⋆ | _ = no (λ { (θ⋆ ∷ θs⋆) → ¬θ⋆ θ⋆})
+  ... | _ | no ¬θs⋆ = no (λ { (θ⋆ ∷ θs⋆) → ¬θs⋆ θs⋆})
 
-gval-unique-helper : ∀ {ψ₁ Δ Γ I τ} →
-                       ψ₁ ⊢ code[ Δ ] Γ ∙ I of τ gval →
-                       τ ≡ ∀[ Δ ] Γ
-gval-unique-helper (of-gval Γ⋆ I⋆) = refl
+  vval-unique : ∀ {ψ₁ Δ Γ v τ₁ τ₂} →
+                  ψ₁ , Δ ⊢ v of Γ ⇒ τ₁ vval →
+                  ψ₁ , Δ ⊢ v of Γ ⇒ τ₂ vval →
+                  τ₁ ≡ τ₂
+  vval-unique of-reg of-reg = refl
+  vval-unique (of-globval l₁) (of-globval l₂) = ↓-unique l₁ l₂
+  vval-unique of-int of-int = refl
+  vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
+    with vval-unique v⋆₁ v⋆₂
+  vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
+      | refl with subst-unique-many subs-Γ₁ subs-Γ₂
+  vval-unique (of-Λ v⋆₁ θs⋆₁ subs-Γ₁) (of-Λ v⋆₂ θs⋆₂ subs-Γ₂)
+      | refl | refl
+      = refl
 
-gval-unique : ∀ g →
-                ∃ λ τ →
-                    (∀ {ψ₁ τ'} → ψ₁ ⊢ g of τ' gval → τ' ≡ τ)
-gval-unique (code[ Δ ] Γ ∙ I)
-  = ∀[ Δ ] Γ , gval-unique-helper
+  vval-helper : ∀ {ψ₁ Δ Γ v τ₁ τ₂} →
+                  ψ₁ , Δ ⊢ v of Γ ⇒ τ₁ vval →
+                  ψ₁ , Δ ⊢ v of Γ ⇒ τ₂ vval →
+                  τ₁ ≢ τ₂ →
+                  ⊥
+  vval-helper v⋆₁ v⋆₂ τ₁≢τ₂
+    with τ₁≢τ₂ (vval-unique v⋆₁ v⋆₂)
+  ... | ()
 
-gvals-unique : ∀ gs →
-                 ∃ λ τs →
-                     (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs)
-gvals-unique []
-  = [] , (λ { {ψ₁} {[]} [] → refl ; {ψ₁} {τ' ∷ τs'} () })
-gvals-unique (g ∷ gs)
-  with gval-unique g | gvals-unique gs
-... | τ , τ-eq | τs , τs-eq
-  = τ ∷ τs , help τ-eq τs-eq
-    where help : ∀ {g gs τ τs} →
-                   (∀ {ψ₁ τ'}  → ψ₁ ⊢ g of τ' gval → τ' ≡ τ) →
-                   (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs) →
-                   (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) (g ∷ gs) τs' → τs' ≡ τ ∷ τs)
-          help τ-eq τs-eq (g⋆ ∷ gs⋆)
-            rewrite τ-eq g⋆
-                  | τs-eq gs⋆
-              = refl
+  vval-dec : ∀ {ψ₁ Δ Γ} v →
+               Dec (∃ λ τ → ψ₁ , Δ ⊢ v of Γ ⇒ τ vval)
+  vval-dec (reg ♯r) = yes (_ , of-reg)
+  vval-dec {ψ₁} (globval lab)
+    with ↓-dec ψ₁ lab
+  ... | yes (τ , l) = yes (τ , of-globval l)
+  ... | no ¬l = no (λ { (_ , of-globval l) → ¬l (_ , l)})
+  vval-dec (int n) = yes (int , of-int)
+  vval-dec {ψ₁} {Δ} {Γ} (Λ Δₒ ∙ v ⟦ θs ⟧)
+    with vval-dec {ψ₁} {Δ} {Γ} v
+  ... | no ¬v⋆ = no (λ { (_ , of-Λ v⋆ θs⋆ subs-Γ) → ¬v⋆ (_ , v⋆) })
+  ... | yes (α⁼ ι , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+  ... | yes (int , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+  ... | yes (ns , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+  ... | yes (tuple τs , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+  ... | yes (∀[ Δᵢ ] Γᵢ , v⋆)
+    with instantiations-dec {Δₒ ++ Δ} θs Δᵢ
+  ... | no ¬θs⋆ = no (help v⋆ ¬θs⋆)
+    where help : ∀ {v θs Δᵢ Γᵢ} →
+                   ψ₁ , Δ ⊢ v of Γ ⇒ ∀[ Δᵢ ] Γᵢ vval →
+                   ¬ Δₒ ++ Δ ⊢ θs of Δᵢ instantiations →
+                   ¬ ∃ λ τ → (ψ₁ , Δ ⊢ Λ Δₒ ∙ v ⟦ θs ⟧ of Γ ⇒ τ vval)
+          help v⋆ ¬θs⋆ (._ , of-Λ v⋆' θs⋆ subs-Γ)
+            with vval-unique v⋆ v⋆'
+          help v⋆ ¬θs⋆ (._ , of-Λ v⋆' θs⋆ subs-Γ)
+              | refl
+            = ¬θs⋆ θs⋆
+  ... | yes θs⋆
+    with weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ θs / 0 ⟧many?
+  ... | yes (Γₒ , subs-Γ) = yes (_ , of-Λ v⋆ θs⋆ subs-Γ)
+  ... | no ¬subs-Γ = no (help v⋆ ¬subs-Γ)
+    where help : ∀ {v θs Δᵢ Γᵢ} →
+                   ψ₁ , Δ ⊢ v of Γ ⇒ ∀[ Δᵢ ] Γᵢ vval →
+                   ¬ (∃ λ Γₒ → weaken (length Δᵢ) (length Δₒ) Γᵢ ⟦ θs / 0 ⟧many≡ Γₒ) →
+                   ¬ ∃ λ τ → (ψ₁ , Δ ⊢ Λ Δₒ ∙ v ⟦ θs ⟧ of Γ ⇒ τ vval)
+          help v⋆ ¬subs-Γ (._ , of-Λ v⋆' θs⋆ subs-Γ)
+            with vval-unique v⋆ v⋆'
+          help v⋆ ¬subs-Γ (._ , of-Λ v⋆' θs⋆ subs-Γ)
+              | refl
+            = ¬subs-Γ (_ , subs-Γ)
+
+  instruction-unique : ∀ {ψ₁ Δ Γ ι Γ₁ Γ₂} →
+                         ψ₁ , Δ ⊢ ι of Γ ⇒ Γ₁ instruction →
+                         ψ₁ , Δ ⊢ ι of Γ ⇒ Γ₂ instruction →
+                         Γ₁ ≡ Γ₂
+  instruction-unique (of-add eq₁ v⋆₁) (of-add eq₂ v⋆₂) = refl
+  instruction-unique (of-sub eq₁ v⋆₁) (of-sub eq₂ v⋆₂) = refl
+  instruction-unique of-salloc of-salloc = refl
+  instruction-unique (of-sfree drop₁) (of-sfree drop₂)
+    rewrite stack-drop-unique drop₁ drop₂ = refl
+  instruction-unique (of-sld l₁) (of-sld l₂)
+    rewrite stack-lookup-unique l₁ l₂ = refl
+  instruction-unique (of-sst up₁) (of-sst up₂)
+    rewrite stack-update-unique up₁ up₂ = refl
+  instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
+    with trans (sym eq₁) eq₂
+  instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
+      | refl with ↓-unique l₁ l₂
+  instruction-unique (of-ld eq₁ l₁) (of-ld eq₂ l₂)
+      | refl | refl = refl
+  instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+    with trans (sym eq₁) eq₂
+  instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+      | refl with ↓-unique l₁ l₂
+  instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+      | refl | refl with ←-unique up₁ up₂
+  instruction-unique (of-st eq₁ lookup≤₁τ l₁ up₁) (of-st eq₂ lookup≤₂τ l₂ up₂)
+      | refl | refl | refl = refl
+  instruction-unique (of-malloc τs⋆₁) (of-malloc τs⋆₂) = refl
+  instruction-unique (of-mov v⋆₁) (of-mov v⋆₂)
+    with vval-unique v⋆₁ v⋆₂
+  instruction-unique (of-mov v⋆₁) (of-mov v⋆₂)
+      | refl = refl
+  instruction-unique (of-beq eq₁ v⋆₁ Γ≤₁Γ') (of-beq eq₂ v⋆₂ Γ≤₂Γ') = refl
+
+  instruction-dec : ∀ {ψ₁ Δ} Γ ι →
+                      Dec (∃ λ Γ' → ψ₁ , Δ ⊢ ι of Γ ⇒ Γ' instruction)
+  instruction-dec {ψ₁} {Δ} Γ (add ♯rd ♯rs v)
+    with vval-dec v
+  ... | no ¬v⋆ = no (λ { (._ , of-add lookup≡int v⋆) → ¬v⋆ (_ , v⋆) })
+  ... | yes (τ , v⋆)
+    with lookup-regs ♯rs Γ ≟ int | τ ≟ int
+  ... | no lookup≢int | _ = no (λ { (._ , of-add lookup≡int v⋆') → lookup≢int lookup≡int })
+  ... | _ | no τ≢int = no (λ { (._ , of-add lookup≡int v⋆') → τ≢int (vval-unique v⋆ v⋆') })
+  instruction-dec Γ (add ♯rd ♯rs v)
+      | yes (int , v⋆) | yes lookup≡eq | yes refl
+        = yes (_ , of-add lookup≡eq v⋆)
+  instruction-dec {ψ₁} {Δ} Γ (sub ♯rd ♯rs v)
+    with vval-dec v
+  ... | no ¬v⋆ = no (λ { (._ , of-sub lookup≡int v⋆) → ¬v⋆ (_ , v⋆) })
+  ... | yes (τ , v⋆)
+    with lookup-regs ♯rs Γ ≟ int | τ ≟ int
+  ... | no lookup≢int | _ = no (λ { (._ , of-sub lookup≡int v⋆') → lookup≢int lookup≡int })
+  ... | _ | no τ≢int = no (λ { (._ , of-sub lookup≡int v⋆') → τ≢int (vval-unique v⋆ v⋆') })
+  instruction-dec Γ (sub ♯rd ♯rs v)
+      | yes (int , v⋆) | yes lookup≡eq | yes refl
+        = yes (_ , of-sub lookup≡eq v⋆)
+  instruction-dec (registerₐ σ τs) (salloc n) = yes (_ , of-salloc)
+  instruction-dec (registerₐ σ τs) (sfree n)
+    with stack-drop-dec n σ
+  ... | yes (σ' , drop) = yes (registerₐ σ' τs , of-sfree drop)
+  ... | no ¬drop = no (λ { (_ , of-sfree drop) → ¬drop (_ , drop)})
+  instruction-dec (registerₐ σ τs) (sld ♯rd i)
+    with stack-lookup-dec i σ
+  ... | no ¬lookup = no (λ { (_ , of-sld lookup) → ¬lookup (_ , lookup)})
+  ... | yes (τ , lookup) = yes (_ , of-sld lookup)
+  instruction-dec (registerₐ σ τs) (sst i ♯rs)
+    with stack-update-dec i (lookup ♯rs τs) σ
+  ... | no ¬update = no (λ { (_ , of-sst update) → ¬update (_ , update)})
+  ... | yes (σ' , update) = yes (_ , of-sst update)
+  instruction-dec {ψ₁} {Δ} (registerₐ σ τs) (ld ♯rd ♯rs i)
+    with is-tuple (lookup ♯rs τs)
+  ... | no lookup≢tuple = no (λ { (_ , of-ld lookup≡tuple lookup) → lookup≢tuple (_ , lookup≡tuple)})
+  ... | yes (τs⁻ , lookup≡tuple)
+    with ↓-dec τs⁻ i
+  ... | yes ((τ , init) , lookup) = yes (_ , of-ld lookup≡tuple lookup)
+  ... | yes ((τ , uninit) , lookup) = no help
+    where help : ¬ (∃ λ Γ → ψ₁ , Δ ⊢ ld ♯rd ♯rs i of registerₐ σ τs ⇒ Γ instruction)
+          help (_ , of-ld lookup≡tuple' lookup')
+            with trans (sym lookup≡tuple') lookup≡tuple
+          help (_ , of-ld lookup≡tuple' lookup')
+              | refl with ↓-unique lookup lookup'
+          ... | ()
+  ... | no ¬lookup = no help
+    where help : ¬ (∃ λ Γ → ψ₁ , Δ ⊢ ld ♯rd ♯rs i of registerₐ σ τs ⇒ Γ instruction)
+          help (_ , of-ld lookup≡tuple' lookup)
+            with trans (sym lookup≡tuple') lookup≡tuple
+          help (_ , of-ld lookup≡tuple' lookup)
+              | refl = ¬lookup (_ , lookup)
+
+  instruction-dec {ψ₁} {Δ} (registerₐ σ τs) (st ♯rd i ♯rs)
+    with is-tuple (lookup ♯rd τs)
+  ... | no lookup≢tuple = no (λ { (_ , of-st lookup≡tuple lookup≤τ l up) → lookup≢tuple (_ , lookup≡tuple)})
+  ... | yes (τs⁻ , lookup≡tuple)
+    with ↓-dec τs⁻ i
+  ... | no ¬l = no help
+    where help : ¬ (∃ λ Γ → ψ₁ , Δ ⊢ st ♯rd i ♯rs of registerₐ σ τs ⇒ Γ instruction)
+          help (_ , of-st lookup≡tuple' lookup≤τ l up)
+            with trans (sym lookup≡tuple') lookup≡tuple
+          help (_ , of-st lookup≡tuple' lookup≤τ l up)
+              | refl = ¬l (_ , l)
+  ... | yes ((τ , φ) , l)
+    with Δ ⊢ lookup ♯rs τs ≤? τ
+  ... | no lookup≰τ = no help
+    where help : ¬ (∃ λ Γ → ψ₁ , Δ ⊢ st ♯rd i ♯rs of registerₐ σ τs ⇒ Γ instruction)
+          help (_ , of-st lookup≡tuple' lookup≤τ l up)
+            with trans (sym lookup≡tuple') lookup≡tuple
+          help (_ , of-st lookup≡tuple' lookup≤τ l' up)
+              | refl with ↓-unique l' l
+          help (_ , of-st lookup≡tuple' lookup≤τ l' up)
+              | refl | refl
+              = lookup≰τ lookup≤τ
+  ... | yes lookup≤τ
+    with <-to-← τs⁻ (τ , init) (↓-to-< l)
+  ... | τs⁻' , up
+    = yes (_ , of-st lookup≡tuple lookup≤τ l up)
+  instruction-dec {Δ = Δ} Γ (malloc ♯r τs)
+    with Δ ⊢? τs Valid
+  ... | yes τs⋆ = yes (_ , of-malloc τs⋆)
+  ... | no ¬τs⋆ = no (λ { (_ , of-malloc τs⋆) → ¬τs⋆ τs⋆})
+  instruction-dec Γ (mov ♯rd v)
+    with vval-dec v
+  ... | yes (τ , v⋆) = yes (_ , of-mov v⋆)
+  ... | no ¬v⋆ = no (λ { (_ , of-mov v⋆) → ¬v⋆ (_ , v⋆)})
+
+  instruction-dec Γ (beq ♯r v)
+    with lookup-regs ♯r Γ ≟ int | vval-dec v
+  ... | no lookup≢int | _ = no (λ { (_ , of-beq lookup≡int v⋆ Γ≤Γ') → lookup≢int lookup≡int})
+  ... | _ | no ¬v⋆ = no (λ { (_ , of-beq lookup≡int v⋆ Γ≤Γ') → ¬v⋆ (_ , v⋆)})
+  ... | yes lookup≡int | yes (τ , v⋆)
+    with is-∀ τ
+  ... | no τ≢∀ = no (λ { (_ , of-beq lookup≡int v⋆' Γ≤Γ') → τ≢∀ (_ , _ , vval-unique v⋆ v⋆') })
+  instruction-dec {ψ₁} {Δ} Γ (beq ♯r v)
+      | yes lookup≡int | yes (∀[ a ∷ Δ' ] Γ' , v⋆) | yes (.(a ∷ Δ') , .Γ' , refl)
+        = no help
+    where help : ¬ (∃ λ Γ' → ψ₁ , Δ ⊢ beq ♯r v of Γ ⇒ Γ' instruction)
+          help (_ , of-beq lookup≡int v⋆' Γ≤Γ')
+            with vval-unique v⋆ v⋆'
+          ... | ()
+  instruction-dec {ψ₁} {Δ} Γ (beq ♯r v)
+      | yes lookup≡int | yes (∀[ [] ] Γ' , v⋆) | yes (.[] , .Γ' , refl)
+    with Δ ⊢ Γ ≤? Γ'
+  ... | yes Γ≤Γ' = yes (Γ , of-beq lookup≡int v⋆ Γ≤Γ')
+  ... | no Γ≰Γ' = no help
+    where help : ¬ (∃ λ Γ' → ψ₁ , Δ ⊢ beq ♯r v of Γ ⇒ Γ' instruction)
+          help (_ , of-beq lookup≡int v⋆' Γ≤Γ')
+            with vval-unique v⋆ v⋆'
+          help (_ , of-beq lookup≡int v⋆' Γ≤Γ')
+              | refl = Γ≰Γ' Γ≤Γ'
+
+  instructionsequence-dec : ∀ {ψ₁ Δ} I Γ →
+                              Dec (ψ₁ , Δ ⊢ I of Γ instructionsequence)
+  instructionsequence-dec {ψ₁} {Δ} (ι ~> I) Γ
+    with instruction-dec Γ ι
+  ... | no ¬ι⋆ = no (λ { (of-~> ι⋆ I⋆) → ¬ι⋆ (_ , ι⋆)})
+  ... | yes (Γ' , ι⋆)
+    with instructionsequence-dec I Γ'
+  ... | yes I⋆ = yes (of-~> ι⋆ I⋆)
+  ... | no ¬I⋆ = no help
+    where help : ¬ (ψ₁ , Δ ⊢ ι ~> I of Γ instructionsequence)
+          help (of-~> ι⋆' I⋆)
+            rewrite instruction-unique ι⋆' ι⋆
+            = ¬I⋆ I⋆
+  instructionsequence-dec {ψ₁} {Δ} (jmp v) Γ
+    with vval-dec {ψ₁} {Δ} {Γ} v
+  ... | no ¬v⋆ = no (λ { (of-jmp v⋆ Γ≤Γ') → ¬v⋆ (_ , v⋆)})
+  ... | yes (α⁼ ι , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
+  ... | yes (int , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
+  ... | yes (ns , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
+  ... | yes (tuple x , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
+  ... | yes (∀[ a ∷ Δ' ] Γ' , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
+  ... | yes (∀[ [] ] Γ' , v⋆)
+    with Δ ⊢ Γ ≤? Γ'
+  ... | yes Γ≤Γ' = yes (of-jmp v⋆ Γ≤Γ')
+  ... | no Γ≰Γ' = no (help v⋆ Γ≰Γ')
+    where help : ψ₁ , Δ ⊢ v of Γ ⇒ ∀[ [] ] Γ' vval →
+                 ¬ (Δ ⊢ Γ ≤ Γ') →
+                 ¬ (ψ₁ , Δ ⊢ jmp v of Γ instructionsequence)
+          help v⋆ Γ≰Γ' (of-jmp v⋆' Γ≤Γ')
+            with vval-unique v⋆ v⋆'
+          help v⋆ Γ≰Γ' (of-jmp v⋆' Γ≤Γ')
+              | refl = Γ≰Γ' Γ≤Γ'
+  instructionsequence-dec halt Γ = yes of-halt
+
+  gval-dec : ∀ {ψ₁} g τ → Dec (ψ₁ ⊢ g of τ gval)
+  gval-dec (code[ Δ ] Γ ∙ I) (α⁼ ι) = no (λ ())
+  gval-dec (code[ Δ ] Γ ∙ I) int = no (λ ())
+  gval-dec (code[ Δ ] Γ ∙ I) ns = no (λ ())
+  gval-dec (code[ Δ₁ ] Γ₁ ∙ I) (∀[ Δ₂ ] Γ₂)
+    with Δ₁ ≟ Δ₂ | Γ₁ ≟ Γ₂
+  ... | no Δ₁≢Δ₂ | _ = no (help Δ₁≢Δ₂)
+    where help : ∀ {ψ₁ Δ₁ Γ₁ I Δ₂ Γ₂} →
+                   Δ₁ ≢ Δ₂ →
+                   ¬ (ψ₁ ⊢ code[ Δ₁ ] Γ₁ ∙ I of ∀[ Δ₂ ] Γ₂ gval)
+          help neq (of-gval Γ⋆ I⋆) = neq refl
+  ... | _ | no Γ₁≢Γ₂ = no (help Γ₁≢Γ₂)
+    where help : ∀ {ψ₁ Δ₁ Γ₁ I Δ₂ Γ₂} →
+                   Γ₁ ≢ Γ₂ →
+                   ¬ (ψ₁ ⊢ code[ Δ₁ ] Γ₁ ∙ I of ∀[ Δ₂ ] Γ₂ gval)
+          help neq (of-gval Γ⋆ I⋆) = neq refl
+  gval-dec {ψ₁} (code[ Δ ] Γ ∙ I) (∀[ .Δ ] .Γ)
+      | yes refl | yes refl
+      with Δ ⊢? Γ Valid | instructionsequence-dec I Γ
+  ... | yes Γ⋆ | yes I⋆ = yes (of-gval Γ⋆ I⋆)
+  ... | no ¬Γ⋆ | _ = no (λ { (of-gval Γ⋆ I⋆) → ¬Γ⋆ Γ⋆})
+  ... | _ | no ¬I⋆ = no (λ { (of-gval Γ⋆ I⋆) → ¬I⋆ I⋆})
+  gval-dec (code[ Δ ] Γ ∙ I) (tuple τs) = no (λ ())
+
+  gvals-dec : ∀ {ψ₁} gs τs → Dec (AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs)
+  gvals-dec [] [] = yes []
+  gvals-dec [] (τ ∷ τs) = no (λ ())
+  gvals-dec (g ∷ gs) [] = no (λ ())
+  gvals-dec (g ∷ gs) (τ ∷ τs)
+    with gval-dec g τ | gvals-dec gs τs
+  ... | yes g⋆ | yes gs⋆ = yes (g⋆ ∷ gs⋆)
+  ... | no ¬g⋆ | _ = no (λ { (g⋆ ∷ gs⋆) → ¬g⋆ g⋆ })
+  ... | _ | no ¬gs⋆ = no (λ { (g⋆ ∷ gs⋆) → ¬gs⋆ gs⋆ })
+
+  gval-unique-helper : ∀ {ψ₁ Δ Γ I τ} →
+                         ψ₁ ⊢ code[ Δ ] Γ ∙ I of τ gval →
+                         τ ≡ ∀[ Δ ] Γ
+  gval-unique-helper (of-gval Γ⋆ I⋆) = refl
+
+  gval-unique : ∀ g →
+                  ∃ λ τ →
+                      (∀ {ψ₁ τ'} → ψ₁ ⊢ g of τ' gval → τ' ≡ τ)
+  gval-unique (code[ Δ ] Γ ∙ I)
+    = ∀[ Δ ] Γ , gval-unique-helper
+
+  gvals-unique : ∀ gs →
+                   ∃ λ τs →
+                       (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs)
+  gvals-unique []
+    = [] , (λ { {ψ₁} {[]} [] → refl ; {ψ₁} {τ' ∷ τs'} () })
+  gvals-unique (g ∷ gs)
+    with gval-unique g | gvals-unique gs
+  ... | τ , τ-eq | τs , τs-eq
+    = τ ∷ τs , help τ-eq τs-eq
+      where help : ∀ {g gs τ τs} →
+                     (∀ {ψ₁ τ'}  → ψ₁ ⊢ g of τ' gval → τ' ≡ τ) →
+                     (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs) →
+                     (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) (g ∷ gs) τs' → τs' ≡ τ ∷ τs)
+            help τ-eq τs-eq (g⋆ ∷ gs⋆)
+              rewrite τ-eq g⋆
+                    | τs-eq gs⋆
+                = refl
+
+  wval-best : ∀ {ψ₁} {ψ₂} w →
+                ¬ (∃ λ τ → ψ₁ , ψ₂ ⊢ w of τ wval) ∨
+                  (∃ λ τ → ψ₁ , ψ₂ ⊢ w of τ wval ×
+                           ∀ τ' → ψ₁ , ψ₂ ⊢ w of τ' wval → [] ⊢ τ ≤ τ')
+  wval-best {ψ₁} {ψ₂} (globval lab)
+    with ↓-dec ψ₁ lab
+  ... | no ¬l = inj₁ (λ { (_ , of-globval l τ≤τ') → ¬l (_ , l)})
+  ... | yes (τ , l)
+    with [] ⊢? τ Valid
+  ... | no ¬τ⋆ = inj₁ help
+    where help : ¬ (∃ λ τ' → ψ₁ , ψ₂ ⊢ globval lab of τ' wval)
+          help (τ' , of-globval l' τ≤τ')
+            rewrite ↓-unique l' l = ¬τ⋆ (≤-valid₁ τ≤τ')
+  ... | yes τ⋆ = inj₂ (τ , of-globval l (≤-refl τ⋆) , help)
+    where help : ∀ τ' → ψ₁ , ψ₂ ⊢ globval lab of τ' wval → [] ⊢ τ ≤ τ'
+          help τ' (of-globval l' τ≤τ')
+            rewrite ↓-unique l' l = τ≤τ'
+  wval-best {ψ₁} {ψ₂} (heapval labₕ)
+    with ↓-dec ψ₂ labₕ
+  ... | no ¬l = inj₁ (λ { (_ , of-heapval l τ≤τ') → ¬l (_ , l)})
+  ... | yes (τ , l)
+    with [] ⊢? τ Valid
+  ... | no ¬τ⋆ = inj₁ help
+    where help : ¬ (∃ λ τ' → ψ₁ , ψ₂ ⊢ heapval labₕ of τ' wval)
+          help (τ' , of-heapval l' τ≤τ')
+            rewrite ↓-unique l' l = ¬τ⋆ (≤-valid₁ τ≤τ')
+  ... | yes τ⋆ = inj₂ (τ , of-heapval l (≤-refl τ⋆) , help)
+    where help : ∀ τ' → ψ₁ , ψ₂ ⊢ heapval labₕ of τ' wval → [] ⊢ τ ≤ τ'
+          help τ' (of-heapval l' τ≤τ')
+            rewrite ↓-unique l' l = τ≤τ'
+  wval-best (int n) = inj₂ (_ , of-int , (λ { .int of-int → int-≤ }))
+  wval-best uninit = inj₂ (_ , of-ns , (λ { .ns of-ns → ns-≤ }))
+  wval-best {ψ₁} {ψ₂} (Λ Δ₂ ∙ w ⟦ θs ⟧)
+    with wval-best w
+  ... | inj₁ ¬w⋆ = inj₁ (λ { (_ , of-Λ w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) → ¬w⋆ (_ , w⋆) })
+  ... | inj₂ (τ , w⋆ , w⋆-best)
+    with is-∀ τ
+  ... | no τ≢∀ = inj₁ (help w⋆-best τ≢∀)
+    where help : ∀ {τ} →
+                   (∀ τ' → ψ₁ , ψ₂ ⊢ w of τ' wval → [] ⊢ τ ≤ τ') →
+                   ¬ (∃₂ λ Δ₁ Γ₁ → τ ≡ ∀[ Δ₁ ] Γ₁) →
+                   ¬ (∃ λ τ' → ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ θs ⟧ of τ' wval)
+          help w⋆-best τ≢∀ (_ , of-Λ w⋆' θs⋆ subs-Γ Γ₃≤Γ₂)
+            with w⋆-best _ w⋆'
+          help w⋆-best τ≢∀ (_ , of-Λ w⋆' θs⋆ subs-Γ Γ₃≤Γ₂)
+              | ∀-≤ Γ≤Γ' = τ≢∀ (_ , _ , refl)
+  wval-best {ψ₁} {ψ₂} (Λ Δ₂ ∙ w ⟦ θs ⟧)
+      | inj₂ (∀[ Δ₁ ] Γ₁ , w⋆ , w⋆-best) | yes (.Δ₁ , .Γ₁ , refl)
+      with instantiations-dec {Δ₂} θs Δ₁
+  ... | no ¬θs⋆ = inj₁ help
+    where help : ¬ (∃ λ τ → ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ θs ⟧ of τ wval)
+          help (_ , of-Λ w⋆' θs⋆ subs-Γ Γ₃≤Γ₂)
+            with w⋆-best _ w⋆'
+          help (_ , of-Λ w⋆' θs⋆ subs-Γ Γ₃≤Γ₂)
+              | ∀-≤ Γ≤Γ' = ¬θs⋆ θs⋆
+  ... | yes θs⋆
+    with Γ₁ ⟦ θs / 0 ⟧many?
+  ... | no ¬subs-Γ = inj₁ help
+    where help : ¬ (∃ λ τ → ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ θs ⟧ of τ wval)
+          help (_ , of-Λ w⋆' θs⋆ subs-Γ Γ₃≤Γ₂)
+            with w⋆-best _ w⋆'
+          help (_ , of-Λ w⋆' θs⋆ subs-Γ Γ₃≤Γ₂)
+              | ∀-≤ Γ₁ᵣ≤Γ₁
+            rewrite List-++-right-identity Δ₁
+            with subtype-subst-exists-many {{RegisterAssignment-TypeSubstitution}} [] θs⋆ (≤-++ Γ₁ᵣ≤Γ₁)
+          ... | Γ₂ᵣ , Γ₂' , subs-Γᵣ' , subs-Γ' , Γ₂ᵣ≤Γ₂'
+            = ¬subs-Γ (Γ₂' , subs-Γ')
+  ... | yes (Γ₂ , subs-Γ)
+    with Δ₂ ⊢? Γ₂ Valid
+  ... | no ¬Γ₂⋆ = inj₁ help
+    where help : ¬ (∃ λ τ → ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ θs ⟧ of τ wval)
+          help (_ , of-Λ w⋆' θs⋆ subs-Γᵣ Γ₃≤Γ₂)
+            with w⋆-best _ w⋆'
+          help (_ , of-Λ w⋆' θs⋆ subs-Γᵣ Γ₃≤Γ₂)
+              | ∀-≤ Γ₁ᵣ≤Γ₁
+            rewrite List-++-right-identity Δ₁
+            = ¬Γ₂⋆ (valid-subst-many [] θs⋆ (≤-valid₂ (≤-++ Γ₁ᵣ≤Γ₁)) subs-Γ)
+  ... | yes Γ₂⋆
+    = inj₂ (_ , of-Λ w⋆ θs⋆ subs-Γ (≤-refl Γ₂⋆) , help)
+      where help : ∀ τ' →
+                     ψ₁ , ψ₂ ⊢ Λ Δ₂ ∙ w ⟦ θs ⟧ of τ' wval →
+                     [] ⊢ ∀[ Δ₂ ] Γ₂ ≤ τ'
+            help _ (of-Λ w⋆ θs⋆ subs-Γ' Γ₃≤Γ₂)
+              with w⋆-best _ w⋆
+            help _ (of-Λ w⋆ θs⋆ subs-Γᵣ Γᵣ₃≤Γᵣ₂)
+                | ∀-≤ Γ₁ᵣ≤Γ₁
+              rewrite List-++-right-identity Δ₁
+              with subtype-subst-exists-many {{RegisterAssignment-TypeSubstitution}} [] θs⋆ (≤-++ Γ₁ᵣ≤Γ₁)
+            ... | Γ₂ᵣ , Γ₂' , subs-Γᵣ' , subs-Γ' , Γ₂ᵣ≤Γ₂'
+              rewrite subst-unique-many subs-Γᵣ' subs-Γᵣ
+                    | subst-unique-many subs-Γ' subs-Γ
+              = ∀-≤ (≤-++ (≤-trans Γᵣ₃≤Γᵣ₂ Γ₂ᵣ≤Γ₂'))
+
+  wval-dec : ∀ {ψ₁} {ψ₂} w τ → Dec (ψ₁ , ψ₂ ⊢ w of τ wval)
+  wval-dec w τ
+    with wval-best w
+  ... | inj₁ ¬w⋆ = no (λ w⋆ → ¬w⋆ (_ , w⋆))
+  ... | inj₂ (τ' , w⋆ , w⋆-best)
+    with [] ⊢ τ' ≤? τ
+  ... | yes τ'≤τ = yes (wval-cast w⋆ τ'≤τ)
+  ... | no τ'≰τ = no (λ w⋆' → τ'≰τ (w⋆-best τ w⋆'))
+
+  wval⁰-dec : ∀ {ψ₁} {ψ₂} w τ⁻ → Dec (ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰)
+  wval⁰-dec {ψ₁} {ψ₂} w (τ , φ)
+    with wval-dec w τ
+  ... | yes w⋆ = yes (of-init w⋆)
+  ... | no ¬w⋆
+    with w ≟ uninit
+  ... | no w≢uninit = no (help w≢uninit ¬w⋆)
+    where help : ∀ {w τ φ} → w ≢ uninit →
+                   ¬ (ψ₁ , ψ₂ ⊢ w of τ wval) →
+                   ¬ (ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰)
+          help w≢uninit ¬w⋆ (of-uninit τ⋆) = w≢uninit refl
+          help w≢uninit ¬w⋆ (of-init w⋆) = ¬w⋆ w⋆
+  wval⁰-dec uninit (τ , init)
+      | no ¬w⋆ | yes refl = no (λ { (of-init w⋆) → ¬w⋆ w⋆ })
+  wval⁰-dec uninit (τ , uninit)
+      | no ¬w⋆ | yes refl
+    with [] ⊢? τ Valid
+  ... | yes τ⋆ = yes (of-uninit τ⋆)
+  ... | no ¬τ⋆ = no (λ { (of-uninit τ⋆) → ¬τ⋆ τ⋆ ; (of-init w⋆) → ¬w⋆ w⋆ })
+
+  hval-dec : ∀ {ψ₁} {ψ₂} h τ → Dec (ψ₁ , ψ₂ ⊢ h of τ hval)
+  hval-dec (tuple ws) (α⁼ ι) = no (λ ())
+  hval-dec (tuple ws) int = no (λ ())
+  hval-dec (tuple ws) ns = no (λ ())
+  hval-dec (tuple ws) (∀[ Δ ] Γ) = no (λ ())
+  hval-dec (tuple ws) (tuple τs⁻) = dec-inj of-tuple (λ { (of-tuple ws⋆) → ws⋆ }) (AllZip-dec wval⁰-dec ws τs⁻)
+
+  heap-dec : ∀ {ψ₁} H ψ₂ → Dec (ψ₁ ⊢ H of ψ₂ heap)
+  heap-dec H ψ₂ = dec-inj of-heap (λ { (of-heap hs⋆) → hs⋆ }) (AllZip-dec hval-dec H ψ₂)
+
+  stack-dec : ∀ {ψ₁ ψ₂} sp σ → Dec (ψ₁ , ψ₂ ⊢ sp of σ stack)
+  stack-dec sp (ρ⁼ ι) = no (λ ())
+  stack-dec [] [] = yes []
+  stack-dec [] (τ ∷ σ) = no (λ ())
+  stack-dec (w ∷ sp) [] = no (λ ())
+  stack-dec (w ∷ sp) (τ ∷ σ)
+    with wval-dec w τ | stack-dec sp σ
+  ... | yes w⋆ | yes sp⋆ = yes (w⋆ ∷ sp⋆)
+  ... | no ¬w⋆ | _ = no (λ { (w⋆ ∷ sp⋆) → ¬w⋆ w⋆})
+  ... | _ | no ¬sp⋆ = no (λ { (w⋆ ∷ sp⋆) → ¬sp⋆ sp⋆})
+
+  register-dec : ∀ {ψ₁ ψ₂} R Γ → Dec (ψ₁ , ψ₂ ⊢ R of Γ register)
+  register-dec (register sp regs) (registerₐ σ τs)
+    with stack-dec sp σ | AllZipᵥ-dec wval-dec regs τs
+  ... | yes sp⋆ | yes regs⋆ = yes (of-register sp⋆ regs⋆)
+  ... | no ¬sp⋆ | _ = no (λ { (of-register sp⋆ regs⋆) → ¬sp⋆ sp⋆})
+  ... | _ | no ¬regs⋆ = no (λ { (of-register sp⋆ regs⋆) → ¬regs⋆ regs⋆})
 
 globals-dec : ∀ G → Dec (∃ λ τs → ⊢ G of τs globals)
 globals-dec gs
@@ -227,3 +571,11 @@ globals-dec gs
         help τs-eq ¬gs⋆ (τs , of-globals gs⋆)
           rewrite τs-eq gs⋆
             = ¬gs⋆ gs⋆
+
+programstate-dec : ∀ {ψ₁} H R I ψ₂ Γ → Dec (ψ₁ ⊢ H , R , I of ψ₂ , Γ programstate)
+programstate-dec H R I ψ₂ Γ
+  with heap-dec H ψ₂ | register-dec R Γ | instructionsequence-dec I Γ
+... | yes H⋆ | yes R⋆ | yes I⋆ = yes (of-programstate H⋆ R⋆ I⋆)
+... | no ¬H⋆ | _ | _ = no (λ { (of-programstate H⋆ R⋆ I⋆) → ¬H⋆ H⋆})
+... | _ | no ¬R⋆ | _ = no (λ { (of-programstate H⋆ R⋆ I⋆) → ¬R⋆ R⋆})
+... | _ | _ | no ¬I⋆  = no (λ { (of-programstate H⋆ R⋆ I⋆) → ¬I⋆ I⋆})

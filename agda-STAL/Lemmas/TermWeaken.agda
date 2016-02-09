@@ -1,4 +1,4 @@
-module Lemmas.InstructionSequenceWeaken where
+module Lemmas.TermWeaken where
 
 open import Util
 open import Judgments

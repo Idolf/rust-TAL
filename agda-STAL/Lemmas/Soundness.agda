@@ -4,9 +4,9 @@ open import Util
 open import Judgments
 open import Lemmas.Types using (≤-refl)
 open import Lemmas.TypeSubstitution using (valid-weaken ; weaken-outside-ctx-0 ; valid-subst-many)
+open import Lemmas.TermWeaken using (instructionsequence-weaken)
+open import Lemmas.TermSubstitution using (instructionsequence-subst-many)
 open import Lemmas.TermCasting using (instructionsequence-cast)
-open import Lemmas.InstructionSequenceWeaken using (instructionsequence-weaken)
-open import Lemmas.InstructionSequenceSubstitution using (instructionsequence-subst-many)
 open import Lemmas.HighSemantics using (step-prg-uniqueₕ)
 open import Lemmas.TermValidType using (wval-valid-type ; globals-valid-type)
 open import Lemmas.HeapSteps using (store-step ; load-step)

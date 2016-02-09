@@ -1,4 +1,4 @@
-module Lemmas.InstructionSequenceSubstitution where
+module Lemmas.TermSubstitution where
 
 open import Util
 open import Judgments

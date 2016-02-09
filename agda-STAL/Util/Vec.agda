@@ -142,6 +142,20 @@ Allᵥ-dec f (x ∷ L) | yes x⋆ | yes xs⋆ = yes (x⋆ ∷ xs⋆)
 Allᵥ-dec f (x ∷ L) | no ¬x⋆ | _  = no (λ { (x⋆ ∷ xs⋆) → ¬x⋆ x⋆ })
 Allᵥ-dec f (x ∷ L) | _ | no ¬xs⋆ = no (λ { (x⋆ ∷ xs⋆) → ¬xs⋆ xs⋆ })
 
+AllZipᵥ-dec : ∀ {a b p} {A : Set a} {B : Set b}
+                {m} →
+                {P : A → B → Set p} →
+                (f : ∀ x y → Dec (P x y)) →
+                (xs : Vec A m) →
+                (ys : Vec B m) →
+                Dec (AllZipᵥ P xs ys)
+AllZipᵥ-dec f [] [] = yes []
+AllZipᵥ-dec f (x ∷ xs) (y ∷ ys)
+  with f x y | AllZipᵥ-dec f xs ys
+... | yes p | yes ps = yes (p ∷ ps)
+... | no ¬p | _ = no (λ { (p ∷ ps) → ¬p p})
+... | _ | no ¬ps = no (λ { (p ∷ ps) → ¬ps ps})
+
 instance
   Vec-Tree : ∀ {ℓ} {A : Set ℓ} {{t : ToTree A}} {m} → ToTree (Vec A m)
   Vec-Tree {A = A} = tree⋆ (λ { (node _ xs) → from xs })
