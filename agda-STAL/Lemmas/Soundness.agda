@@ -269,3 +269,22 @@ steps-soundness : ∀ {n ℒ₁ ℒ₂} →
                     ⊢ ℒ₁ ⇒ₙ n / ℒ₂ →
                     ∃ λ ℒ₃ → ⊢ ℒ₂ ⇒ ℒ₃
 steps-soundness ℒ⋆ steps = step-progress (steps-reduction ℒ⋆ steps)
+
+
+data Stuck : Program → Set where
+  here :
+            ∀ {ℒ} →
+    ¬ (∃ λ ℒ' → ⊢ ℒ ⇒ ℒ') →
+    -----------------------
+           Stuck ℒ
+
+  there :
+    ∀ {ℒ ℒ'} →
+    ⊢ ℒ ⇒ ℒ' →
+    Stuck ℒ' →
+    ----------
+     Stuck ℒ
+
+Valid→¬Stuck : ∀ {ℒ} → ⊢ ℒ program → ¬ Stuck ℒ
+Valid→¬Stuck ℒ⋆ (here ¬step) = ¬step (step-progress ℒ⋆)
+Valid→¬Stuck ℒ⋆ (there step stuck) = Valid→¬Stuck (step-reduction ℒ⋆ step) stuck

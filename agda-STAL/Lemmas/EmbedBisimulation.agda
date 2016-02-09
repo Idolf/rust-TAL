@@ -3,12 +3,15 @@ module Lemmas.EmbedBisimulation where
 open import Util
 open import Judgments
 open import Lemmas.SimpleSemantics
+open import Lemmas.HighSemantics
 open import Lemmas.Soundness
 open import Lemmas.EmbedSimulation
 
--- The purpose of this module is to prove
--- that the relation {(ℒₕ, embed ℒₕ) | ⊢ ℒₕ program}
--- is a bisimulation.
+-- The purpose of this module is to prove that two relations
+-- between the high and simple grammar are bisimulations.
+-- The two relations are:
+-- * {(ℒₕ, embed ℒₕ) | ⊢ ℒₕ program}
+-- * {(ℒₕ, embed ℒₕ) | ¬ Stuck ℒₕ}
 
 Rel : Set → Set → Set₁
 Rel A B = A → B → Set
@@ -63,10 +66,34 @@ EmbedBisimulation = bisimulation forwards backwards
           rewrite step-prg-uniqueₛ sstep sstep'
             = _ , (refl , ℒₕ'⋆) , hstep
 
--- TODO
--- steps-soundness : ∀ {n ℒ₁ ℒ₂} →
---                     ⊢ ℒ₁ program →
---                     ⊢ embed ℒ₁ ⇒ₙ n / ℒ₂ →
---                     ∃ λ ℒ₃ →
---                       ⊢ ℒ₂ ⇒ ℒ₃
--- steps-soundness ℒ⋆ steps = step-progress (steps-reduction ℒ⋆ steps)
+alt-bisim : Rel H.Program S.Program
+alt-bisim ℒₕ ℒₛ = embed ℒₕ ≡ ℒₛ × ¬ Stuck ℒₕ
+
+AltEmbedBisimulation : IsBisimulation alt-bisim H.⊢_⇒_ S.⊢_⇒_
+AltEmbedBisimulation = bisimulation forwards backwards
+  where forwards : ∀ {ℒₕ ℒₕ' ℒₛ} →
+                     alt-bisim ℒₕ ℒₛ →
+                     H.⊢ ℒₕ ⇒ ℒₕ' →
+                     ∃ λ ℒₛ' →
+                         alt-bisim ℒₕ' ℒₛ' ×
+                         S.⊢ ℒₛ ⇒ ℒₛ'
+        forwards (refl , ¬stuck) step
+          = _ , (refl , (λ stuck → ¬stuck (there step stuck))) , embed-step-prg step
+
+        backwards : ∀ {ℒₕ ℒₛ ℒₛ'} →
+                     alt-bisim ℒₕ ℒₛ →
+                     S.⊢ ℒₛ ⇒ ℒₛ' →
+                     ∃ λ ℒₕ' →
+                         alt-bisim ℒₕ' ℒₛ' ×
+                         H.⊢ ℒₕ ⇒ ℒₕ'
+        backwards {ℒₕ} (refl , ¬stuck) sstep
+          with step-prg-decₕ ℒₕ
+        ... | no ¬hstep
+          with ¬stuck (here ¬hstep)
+        ... | ()
+        backwards {ℒₕ} (refl , ¬stuck) sstep
+            | yes (ℒₕ' , hstep)
+          with embed-step-prg hstep
+        ... | sstep'
+          rewrite step-prg-uniqueₛ sstep sstep'
+          = _ , (refl , (λ stuck → ¬stuck (there hstep stuck))) , hstep
