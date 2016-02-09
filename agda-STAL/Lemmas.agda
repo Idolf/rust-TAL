@@ -38,4 +38,5 @@ open import Lemmas.EmbedSimulation public
 open import Lemmas.EmbedBisimulation public
 
 -- Step 8:
+-- Prove that type-checking is decidable
 open import Lemmas.TermDec public
