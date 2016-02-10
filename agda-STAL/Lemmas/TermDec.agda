@@ -13,8 +13,7 @@ open import Lemmas.HeapFix using (register-heapfix ; hval-heapfix)
 open HighGrammar
 
 -- The purpose of this file is to prove that type-checking
--- is decidable. I does not have a lot of interference, but
--- it does have validation.
+-- is decidable.
 
 private
   stack-lookup-unique : ∀ {n σ τ₁ τ₂} →
