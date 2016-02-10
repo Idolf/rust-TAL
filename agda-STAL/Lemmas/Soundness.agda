@@ -92,7 +92,7 @@ instantiation-progress (of-globals gs⋆) H⋆ (of-globval l (∀-≤ Γ≤Γ'))
 instantiation-progress G⋆ (of-heap hs⋆) (of-heapval l τ≤τ')
   with allzip-lookup₂ l hs⋆
 instantiation-progress G⋆ (of-heap hs⋆) (of-heapval l ())
-    | tuple ws , l' , of-tuple ws⋆
+    | tuple τs ws , l' , of-tuple eqs ws⋆
 instantiation-progress G⋆ H⋆ (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ θs⋆ subs-Γ Γ≤Γ')
   with instantiation-progress G⋆ H⋆ w⋆
 ... | I , ig , I⋆

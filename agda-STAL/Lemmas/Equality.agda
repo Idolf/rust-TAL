@@ -187,19 +187,11 @@ instance
 
   HeapValueₛ-Tree : ToTree S.HeapValue
   HeapValueₛ-Tree = tree⋆ from sur
-    where from' : List Tree → Maybe (List S.WordValue)
-          from' [] = just []
-          from' (t ∷ ts) = _∷_ <$> fromTree t <*> from' ts
-          sur' : IsSurjective from'
-          sur' [] = [] , refl
-          sur' (w ∷ ws) = toTree w ∷ proj₁ (sur' ws) ,
-            _∷_ <$=> invTree w <*=> proj₂ (sur' ws)
-          from : Tree → Maybe S.HeapValue
-          from (node _ ws) = tuple <$> from' ws
+    where from : Tree → Maybe S.HeapValue
+          from ws = tuple <$> fromTree ws
           sur : IsSurjective from
-          sur (tuple ws) =
-            node 0 (proj₁ (sur' ws)) ,
-            tuple <$=> proj₂ (sur' ws)
+          sur (tuple ws) = toTree ws ,
+            tuple <$=> invTree ws
 
   GlobalValueₛ-Tree : ToTree S.GlobalValue
   GlobalValueₛ-Tree = tree⋆
@@ -342,19 +334,13 @@ instance
 
   HeapValueₕ-Tree : ToTree H.HeapValue
   HeapValueₕ-Tree = tree⋆ from sur
-    where from' : List Tree → Maybe (List H.WordValue)
-          from' [] = just []
-          from' (t ∷ ts) = _∷_ <$> fromTree t <*> from' ts
-          sur' : IsSurjective from'
-          sur' [] = [] , refl
-          sur' (w ∷ ws) = toTree w ∷ proj₁ (sur' ws) ,
-            _∷_ <$=> invTree w <*=> proj₂ (sur' ws)
-          from : Tree → Maybe H.HeapValue
-          from (node _ ws) = tuple <$> from' ws
+    where from : Tree → Maybe H.HeapValue
+          from (node _ (τs ∷ ws ∷ _)) = tuple <$> fromTree τs <*> fromTree ws
+          from _ = nothing
           sur : IsSurjective from
-          sur (tuple ws) =
-            node 0 (proj₁ (sur' ws)) ,
-            tuple <$=> proj₂ (sur' ws)
+          sur (tuple τs ws) =
+            T₂ 0 τs ws ,
+            tuple <$=> invTree τs <*=> invTree ws
 
   GlobalValueₕ-Tree : ToTree H.GlobalValue
   GlobalValueₕ-Tree = tree⋆

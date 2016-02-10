@@ -81,7 +81,7 @@ instance
   embedHeapValue : Embed H.HeapValue S.HeapValue
   embedHeapValue = mkEmbed f
     where f : H.HeapValue → S.HeapValue
-          f (tuple ws) = tuple (embed ws)
+          f (tuple τs ws) = tuple (embed ws)
 
   embedHeap : Embed H.Heap S.Heap
   embedHeap = mkEmbed (map embed)

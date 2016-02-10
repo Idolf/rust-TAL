@@ -126,10 +126,11 @@ infix 3 _⊢_of_hval
 data _⊢_of_hval : GlobalLabelAssignment × HeapLabelAssignment →
                   HeapValue → Type → Set where
   of-tuple :
-                     ∀ {ψ₁ ψ₂ ws τs⁻} →
+                    ∀ {ψ₁ ψ₂ ws τs τs⁻} →
+        AllZip (λ { τ (τ' , φ) → τ ≡ τ' }) τs τs⁻ →
     AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻ →
-    -------------------------------------------------------
-           ψ₁ , ψ₂ ⊢ tuple ws of tuple τs⁻ hval
+    --------------------------------------------------
+         ψ₁ , ψ₂ ⊢ tuple τs ws of tuple τs⁻ hval
 
 infix 3 _⊢_of_heap
 data _⊢_of_heap (ψ₁ : GlobalLabelAssignment) (H : Heap)

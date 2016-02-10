@@ -37,4 +37,4 @@ wval⁰-valid-type (of-init w⋆) = valid-τ⁻ (wval-valid-type w⋆)
 hval-valid-type : ∀ {ψ₁ ψ₂ h τ} →
                     ψ₁ , ψ₂ ⊢ h of τ hval →
                     [] ⊢ τ Valid
-hval-valid-type (of-tuple ws⋆) = valid-tuple (AllZip-extract→ wval⁰-valid-type ws⋆)
+hval-valid-type (of-tuple eqs ws⋆) = valid-tuple (AllZip-extract→ wval⁰-valid-type ws⋆)

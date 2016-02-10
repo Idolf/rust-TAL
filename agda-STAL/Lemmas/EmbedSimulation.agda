@@ -148,7 +148,7 @@ private
     rewrite embed-lookup ♯rs regs
     = step-st (trans (sym (embed-lookup ♯rd regs)) (cong embed eq)) (embed-↓ l) up₁' (embed-← up₂)
   embed-step (step-malloc {H = H} {regs = regs} {♯rd = ♯rd} {τs = τs})
-    rewrite List-map-++-commute embed H [ tuple (replicate (length τs) uninit) ]
+    rewrite List-map-++-commute embed H [ tuple τs (replicate (length τs) uninit) ]
           | replicate-helper (length τs)
           | embed-update ♯rd (heapval (length H)) regs
           | sym (List-length-map embed H)

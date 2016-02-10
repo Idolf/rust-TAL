@@ -4,43 +4,33 @@ open import Lemmas
 open HighGrammar
 open HighSemantics
 
--- Static type checking
-foo-word : SmallValue
-foo-word = Λ [] ∙ globval 0 ⟦ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ ρ (ρ⁼ 4) ∷ [] ⟧
+infloop : GlobalValue
+infloop =
+  code[ α ∷ α ∷ α ∷ α ∷ ρ ∷ [] ]
+    registerₐ (ρ⁼ 4) (α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ α⁼ 3 ∷ []) ∙
+    (jmp Λ [] ∙ globval 0 ⟦ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ ρ (ρ⁼ 4) ∷ [] ⟧)
 
-foo : InstructionSequence
-foo = jmp foo-word
+myglobals : Globals
+myglobals = [ infloop ]
 
-foo-Γ : RegisterAssignment
-foo-Γ = registerₐ (ρ⁼ 4) (α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ α⁼ 3 ∷ [])
+myheap : Heap
+myheap = []
 
-foo-Δ : TypeAssumptions
-foo-Δ = α ∷ α ∷ α ∷ α ∷ ρ ∷ []
+myregister : RegisterFile
+myregister = register [] (int 0 ∷ int 1 ∷ int 2 ∷ int 3 ∷ [])
 
-foo-τ : Type
-foo-τ = ∀[ foo-Δ ] foo-Γ
+mystart : InstructionSequence
+mystart =
+  jmp Λ [] ∙ globval 0 ⟦ α int ∷ α int ∷ α int ∷ α int ∷ ρ [] ∷ [] ⟧
 
-foo-is : [ foo-τ ] , foo-Δ ⊢ foo of foo-Γ instructionsequence
-foo-is = of-jmp (of-Λ (of-globval here) ((of-α (valid-α⁼ (there (there (there (there here)))))) ∷ ((of-α (valid-α⁼ (there (there (there (there here)))))) ∷ (of-α (valid-α⁼ (there (there (there (there here))))) ∷ of-α (valid-α⁼ (there (there (there (there here))))) ∷ of-ρ (valid-ρ⁼ (there (there (there (there here))))) ∷ []))) ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-> (s≤s z≤n) ∷ subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-≡ ∷ [])) Substitution.∷ ((subst-registerₐ subst-ρ-≡ (subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ Substitution.[])))))) (Γ-≤ (ρ⁼-≤ (there (there (there (there here))))) (α⁼-≤ here ∷ α⁼-≤ (there here) ∷ α⁼-≤ (there (there here)) ∷ α⁼-≤ (there (there (there here))) ∷ []))
--- Dynamic type-checking
-foo-word' : SmallValue
-foo-word' = Λ [] ∙ globval 0 ⟦ α int ∷ α int ∷ α int ∷ α int ∷ ρ [] ∷ [] ⟧
+mystate : ProgramState
+mystate = myheap , myregister , mystart
 
-foo' : InstructionSequence
-foo' = jmp foo-word'
+myprogram : Program
+myprogram = running myglobals mystate
 
-int-reg : RegisterFile
-int-reg = register [] (int 0 ∷ int 1 ∷ int 2 ∷ int 3 ∷ [])
+myprogram-valid : ⊢ myprogram program
+myprogram-valid = dec-force (program-dec _)
 
-foo-G : Globals
-foo-G = [ code[ foo-Δ ] foo-Γ ∙ foo ]
-
-foo'-program : ⊢ running foo-G ([] , int-reg , foo') program
-foo'-program = of-running (of-globals ((of-gval (valid-registerₐ (valid-ρ⁼ (there (there (there (there here))))) (valid-α⁼ here ∷ valid-α⁼ (there here) ∷ valid-α⁼ (there (there here)) ∷ valid-α⁼ (there (there (there here))) ∷ [])) foo-is) ∷ [])) (of-programstate (of-heap []) (of-register [] (of-int ∷ of-int ∷ of-int ∷ of-int ∷ [])) (of-jmp (of-Λ (of-globval here) ((of-α valid-int) ∷ ((of-α valid-int) ∷ (of-α valid-int ∷ of-α valid-int ∷ of-ρ [] ∷ []))) ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-int ∷ subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-int ∷ subst-int ∷ subst-α-≡ ∷ subst-α-> (s≤s z≤n) ∷ [])) Substitution.∷ ((subst-registerₐ (subst-ρ-> (s≤s z≤n)) (subst-int ∷ subst-int ∷ subst-int ∷ subst-α-≡ ∷ [])) Substitution.∷ ((subst-registerₐ subst-ρ-≡ (subst-int ∷ subst-int ∷ subst-int ∷ subst-int ∷ [])) Substitution.∷ Substitution.[])))))) (Γ-≤ [] (int-≤ ∷ int-≤ ∷ int-≤ ∷ int-≤ ∷ []))))
-
--- Execution
-foo-exec : foo-G ⊢ [] , int-reg , foo' ⇒ [] , int-reg , foo'
-foo-exec = dec-force (step-dec-specificₕ foo-G ([] , int-reg , foo') ([] , int-reg , foo'))
-
-foo-exec' : ∀ {H R} → foo-G ⊢ H , R , foo' ⇒ H , R , foo'
-foo-exec' {R = register sp stack} = step-jmp (instantiate-Λ (instantiate-globval here) ((subst-jmp (subst-Λ subst-globval (subst-α subst-α-≡ ∷ subst-α (subst-α-> (s≤s (s≤s (s≤s (s≤s z≤n))))) ∷ subst-α (subst-α-> (s≤s (s≤s (s≤s z≤n)))) ∷ subst-α (subst-α-> (s≤s (s≤s z≤n))) ∷ subst-ρ (subst-ρ-> (s≤s z≤n)) ∷ []))) Substitution.∷ ((subst-jmp (subst-Λ subst-globval (subst-α subst-int ∷ subst-α subst-α-≡ ∷ subst-α (subst-α-> (s≤s (s≤s (s≤s z≤n)))) ∷ subst-α (subst-α-> (s≤s (s≤s z≤n))) ∷ subst-ρ (subst-ρ-> (s≤s z≤n)) ∷ []))) Substitution.∷ ((subst-jmp (subst-Λ subst-globval (subst-α subst-int ∷ subst-α subst-int ∷ subst-α subst-α-≡ ∷ subst-α (subst-α-> (s≤s (s≤s z≤n))) ∷ subst-ρ (subst-ρ-> (s≤s z≤n)) ∷ []))) Substitution.∷ ((subst-jmp (subst-Λ subst-globval (subst-α subst-int ∷ subst-α subst-int ∷ subst-α subst-int ∷ subst-α subst-α-≡ ∷ subst-ρ (subst-ρ-> (s≤s z≤n)) ∷ []))) Substitution.∷ ((subst-jmp (subst-Λ subst-globval (subst-α subst-int ∷ subst-α subst-int ∷ subst-α subst-int ∷ subst-α subst-int ∷ subst-ρ subst-ρ-≡ ∷ []))) Substitution.∷ Substitution.[]))))))
+myprogram-step : ⊢ myprogram ⇒ myprogram
+myprogram-step = dec-force (step-prg-dec-specificₕ _ _)

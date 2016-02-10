@@ -25,11 +25,18 @@ private
                      labₕ₁ ≡ labₕ₂
   heapval-helper refl refl = refl
 
-  ↓-unique-heap : ∀ {H : Heap} {labₕ ws₁ ws₂} →
-                    H ↓ labₕ ⇒ tuple ws₁ →
-                    H ↓ labₕ ⇒ tuple ws₂ →
+  ↓-unique-heap : ∀ {H : Heap} {labₕ τs₁ τs₂ ws₁ ws₂} →
+                    H ↓ labₕ ⇒ tuple τs₁ ws₁ →
+                    H ↓ labₕ ⇒ tuple τs₂ ws₂ →
                     ws₁ ≡ ws₂
   ↓-unique-heap l₁ l₂ with ↓-unique l₁ l₂
+  ... | refl = refl
+
+  ↓-unique-heap' : ∀ {H : Heap} {labₕ τs₁ τs₂ ws₁ ws₂} →
+                     H ↓ labₕ ⇒ tuple τs₁ ws₁ →
+                     H ↓ labₕ ⇒ tuple τs₂ ws₂ →
+                     τs₁ ≡ τs₂
+  ↓-unique-heap' l₁ l₂ with ↓-unique l₁ l₂
   ... | refl = refl
 
   is-int : ∀ (w : WordValue) → Dec (∃ λ n → w ≡ int n)
@@ -109,6 +116,7 @@ step-uniqueₕ (step-ld eq₁ l₁₁ l₁₂) (step-ld eq₂ l₂₁ l₂₂)
 step-uniqueₕ (step-st eq₁ l₁ up₁₁ up₁₂) (step-st eq₂ l₂ up₂₁ up₂₂)
   rewrite heapval-helper eq₁ eq₂
         | ↓-unique-heap l₁ l₂
+        | ↓-unique-heap' l₁ l₂
         | ←-unique up₁₁ up₂₁
         | ←-unique up₁₂ up₂₂
   = refl
@@ -163,7 +171,7 @@ step-decₕ G (H , register sp regs , ld ♯rd ♯rs i ~> I)
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒ P')
         help (._ , step-ld eq' l₁ l₂) with heapval-helper eq eq'
         ... | refl = ¬l₁ (_ , l₁)
-... | yes (tuple ws , l₁) with ↓-dec ws i
+... | yes (tuple τs ws , l₁) with ↓-dec ws i
 ... | no ¬l₂ = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒ P')
         help (._ , step-ld eq' l₁' l₂) with heapval-helper eq eq'
@@ -178,17 +186,18 @@ step-decₕ G (H , register sp regs , st ♯rd i ♯rs ~> I)
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , st ♯rd i ♯rs ~> I ⇒ P')
         help (._ , step-st eq' l up₁ up₂) with heapval-helper eq eq'
         ... | refl = ¬l (_ , l)
-... | yes (tuple ws , l) with ←-dec ws i (lookup ♯rs regs)
+... | yes (tuple τs ws , l) with ←-dec ws i (lookup ♯rs regs)
 ... | no ¬up₁ = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , st ♯rd i ♯rs ~> I ⇒ P')
         help (._ , step-st eq' l' up₁ up₂) with heapval-helper eq eq'
         ... | refl with ↓-unique-heap l l'
         ... | refl = ¬up₁ (_ , up₁)
-... | yes (ws' , up₁) with ←-dec H lₕ (tuple ws')
+... | yes (ws' , up₁) with ←-dec H lₕ (tuple τs ws')
 ... | no ¬up₂ = no help
   where help : ¬ (∃ λ P' → G ⊢ H , register sp regs , st ♯rd i ♯rs ~> I ⇒ P')
         help (._ , step-st eq' l' up₁' up₂) with heapval-helper eq eq'
         ... | refl with ↓-unique-heap l l'
+        ... | refl with ↓-unique-heap' l l'
         ... | refl with ←-unique up₁ up₁'
         ... | refl = ¬up₂ (_ , up₂)
 ... | yes (H' , up₂) = yes (_ , step-st eq l up₁ up₂)
@@ -211,16 +220,6 @@ step-decₕ G (H , register sp regs , jmp v)
 ... | no ¬ig = no (λ { (._ , step-jmp ig) → ¬ig (_ , ig) })
 ... | yes (I' , ig) = yes (_ , step-jmp ig)
 step-decₕ G (H , R , halt) = no (λ { (_ , ()) })
-
-step-dec-specificₕ : ∀ G P P' → Dec (G ⊢ P ⇒ P')
-step-dec-specificₕ G P P'
-  with step-decₕ G P
-... | no ¬step = no (λ step → ¬step (P' , step))
-... | yes (P'' , step)
-  with P' ≟ P''
-... | no ¬eq = no (λ step' → ¬eq (step-uniqueₕ step' step))
-step-dec-specificₕ G P P'
-    | yes (.P' , step) | yes refl = yes step
 
 step-prg-uniqueₕ : ∀ {ℒ ℒ₁ ℒ₂} →
                     ⊢ ℒ ⇒ ℒ₁ →
@@ -248,6 +247,16 @@ step-prg-decₕ (running G (H , R , .halt))
         help I≢halt ¬step (_ , step-running step) = ¬step (_ , step)
         help I≢halt ¬step (_ , step-halting) = I≢halt refl
 step-prg-decₕ halted = yes (halted , step-halted)
+
+step-prg-dec-specificₕ : ∀ ℒ ℒ' → Dec (⊢ ℒ ⇒ ℒ')
+step-prg-dec-specificₕ ℒ ℒ'
+  with step-prg-decₕ ℒ
+... | no ¬step = no (λ step → ¬step (ℒ' , step))
+... | yes (ℒ'' , step)
+  with ℒ' ≟ ℒ''
+... | no ¬eq = no (λ step' → ¬eq (step-prg-uniqueₕ step' step))
+step-prg-dec-specificₕ ℒ ℒ'
+    | yes (.ℒ' , step) | yes refl = yes step
 
 exec-uniqueₕ : ∀ {ℒ ℒ₁ ℒ₂ n} →
                  ⊢ ℒ ⇒ₙ n / ℒ₁ →

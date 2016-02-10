@@ -27,7 +27,7 @@ private
   hval-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ h τ} →
               ψ₁ , ψ₂ ⊢ h of τ hval →
               ψ₁ , ψ₂ ++ ψ₂⁺ ⊢ h of τ hval
-  hval-++ (of-tuple ws⋆) = of-tuple (AllZip-map wval⁰-++ ws⋆)
+  hval-++ (of-tuple eqs ws⋆) = of-tuple eqs (AllZip-map wval⁰-++ ws⋆)
 
   hvals-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ hs τs} →
                  AllZip (λ h τ → ψ₁ , ψ₂ ⊢ h of τ hval) hs τs →
@@ -54,17 +54,22 @@ private
   map-uninit-helper [] = []
   map-uninit-helper (τ⋆ ∷ τs⋆) = of-uninit τ⋆ ∷ map-uninit-helper τs⋆
 
+  map-uninit-helper₁ : ∀ τs →
+                         AllZip {A = Type} {B = InitType} (λ { τ (τ' , φ) → τ ≡ τ' }) τs (map (λ τ → τ , uninit) τs)
+  map-uninit-helper₁ [] = []
+  map-uninit-helper₁ (τ ∷ τs) = refl ∷ map-uninit-helper₁ τs
+
 malloc-step : ∀ {ψ₁ H ψ₂ τs τs⁻ sp regs Γ} ♯rd →
                 {{_ : τs⁻ ≡ map (λ τ → τ , uninit) τs}} →
                 ψ₁ ⊢ H of ψ₂ heap →
                 [] ⊢ τs Valid →
                 ψ₁ , ψ₂ ⊢ register sp regs of Γ register →
-                ψ₁ ⊢ H ∷ʳ tuple (replicate (length τs) uninit) of ψ₂ ∷ʳ tuple τs⁻ heap ×
+                ψ₁ ⊢ H ∷ʳ tuple τs (replicate (length τs) uninit) of ψ₂ ∷ʳ tuple τs⁻ heap ×
                 ψ₁ , ψ₂ ∷ʳ tuple τs⁻ ⊢ register sp (update ♯rd (heapval (length H)) regs) of update-regs ♯rd (tuple τs⁻) Γ register
-malloc-step {ψ₂ = ψ₂} ♯rd {{refl}} (of-heap hs⋆) τs⋆ (of-register sp⋆ regs⋆)
+malloc-step {ψ₂ = ψ₂} {τs} ♯rd {{refl}} (of-heap hs⋆) τs⋆ (of-register sp⋆ regs⋆)
   with of-heapval (↓-length ψ₂ _) (≤-refl (valid-tuple (All-map' valid-τ⁻ τs⋆)))
 ... | h⋆
-  with heap-push (of-heap hs⋆) (of-tuple (map-uninit-helper τs⋆))
+  with heap-push (of-heap hs⋆) (of-tuple (map-uninit-helper₁ τs) (map-uninit-helper τs⋆))
 ... | H'⋆
   rewrite sym (AllZip-length hs⋆)
   = H'⋆ , of-register (stack-++ sp⋆) (allzipᵥ-update ♯rd h⋆ (AllZipᵥ-map wval-++ regs⋆))

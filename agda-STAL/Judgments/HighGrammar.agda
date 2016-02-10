@@ -118,7 +118,7 @@ Globalsₕ = List GlobalValueₕ
 
 -- Heap values, h
 data HeapValueₕ : Set where
-  tuple : List WordValueₕ → HeapValueₕ
+  tuple : List Type → List WordValueₕ → HeapValueₕ
 
 -- Heapₕs, H
 Heapₕ : Set

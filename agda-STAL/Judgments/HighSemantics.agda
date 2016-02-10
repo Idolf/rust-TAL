@@ -74,20 +74,20 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
            H , register sp' regs , I
 
     step-ld :
-           ∀ {H sp regs I ♯rd ♯rs i labₕ ws w} →
+         ∀ {H sp regs I ♯rd ♯rs i labₕ τs ws w} →
              lookup ♯rs regs ≡ heapval labₕ →
-                   H ↓ labₕ ⇒ tuple ws →
+                 H ↓ labₕ ⇒ tuple τs ws →
                      ws ↓ i ⇒ w →
       -----------------------------------------------
       G ⊢ₕ H , register sp regs , ld ♯rd ♯rs i ~> I ⇒
            H , register sp (update ♯rd w regs) , I
 
     step-st :
-          ∀ {H H' sp regs I ♯rd i ♯rs labₕ ws ws'} →
+        ∀ {H H' sp regs I ♯rd i ♯rs labₕ τs ws ws'} →
              lookup ♯rd regs ≡ heapval labₕ →
-                   H ↓ labₕ ⇒ tuple ws →
+                   H ↓ labₕ ⇒ tuple τs ws →
               ws ⟦ i ⟧← lookup ♯rs regs ⇒ ws' →
-                 H ⟦ labₕ ⟧← tuple ws' ⇒ H' →
+              H ⟦ labₕ ⟧← tuple τs ws' ⇒ H' →
       ------------------------------------------------
       G ⊢ₕ H  , register sp regs , st ♯rd i ♯rs ~> I ⇒
            H' , register sp regs , I
@@ -96,7 +96,7 @@ data _⊢ₕ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
                     ∀ {H sp regs I ♯rd τs} →
       -----------------------------------------------------------
       G ⊢ₕ H , register sp regs , malloc ♯rd τs ~> I ⇒
-           H ∷ʳ tuple (replicate (length τs) uninit) ,
+           H ∷ʳ tuple τs (replicate (length τs) uninit) ,
            register sp (update ♯rd (heapval (length H)) regs) , I
 
     step-mov :
