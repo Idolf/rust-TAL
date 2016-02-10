@@ -54,6 +54,7 @@ private
                         σ₁ ≡ σ₂
   stack-drop-unique here here = refl
   stack-drop-unique (there drop₁) (there drop₂) = stack-drop-unique drop₁ drop₂
+
   stack-drop-dec : ∀ n σ → Dec (∃ λ σ' → stack-drop n σ σ')
   stack-drop-dec zero σ = yes (σ , here)
   stack-drop-dec (suc n) (ρ⁼ ι) = no (λ { (_ , ()) })
@@ -408,14 +409,32 @@ private
                     | τs-eq gs⋆
                 = refl
 
-  wval⁰-optimist : ∀ w τ →
-                   ∃ λ φ →
-                     (∀ {ψ₁ ψ₂ φ'} → ψ₁ , ψ₂ ⊢ w of τ , φ' wval⁰ → φ ≤φ φ' × ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰)
-  wval⁰-optimist w τ
+  globals-dec : ∀ G →
+                  ¬ (∃ λ τs  → ⊢ G of τs globals) ∨
+                    (∃ λ τs  → ⊢ G of τs globals ×
+                       ∀ τs' → ⊢ G of τs' globals → τs' ≡ τs)
+  globals-dec gs
+    with gvals-unique gs
+  ... | τs , τs-eq
+    with gvals-dec {τs} gs τs
+  ... | yes gs⋆ = inj₂ (τs , of-globals gs⋆ , (λ { τs' (of-globals gs⋆') → τs-eq gs⋆' }))
+  ... | no ¬gs⋆ = inj₁ (help τs-eq ¬gs⋆)
+    where help : ∀ {gs τs} →
+                   (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs) →
+                   ¬ AllZip (λ g τ → τs ⊢ g of τ gval) gs τs →
+                   ¬ ∃ λ τs → ⊢ gs of τs globals
+          help τs-eq ¬gs⋆ (τs , of-globals gs⋆)
+            rewrite τs-eq gs⋆
+              = ¬gs⋆ gs⋆
+
+  wval⁰-best : ∀ w τ →
+                 ∃ λ φ →
+                   (∀ {ψ₁ ψ₂ φ'} → ψ₁ , ψ₂ ⊢ w of τ , φ' wval⁰ → φ ≤φ φ' × ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰)
+  wval⁰-best w τ
     with w ≟ uninit | τ ≟ ns
-  wval⁰-optimist .uninit .ns
+  wval⁰-best .uninit .ns
       | yes refl | yes refl = init , (λ _ → φ-≤-init , of-init of-ns)
-  wval⁰-optimist .uninit τ
+  wval⁰-best .uninit τ
       | yes refl | no τ≢ns = uninit , help τ≢ns
       where help : ∀ {ψ₁ ψ₂ φ' τ} →
                      τ ≢ ns →
@@ -425,7 +444,7 @@ private
             help τ≢ns (of-init of-ns)
               with τ≢ns refl
             ... | ()
-  wval⁰-optimist w τ
+  wval⁰-best w τ
       | no w≢uninit | _ = init , help w≢uninit
       where help : ∀ {ψ₁ ψ₂ φ' w} → w ≢ uninit →
                      ψ₁ , ψ₂ ⊢ w of τ , φ' wval⁰ →
@@ -435,23 +454,23 @@ private
             ... | ()
             help w≢uninit (of-init w⋆) = φ-≤-init , of-init w⋆
 
-  wvals⁰-optimist : ∀ ws τs →
-                      ∃ λ τs⁻ →
-                        AllZip (λ { τ (τ' , φ) → τ ≡ τ' }) τs τs⁻ ×
-                        (∀ {ψ₁ ψ₂ τs⁻'} →
-                           [] ⊢ τs⁻' Valid →
-                           AllZip (λ { τ (τ' , φ) → τ ≡ τ' }) τs τs⁻' →
-                           AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻' →
-                           [] ⊢ τs⁻ ≤ τs⁻' ×
-                           AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻)
-  wvals⁰-optimist [] [] = [] , [] , (λ { {τs⁻' = []} [] [] [] → [] , []})
-  wvals⁰-optimist [] (τ ∷ τs)
-    with wvals⁰-optimist [] τs
+  wvals⁰-best : ∀ ws τs →
+                  ∃ λ τs⁻ →
+                    AllZip (λ { τ (τ' , φ) → τ ≡ τ' }) τs τs⁻ ×
+                    (∀ {ψ₁ ψ₂ τs⁻'} →
+                       [] ⊢ τs⁻' Valid →
+                       AllZip (λ { τ (τ' , φ) → τ ≡ τ' }) τs τs⁻' →
+                       AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻' →
+                       [] ⊢ τs⁻ ≤ τs⁻' ×
+                       AllZip (λ w τ⁻ → ψ₁ , ψ₂ ⊢ w of τ⁻ wval⁰) ws τs⁻)
+  wvals⁰-best [] [] = [] , [] , (λ { {τs⁻' = []} [] [] [] → [] , []})
+  wvals⁰-best [] (τ ∷ τs)
+    with wvals⁰-best [] τs
   ... | τs⁻ , eqs , τs⁻-best
     = (τ , uninit) ∷ τs⁻ , refl ∷ eqs , (λ { {τs⁻' = []} [] () [] })
-  wvals⁰-optimist (w ∷ ws) [] = [] , [] , (λ { {τs⁻' = []} [] [] () })
-  wvals⁰-optimist (w ∷ ws) (τ ∷ τs)
-    with wval⁰-optimist w τ | wvals⁰-optimist ws τs
+  wvals⁰-best (w ∷ ws) [] = [] , [] , (λ { {τs⁻' = []} [] [] () })
+  wvals⁰-best (w ∷ ws) (τ ∷ τs)
+    with wval⁰-best w τ | wvals⁰-best ws τs
   ... | φ , φ-best | τs⁻ , eqs , τs⁻-best
     = (τ , φ) ∷ τs⁻ , refl ∷ eqs , help
       where help : ∀ {ψ₁ ψ₂ τs⁻'} →
@@ -465,13 +484,13 @@ private
             ... | φ≤φ' , w⋆' | τs⁻≤τs⁻' , ws⋆'
               = ((τ⁻-≤ τ⋆ φ≤φ') ∷ τs⁻≤τs⁻') , w⋆' ∷ ws⋆'
 
-  hval-optimist : ∀ h →
-                  ∃ λ τ →
-                    (∀ {ψ₁ ψ₂ τ'} →
-                       [] ⊢ τ' Valid →
-                       ψ₁ , ψ₂ ⊢ h of τ' hval → [] ⊢ τ ≤ τ' × ψ₁ , ψ₂ ⊢ h of τ hval)
-  hval-optimist (tuple τs ws)
-    with wvals⁰-optimist ws τs
+  hval-best : ∀ h →
+                ∃ λ τ →
+                  (∀ {ψ₁ ψ₂ τ'} →
+                     [] ⊢ τ' Valid →
+                     ψ₁ , ψ₂ ⊢ h of τ' hval → [] ⊢ τ ≤ τ' × ψ₁ , ψ₂ ⊢ h of τ hval)
+  hval-best (tuple τs ws)
+    with wvals⁰-best ws τs
   ... | τs⁻ , eqs , τs⁻-best
     = tuple τs⁻ , help
       where help : ∀ {ψ₁ ψ₂ τ'} →
@@ -483,16 +502,16 @@ private
               with τs⁻-best τs⁻⋆ eqs' ws⋆
             ... | τs⁻≤τs⁻' , ws⋆' = tuple-≤ τs⁻≤τs⁻' , of-tuple eqs ws⋆'
 
-  hvals-optimist : ∀ hs →
-                   ∃ λ τs →
-                     (∀ {ψ₁ ψ₂ τs'} →
-                        All (λ τ' → [] ⊢ τ' Valid) τs' →
-                        AllZip (λ h τ' → ψ₁ , ψ₂ ⊢ h of τ' hval) hs τs' →
-                        AllZip (λ τ τ' → [] ⊢ τ ≤ τ') τs τs' ×
-                        AllZip (λ h τ → ψ₁ , ψ₂ ⊢ h of τ hval) hs τs)
-  hvals-optimist [] = [] , (λ { {τs' = []} [] [] → [] , []})
-  hvals-optimist (h ∷ hs)
-    with hval-optimist h | hvals-optimist hs
+  hvals-best : ∀ hs →
+                 ∃ λ τs →
+                   (∀ {ψ₁ ψ₂ τs'} →
+                      All (λ τ' → [] ⊢ τ' Valid) τs' →
+                      AllZip (λ h τ' → ψ₁ , ψ₂ ⊢ h of τ' hval) hs τs' →
+                      AllZip (λ τ τ' → [] ⊢ τ ≤ τ') τs τs' ×
+                      AllZip (λ h τ → ψ₁ , ψ₂ ⊢ h of τ hval) hs τs)
+  hvals-best [] = [] , (λ { {τs' = []} [] [] → [] , []})
+  hvals-best (h ∷ hs)
+    with hval-best h | hvals-best hs
   ... | τ , τ-best | τs , τs-best
     = τ ∷ τs , (λ { {τs' = τ' ∷ τs'} (τ'⋆ ∷ τs'⋆) (h⋆ ∷ hs⋆) → Σ-zip _∷_ _∷_ (τ-best τ'⋆ h⋆) (τs-best τs'⋆ hs⋆)})
 
@@ -638,7 +657,7 @@ private
                   (∃ λ ψ₂ → ψ₁ ⊢ H of ψ₂ heap ×
                             ∀ ψ₂' → ψ₁ ⊢ H of ψ₂' heap → [] ⊢ ψ₂ ≤ ψ₂')
   heap-best {ψ₁} H
-    with hvals-optimist H
+    with hvals-best H
   ... | τs , τs-best
     with heap-dec H τs
   ... | no ¬H⋆ = inj₁ help
@@ -687,24 +706,6 @@ private
   ... | _ | inj₁ ¬regs⋆ = inj₁ (λ { (_ , of-register sp⋆ regs⋆) → ¬regs⋆ (_ , regs⋆) })
   ... | inj₂ (σ , sp⋆ , sp⋆-best) | inj₂ (τs , regs⋆ , regs⋆-best)
     = inj₂ (_ , of-register sp⋆ regs⋆ , (λ { ._ (of-register sp⋆' regs⋆') → Γ-≤ (sp⋆-best _ sp⋆') (regs⋆-best _ regs⋆') }))
-
-  globals-dec : ∀ G →
-                  ¬ (∃ λ τs  → ⊢ G of τs globals) ∨
-                    (∃ λ τs  → ⊢ G of τs globals ×
-                       ∀ τs' → ⊢ G of τs' globals → τs' ≡ τs)
-  globals-dec gs
-    with gvals-unique gs
-  ... | τs , τs-eq
-    with gvals-dec {τs} gs τs
-  ... | yes gs⋆ = inj₂ (τs , of-globals gs⋆ , (λ { τs' (of-globals gs⋆') → τs-eq gs⋆' }))
-  ... | no ¬gs⋆ = inj₁ (help τs-eq ¬gs⋆)
-    where help : ∀ {gs τs} →
-                   (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs) →
-                   ¬ AllZip (λ g τ → τs ⊢ g of τ gval) gs τs →
-                   ¬ ∃ λ τs → ⊢ gs of τs globals
-          help τs-eq ¬gs⋆ (τs , of-globals gs⋆)
-            rewrite τs-eq gs⋆
-              = ¬gs⋆ gs⋆
 
   programstate-dec : ∀ {ψ₁} → [] ⊢ ψ₁ Valid →
                      ∀ P → Dec (∃₂ λ ψ₂ Γ → ψ₁ ⊢ P of ψ₂ , Γ programstate)
