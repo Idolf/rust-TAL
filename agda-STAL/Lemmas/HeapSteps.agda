@@ -4,8 +4,8 @@ open import Util
 open import Judgments
 open import Lemmas.Types
 open import Lemmas.TermValidType
-open import Lemmas.TermCasting using (wval-cast)
-open import Lemmas.HeapFix using (wval-heapfix ; hval-heapfix ; stack-heapfix)
+open import Lemmas.TermCast using (wval-cast)
+open import Lemmas.TermHeapCast using (regs-heapcast ; stack-heapcast ; hvals-heapcast)
 open HighGrammar
 open HighSemantics
 
@@ -56,7 +56,7 @@ private
           ... | _ , _ , up₁ , up₂ , hs'⋆ , τs'≤τs
             = , , there up₁ , there up₂ , h'⋆ ∷ hs'⋆ , ≤-refl (hval-valid-type h'⋆) ∷ τs'≤τs
   ... | hs' , ψ₂' , up₁ , up₂ , hs'⋆ , ψ₂'≤ψ₂
-    = hs' , ψ₂' , up₁ , up₂ , of-heap (AllZip-map (hval-heapfix ψ₂'≤ψ₂) hs'⋆) , ψ₂'≤ψ₂
+    = hs' , ψ₂' , up₁ , up₂ , of-heap (hvals-heapcast ψ₂'≤ψ₂ hs'⋆) , ψ₂'≤ψ₂
 
   regs-helper : ∀ {ψ₁ ψ₂ n} {regs : Vec WordValue n} {τs} ♯rd {labₕ τ} →
                   [] ⊢ τ Valid →
@@ -113,11 +113,11 @@ store-step {♯rd = ♯rd} {♯rs} G⋆ H⋆ sp⋆ regs⋆ eq lookup≤τ l up
 ... | ws' , τs⁻₃ , up₁ , up₂ , ws'⋆ , τs⁻₃≤τs⁻₂
   with heap-update (of-tuple (AllZip-trans {P₁ = λ { τ (τ' , φ) → τ ≡ τ' }} {P₂ = λ τ₂ τ₃ → [] ⊢ τ₃ ≤ τ₂} (λ { {τ} {τ₂ , φ₂} {.τ₂ , φ₃} eq (τ⁻-≤ τ⋆ φ₃≤φ₂) → eq }) eqs (AllZip-swap τs⁻₃≤τs⁻₂)) ws'⋆) H⋆ l₂ (tuple-≤ τs⁻₃≤τs⁻₂)
 ... | H' , ψ₂' , up₃ , up₄ , H'⋆ , ψ₂'≤ψ₂
-  with regs-helper ♯rd (valid-tuple (≤-valid₁ τs⁻₃≤τs⁻₂)) eq₁ (←-to-↓ up₄) (AllZipᵥ-map (wval-heapfix ψ₂'≤ψ₂) regs⋆)
+  with regs-helper ♯rd (valid-tuple (≤-valid₁ τs⁻₃≤τs⁻₂)) eq₁ (←-to-↓ up₄) (regs-heapcast ψ₂'≤ψ₂ regs⋆)
 ... | regs'⋆
   with allzip-update up₂ up (≤-refl (valid-τ⁻ (≤-valid₂ lookup≤τ))) τs⁻₂≤τs⁻₁
 ... | τs⁻₃≤τs⁻₁'
-  = , , H'⋆ , of-register (stack-heapfix ψ₂'≤ψ₂ sp⋆) (AllZipᵥ-trans wval-cast regs'⋆ (allzipᵥ-update ♯rd (tuple-≤ τs⁻₃≤τs⁻₁') (≤-refl (AllZipᵥ-extract→ wval-valid-type regs⋆)))) , step-st eq₁ l₁ up₁ up₃
+  = , , H'⋆ , of-register (stack-heapcast ψ₂'≤ψ₂ sp⋆) (AllZipᵥ-trans wval-cast regs'⋆ (allzipᵥ-update ♯rd (tuple-≤ τs⁻₃≤τs⁻₁') (≤-refl (AllZipᵥ-extract→ wval-valid-type regs⋆)))) , step-st eq₁ l₁ up₁ up₃
 
 load-step : ∀ {G ψ₁ H ψ₂ regs sp σ τs ♯rd ♯rs τs⁻ τ i I} →
               ⊢ G of ψ₁ globals →

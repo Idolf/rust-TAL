@@ -7,9 +7,9 @@ open import Lemmas.Substitution
 open import Lemmas.Types
 open import Lemmas.TypeSubstitution
 open import Lemmas.HighSemantics
-open import Lemmas.TermCasting
+open import Lemmas.TermCast
 open import Lemmas.TermValidType
-open import Lemmas.HeapFix using (register-heapfix ; hval-heapfix)
+open import Lemmas.TermHeapCast using (register-heapcast ; hvals-heapcast)
 open HighGrammar
 
 -- The purpose of this file is to prove that type-checking
@@ -664,7 +664,7 @@ private
     where help : ¬ (∃ λ ψ₂ → ψ₁ ⊢ H of ψ₂ heap)
           help (ψ₂ , of-heap hs⋆)
             with τs-best (AllZip-extract→ hval-valid-type hs⋆) hs⋆
-          ... | τs≤ψ₂ , hs⋆' = ¬H⋆ (of-heap (AllZip-map (hval-heapfix τs≤ψ₂) hs⋆'))
+          ... | τs≤ψ₂ , hs⋆' = ¬H⋆ (of-heap (hvals-heapcast τs≤ψ₂ hs⋆'))
   ... | yes H⋆
     = inj₂ (τs , H⋆ , help)
     where help : ∀ ψ₂' → ψ₁ ⊢ H of ψ₂' heap → [] ⊢ τs ≤ ψ₂'
@@ -719,7 +719,7 @@ private
           help (ψ₂' , Γ , of-programstate H⋆ R⋆ I⋆)
             with ψ₂-best _ H⋆
           ... | ψ₂≤ψ₂'
-            = ¬R⋆ (_ , register-heapfix ψ₂≤ψ₂' R⋆)
+            = ¬R⋆ (_ , register-heapcast ψ₂≤ψ₂' R⋆)
   ... | inj₂ (Γ , R⋆ , Γ-best)
     with instructionsequence-dec I Γ
   ... | yes I⋆ = yes (ψ₂ , Γ , of-programstate H⋆ R⋆ I⋆)
@@ -728,7 +728,7 @@ private
           help (ψ₂' , Γ' , of-programstate H⋆ R⋆ I⋆)
             with ψ₂-best _ H⋆
           ... | ψ₂≤ψ₂'
-            with Γ-best _ (register-heapfix ψ₂≤ψ₂' R⋆)
+            with Γ-best _ (register-heapcast ψ₂≤ψ₂' R⋆)
           ... | Γ≤Γ'
             with instructionsequence-cast ψ₁⋆ I⋆ Γ≤Γ'
           ... | I⋆'

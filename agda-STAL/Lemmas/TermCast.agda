@@ -1,4 +1,4 @@
-module Lemmas.TermCasting where
+module Lemmas.TermCast where
 
 open import Util
 open import Judgments

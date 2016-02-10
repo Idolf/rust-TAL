@@ -17,8 +17,8 @@ open import Lemmas.TermSubstitution public
 -- Step 5.3:
 -- Terms can be casted using subtyping, and
 -- we can make the heap more specific too.
-open import Lemmas.TermCasting public
-open import Lemmas.HeapFix public
+open import Lemmas.TermCast public
+open import Lemmas.TermHeapCast public
 
 -- Step 5.4:
 -- Determinism and decidibility the semantics
