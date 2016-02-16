@@ -1,2 +1,99 @@
 \chapter{Safety and Soundness}
 \label{chap:safesound}
+
+\section{Defining safety}
+
+Before going into the detail, it is beneficial to discuss exactly what we mean
+by ``safety''. We will first discuss what we mean by a secure ``system'' such as
+an entire computer. As a naive definition one might the following:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it A ``safe'' system must never do anything that could jeopardize the
+    safety of the user.}
+\end{addmargin}
+\vspace{0.3cm}
+
+Besides being close to a circular definition, this definition also highlights
+another issue: Any system fulfilling this definition must be highly customized
+to the specific user. A slightly better definition would be:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it A ``safe'' system will never do anything potentially dangerous that a
+    reasonably well-educated user would expect it not to.}
+\end{addmargin}
+\vspace{0.3cm}
+
+While somewhat impractical, this definition has the nice feature, that one can
+actually strive to follow it -- even if one cannot prove such a general
+statement. An interesting fact is also, that while safety can depend on context
+and is often very hard to prove, some systems would always be considered
+insecure.
+
+The definition is still too vague though -- to get closer to a \emph{provable}
+definition, we will avoid mentioning the user:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it A ``safe'' system will never do any of the following things: [long list
+    of potentially dangerous things]}
+\end{addmargin}
+\vspace{0.3cm}
+
+The biggest remaining issue is that this blacklist approach is unlikely to be
+practical. The list of bad actions for a system is likely near-infinite, so even
+if we somehow manage to specify all the bad properties correctly, the list will
+be unimaginably large. Instead of a blacklist we will use a whitelist:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it \textbf{A safe system} is a system will only do things from the following
+    list: [long list of non-dangerous things]}
+\end{addmargin}
+\vspace{0.3cm}
+
+Ideally this list would likely be just as large as the blacklist -- however in
+this case we can approximate it by using a subset of the list! Indeed, if we
+used the empty list, then we would only have safe systems (the ones that do
+nothing).
+
+We will now use this definition to define a safe program. One might try
+something similar to this:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it Assume we have a platform on which we can run programs. A ``safe
+    program'' for that platform is any program where running it on the platform
+    results in a safe system.}
+\end{addmargin}
+\vspace{0.3cm}
+
+This definition turns out to be unusable in practice, as it depends on e.g. how
+the CPU has been implemented and ultimately on whether or not our physical
+models of reality are correct. We will instead use:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it Assume we have a platform on which we can run programs. This platform
+    consists of a secure and an insecure part, and are we are allowed to make
+    certain assumptions on the secure part (e.g. ``the kernel does not contain
+    bugs'', ``the sandbox is implemented correctly''). \textbf{A safe program
+      for that platform} is any program where running it on the platform results
+    in a safe system. The secure part is known as the \textbf{Trusted Computing
+      Base}.}
+\end{addmargin}
+\vspace{0.3cm}
+
+It is fairly obvious that one wants the trusted computing base to be as small as
+possible. We can now include reformulation of the soundness theorem in the
+context of safe programs.
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it Assume we have a set of possible programs, a mathematical description of
+    how these programs are run and a type system for the programs. This type
+    system is \textbf{sound} if all well-typed programs are also safe programs
+    on any platform, that enforce that mathematical description.}
+\end{addmargin}
+\vspace{0.3cm}

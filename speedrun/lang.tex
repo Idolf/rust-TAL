@@ -1,2 +1,47 @@
 \chapter{\ATAL and \ATALe}
 \label{chap:lang}
+
+% % Informally
+% % this means that the languages are essentially equivalent, however there are two
+% % good reasons for introducing it anyways:
+
+
+% % A fundamental abstraction in \ATAL (and other TAL-based systems) is the
+% % basic-block. A basic-block is a collection of instructions with two properties:
+
+% % \begin{itemize}
+% % \item There can only be references to the start of a basic-block, not into the
+% %   middle of one.
+% % \item A basic block will always contain exactly one unconditional jump or halt,
+% %   and that is the last instruction of the block.\footnote{Note that it is often
+% %     beneficial to weaken this assumption slightly, by also allowing an
+% %     \emph{implicit} unconditional jump to the basic-block at the next
+% %     address. We will not allow that in our definition, but could easily emulate
+% %     it.}
+% % \end{itemize}
+
+% % A program-state in \ATAL is a tuple $\langle G, H, R, I \rangle$ consisting of
+% % \textbf{global values}, \textbf{heap values}, \textbf{register values} and
+% % \textbf{the current basic-block}. In \ATAL a global value is always a
+% % type-annotated basic-block, but it could be extended with other global values. A
+% % heap value is always a tuple of word-sized values (though it could be a tuple of
+% % size 1). In Agda we implement these collections as ordered lists, however other
+% % constructions such as dictionaries could be used.
+
+% % The register values is a mapping from register names to a word values -- the
+% % only exception is the stack pointer, which is mapped to a stack of word values
+% % (again implemented as an ordered list).
+
+% % We will then define a small-step semantics, which is a relation from
+% % program-states to program-states.
+
+
+% % \begin{itemize}
+% % \item \ATAL depends on types at run-time for its execution. while \ATALe does
+% %   not. Since the two languages are essentially equivalent, one can simply
+% %   translate from \ATAL to \ATALe before running the program.
+% % \item \ATALe is much simpler than \ATAL. This makes it easier to reason about
+% %   any implementation that runs \ATALe-code.
+% % \item It makes it possible to experiment with changes to \ATAL without changing
+% %   \ATALe or the system that runs \ATALe-code.
+% % \end{itemize}

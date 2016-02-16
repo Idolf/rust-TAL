@@ -1,136 +1,11 @@
 \chapter{Typed Assembly Language, Safety and Formalizations}
 
-In the paper ``From System F to Typed Assembly Language'' Morrisett et
-al. presented a type system for an assembly language. They then show that their
-typed assembly language (TAL) have some desirable properties:
-
-\begin{itemize}
-\item They present a type-preserving translation from an ML-like language to the
-  introduced language.
-\item They include a proof of ``soundness''. This is a \emph{metatheoretic}
-  theorem, as it is about the system in contrast to being about individual terms
-  (such as e.g. a proof that specific term is well-typed). Very informally this
-  theorem states well-typed programs cannot do unsafe things.
-\end{itemize}
-
-In the paper ``Stack-Based Typed Assembly Language'' the authors created an
-extensions of this system (STAL), which supports stack and exceptions. While the
-compilation and type-checking algorithms of both TAL and STAL are fairly
-straight-forward to implement in most programming languages, it is more tricky
-to encode the soundness proof in a way that permits machine verification. It was
-not until the paper ``Toward a Foundational Typed Assembly Language'' by Karl
-Crary (also one of the original authors) that the soundness proof was
-mechanizes. The original implementation was in Twelf, however it has later been
-implemented in Coq by multiple authors.\todo{Citations}
-
-In this thesis we present a mostly-compatible variant of STAL in Agda, and
-formalize proofs of both decidable type-checking and soundness. Additionally we
-provide a simplified version of the language and prove that the two languages
-are related by type erasure.
-
-\section{On the subject of safety}
-
-Before going into the detail, it is beneficial to discuss exactly what we mean
-by ``safety''. We will first discuss what we mean by a secure ``system'' such as
-an entire computer. As a naive definition one might the following:
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it A ``safe'' system must never do anything that could jeopardize the
-    safety of the user.}
-\end{addmargin}
-\vspace{0.3cm}
-
-Besides being close to a circular definition, this definition also highlights
-another issue: Any system fulfilling this definition must be highly customized
-to the specific user. A slightly better definition would be:
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it A ``safe'' system will never do anything potentially dangerous that a
-    reasonably well-educated user would expect it not to.}
-\end{addmargin}
-\vspace{0.3cm}
-
-While somewhat impractical, this definition has the nice feature, that one can
-actually strive to follow it -- even if one cannot prove such a general
-statement. An interesting fact is also, that while safety can depend on context
-and is often very hard to prove, some systems would always be considered
-insecure.
-
-The definition is still too vague though -- to get closer to a \emph{provable}
-definition, we will avoid mentioning the user:
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it A ``safe'' system will never do any of the following things: [long list
-    of potentially dangerous things]}
-\end{addmargin}
-\vspace{0.3cm}
-
-The biggest remaining issue is that this blacklist approach is unlikely to be
-practical. The list of bad actions for a system is likely near-infinite, so even
-if we somehow manage to specify all the bad properties correctly, the list will
-be unimaginably large. Instead of a blacklist we will use a whitelist:
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it \textbf{A safe system} is a system will only do things from the following
-    list: [long list of non-dangerous things]}
-\end{addmargin}
-\vspace{0.3cm}
-
-Ideally this list would likely be just as large as the blacklist -- however in
-this case we can approximate it by using a subset of the list! Indeed, if we
-used the empty list, then we would only have safe systems (the ones that do
-nothing).
-
-We will now use this definition to define a safe program. One might try
-something similar to this:
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it Assume we have a platform on which we can run programs. A ``safe
-    program'' for that platform is any program where running it on the platform
-    results in a safe system.}
-\end{addmargin}
-\vspace{0.3cm}
-
-This definition turns out to be unusable in practice, as it depends on e.g. how
-the CPU has been implemented and ultimately on whether or not our physical
-models of reality are correct. We will instead use:
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it Assume we have a platform on which we can run programs. This platform
-    consists of a secure and an insecure part, and are we are allowed to make
-    certain assumptions on the secure part (e.g. ``the kernel does not contain
-    bugs'', ``the sandbox is implemented correctly''). \textbf{A safe program
-      for that platform} is any program where running it on the platform results
-    in a safe system. The secure part is known as the \textbf{Trusted Computing
-      Base}.}
-\end{addmargin}
-\vspace{0.3cm}
-
-It is fairly obvious that one wants the trusted computing base to be as small as
-possible. We can now include reformulation of the soundness theorem in the
-context of safe programs.
-
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it Assume we have a set of possible programs, a mathematical description of
-    how these programs are run and a type system for the programs. This type
-    system is \textbf{sound} if all well-typed programs are also safe programs
-    on any platform, that enforce that mathematical description.}
-\end{addmargin}
-\vspace{0.3cm}
-
 \section{The security ecosystem}
 
-Most computer systems in the world have at some point or another contained
-security vulnerabilities -- so we would not consider them safe. As a result of
-this many computers on the internet is infected by malware. To get closer to an
-ideal of safe systems, we have a number of different tools at our disposal:
+Most computer systems in the world have at some point or another contained a
+security vulnerability. As a result of this many computers on the internet is
+infected by malware of some form. To try to combat these problems, we have
+developed a number of tools:
 
 \begin{itemize}
 \item Anti-virus software and similar solutions try to catch malicious events in
@@ -145,159 +20,173 @@ ideal of safe systems, we have a number of different tools at our disposal:
   refer to these and similar approaches as ``run-time protections''.
   \footnote{
     While anti-virus and code-signing certificates principally belong to the
-    category of run-time protections, they are sufficiently different that I
-    feel they deserve their own point.
+    category of run-time protections, they are sufficiently different from most
+    other such protections that they deserve their own point.
   }
 \item Static analysis, fuzzing and type systems try to detect vulnerabilities in
   programs before they are deployed. Compiler modifcations stack-cookies or
   printf-hardening try to generate code that is hard to exploit even in the
-  event of an exploit. Using modern languages one might even avoid a whole
-  classes of bugs. We will collectively refer to these and similar approaches as
+  event of an exploit. Using modern languages one might even avoid whole classes
+  of bugs. We will collectively refer to these and similar approaches as
   ``compile-time protections''.
 \end{itemize}
 
 Note, that while all of these are valuable tools in the current security
 industry, none of them are perfect -- many are specifically designed to increase
-the cost of attacks as much as possible, instead of preventing them altogether.
+the cost of attacks as much as possible, not preventing them altogether.
 
-Anti-virus software is inherently limited by Rice's Theorem. In this context the
-theorem states, that any attempt to classify programs as good or bad will have
-either false positives (good programs classified as bad) or false negatives (bad
+Anti-virus software is inherently limited by Rice's Theorem. This theorem
+implies, that any attempt to classify programs as good or bad will have either
+false positives (good programs classified as bad) or false negatives (bad
 programs classified as good). In practice most real-world implementations have
 both. In addition, anti-virus software is often of low quality which actually
 results in increasing the attack surface of a system, not decreasing
 it.\todo{Insert citation}
 
-The core idea of code-signing is to include a certificate with distributed
+The core idea of code-signing is to include a certificate with any distributed
 programs. This certificate will prove that the program have been written by a
 real-world entity verified by a trusted third-party using a public key
-infrastructure (PKI). This works by effectively increasing the price of running
-malicious programs on other people's machines. Ideally the only attack available
-would be to create a fake real-world identity (expensive!) and use it to buy a
-code-signing certificate. However in practice there are multiple other avenues
-available: One could steal a valid certificate, exploit another vulnerable (but
-signed) program or try to bypass the validation check.
+infrastructure (PKI). The purpose is to effectively increase the price of
+running malicious programs on other people's machines; ideally the only attack
+available would be to create a fake real-world identity (expensive!) and use it
+to buy a code-signing certificate. However in practice there are multiple other
+avenues available: One could steal a valid certificate, exploit another
+vulnerable (but signed) program or try to bypass the validation check.
 
 Run-time protections have a long history in computer science, and could arguably
 be said to have had the biggest practical impact so far. One reason for their
 effectiveness, is that it is often possible to deploy many unrelated protections
 in parallel (a technique sometimes referred to as ``Defense in Depth''). It is
-for instance not uncommon to see an end-user system that deploys both POSIX user
-permissions, a firewall and sandboxes for the most exposed applications. Another
-reason is that this system is not (directly) limited by Rice's Theorem. It is
-for instance possible (at least in principle) to design system where any
-potentially malicious actions must be approved by a user before execution --
-however such a system would not be practical. More generally one has to balance
-security with other issues such as performance, usability and ease of
-development.
+for instance uncommon to see end-user machines without at least memory
+protections, file permissions and sandboxes for the most exposed
+applications. Another reason is that this system is not (directly) limited by
+Rice's Theorem.\footnote{Many implementations \emph{would} be limited by Rice's
+  Theorem, but that is not an inherent property of run-time protections. For
+  instance if one simply wanted to stop a system from ``firing the missiles'',
+  then one could cut the wire to do so.} It is for instance theoretically
+possible to design system where any potentially malicious actions must be
+approved by a user before execution -- however such a system would not be
+practical. In general one has to balance security with other issues such as
+performance, usability and ease of development.
 
 Compile-time protections have also had huge influence in improving the quality
 of the code generated and distributed in the world, though it is harder to
-quantify exactly how much. With run-time protections one can simply ask the
-question ``what if this was turned off?'', however compile-time protections
-often work by permanently improving code quality or are so integrated into the
-compilation-process that they cannot be turned off. Many of these protections
-are superficially similar to anti-virus software, as they work by analyzing code
-and detecting potential problems, however they have a huge advantage in that
-they are able to interact directly with the programmer. A can choose to ignore
-warnings if he believes them to be false positives, or he can improve the
-detection algorithms if he finds false negatives. A disadvantage is that while
-this approach \emph{does} improve security in practice, there is little
-possibility for users to \emph{verify} that this is the case.
+quantify exactly how much. With run-time protections one can often turn off a
+protection (at least in principle) and look at the influence of that change. In
+contrast compile-time protections often work by permanently improving code
+quality or are so integrated into the compilation-process that they cannot be
+turned off. Many of these protections are superficially similar to anti-virus
+software, as they work by analyzing code and detecting potential problems,
+however they have a huge advantage in that they are able to interact directly
+with the programmer. He can choose to ignore warnings if he believes them to be
+false positives, or he can improve the detection algorithms if he finds them
+insufficient. A disadvantage is that while this approach \emph{does} improve
+security in practice, there is little possibility for users to \emph{verify}
+that this is the case.
 
-So where in this classification system would TAL and variants fit? Ultimately
-they should probably be grouped with the run-time protections, however they have
-properties from each of the categories:
+This thesis discusses a technique known Typed Assembly Language (TAL). So where
+in this classification system would TAL and variants fit? Ultimately they should
+probably be grouped with the run-time protections, however they have properties
+from each of the categories:
 
 \begin{itemize}
 \item TAL needs compiler-time support to be useful. The compiler must to
   type-check the source program and use these types when compiling the code.
 \item The compiler then outputs a ``certificate'' along with this code. This
-  certificate proves the program is non-malicious. However in contrast to
-  code-signing, this proof is based on a type system instead of PKI.
+  certificate proves the program to be non-malicious. The difference is that
+  this proof depends on a \emph{Trusted Computing Base}, not a \emph{Trusted
+    Third Party}.
 \item Before trying to run a program, it must first be classified as good or
   bad. This classification is limited by Rice's Theorem in the same way as an
-  anti-virus solution. However in contrast to anti-virus software, this
-  classifier would not have any false negatives (bad, but accept programs). It
-  would use the certificate to run this classification fast, while still keeping
-  the false positive rate low.
+  anti-virus solution. While anti-virus software will typically try to trade-off
+  the false negatives with the false positives, this classifier will reject
+  \emph{all} malicious programs (and some non-malicious ones). Another
+  difference is that this classifier gets an additional input in the form of the
+  ``certificate''.
 \item Ultimately the system would have an API very similar to that of a
-  sandbox. It would accept untrusted programs and run (or reject) them without
-  negative security implications. It would internally use the classifier, but
-  ultimately this does not matter to an end-user.
+  sandbox. It would accept untrusted programs and run (or reject) them in a
+  secure fashion. It would internally use the classifier, but ultimately this
+  does not matter to an end-user.
 \end{itemize}
 
-% \section{A Bird's Eyes View of the Project}
+\section{Typed Assembly Language}
 
-% Informally
-% this means that the languages are essentially equivalent, however there are two
-% good reasons for introducing it anyways:
+Typed Assembly Language was introduced in the paper ``From System F to Typed
+Assembly Language'' by Morrisett et al. The procedure set forth by this
+technique is as follows:
 
+\begin{itemize}
+\item Start by choosing a subset of a real-world assembly language.
+\item Define a small-step semantics for this subset. A small-step semantics is a
+  model for how our subset is executed. For instance if our model states that a
+  machine in state $p_1$ can transition to a machine in state $p_2$, then we
+  would write $p_1 -> p_2$. Furthermore this model will designate some states as
+  \emph{halting} states, i.e. states that will halt immediately without
+  error. If programs are neither transitioning nor halting, then we say that
+  they are \emph{stuck} and this is considered an error.
+\item Define a type system for this subset. This type system should have a
+  type-checker, i.e. a program that \emph{should} output true for well-typed
+  programs, but \emph{always} outputs false for programs with type errors.
+\item Prove that this type-system is \emph{sound}. This means that is $p_1$ is
+  well-typed and $p_1 -> \dots -> p_2$, then $p_2$ is not stuck.
+\end{itemize}
 
-% A fundamental abstraction in \ATAL (and other TAL-based systems) is the
-% basic-block. A basic-block is a collection of instructions with two properties:
+It is okay for our small-step semantics to be a simplification of the real
+machine, as long it bears some relation to the real-world machine. Specifically
+we say that the model is \emph{safe} if:
+\begin{itemize}
+\item If our model states that $p$ can transition to one of $p_1, \dots, p_n$
+  (with $n \geq 1$), then the real-world machine should ideally transition to
+  one of these states too. If it cannot do this (for instance if it is out of
+  memory), then it should instead abort the program in a non-harmful way.
+\item If our model states that $p$ is halting, then the real world machine
+  should halt without error too.
+\item If our model states that $p$ is stuck, then the real-world machine is
+  allowed to do anything.
+\item Our model should be chosen such that the ``bad stuff'' is left out. How to
+  achieve this is discussed in \Cref{chap:safesound}.
+\end{itemize}
 
-% \begin{itemize}
-% \item There can only be references to the start of a basic-block, not into the
-%   middle of one.
-% \item A basic block will always contain exactly one unconditional jump or halt,
-%   and that is the last instruction of the block.\footnote{Note that it is often
-%     beneficial to weaken this assumption slightly, by also allowing an
-%     \emph{implicit} unconditional jump to the basic-block at the next
-%     address. We will not allow that in our definition, but could easily emulate
-%     it.}
-% \end{itemize}
+We can now implement a sandbox as follows:
 
-% A program-state in \ATAL is a tuple $\langle G, H, R, I \rangle$ consisting of
-% \textbf{global values}, \textbf{heap values}, \textbf{register values} and
-% \textbf{the current basic-block}. In \ATAL a global value is always a
-% type-annotated basic-block, but it could be extended with other global values. A
-% heap value is always a tuple of word-sized values (though it could be a tuple of
-% size 1). In Agda we implement these collections as ordered lists, however other
-% constructions such as dictionaries could be used.
+\begin{enumerate}
+\item Receive a program $p$.
+\item Run the type-checker on $p$.
+\item If the type-checker outputs true, then we can safely run $p$.
+\end{enumerate}
 
-% The register values is a mapping from register names to a word values -- the
-% only exception is the stack pointer, which is mapped to a stack of word values
-% (again implemented as an ordered list).
-
-% We will then define a small-step semantics, which is a relation from
-% program-states to program-states.
-
-
-% \begin{itemize}
-% \item \ATAL depends on types at run-time for its execution. while \ATALe does
-%   not. Since the two languages are essentially equivalent, one can simply
-%   translate from \ATAL to \ATALe before running the program.
-% \item \ATALe is much simpler than \ATAL. This makes it easier to reason about
-%   any implementation that runs \ATALe-code.
-% \item It makes it possible to experiment with changes to \ATAL without changing
-%   \ATALe or the system that runs \ATALe-code.
-% \end{itemize}
-
+If our soundness-proof and type-checker are correct and our model is valid, then
+this is safe.
 
 \section{Outline of the Thesis}
 
 The rest of this thesis is organized as follows
 
-\textbf{\Cref{chap:lang}} formally defines a variant of STAL, which we will refer to
-as \ATAL (Agda-based TAL). \ATAL is mostly equivalent to STAL, however support
-for exceptions and existential types have been removed, and a few details have
-been simplified without loss of generality.
+\textbf{\Cref{chap:lang}} formally defines a variant of STAL, which we will
+refer to as \ATAL (Agda-based TAL). \ATAL is mostly equivalent to STAL, however
+support for exceptions and existential types have been removed, and a few
+details have been simplified without loss of generality.
 
 Simultaneously with introducing \ATAL, we will introduce a simplified version of
 the same language, \ATALe, along with a small-step semantics for both
-languages. We prove that the two languages are related type erasure.
+languages. We prove that the two languages are equivalent up to type erasure.
 
-\textbf{\Cref{chap:types}} introduces the type system for \ATAL and proves that it is
-sound. It will also introduce a decision procedure to check if a program is
-well-typed (i.e. a proven-correct type-checker).
+\textbf{\Cref{chap:types}} introduces the type system for \ATAL and proves that
+it is sound. It will also introduce a decision procedure to check if a program
+is well-typed (i.e. a proven-correct type-checker).
 
-\textbf{\Cref{chap:safesound}} will further discuss the issue of safety and how it
-relates to the proof of soundness. Specifically we will give a high-level
+\textbf{\Cref{chap:safesound}} will further discuss the issue of safety and how
+it relates to the proof of soundness. Specifically we will give a high-level
 overview of how one could implement a platform with a small trusted computing
 base from these results.
 
-Finally \textbf{\Cref{chap:hindsight}} lists a few lessons lessons from
-working doing a project of this size in Agda. This includes both observations
-specific to implement a TAL-like language in Agda, but also a few more general
-tricks for making Agda easier to work with.
+\textbf{\Cref{chap:hindsight}} lists a few lessons lessons from working doing a
+project of this size in Agda. This includes both observations specific to
+implement a TAL-like language in Agda, but also a few more general tricks for
+making Agda easier to work with.
+
+\textbf{\Cref{chap:future}} discusses how the work could be extended and relates
+it to other work.
+
+Finally, \textbf{\Cref{chap:conclusion}} summaries my contributions and
+concludes.
