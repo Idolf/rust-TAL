@@ -1,0 +1,196 @@
+\chapter{Assembly, Types and Formalizations}
+
+In the paper ``From System F to Typed Assembly Language'' Morrisett et
+al. presented a type-system for an assembly language. They then show that their
+typed assembly language (TAL) have some desirable properties:
+
+\begin{itemize}
+\item They show type-preserving translation from an ML-like language based on
+  System F into the introduced language.
+\item They include a proof of ``soundness''. This is a \emph{metatheoretic}
+  theorem, as it is about the system in contrast to being about individual terms
+  (such as e.g. a proof that specific term is well-typed). Very informally this
+  theorem states well-typed programs cannot do unsafe things.
+\end{itemize}
+
+In the paper ``Stack-Based Typed Assembly Language'' the authors created an
+extensions of this system (STAL), which supports stack and exceptions. While the
+compilation and type-checking algorithms of both TAL and STAL are fairly
+straight-forward to implement in most programming languages, it is more tricky
+to encode the soundness proof in a way that permits machine verification.
+
+Karl Crary (one of the original authors) implemented a proof of soundness in
+Twelf, and it has later been implemented in Coq by multiple
+authors.\todo{Citations}
+
+In this thesis I present a mostly-compatible variant of STAL in Agda, with the
+notable shortcomings being the lack of existential types and exceptions. I prove
+the safety theorem of this system, along with a few other desirable (but less
+critical) metatheorems.
+
+\section{On the subject of safety}
+
+Before going into the detail, it is beneficial to discuss exactly what we mean
+by ``safety''. We will first discuss what we mean by a secure ``system'' such as
+an entire computer. As a naive definition one might the following:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it A ``safe'' system must never do anything that could jeopardize the
+    safety of the user.}
+\end{addmargin}
+\vspace{0.3cm}
+
+Besides being close to a circular definition, this definition also highlights
+another issue: Any system fulfilling this definition must be highly customized
+to the specific user. A slightly better definition would be:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it A ``safe'' system will never do anything potentially dangerous that a
+    reasonably well-educated user would expect it not to.}
+\end{addmargin}
+\vspace{0.3cm}
+
+While somewhat impractical, this definition has the nice feature, that one can
+actually strive to follow it -- even if one cannot prove such a general
+statement. An interesting fact is also, that while safety can depend on context
+and is often very hard to prove, some systems would always be considered
+insecure.
+
+The definition is still too vague though -- to get closer to a \emph{provable}
+definition, we will avoid mentioning the user:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it A ``safe'' system will never do any of the following things: [long list
+    of potentially dangerous things]}
+\end{addmargin}
+\vspace{0.3cm}
+
+The biggest remaining issue is that this blacklist approach is unlikely to be
+practical. The list of bad actions for a system is likely near-infinite, so even
+if we somehow manage to specify all the bad properties correctly, the list will
+be unimaginably large. Instead of a blacklist we will use a whitelist:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it \textbf{A safe system} is a system will only do things from the following
+    list: [long list of non-dangerous things]}
+\end{addmargin}
+\vspace{0.3cm}
+
+Ideally this list would likely be just as large as the blacklist -- however in
+this case we can approximate it by using a subset of the list! Indeed, if we
+used the empty list, then we would only have safe systems (the ones that do
+nothing).
+
+We will now use this definition to define a safe program. One might try
+something similar to this:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it Assume we have a platform on which we can run programs. A ``safe
+    program'' for that platform is any program where running it on the platform
+    results in a safe system.}
+\end{addmargin}
+\vspace{0.3cm}
+
+This definition turns out to be unusable in practice, as it depends on e.g. how
+the CPU has been implemented and ultimately on whether or not our physical
+models of reality are correct. We will instead use:
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it Assume we have a platform on which we can run programs. This platform
+    consists of a secure and an insecure part, and are we are allowed to make
+    certain assumptions on the secure part (e.g. ``the kernel does not contain
+    bugs'', ``the sandbox is implemented correctly''). \textbf{A safe program
+      for that platform} is any program where running it on the platform results
+    in a safe system. The secure part is known as the \textbf{Trusted Computing
+      Base (TCB)}.}
+\end{addmargin}
+\vspace{0.3cm}
+
+We can now include reformulation of the soundness theorem in the context of safe
+programs.
+
+\vspace{0.3cm}
+\begin{addmargin}{1cm}
+  {\it Assume we have a set of possible programs, a mathematical description of
+    how these programs are run and some way to type system for the
+    programs. This type system is \textbf{sound} if all well-typed programs are
+    also safe programs on any platform, that enforce that mathematical
+    description.}
+\end{addmargin}
+\vspace{0.3cm}
+
+\section{The security ecosystem}
+
+Most computer systems in the world have at some point or another contained
+security vulnerabilities -- so we would not consider them safe. As a result of
+this many computers on the internet is infected by malware. To combat this and
+similar problems, we have a number of different tools at our disposal:
+
+\begin{itemize}
+\item Anti-virus software and similar solutions try to catch malicious events in
+  the making, by looking at e.g. network streams, files on disk and the
+  behaviors of the programs running on a machine.
+\item Code-signing certificates uses public-key infrastructure to prove that a
+  program was written by a verified third-party.
+\item Sandboxes and virtual machines two examples of systems that try to limit
+  what a program is \emph{able} to do at run-time. They do this by not exposing
+  APIs to do any undesired operations. Other examples from this category are
+  POSIX user permissions, memory protections and firewalls. We will collectively
+  refer to these and similar approaches as ``run-time protections''.
+\item Static analysis, fuzzing and type systems try to detect vulnerabilities in
+  programs before they are deployed. We will collectively refer to these and
+  similar approaches as ``compile-time protections''.
+\end{itemize}
+
+Note, that while all of these are valuable tools in the current security
+industry, none of them are perfect. Anti-virus software is inherently limited by
+Rice's theorem. This instantiation of the theorem states, that it is not
+possible to perfectly dissect the space of possible programs into good and bad
+programs. In practice most real-world classifiers have both false positives and
+negatives. In addition, anti-virus software is often of low quality which
+actually results in increasing the attack surface of a system, not decreasing
+it.\todo{Insert citation}
+
+The core idea of code-signing is to include a certificate with distributed
+programs. This certificate will prove that the program have been written by a
+real-world entity verified by a trusted third-party. This works by effectively
+increasing the price of running malicious programs on other people's
+machines. In a best-case scenario, the only attack available to an opponent
+would be to create a fake real-world identity (expensive!) and buy a
+code-signing certificate with it. However in practice there are multiple other
+avenues available: One could steal a valid certificate, exploit another
+vulnerable (but signed) program or try to bypass the validation check.
+
+Run-time protections have a long history in computer science, and could arguably
+be said to have had the biggest impact so far. One reason for their
+effectiveness, is that it is often advantageous to deploy many unrelated
+protections in parallel (a technique sometimes referred to as ``Defense in
+Depth''). It is for instance not uncommon to see an end-user system that deploys
+both POSIX user permissions, a firewall and sandboxes for the most untrusted
+applications. Another reason is that this system is not directly limited by
+Rice's Theorem. It is for instance possible (at least in principle) to design
+system where any potentially malicious actions must be approved by a user before
+execution -- however such a system would not be practical. More generally one
+has to balance security with other issues such as performance, usability and
+ease of development. Another disadvantage is that while a user might be able to decide if something is malicious after looking
+
+
+ and other methods of limiting the options available to a malicious
+program have so far been  been the most effective at preventing attacks.
+
+The software ecosystem today is heavily influence by the fact that a lot of
+software in the world contain bugs, and many systems are infected by malware
+because of this fact.
+
+In this thesis, I will an
+
+In the paper ``From System F to Typed Assembly Language'' Morrisett et
+al.\cite{TAL} introduced a type-system, which was then extended in the
+
+``Stack-based typed assembly language'' Morrisett et al. argued that it is possible
