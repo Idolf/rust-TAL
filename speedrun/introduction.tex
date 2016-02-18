@@ -1,4 +1,5 @@
 \chapter{Typed Assembly Language, Safety and Formalizations}
+\label{chap:introduction}
 
 \section{The security ecosystem}
 
@@ -157,6 +158,30 @@ We can now implement a sandbox as follows:
 
 If our soundness-proof and type-checker are correct and our model is valid, then
 this is safe.
+
+\section{The Goals of the Thesis}
+\label{sec:goals}
+
+The goal of this thesis is ultimately how to design a secure sandbox primitive
+based on Typed Assembly Language with specific focus on how to minimize the
+Trusted Computing Base. This minimization takes two forms: By formalizing the
+meta-theory and by trying to simplify the components needed beyond this
+formalization. As a result most of the work revolves around proofs (particularly
+proof of soundness) how they can be mechanized.
+
+This thesis is \emph{not} about:
+
+\begin{itemize}
+\item How to implement infrastructure for this system beyond the sandbox
+  itself. In particular we will not discuss compiler implementations.
+\item How to reduce the Trusted Computing Base beyond reducing code size and
+  formalizing the metatheory. We will for example not talk about bugs in the
+  hardware or CPU specification.
+\item Any form of detailed analysis of the performance characteristics of the
+  system.  We will specifically not do any thorough analysis of the algorithmic
+  complexity of any algorithms, though we might informally argue why we believe
+  that an algorithm will run within a certain bound.
+\end{itemize}
 
 \section{Outline of the Thesis}
 
