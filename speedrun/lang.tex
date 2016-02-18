@@ -17,20 +17,129 @@ sandbox. We will do this by:
   that they are related by the erasure property.
 \end{itemize}
 
-\section{The System Architecture and Evaluation Model}
+The full implications of and reasoning behind having two languages related by
+erasure will be discussed later. \Cref{sec:erasure} will discuss some of the
+issues along with the proof, while the full reasoning will not be apparent until
+\Cref{chap:safesound}. For now let us just state these two unbacked postulates
+over the alternative of using a single language:
 
-[Present the CPU architecture and the evaluation model. Say briefly how to
-relates to a real-world CPU.]
+\begin{itemize}
+\item By having two languages we are mostly able to separate our type system
+  from our model simplification. This is advantageous for instance when
+  reasoning about the sandbox implementation.
+\item This separation also allows one to experiment with different type systems:
+  As long as the type system is sound, decidable and has the erasure property,
+  then it should be able to use the same sandbox infrastructure.
+\end{itemize}
 
-\section{Erasure Semantics}
+Before formally defining the languages, we will give an informal understanding
+of our model by comparing it to a the model of real-world CPUs.
 
-[Define erasure semantics informally and say why they are valuable]
+\section{Architecture and Evaluation Model}
+
+Most real-world CPUs use a variant of a von Neumann architecture. In its
+simplest form, you only need memory and registers each holding some number of
+machine words along with a procedure to fetch an instruction from memory, decode
+and execute it. This executing (optionally) changes memory and register, after
+which the process is repeated. We will refer to this model as the real-world
+model; even though many modern CPU-architectures are more complicated than this,
+the difference are for the most part not relevant to this discussion.
+
+In the real-world model there are only two conceptual abstractions: Machine
+words are fixed-width integers and instructions are just decoded machine
+words. This simplicity makes it easier to implement and analyze CPU designs,
+however it makes hard to analyze programs for the platform.
+
+To support effective program analysis, both \ATAL and \ATALe deviates from this
+model in a number of ways. As \ATALe deviates the least, we will start by
+introducing it.
+
+\subsection{Difference between \ATALe and the real-world model}
+
+In the real-world model machine words are simply fixed-size integers and these
+are used for multiple purposes. In \ATALe every machine word have been tagged
+with their intended usage. While any machine word can still be copied or
+overwritten additional operations are only defined for some tags:
+
+\begin{itemize}
+\item Words tagged as numbers can be used for arithmetics.
+\item Words tagged as pointers can only be used to dereference memory. Depending
+  on the pointer, this dereference could be a read or a write.
+\item Words tagged as uninitialized does not have any additional operations.
+\end{itemize}
+
+Another difference is that instructions are no longer decoded machine
+words. Instead they are collected into pre-decoded basic blocks. A basic block
+is an immutable series of instructions that ends with an unconditional jump or a
+halt instruction.
+
+Memory is no longer a continuous array of machine words. Instead it has been
+split into three parts each with difference functions:
+
+\begin{itemize}
+\item The global values/globals is where code is stored. It is a collection of
+  basic blocks. The only operation supported by the global values is to fetch a
+  specific basic block.
+\item The heap is where long-lived mutable data lives. It is a collection of
+  tuples, where each tuple is a collection of machine words. It supports three
+  operations: allocating a new tuple of a given size along with reading/write a
+  machine word given a pointer to a tuple and a tuple-index. It does not support
+  deallocating tuples. This is an unfortunate part of our model, and we will in
+  \Cref{chap:safesound} discuss this problem including how to partially mitigate
+  it by using garbage collection.
+\item The stack is where short-lived mutable data lives. It is a collection of
+  machine words. It supports four operations: Adding a number of uninitialized
+  machine words to the top of the stack, deallocating a number of machine words
+  (no matter their tag) from the top of the stack, reading or writing a machine
+  words indexes by distance from the top of the stack.
+\end{itemize}
+
+The registers are still a collection of machine words with the exception of the
+special-purpose register \texttt{sp}. This register is no longer a machine word,
+but instead always points to the top of the stack.
+
+In addition to splitting memory, we will also restrict the possible values a
+pointer can take. A pointer can only point to the beginning of a heap-tuple or
+to the beginning of a basic block\footnote{On the surface this seems to disallow
+  some cases of code re-use, however it turns out to not be so much of a problem
+  in practice. If we wanted to refer to some point in the middle of a basic
+  block, then we could simply split it and insert an unconditional jump at the
+  end of the first block. We might even make this jump implicit to avoid wasting
+  space.}. Machine words cannot point to the stack; the only reference to the
+stack is \texttt{sp}.
+
+Finally the issue of memory organization have been abstracted away. It is no
+longer meaningful to talk about the ``location'' of values in memory. As an
+example the stack is neither below nor above the heap, it simply \emph{is}.  An
+indirect consequence of this is also that memory is effectively infinite in our
+model. This has some interesting consequences for the relation to the real-world
+model which we will discuss in \Cref{chap:safesound}. Until then we will ignore
+the issue by staying inside our models.
+
+\subsection{Additional differences introduced by \ATAL}
+
+The \ATAL model goes a step further by introducing a type system, which is used
+during the run-time. The fundamental concept is that of a \emph{type}. Some
+informal examples of types are ``integer'', ``basic block taking an integer as
+argument'' or ``tuple of two integers''. This type system includes the
+parametric polymorphism and subtyping. The only types that are allowed to be
+polymorphic is the types of basic blocks.
+
+In \ATAL all basic blocks and tuples have a type associated with them. This
+associated type is superficially similar to the tag added to machine words. The
+biggest difference is that the tags for machine words matter at run-time, while
+the associated types do not.
+
+Another change with \ATAL is that places where one could refer to a basic block
+(such as inside an instruction or word value), one can now \emph{additionally}
+add generalization and instantiation information to the value.
 
 \section{Grammar for \ATALe}
 \section{Grammar for \ATAL}
 \section{Semantics for \ATAL}
 \section{Semantics for \ATALe}
 \section{Proof of erasure}
+\label{sec:erasure}
 
 % % Informally
 % % this means that the languages are essentially equivalent, however there are two
