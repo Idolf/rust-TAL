@@ -1,11 +1,36 @@
 \chapter{\ATAL and \ATALe}
 \label{chap:lang}
 
-As stated
+As stated \cref{sec:goals}, we want to design a secure sandbox, and to do so we
+will need to design a Typed Assembly Language and prove soundness for it. In
+this chapter we will introduce the two languages in which we will build this
+sandbox. We will do this by:
 
-In this chapter we will introduce the language \ATAL and its type-erased variant
-\ATALe, along with their respective semantics.
+\begin{itemize}
+\item Defining \ATAL and \ATALe in terms of their program states.
+\item The set of possible program states are defined in terms a Context-Free
+  Grammar in our Agda formalization. In our paper definition, we have chosen to
+  use some syntax that is not Context-Free for increased readability. As we
+  shall see, this is not a problem as there is a trivial correspondence between
+  the two presentations.
+\item We will present a small-step semantics for the two languages and prove
+  that they are related by the erasure property.
+\end{itemize}
 
+\section{The System Architecture and Evaluation Model}
+
+[Present the CPU architecture and the evaluation model. Say briefly how to
+relates to a real-world CPU.]
+
+\section{Erasure Semantics}
+
+[Define erasure semantics informally and say why they are valuable]
+
+\section{Grammar for \ATALe}
+\section{Grammar for \ATAL}
+\section{Semantics for \ATAL}
+\section{Semantics for \ATALe}
+\section{Proof of erasure}
 
 % % Informally
 % % this means that the languages are essentially equivalent, however there are two
