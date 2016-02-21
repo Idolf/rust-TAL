@@ -61,10 +61,10 @@ instantiate-decₛ G (heapval lab) = no (λ { (_ , ()) })
 instantiate-decₛ G (int n) = no (λ { (_ , ()) })
 instantiate-decₛ G uninit = no (λ { (_ , ()) })
 
-step-uniqueₛ : ∀ {G P P₁ P₂} →
-                 G ⊢ P ⇒ P₁ →
-                 G ⊢ P ⇒ P₂ →
-                 P₁ ≡ P₂
+step-uniqueₛ : ∀ {G Pₘ Pₘ₁ Pₘ₂} →
+                 G ⊢ Pₘ ⇒ Pₘ₁ →
+                 G ⊢ Pₘ ⇒ Pₘ₂ →
+                 Pₘ₁ ≡ Pₘ₂
 step-uniqueₛ (step-add eq₁₁ eq₁₂) (step-add eq₂₁ eq₂₂)
   rewrite int-helper eq₁₁ eq₂₁
         | int-helper eq₁₂ eq₂₂
