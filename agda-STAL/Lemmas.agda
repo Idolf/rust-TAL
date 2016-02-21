@@ -36,7 +36,7 @@ open import Lemmas.Soundness public
 
 -- Step 6:
 -- Prove a bisimulation between the high and simple languages
-open import Lemmas.EmbedSimulation public
+open import Lemmas.EraseSimulation public
 
 -- Step 8:
 -- Prove that type-checking is decidable

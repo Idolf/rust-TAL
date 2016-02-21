@@ -7,7 +7,7 @@ open import Judgments.HighGrammar public
 open import Judgments.Grammar public
 
 -- Step 2: Language translations
-open import Judgments.Embed public
+open import Judgments.Erase public
 
 -- Step 3 requirements: Substitution Judgments
 -- (needed for the high semantics)
