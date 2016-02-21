@@ -287,25 +287,22 @@ data ⊢_of_globals (G : Globals) (ψ₁ : GlobalLabelAssignment) : Set where
     ----------------------------------------
              ⊢ G of ψ₁ globals
 
-infix 3 _⊢_of_programstate
-data _⊢_of_programstate : GlobalLabelAssignment → ProgramState → HeapLabelAssignment × RegisterAssignment → Set where
+infix 3 _⊢_of_mutprogramstate
+data _⊢_of_mutprogramstate : GlobalLabelAssignment → MutProgramState →
+                             HeapLabelAssignment × RegisterAssignment → Set where
+  of-mutprogramstate :
+              ∀ {ψ₁ ψ₂ Γ H R I} →
+              ψ₁ ⊢ H of ψ₂ heap →
+          ψ₁ , ψ₂ ⊢ R of Γ register →
+     ψ₁ , [] ⊢ I of Γ instructionsequence →
+    ----------------------------------------
+    ψ₁ ⊢ H , R , I of ψ₂ , Γ mutprogramstate
+
+infix 3 ⊢_programstate
+data ⊢_programstate : ProgramState → Set where
   of-programstate :
-            ∀ {ψ₁ ψ₂ Γ H R I} →
-             ψ₁ ⊢ H of ψ₂ heap →
-         ψ₁ , ψ₂ ⊢ R of Γ register →
-    ψ₁ , [] ⊢ I of Γ instructionsequence →
-    --------------------------------------
-    ψ₁ ⊢ H , R , I of ψ₂ , Γ programstate
-
-infix 3 ⊢_program
-data ⊢_program : Program → Set where
-  of-running :
-            ∀ {G ψ₁ ψ₂ Γ P} →
-           ⊢ G of ψ₁ globals →
-    ψ₁ ⊢ P of ψ₂ , Γ programstate →
-    -------------------------------
-        ⊢ running G P program
-
-  of-halted :
-    ----------------
-    ⊢ halted program
+           ∀ {G ψ₁ Pₘ T} →
+         ⊢ G of ψ₁ globals →
+    ψ₁ ⊢ Pₘ of T mutprogramstate →
+    ------------------------------
+          ⊢ G , Pₘ programstate

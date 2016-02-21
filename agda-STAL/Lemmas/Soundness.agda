@@ -230,49 +230,49 @@ step-progress' I≢halt G⋆ H⋆ R⋆ of-halt
   with I≢halt refl
 ... | ()
 
-step-progress⁺ : ∀ {ℒ} →
-                   ⊢ ℒ program →
-                   ∃ λ ℒ' →
-                     ⊢ ℒ' program ×
-                     ⊢ ℒ ⇒ ℒ'
-step-progress⁺ {ℒ = running G (H , register sp regs , I)} (of-running G⋆ (of-programstate H⋆ R⋆ I⋆))
+step-progress⁺ : ∀ {P} →
+                   ⊢ P programstate →
+                   Halting P ∨
+                   (∃ λ P' →
+                     ⊢ P' programstate ×
+                     ⊢ P ⇒ P')
+step-progress⁺ {G , H , register sp regs , I} (of-programstate G⋆ (of-mutprogramstate H⋆ R⋆ I⋆))
   with I ≟ halt
-step-progress⁺ {ℒ = running G (H , register sp regs , .halt)} (of-running G⋆ (of-programstate H⋆ R⋆ I⋆))
-    | yes refl = halted , of-halted , step-halting
+step-progress⁺ {G , H , register sp regs , .halt} (of-programstate G⋆ (of-mutprogramstate H⋆ R⋆ I⋆))
+    | yes refl = inj₁ halting
 ... | no I≢halt
   with step-progress' I≢halt G⋆ H⋆ R⋆ I⋆
 ... | _ , _ , _ , _ , _ , H'⋆ , R'⋆ , I'⋆ , step
-  = , of-running G⋆ (of-programstate H'⋆ R'⋆ I'⋆) , step-running step
-step-progress⁺ of-halted = halted , of-halted , step-halted
+  = inj₂ (, of-programstate G⋆ (of-mutprogramstate H'⋆ R'⋆ I'⋆) , step-inner step)
 
+step-progress : ∀  {P} → ⊢ P programstate → GoodState P
+step-progress P⋆
+  with step-progress⁺ P⋆
+step-progress P⋆
+    | inj₁ halting = halting
+... | inj₂ (P' , P'⋆ , step) = transitioning step
 
-step-progress : ∀  {ℒ} → ⊢ ℒ program →
-                ∃ λ ℒ' → ⊢ ℒ ⇒ ℒ'
-step-progress ℒ⋆ = ⟨ id , proj₂ ⟩ (step-progress⁺ ℒ⋆)
-
-step-reduction : ∀ {ℒ}  → ⊢ ℒ program →
-                 ∀ {ℒ'} → ⊢ ℒ ⇒ ℒ' →
-                 ⊢ ℒ' program
-step-reduction ℒ⋆ step
-  with step-progress⁺ ℒ⋆
-... | _ , ℒ'⋆ , step'
+step-reduction : ∀ {P}  → ⊢ P programstate →
+                 ∀ {P'} → ⊢ P ⇒ P' →
+                 ⊢ P' programstate
+step-reduction P⋆ step
+  with step-progress⁺ P⋆
+step-reduction P⋆ (step-inner ())
+    | inj₁ halting
+... | inj₂ (_ , P'⋆ , step')
   rewrite step-prg-uniqueₕ step step'
-  = ℒ'⋆
+  = P'⋆
 
-steps-reduction : ∀ {n ℒ₁ ℒ₂} →
-                    ⊢ ℒ₁ program →
-                    ⊢ ℒ₁ ⇒ₙ n / ℒ₂ →
-                    ⊢ ℒ₂ program
-steps-reduction ℒ₁⋆ [] = ℒ₁⋆
-steps-reduction ℒ₁⋆ (step ∷ steps)
-  = steps-reduction (step-reduction ℒ₁⋆ step) steps
+steps-reduction : ∀ {n P₁ P₂} →
+                    ⊢ P₁ programstate →
+                    ⊢ P₁ ⇒ₙ n / P₂ →
+                    ⊢ P₂ programstate
+steps-reduction P₁⋆ [] = P₁⋆
+steps-reduction P₁⋆ (step ∷ steps)
+  = steps-reduction (step-reduction P₁⋆ step) steps
 
-steps-soundness : ∀ {n ℒ₁ ℒ₂} →
-                    ⊢ ℒ₁ program →
-                    ⊢ ℒ₁ ⇒ₙ n / ℒ₂ →
-                    ∃ λ ℒ₃ → ⊢ ℒ₂ ⇒ ℒ₃
-steps-soundness ℒ⋆ steps = step-progress (steps-reduction ℒ⋆ steps)
-
-Valid→¬Stuck : ∀ {ℒ} → ⊢ ℒ program → ¬ Stuck ℒ
-Valid→¬Stuck ℒ⋆ (here ¬step) = ¬step (step-progress ℒ⋆)
-Valid→¬Stuck ℒ⋆ (there step stuck) = Valid→¬Stuck (step-reduction ℒ⋆ step) stuck
+steps-soundness : ∀ {n P₁ P₂} →
+                    ⊢ P₁ programstate →
+                    ⊢ P₁ ⇒ₙ n / P₂ →
+                    GoodState P₂
+steps-soundness P⋆ steps = step-progress (steps-reduction P⋆ steps)

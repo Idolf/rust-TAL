@@ -96,13 +96,12 @@ instance
     where f : H.RegisterFile → S.RegisterFile
           f (register sp regs) = register (embed sp) (embed regs)
 
+  embedMutProgramState : Embed H.MutProgramState S.MutProgramState
+  embedMutProgramState = mkEmbed f
+    where f : H.MutProgramState → S.MutProgramState
+          f (H , R , I) = embed H , embed R , embed I
+
   embedProgramState : Embed H.ProgramState S.ProgramState
   embedProgramState = mkEmbed f
     where f : H.ProgramState → S.ProgramState
-          f (H , R , I) = embed H , embed R , embed I
-
-  embedProgram : Embed H.Program S.Program
-  embedProgram = mkEmbed f
-    where f : H.Program → S.Program
-          f (running G P) = running (embed G) (embed P)
-          f halted = halted
+          f (G , H , R , I) = embed G , embed H , embed R , embed I

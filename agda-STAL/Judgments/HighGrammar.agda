@@ -134,9 +134,8 @@ data RegisterFileₕ : Set where
 
 -- Program states, P
 ProgramStateₕ : Set
-ProgramStateₕ = Heapₕ × RegisterFileₕ × InstructionSequenceₕ
+ProgramStateₕ = Globalsₕ × Heapₕ × RegisterFileₕ × InstructionSequenceₕ
 
--- Programs, ℒ
-data Programₕ : Set where
-  running : Globalsₕ → ProgramStateₕ → Programₕ
-  halted : Programₕ
+-- The mutable part of program states, Pₘ
+MutProgramStateₕ : Set
+MutProgramStateₕ = Heapₕ × RegisterFileₕ × InstructionSequenceₕ

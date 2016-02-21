@@ -42,8 +42,8 @@ module SimpleGrammar where
   ProgramState : Set
   ProgramState = ProgramStateₛ
 
-  Program : Set
-  Program = Programₛ
+  MutProgramState : Set
+  MutProgramState = MutProgramStateₛ
 
 module HighGrammar where
   open import Judgments.HighGrammar
@@ -81,5 +81,5 @@ module HighGrammar where
   ProgramState : Set
   ProgramState = ProgramStateₕ
 
-  Program : Set
-  Program = Programₕ
+  MutProgramState : Set
+  MutProgramState = MutProgramStateₕ

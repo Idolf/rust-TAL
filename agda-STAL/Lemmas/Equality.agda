@@ -208,17 +208,6 @@ instance
           sur (register stack regs) = T₂ 0 stack regs ,
             register <$=> invTree stack <*=> invTree regs
 
-  Programₛ-Tree : ToTree S.Program
-  Programₛ-Tree = tree⋆ from sur
-    where from : Tree → Maybe S.Program
-          from (node 0 (G ∷ P ∷ _)) = running <$> fromTree G <*> fromTree P
-          from (node 1 _) = just halted
-          from _ = nothing
-          sur : IsSurjective from
-          sur (running G P) = T₂ 0 G P ,
-            running <$=> invTree G <*=> invTree P
-          sur halted = T₀ 1 , refl
-
   Type-Tree : ToTree Type
   Type-Tree = tree⋆ τ-from τ-sur
 
@@ -359,14 +348,3 @@ instance
           sur : IsSurjective from
           sur (register stack regs) = T₂ 0 stack regs ,
             register <$=> invTree stack <*=> invTree regs
-
-  Programₕ-Tree : ToTree H.Program
-  Programₕ-Tree = tree⋆ from sur
-    where from : Tree → Maybe H.Program
-          from (node 0 (G ∷ P ∷ _)) = running <$> fromTree G <*> fromTree P
-          from (node 1 _) = just halted
-          from _ = nothing
-          sur : IsSurjective from
-          sur (running G P) = T₂ 0 G P ,
-            running <$=> invTree G <*=> invTree P
-          sur halted = T₀ 1 , refl

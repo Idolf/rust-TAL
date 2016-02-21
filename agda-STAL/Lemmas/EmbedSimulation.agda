@@ -113,9 +113,9 @@ private
     rewrite embed-subst-I-many subs-I
       = ig'
 
-  embed-step : ∀ {G P P'} →
-                 G H.⊢ P ⇒ P' →
-                 embed G S.⊢ embed P ⇒ embed P'
+  embed-step : ∀ {G Pₘ Pₘ'} →
+                 G H.⊢ Pₘ ⇒ Pₘ' →
+                 embed G S.⊢ embed Pₘ ⇒ embed Pₘ'
   embed-step (step-add {regs = regs} {♯rd = ♯rd} {♯rs} {v} {n₁} {n₂} eq₁ eq₂)
     rewrite embed-update ♯rd (int (n₁ + n₂)) regs
           = step-add (trans (sym (embed-lookup ♯rs regs)) (cong embed eq₁))
@@ -170,18 +170,14 @@ private
     rewrite embed-eval regs v
     = step-jmp ig'
 
-embed-step-prg : ∀ {ℒ ℒ'} →
-                   H.⊢ ℒ ⇒ ℒ' →
-                   S.⊢ embed ℒ ⇒ embed ℒ'
-embed-step-prg (step-running step) = step-running (embed-step step)
-embed-step-prg step-halting = step-halting
-embed-step-prg step-halted = step-halted
+embed-step-prg : ∀ {P P'} →
+                   H.⊢ P ⇒ P' →
+                   S.⊢ embed P ⇒ embed P'
+embed-step-prg (step-inner step) = step-inner (embed-step step)
 
-embed-stuck : ∀ {ℒ} →
-              ¬ H.Stuck ℒ →
-              ¬ S.Stuck (embed ℒ)
-embed-stuck ¬stuck stuck with ¬Stuck→stepₕ ¬stuck
-embed-stuck ¬stuck (here ¬step)       | ℒ' , step' , ¬stuck' = ¬step (_ , embed-step-prg step')
-embed-stuck ¬stuck (there step stuck) | ℒ' , step' , ¬stuck'
-  rewrite step-prg-uniqueₛ step (embed-step-prg step')
-    = embed-stuck ¬stuck' stuck
+embed-lockstep : ∀ {P₁ P₂ P₂'} →
+                   H.⊢ P₁ ⇒ P₂ →
+                   S.⊢ embed P₁ ⇒ P₂' →
+                   embed P₂ ≡ P₂'
+embed-lockstep step step'
+  = step-prg-uniqueₛ (embed-step-prg step) step'
