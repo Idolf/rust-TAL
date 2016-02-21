@@ -12,9 +12,9 @@
 \newcommand \embedp {\ensuremath{\mathbf{embed}^\ast}}
 
 \newcommand \native[1] {{\ensuremath{#1_N}}\xspace}
-\newcommand \simple[1] {{\ensuremath{#1_S}}\xspace}
-\newcommand \high[1] {{\ensuremath{#1_H}}\xspace}
-\newcommand \typed[1] {{\ensuremath{#1_T}}\xspace}
+\newcommand \simple[1] {{\ensuremath{#1_{\mathrm{e}}}}\xspace}
+\newcommand \high[1] {#1}
+\newcommand \typed[1] {{\ensuremath{#1_{\mathrm{T}}}}\xspace}
 
 \newcommand \nativeo[1] {{{}\ensuremath{\stackrel{N}{#1}}{}}}
 \newcommand \simpleo[1] {{{}\ensuremath{\stackrel{S}{#1}}{}}}
@@ -23,10 +23,10 @@
 \newcommand \lang {\ensuremath{\mathcal{L}}}
 \newcommand \Stuck {\ensuremath{\mathbf{Stuck}}}
 
-\newcommand \nativelang {\ensuremath{\lang_N}\xspace}
-\newcommand \simplelang {\ensuremath{\lang_S}\xspace}
-\newcommand \highlang {\ensuremath{\lang_H}\xspace}
-\newcommand \typedlang {\ensuremath{\lang_T}\xspace}
+\newcommand \nativelang {\ensuremath{\lang_{\mathrm{N}}}\xspace}
+\newcommand \simplelang {\ensuremath{\lang_{\mathrm{S}}}\xspace}
+\newcommand \highlang {\ensuremath{\lang_{\mathrm{H}}}\xspace}
+\newcommand \typedlang {\ensuremath{\lang_{\mathrm{T}}}\xspace}
 
 \newcommand \highembed {\ensuremath{\embed_{\highlang}}\xspace}
 \newcommand \simpleembed {\ensuremath{\embed_{\simplelang}}\xspace}
@@ -65,14 +65,9 @@
 
 % Simple judgments
 \newcommand \evalregs[3] {{#1} |- {#2} ! {#3}}
+\newcommand \evalcode[3] {{#1} |- {#2} ! {#3}}
 \newcommand \execis[3] {{#1} |- {#2} -> {#3}}
 \newcommand \steps[2] {{#1} -> {#2}}
-
-% Annotated judgments
-\newcommand \evalrega[3] {{#1} |- {#2} ! {#3}}
-\newcommand \evalcode[3] {{#1} |- {#2} ! {#3}}
-\newcommand \execia[3] {{#1} |- {#2} => {#3}}
-\newcommand \stepa[2] {{#1} -> {#2}}
-\newcommand \donea[1] {{#1}\ \mathbf{done}}
+\newcommand \stepsn[3] {{#1} \xrightarrow{#2} {#3}}
 
 \newcommand \nil {\ensuremath{\mathtt{nil}}}
