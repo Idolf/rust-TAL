@@ -9,7 +9,7 @@ all: $(TARGET)
 $(TARGET): $(GRAPHS) $(TEXFILES) $(HELPFILES) Makefile
 
 clean:
-	rm -rf *.blg *.mapleout *.bbl *.aux *.log *.out *.toc *.eps *.data *.o *.hi *.dvi *.fdb_latexmk *.fls *.tdo *.ptb *.agdai *~ $(GRAPHS) $(TARGET)
+	rm -rf *.blg *.mapleout *.bbl *.aux *.log *.out *.toc *.eps *.data *.o *.hi *.dvi *.fdb_latexmk *.fls *.tdo *.ptb *.agdai _region_.tex *~ $(GRAPHS) $(TARGET)
 
 %.svg: %.dot
 	dot $*.dot -Tsvg -o $*.svg
