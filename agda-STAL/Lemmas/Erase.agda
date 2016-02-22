@@ -1,4 +1,4 @@
-module Lemmas.EraseSimulation where
+module Lemmas.Erase where
 
 open import Util
 open import Judgments
@@ -71,13 +71,7 @@ private
   erase-subst-ι subst-sst = refl
   erase-subst-ι subst-ld = refl
   erase-subst-ι subst-st = refl
-  erase-subst-ι (subst-malloc sub-τs) = cong₂ malloc refl (help sub-τs)
-    where help : ∀ {τs τs' : List Type} {θ pos} →
-                   τs ⟦ θ / pos ⟧≡ τs' →
-                   length τs ≡ length τs'
-          help [] = refl
-          help (sub-τ ∷ sub-τs) = cong suc (help sub-τs)
-
+  erase-subst-ι (subst-malloc sub-τs) = cong₂ malloc refl (AllZip-length sub-τs)
   erase-subst-ι (subst-mov sub-v) = cong₂ mov refl (erase-subst-v sub-v)
   erase-subst-ι (subst-beq sub-v) = cong₂ beq refl (erase-subst-v sub-v)
 
@@ -181,3 +175,21 @@ erase-lockstep : ∀ {P₁ P₂ P₂'} →
                    erase P₂ ≡ P₂'
 erase-lockstep step step'
   = step-prg-uniqueₛ (erase-step-prg step) step'
+
+erase-step-prg-backwards : ∀ {P Pₛ'} →
+                             S.⊢ erase P ⇒ Pₛ' →
+                             (∃ λ P' → H.⊢ P ⇒ P' × erase P' ≡ Pₛ') ∨
+                             ¬ (H.GoodState P)
+erase-step-prg-backwards {G , H , R , I} step
+  with step-prg-decₕ (G , H , R , I) | I ≟ halt
+... | yes (P' , step') | _
+    = inj₁ (P' , step' , step-prg-uniqueₛ (erase-step-prg step') step)
+erase-step-prg-backwards {G , H , R , .halt} (step-inner ())
+    | _ | yes refl
+... | no ¬step' | no I≢halt = inj₂ (help ¬step' I≢halt)
+  where help : ∀ {G H R I} →
+                 ¬ (∃ λ P' → H.⊢ (G , H , R , I) ⇒ P') →
+                 I ≢ halt →
+                 ¬ (H.GoodState (G , H , R , I))
+        help ¬step I≢halt halting = I≢halt refl
+        help ¬step I≢halt (transitioning step) = ¬step (_ , step)

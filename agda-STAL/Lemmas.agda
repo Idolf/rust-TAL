@@ -35,8 +35,8 @@ open import Lemmas.HeapSteps public
 open import Lemmas.Soundness public
 
 -- Step 6:
--- Prove a bisimulation between the high and simple languages
-open import Lemmas.EraseSimulation public
+-- Prove the erasure property
+open import Lemmas.Erase public
 
 -- Step 8:
 -- Prove that type-checking is decidable
