@@ -23,14 +23,11 @@ mystart : InstructionSequence
 mystart =
   jmp Λ [] ∙ globval 0 ⟦ α int ∷ α int ∷ α int ∷ α int ∷ ρ [] ∷ [] ⟧
 
-mystate : ProgramState
-mystate = myheap , myregister , mystart
+myprogram : ProgramState
+myprogram = myglobals , myheap , myregister , mystart
 
-myprogram : Program
-myprogram = running myglobals mystate
-
-myprogram-valid : ⊢ myprogram program
-myprogram-valid = dec-force (program-dec _)
+myprogram-valid : ⊢ myprogram programstate
+myprogram-valid = dec-force (programstate-dec _)
 
 myprogram-step : ⊢ myprogram ⇒ myprogram
 myprogram-step = dec-force (step-prg-dec-specificₕ _ _)

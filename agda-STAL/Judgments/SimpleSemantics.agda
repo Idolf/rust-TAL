@@ -20,7 +20,7 @@ data InstantiateGlobalₛ (G : Globals) : WordValue → InstructionSequence → 
     InstantiateGlobalₛ G (globval lab) I
 
 infix 3 _⊢ₛ_⇒_
-data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
+data _⊢ₛ_⇒_ (G : Globals) : MutProgramState → MutProgramState → Set where
     step-add :
              ∀ {H sp regs I ♯rd ♯rs v n₁ n₂} →
                 lookup ♯rs regs ≡ int n₁ →
@@ -119,47 +119,49 @@ data _⊢ₛ_⇒_ (G : Globals) : ProgramState → ProgramState → Set where
               H , register sp regs , I
 
 infix 3 ⊢ₛ_⇒_
-data ⊢ₛ_⇒_ : Program → Program → Set where
-  step-running :
-          ∀ {G P P'} →
-          G ⊢ₛ P ⇒ P' →
-    -----------------------------
-    ⊢ₛ running G P ⇒ running G P'
-
-  step-halting :
-               ∀ {G H R} →
-    ------------------------------------
-    ⊢ₛ running G (H , R , halt) ⇒ halted
-
-  step-halted :
-    ------------------
-    ⊢ₛ halted ⇒ halted
+data ⊢ₛ_⇒_ : ProgramState → ProgramState → Set where
+  step-inner :
+            ∀ {G H R I H' R' I'} →
+     G ⊢ₛ (H , R , I) ⇒ (H' , R' , I') →
+    --------------------------------------
+    ⊢ₛ (G , H , R , I) ⇒ (G , H' , R' , I')
 
 infix 3 ⊢ₛ_⇒ₙ_/_
 infixr 5 _∷_
-data ⊢ₛ_⇒ₙ_/_ : Program → ℕ → Program → Set where
+data ⊢ₛ_⇒ₙ_/_ : ProgramState → ℕ → ProgramState → Set where
   []  :
-       ∀ {ℒ} →
+       ∀ {P} →
     -------------
-    ⊢ₛ ℒ ⇒ₙ 0 / ℒ
+    ⊢ₛ P ⇒ₙ 0 / P
 
   _∷_ :
-       ∀ {ℒ₁ ℒ₂ ℒ₃ n} →
-          ⊢ₛ ℒ₁ ⇒ ℒ₂ →
-       ⊢ₛ ℒ₂ ⇒ₙ n / ℒ₃ →
+       ∀ {P₁ P₂ P₃ n} →
+          ⊢ₛ P₁ ⇒ P₂ →
+       ⊢ₛ P₂ ⇒ₙ n / P₃ →
       -------------------
-      ⊢ₛ ℒ₁ ⇒ₙ suc n / ℒ₃
+      ⊢ₛ P₁ ⇒ₙ suc n / P₃
 
-data Stuckₛ : Program → Set where
-  here :
-            ∀ {ℒ} →
-    ¬ (∃ λ ℒ' → ⊢ₛ ℒ ⇒ ℒ') →
-    ------------------------
-           Stuckₛ ℒ
+data Haltingₛ : ProgramState → Set where
+  halting :
+           ∀ {G H R} →
+    ---------------------------
+    Haltingₛ (G , H , R , halt)
 
-  there :
-    ∀ {ℒ ℒ'} →
-    ⊢ₛ ℒ ⇒ ℒ' →
-    Stuckₛ ℒ' →
-    -----------
-     Stuckₛ ℒ
+data Progressingₛ : ProgramState → Set where
+  transitioning :
+      ∀ {P P'} →
+      ⊢ₛ P ⇒ P' →
+    --------------
+    Progressingₛ P
+
+data GoodStateₛ : ProgramState → Set where
+  halting :
+           ∀ {G H R} →
+    -----------------------------
+    GoodStateₛ (G , H , R , halt)
+
+  transitioning :
+     ∀ {P P'} →
+     ⊢ₛ P ⇒ P' →
+    ------------
+    GoodStateₛ P

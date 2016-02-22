@@ -65,9 +65,8 @@ data RegisterFileₛ : Set where
 
 -- Program states, P
 ProgramStateₛ : Set
-ProgramStateₛ = Heapₛ × RegisterFileₛ × InstructionSequenceₛ
+ProgramStateₛ = Globalsₛ × Heapₛ × RegisterFileₛ × InstructionSequenceₛ
 
--- Programs, ℒ
-data Programₛ : Set where
-  running : Globalsₛ → ProgramStateₛ → Programₛ
-  halted : Programₛ
+-- The mutable part of program states, Pₘ
+MutProgramStateₛ : Set
+MutProgramStateₛ = Heapₛ × RegisterFileₛ × InstructionSequenceₛ

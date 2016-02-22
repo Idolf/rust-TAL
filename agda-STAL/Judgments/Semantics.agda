@@ -17,18 +17,24 @@ module SimpleSemantics where
   InstantiateGlobal = InstantiateGlobalₛ
 
   infix 3 _⊢_⇒_
-  _⊢_⇒_ : Globals → ProgramState → ProgramState → Set
+  _⊢_⇒_ : Globals → MutProgramState → MutProgramState → Set
   _⊢_⇒_ = _⊢ₛ_⇒_
 
   infix 3 ⊢_⇒_
-  ⊢_⇒_ : Program → Program → Set
+  ⊢_⇒_ : ProgramState → ProgramState → Set
   ⊢_⇒_ = ⊢ₛ_⇒_
 
-  ⊢_⇒ₙ_/_ : Program → ℕ → Program → Set
+  ⊢_⇒ₙ_/_ : ProgramState → ℕ → ProgramState → Set
   ⊢_⇒ₙ_/_ = ⊢ₛ_⇒ₙ_/_
 
-  Stuck : Program → Set
-  Stuck = Stuckₛ
+  Halting : ProgramState → Set
+  Halting = Haltingₛ
+
+  Progressing : ProgramState → Set
+  Progressing = Progressingₛ
+
+  GoodState : ProgramState → Set
+  GoodState = GoodStateₛ
 
 module HighSemantics where
   open import Judgments.HighSemantics
@@ -41,15 +47,21 @@ module HighSemantics where
   InstantiateGlobal = InstantiateGlobalₕ
 
   infix 3 _⊢_⇒_
-  _⊢_⇒_ : Globals → ProgramState → ProgramState → Set
+  _⊢_⇒_ : Globals → MutProgramState → MutProgramState → Set
   _⊢_⇒_ = _⊢ₕ_⇒_
 
   infix 3 ⊢_⇒_
-  ⊢_⇒_ : Program → Program → Set
+  ⊢_⇒_ : ProgramState → ProgramState → Set
   ⊢_⇒_ = ⊢ₕ_⇒_
 
-  ⊢_⇒ₙ_/_ : Program → ℕ → Program → Set
+  ⊢_⇒ₙ_/_ : ProgramState → ℕ → ProgramState → Set
   ⊢_⇒ₙ_/_ = ⊢ₕ_⇒ₙ_/_
 
-  Stuck : Program → Set
-  Stuck = Stuckₕ
+  Halting : ProgramState → Set
+  Halting = Haltingₕ
+
+  Progressing : ProgramState → Set
+  Progressing = Progressingₕ
+
+  GoodState : ProgramState → Set
+  GoodState = GoodStateₕ

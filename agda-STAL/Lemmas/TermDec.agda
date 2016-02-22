@@ -707,25 +707,26 @@ private
   ... | inj₂ (σ , sp⋆ , sp⋆-best) | inj₂ (τs , regs⋆ , regs⋆-best)
     = inj₂ (_ , of-register sp⋆ regs⋆ , (λ { ._ (of-register sp⋆' regs⋆') → Γ-≤ (sp⋆-best _ sp⋆') (regs⋆-best _ regs⋆') }))
 
-  programstate-dec : ∀ {ψ₁} → [] ⊢ ψ₁ Valid →
-                     ∀ P → Dec (∃₂ λ ψ₂ Γ → ψ₁ ⊢ P of ψ₂ , Γ programstate)
-  programstate-dec {ψ₁} ψ₁⋆ (H , R , I)
+  mutprogramstate-dec : ∀ {ψ₁} →
+                          [] ⊢ ψ₁ Valid →
+                          ∀ Pₘ → Dec (∃₂ λ ψ₂ Γ → ψ₁ ⊢ Pₘ of ψ₂ , Γ mutprogramstate)
+  mutprogramstate-dec {ψ₁} ψ₁⋆ (H , R , I)
     with heap-best H
-  ... | inj₁ ¬H⋆ = no (λ { (ψ₂ , Γ , of-programstate H⋆ R⋆ I⋆) → ¬H⋆ (_ , H⋆)})
+  ... | inj₁ ¬H⋆ = no (λ { (ψ₂ , Γ , of-mutprogramstate H⋆ R⋆ I⋆) → ¬H⋆ (_ , H⋆)})
   ... | inj₂ (ψ₂ , H⋆ , ψ₂-best)
     with register-best R
   ... | inj₁ ¬R⋆ = no help
-    where help : ¬ (∃₂ λ ψ₂ Γ → ψ₁ ⊢ H , R , I of ψ₂ , Γ programstate)
-          help (ψ₂' , Γ , of-programstate H⋆ R⋆ I⋆)
+    where help : ¬ (∃₂ λ ψ₂ Γ → ψ₁ ⊢ H , R , I of ψ₂ , Γ mutprogramstate)
+          help (ψ₂' , Γ , of-mutprogramstate H⋆ R⋆ I⋆)
             with ψ₂-best _ H⋆
           ... | ψ₂≤ψ₂'
             = ¬R⋆ (_ , register-heapcast ψ₂≤ψ₂' R⋆)
   ... | inj₂ (Γ , R⋆ , Γ-best)
     with instructionsequence-dec I Γ
-  ... | yes I⋆ = yes (ψ₂ , Γ , of-programstate H⋆ R⋆ I⋆)
+  ... | yes I⋆ = yes (ψ₂ , Γ , of-mutprogramstate H⋆ R⋆ I⋆)
   ... | no ¬I⋆ = no help
-    where help : ¬ (∃₂ λ ψ₂ Γ → ψ₁ ⊢ H , R , I of ψ₂ , Γ programstate)
-          help (ψ₂' , Γ' , of-programstate H⋆ R⋆ I⋆)
+    where help : ¬ (∃₂ λ ψ₂ Γ → ψ₁ ⊢ H , R , I of ψ₂ , Γ mutprogramstate)
+          help (ψ₂' , Γ' , of-mutprogramstate H⋆ R⋆ I⋆)
             with ψ₂-best _ H⋆
           ... | ψ₂≤ψ₂'
             with Γ-best _ (register-heapcast ψ₂≤ψ₂' R⋆)
@@ -734,15 +735,15 @@ private
           ... | I⋆'
             = ¬I⋆ I⋆'
 
-program-dec : ∀ ℒ → Dec (⊢ ℒ program)
-program-dec (running G P)
+programstate-dec : ∀ P → Dec (⊢ P programstate)
+programstate-dec (G , Pₘ)
   with globals-dec G
-... | inj₁ ¬G⋆ = no (λ { (of-running G⋆ P⋆) → ¬G⋆ (_ , G⋆) })
+... | inj₁ ¬G⋆ = no (λ { (of-programstate G⋆ Pₘ⋆) → ¬G⋆ (_ , G⋆) })
 ... | inj₂ (ψ₁ , G⋆ , ψ₁-unique)
-  with programstate-dec {ψ₁} (globals-valid-type G⋆) P
-... | yes (ψ₂ , Γ , P⋆) = yes (of-running G⋆ P⋆)
-... | no ¬P⋆ = no help
-  where help : ¬ ⊢ running G P program
-        help (of-running G⋆' P⋆)
-          rewrite ψ₁-unique _ G⋆' = ¬P⋆ (_ , _ , P⋆)
-program-dec halted = yes of-halted
+  with mutprogramstate-dec (globals-valid-type G⋆) Pₘ
+... | yes (ψ₂ , Γ , Pₘ⋆) = yes (of-programstate G⋆ Pₘ⋆)
+... | no ¬Pₘ⋆ =
+  no help
+  where help : ¬ ⊢ G , Pₘ programstate
+        help (of-programstate G⋆' Pₘ⋆)
+          rewrite ψ₁-unique _ G⋆' = ¬Pₘ⋆ (_ , _ , Pₘ⋆)

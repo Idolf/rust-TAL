@@ -135,9 +135,357 @@ Another change with \ATAL is that places where one could refer to a basic block
 add generalization and instantiation information to the value.
 
 \section{Grammar for \ATALe}
+
+Before introducing \ATAL, let us introduce \ATALe, as it is simpler and better
+captures the intended meaning of the language. The language itself is a set of
+states. In the Agda-implementation uses a context-free grammar for this, though
+the version presented here is strictly speaking not context free, as it uses
+dictionaries.
+
+{\footnotesize
+\begin{tabular}{lrcl}
+Variables: \\
+\textit{global pointers} & $\ell_{\mathrm{g}}$ \\
+\textit{heap pointers}   & $\ell_{\mathrm{h}}$ \\\\
+
+Common definitions: \\
+\textit{integer}            & $n,k$ & ::= & $0, 1, \dots$ \\
+\textit{machine integers}   & $i$   & ::= & $0, 1, \dots, 2^{\mathrm{wordsize}}-1$ \\
+\textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
+
+The grammar for \ATALe: \\
+\textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{heapval}\ \ell_{\mathrm{h}} \mid \mathtt{int}\ i \mid \mathtt{uninit}$ \\
+\textit{small values}       & $\simple v$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{reg}\ r \mid \mathtt{int}\ i$ \\
+\textit{global values}      & $\simple g$ & ::= & $\mathtt{code}\ \simple I$ \\
+\textit{global collections} & $\simple G$ & ::= & $\{\ell_{\mathrm{g}} |-> \simple{g}, \dots, \ell_{\mathrm{g}} |-> \simple{g}\}$ \\
+\textit{heap values}        & $\simple h$ & ::= & $\mathtt{tuple}\ \langle \simple w, \dots, \simple w \rangle$ \\
+\textit{heap collections}   & $\simple H$ & ::= & $\{\ell_{\mathrm{h}} |-> \simple{h}, \dots, \ell_{\mathrm{h}} |-> \simple{h}\}$ \\
+\textit{stacks}             & $\simple S$ & ::= & $\nil \mid \simple w :: \simple S$ \\
+\textit{register files}     & $\simple R$ & ::= & $\{\mathtt{sp} |-> \simple{S}, \mathtt{r}_1 |-> \simple{w}, \dots, \mathtt{r}_{\mathrm{max}} |-> \simple{w}\}$ \\\\
+
+\textit{instructions} & $\simple \iota$ & ::= & $\mathtt{add}\ r, r, \simple v \mid \mathtt{sub}\ r, r, \simple v \mid$ \\
+        &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
+        &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
+        &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
+        &&& $\mathtt{malloc}\ r,\ n \mid $ \\
+        &&& $\mathtt{mov}\ r, \simple v \mid \mathtt{beq}\ r, \simple v$ \\
+\textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v \mid \mathtt{halt}$ \\
+\textit{program states} & $\simple P$ & ::= & $(\simple G, \simple H, \simple R, \simple I)$ \\\\
+\end{tabular}
+}
+
+There is only one major differences between this version and the one in
+\texttt{Judgments/SimpleGrammar.agda}, and that is the issue of the dictionaries
+and variables. In the presented version we simply assumed an infinite number of
+variables
+$\ell_{\mathrm{g},0}, \ell_{\mathrm{h},0}, \ell_{\mathrm{g},1}, \dots$, and
+created dictionaries using these variables as keys.
+
+This approach is not suitable in the Agda-version, as the Agda-version uses a
+context-free grammar. Instead we will assign these abstract variables to natural
+numbers. This means that we can use ordered lists instead of dictionaries, and
+ordered lists can be represented using a context-free grammar.
+
+For instance: The globals collection
+$\{\ell_{\mathrm{g},0} |-> g_{\mathrm{e},0}, \ell_{\mathrm{g},1} |->
+h_{\mathrm{e},1}\}$ could be represented in the Agda-code by the list
+$h_{\mathrm{e},0} :: h_{\mathrm{e},1} :: \mathtt{nil}$ in which case we would
+have $\ell_{\mathrm{g},0} = 0, \ell_{\mathrm{g},1} = 1$. The other valid choice
+would be $h_{\mathrm{e},1} :: h_{\mathrm{e},0} :: \mathtt{nil}$, but in this
+case we must have $\ell_{\mathrm{g},0} = 1, \ell_{\mathrm{g},1} = 0$.
+
+[Expand more. Do not assume the reader knows what you are doing or trying to do.]
+
 \section{Grammar for \ATAL}
+
+The grammar for \ATAL is very similar. There are very few syntactic
+differences (besides the addition of the type system itself):
+
+\begin{itemize}
+\item Global values have had a type added to them. This type is only added as
+  hint to the type-checker -- it is not actually used at run-time. This type is
+  added to specify which generics a basic block supports.
+\item Heap values have had a type added to them as well. These types only have
+  relevance for the \texttt{malloc} instruction -- and even then they do not
+  affect any other aspects of the run-time.
+\item Instantiations have been added to word values and small values. This
+  syntax is used to instantiate the type variables of a basic block.
+\item The \texttt{malloc} instruction no longer takes a number as the second
+  argument. Instead it takes a list of types.
+\end{itemize}
+
+{\footnotesize
+\begin{tabular}{lrcl}
+Variables: \\
+\textit{global pointers} & $\ell_{\mathrm{g}}$ \\
+\textit{heap pointers}   & $\ell_{\mathrm{h}}$ \\
+\textit{type variable}   & $\alpha$ \\
+\textit{stack variable}  & $\rho$ \\\\
+
+Common definitions: \\
+\textit{integer}            & $n,k$ & ::= & $0, 1, \dots$ \\
+\textit{machine integers}   & $i$   & ::= & $0, 1, \dots, 2^{\mathrm{wordsize}}-1$ \\
+\textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
+
+The type system for \ATAL: \\
+\textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
+\textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
+\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \nil \mid \tau :: \sigma$ \\
+\textit{type assignments}         & $\Delta$ & ::= & $\nil \mid a :: \Delta$ \\
+\textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
+\textit{global label assignments} & $\Psi_{\mathrm{g}}$ & ::= & $\{\ell_{\mathrm{g}} |-> \tau, \dots, \ell_{\mathrm{g}} |-> \tau\}$ \\
+\textit{heap label assignmentss}  & $\Psi_{\mathrm{h}}$ & ::= & $\{\ell_{\mathrm{h}} |-> \tau, \dots, \ell_{\mathrm{h}} |-> \tau\}$ \\
+\textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau\}$ \\
+\textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\
+\textit{instantiations}           & $\Theta$ & ::= & $\theta :: \Theta \mid \nil$ \\\\
+
+The grammar for \ATAL itself: \\
+\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{heapval}\ \ell_{\mathrm{h}} \mid \mathtt{int}\ i \mid \mathtt{uninit} \mid \Lambda\ \Delta \cdot \high{w}[\Theta]$ \\
+\textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\Theta]$ \\
+\textit{global values}            & $\high g$ & ::= & $\mathtt{code}[ \Delta ] \Gamma \cdot \high I$ \\
+\textit{global collections}       & $\high G$ & ::= & $\{\ell_{\mathrm{g}} |-> \high{g}, \dots, \ell_{\mathrm{g}} |-> \high{g}\}$ \\
+\textit{heap values}              & $\high h$ & ::= & $\mathtt{tuple}\ \langle \tau, \dots, \tau \rangle\ \langle \high w, \dots, \high w \rangle$ \\
+\textit{heap collections}         & $\high H$ & ::= & $\{\ell_{\mathrm{h}} |-> \high{h}, \dots, \ell_{\mathrm{h}} |-> \high{h}\}$ \\
+\textit{stacks}                   & $\high S$ & ::= & $\nil \mid \high w :: \high S$ \\
+\textit{register files}           & $\high R$ & ::= & $\{\mathtt{sp} |-> \high{S}, \mathtt{r}_1 |-> \high{w}, \dots, \mathtt{r}_{\mathrm{max}} |-> \high{w}\}$ \\\\
+
+\textit{instructions} & $\high\iota$ & ::= & $\mathtt{add}\ r, r, \high v \mid \mathtt{sub}\ r, r, \high v \mid$ \\
+        &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
+        &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
+        &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
+        &&& $\mathtt{malloc}\ r,\ \langle \tau, \dots, \tau \rangle \mid $ \\
+        &&& $\mathtt{mov}\ r, \high v \mid \mathtt{beq}\ r, \high v$ \\
+\textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v \mid \mathtt{halt}$ \\
+\textit{program states} & $\high P$ & ::= & $(\high G, \high H, \high R, \high I)$ \\
+\end{tabular}
+}
+
+As we did for \ATALe, we will used natural numbers to represent the variables in
+\ATAL. $\ell_{\mathrm{g}}$ and $\ell_{\mathrm{h}}$ will be handled using the
+same technique, while $\alpha$ and $\rho$ will be represented using De Bruijn
+indices.
+
+[Expand more. Do not assume the reader knows what you are doing or trying to do.]
+
 \section{Semantics for \ATAL}
+
+This brings us to the semantics for \ATAL. There are a few different judgments
+used:
+
+\begin{tabular}{|c|p{7.5 cm}|}
+  \hline
+  Judgment & \multicolumn{1}{|c|}{Meaning} \\\hline
+  $\evalregs{\high R}{\high v}{\high w}$ & Here $\high v$ is a small value, that is used an argument to an instruction. This judgment states that we can evaluate $v$ to $\high w$ by looking up registers in the register file $\high R$. \\\hline
+  $\evalcode{\high G}{\high w}{I}$ & Here $\high w$ is a word value that we intend to jump to. This judgment states that we can evaluate $\high w$ to the basic block $\high I$ by looking up basic blocks in $\high G$ and possibly instantiating some of the type variables. \\\hline
+  $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$ & This is our main small-step relation. It is a judgment that asserts that if a program is in state $(\high G, \high H, \high R, \high I)$, then it can transition to $(\high G, \high H', \high R', \high I')$. Note that $G$ is immutable. \\\hline
+  $\steps{\high P}{\high P'}$ & This states that the program state $\high P$ can small-step to $\high P'$. It has only a single rule which uses the judgment above. \\\hline
+  $\stepsn{\high P}{n}{\high P'}$ & This states that the program state $\high P$' can small-step to $\high P'$ in $n$ steps. \\\hline
+\end{tabular} \\
+
+Let us start with the last two judgments as they are the simplest: \\
+
+\fbox{$\steps{\high P}{\high P'}$}
+\begin{mathpar}
+  \infer{
+    \execis{\high G}{(\high H, \high R, \high I)}{(\high H', \high R', \high I')}
+  }{
+    \steps{(\high G, \high H, \high R, \high I)}{(\high G, \high H', \high R', \high I')}
+  }
+\end{mathpar}
+
+\fbox{$\stepsn{\high P}{n}{\high P'}$}
+\begin{mathpar}
+  \infer{
+  }{
+    \stepsn{\high P}{0}{\high P}
+  } \and
+  \infer{
+    \steps{\high P}{}{\high P'} \and
+    \stepsn{\high P'}{n}{\high P''}
+  }{
+    \stepsn{\high P}{1+n}{\high P''}
+  }
+\end{mathpar}
+
+The definition for $\evalregs{\high R}{\high v}{\high w}$ is also pretty simple --
+it simply replaces \texttt{reg}-values by looking up the register in the
+register file: \\
+
+\fbox{$\evalregs{\high R}{\high v}{\high w}$}
+\begin{mathpar}
+  \infer{
+  }{
+    \evalregs{\high R}{\mathtt{reg}\ r}{\high R[r]}
+  } \and
+  \infer{
+  }{
+    \evalregs{\high R}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\mathtt{globval}\ \ell_{\mathrm{g}}}
+  } \and
+  \infer{
+  }{
+    \evalregs{\high R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+  } \and
+  \infer{
+    \evalregs{\high R}{\high v}{\high w}
+  }{
+    \evalregs{\high R}{\Lambda\ \Delta \cdot \high{v}[\Theta]}{\Lambda\ \Delta \cdot \high{w}[\Theta]}
+  }
+\end{mathpar}
+
+\fbox{$\evalcode{\high G}{\high w}{I}$}
+\begin{mathpar}
+\infer{
+  \high G[\ell_{\mathrm{g}}] = \mathtt{code}[ \Delta ] \Gamma \cdot \high I
+}{
+  \evalcode{\high G}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\high I}
+} \and
+\infer{
+  \evalcode{\high G}{w}{\high I} \\
+  \high I_1 = \high I[x_1 / a_1] \and \dots \and \high I_n = \high I_{n-1}[x_n / a_n] \\
+  \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
+  \\
+}{
+  \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\high I_n}
+}
+\end{mathpar}
+
+\fbox{$\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$}
+\begin{mathpar}
+\infer{
+  \high R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\high R}{\high v}{\mathtt{int}\ i_2}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{add}\ r_a, r_b, \high v) ; \high I}
+    {\high H, \high R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \high I}
+} \and
+\infer{
+  \high R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\high R}{\high v}{\mathtt{int}\ i_2}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{sub}\ r_a, r_b, \high v) ; \high I}
+    {\high H, \high R[r_1 \mapsto \mathtt{int}\ (i_1 - i_2)], \high I}
+} \and
+\infer{
+  \high S = \overbrace{\mathtt{uninit} :: \dots :: \mathtt{uninit}}^n :: \high R[\mathtt{sp}]
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{salloc}\ n) ; \high I}
+    {\high H, \high R[\mathtt{sp} |-> \high S], \high I}
+} \and
+\infer{
+  \high R[\mathtt{sp}] = \overbrace{\high w_1 :: \dots :: \high w_n}^n :: \high S
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{sfree}\ n) ; \high I}
+    {\high H, \high R[\mathtt{sp} |-> \high S], \high I}
+} \and
+\infer{
+  \high R[\mathtt{sp}][n] = \high w
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{ld}\ r, \mathtt{sp}(n)) ; \high I}
+    {\high H, \high R[r |-> \high w], \high I}
+} \and
+\infer{
+  \high R[r_b] = \mathtt{heapval}\ \ell_{\mathrm{h}} \and
+  \high H[\ell_{\mathrm{h}}] = \mathtt{tuple}\ \langle \tau_1, \dots \rangle\ \langle \high w_1, \dots, \high w_n, \dots \rangle
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{ld}\ r_a, r_b(n)) ; \high I}
+    {\high H, \high R[r_a |-> \high w_n], \high I}
+} \and
+\infer{
+  R[r] = \high w \and
+  R[\mathtt{sp}] = \high S
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{st}\ \mathtt{sp}(n), r) ; \high I}
+    {\high H, \high R[\mathtt{sp} |-> \high S[n |-> \high w]], \high I}
+} \and
+\infer{
+  \high R[r_a] = \mathtt{heapval}\ \ell_{\mathrm{h}} \and
+  \high H[\ell_{\mathrm{h}}] = \mathtt{tuple}\ \langle \tau_1, \dots \rangle\ \langle \high w_1, \dots \high w_n, \dots \rangle \and
+  \high R[r_b] = \high w \and
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{st}\ r_a(n), r_b) ; \high I}
+    {\high H[\ell_{\mathrm{h}} |-> \mathtt{tuple}\ \langle \tau_1, \dots, \rangle\ \langle \high w_1, \dots, w, \dots \rangle], \high R, \high I}
+} \and
+\infer{
+  \text{$\ell_{\mathrm{h}}$ is a fresh variable} \and
+  \high h = \mathtt{tuple}\ \langle \tau_1, \dots, \tau_n \rangle\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) ; \high I}
+    {\high H \cup \{\ell_{\mathrm{h}} |-> \high h\}, R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], \high I}
+} \and
+\infer{
+  \evalregs{\high R}{\high v}{\high w}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{mov}\ r, \high v) ; \high I}
+    {\high H, \high R[r |-> \high w], \high I}
+} \and
+\infer{
+  \high R[r] = \mathtt{int}\ 0 \and
+  \evalregs{\high R}{\high v}{\high w} \and
+  \evalcode{\high G}{\high w}{I'}
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{beq}\ r, \high v) ; \high I}
+    {\high H, \high R, \high I'}
+} \and
+\infer{
+  \high R[r] = \mathtt{int}\ i \and
+  i \neq 0
+}{
+  \execis{\high G}
+    {\high H, \high R, (\mathtt{beq}\ r, \high v) ; \high I}
+    {\high H, \high R, \high I}
+} \and
+\infer{
+  \evalregs{\high R}{\high v}{\high w} \and
+  \evalcode{\high G}{\high w}{I}
+}{
+  \execis{\high G}
+    {\high H, \high R, \mathtt{jmp}\ \high v}
+    {\high H, \high R, \high I}
+}
+\end{mathpar}
+
 \section{Semantics for \ATALe}
+
+The semantics for \ATALe er mostly the same as for \ATAL -- it has the same 5
+core judgments as. The difference are:
+
+\begin{itemize}
+\item $\evalregs{\simple R}{\simple v}{\simple w}$ has one case less than
+  $\evalregs{\high R}{\high v}{\high w}$ because \ATALe does not have the
+  instantiation syntax.
+\item For the same reason there is only fewer case for
+  $\evalcode{\simple G}{\simple w}{\simple I}$. Note that this makes the
+  judgment almost trivial.
+\item
+  $\execis{\simple G}{\simple H, \simple R, \simple I}{\simple H', \simple R',
+    \simple I'}$ has changed slightly. The cases for $\mathtt{ld}\ r_a, r_b(n)$
+  and $\mathtt{st}\ r_a(n), r_b$ have been simplified in the obvious way as
+  tuples do not carry type information. The case for $\mathtt{malloc}$ has also
+  been changed slightly:
+\end{itemize}
+
+\begin{mathpar}
+\infer{
+  \text{$\ell_{\mathrm{h}}$ is a fresh variable} \and
+  \simple h = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{malloc}\ r, n) ; \simple I}
+    {\simple H \cup \{\ell_{\mathrm{h}} |-> \simple h\}, R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], \simple I}
+} \and
+\end{mathpar}
+
 \section{Proof of erasure}
 \label{sec:erasure}
 
