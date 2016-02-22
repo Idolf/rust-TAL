@@ -1,0 +1,304 @@
+\chapter{Erasure Semantics}
+\label{chap:erasure}
+
+In Types and Programming\cite{typesandprog} erasure is defined as the following
+property between a typed language and an untyped version of the same language:
+
+\begin{itemize}
+\item There must be a function $\erase$ which maps values from the typed language
+  to the untyped language.
+\item If we have $t -> t'$ in the typed language, then we must have
+  $\erase(t) -> \erase(t')$ in the untyped language.
+\item If we have $\erase(t) -> m'$ in the untyped semantics, then there is a $t'$
+  such that $t -> t'$ and $\erase(t') = m'$.
+\end{itemize}
+
+Unfortunately this is not quite true. Instead we will define an $\erase$ function
+such that the following holds:
+
+\begin{itemize}
+\item If we have $\steps{\high P}{\high P'}$ in \ATAL, then we have
+  $\steps{\erase(\high P)}{\erase(\high P')}$ in \ATALe.
+\item If we have $\steps{\erase(\high P)}{\simple{P'}}$ in \ATALe, then one of
+  these two holds:
+  \begin{itemize}
+  \item There is a $\high P'$ such that $\steps{\high P}{\high P'}$ and
+    $\erase(\high P') = \simple{P'}$ or
+  \item $\high P$ is in a bad state, i.e. it is neither halting nor
+    progressing. Instead it is stuck, and specifically this occurs because some
+    substitution was impossible. We will later prove that cannot occur for
+    well-typed terms.
+  \end{itemize}
+\end{itemize}
+
+At this point it is useful to take a step back and ask, \emph{why} erasure is a
+useful property when working with TALs. There are a few good reasons for
+including erasure as part of the work on \ATAL:
+
+\begin{itemize}
+\item \ATAL depends on types at run-time for its execution. while \ATALe does
+  not. Since the two languages are essentially equivalent, one can simply
+  translate from \ATAL to \ATALe before running the program.
+\item A real-world CPU is not able to run \ATAL. While it is not able to \ATALe
+  either, it is closer to the real-world model. If one wanted to justify
+  correctness of our semantics it is much easier to argue why the small-step
+  semantics of \ATALe correctly models the world than that of \ATAL.
+\item We can once and for all define \ATALe and convince ourselves of its
+  adequacy. We are then free to experiment with different type-systems as long
+  as they all have the erasure property.
+\item In fact it is possible to have several different type-checkers as part of
+  the same sandbox system. This might be useful, as it would allow different
+  TALs with different features to use the same platform.
+\end{itemize}
+
+\section{The erasure function for \ATAL}
+
+The erasure function is mostly the obvious one: Simply drop all occurrences of
+types or instantiations. In the Agda implementation
+(\texttt{Judgments/Erase.agda}) this has been implemented as several different
+functions having the same interface -- one for each syntactic category. We will
+here write a few of the functions; for a complete listing see the
+appendix.\todo{Where in the appendix?}
+
+{\footnotesize
+\[\begin{array}{l}
+\begin{array}{ll}
+\rlap{$\erase_w : \high w -> \simple{w}$} \\
+\erase_w(\mathtt{globval}\ \ell_g) &= \mathtt{globval}\ \ell_g \\
+\erase_w(\mathtt{heapval}\ \ell_h) &= \mathtt{heapval}\ \ell_h \\
+\erase_w(\mathtt{int}\ i) &= \mathtt{int}\ i \\
+\erase_w(\mathtt{uninit}) &= \mathtt{uninit} \\
+\erase_w(\Lambda\ \Delta \cdot \high w[\Theta]) &= \erase_w(\high w) \\
+\end{array} \\\\
+
+\begin{array}{l}
+\rlap{$\erase_g : \high g -> \simple{g}$} \\
+\erase_g(\mathtt{code}[\Delta]\Gamma \cdot I) = \mathtt{code}\ (\erase_I(I)) \\\\
+
+\rlap{$\erase_h : \high h -> \simple{h}$} \\
+\erase_h(\mathtt{tuple}\ \langle \tau_1, \dots, \tau_m \rangle\ \langle \high w_1, \dots, \high w_n \rangle) = \mathtt{tuple}\ \langle \erase_w(\high w_1), \dots, \erase_w(\high w_n) \rangle \\
+\end{array} \\\\
+
+\begin{array}{ll}
+\rlap{$\erase_{\iota} : \high\iota -> \simple{\iota}$} \\
+\erase_{\iota}(\mathtt{add}\ r_a, r_b, \high v) &= \mathtt{add}\ r_a, r_b, \erase_v(\high v) \\
+\erase_{\iota}(\mathtt{sub}\ r_a, r_b, \high v) &= \mathtt{sub}\ r_a, r_b, \erase_v(\high v) \\
+\erase_{\iota}(\mathtt{salloc}\ n) &= \mathtt{salloc}\ n \\
+\erase_{\iota}(\mathtt{sfree}\ n) &= \mathtt{sfree}\ n \\
+\erase_{\iota}(\mathtt{ld}\ r, \mathtt{sp}(n)) &= \mathtt{ld}\ r, \mathtt{sp}(n) \\
+\erase_{\iota}(\mathtt{st}\ \mathtt{sp}(n), r) &= \mathtt{st}\ \mathtt{sp}(n), r \\
+\erase_{\iota}(\mathtt{ld}\ r_a, r_b(n)) &= \mathtt{ld}\ r_a, r_b(n) \\
+\erase_{\iota}(\mathtt{st}\ r_a(n), r_b) &= \mathtt{st}\ r_a(n), r_b \\
+\erase_{\iota}(\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) &= \mathtt{malloc}\ r, n \\
+\erase_{\iota}(\mathtt{mov}\ r, \high v) &= \mathtt{mov}\ r, \erase_v(\high v) \\
+\erase_{\iota}(\mathtt{beq}\ r, \high v) &= \mathtt{beq}\ r, \erase_v(\high v) \\
+\end{array} \\\\
+
+\begin{array}{l}
+\erase_P : \high P -> \simple{P} \\
+\erase_P(\high G, \high H, \high R, \high I) = (\erase_G(\high G), \erase_H(\high H), \erase_R(\high R), \erase_I(\high I)) \\\\
+\end{array} \\\\
+
+\end{array}\]
+}
+
+As the subscript can be inferred unambigiously in most cases, we will leave them
+out when possible.
+
+\section{Sketch proof of erasure}
+
+The proof itself is contained in the file \texttt{Lemmas/Erase.agda}. It
+contains a lot of boilerplate lemmas, so we will only include a sketch of the
+proof here.
+
+\begin{lemma}
+  Erasure commutes with list-lookup. Specifically if
+  $L = \langle \high w_1, \dots \high w_n \rangle$ then
+  $\erase(L[i]) = \erase(L)[i]$.
+\end{lemma}
+\begin{proof}
+  By induction over $i$.
+\end{proof}
+
+\begin{lemma}
+  Erasure commutes with list-update. Specifically if
+  $L = \langle \high w_1, \dots \high w_n \rangle$ then
+  $\erase(L[i |-> \high w]) = \erase(L)[i |-> \erase(\high w)]$.
+\end{lemma}
+\begin{proof}
+  By induction over $i$.
+\end{proof}
+
+At this point we have many similar, small lemmas. After those we can prove that
+a substitution will only affect parts that are not preserved by erasure:
+
+\begin{lemma}
+  \label{lemma:suberase}
+  Let $\high v, \high v'$ be small values such that
+  $\high v[\theta] = \high v'$. In that case we have
+  $\erase(\high v) = \erase(\high v')$. Similar lemmas hold for instructions and
+  instruction sequences.
+\end{lemma}
+\begin{proof}
+  By structural induction over $\high v$ (and similarly for the other syntactic
+  categories).
+\end{proof}
+
+After this we can start on the ``real'' erasure lemmas:
+
+\begin{lemma}
+  Assume we have $\evalregs{\high R}{\high v}{\high w}$, then we also have
+  $\evalregs{\erase(\high R)}{\erase(\high v)}{\erase(\high w)}$.
+\end{lemma}
+\begin{proof}
+  By structural induction over $\high v$. The only non-trivial case is
+  $v = \mathtt{reg}\ r$, where we use one of the trivial lemmas.
+\end{proof}
+
+\begin{lemma}
+  Assume we have $\evalcode{\high G}{\high w}{\high I}$, then we also have
+  $\evalcode{\erase(\high G)}{\erase(\high w)}{\erase(\high I)}$.
+\end{lemma}
+\begin{proof}
+  By structural induction over $\high w$ while using \cref{lemma:suberase}.
+\end{proof}
+
+Finally, the core lemma of our proof:
+
+\begin{lemma}
+  \label{lemma:erasestep}
+  Assume we have
+  $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high
+    I'}$. In that case we also have
+  $\execis{\erase(\high G)}{\erase(\high H, \high R, \high I)}{\erase(\high H',
+    \high R', \high I')}$.
+\end{lemma}
+\begin{proof}
+  We will only do a sketch a few of the cases, as the actual proof depends on
+  many lemmas and has many cases. In the body of this proof we will write
+  $x^{\mathrm{e}}$ as shorthand for $\erase(x)$.
+
+  Let $\mathcal{S}$ be our derivation of
+  $\execis{\high G}{\high H, \high R, \high I}{\high I', \high R', \high
+    I'}$. Consider the cases of $\high I$:
+
+  \paragraph{Assume $\high I = \mathtt{add}\ r_a, r_b, \high v ; \high I''$.}
+  Thus $\mathcal{S}$ must be of the form:
+
+  \begin{mathpar}
+    \infer{
+      \stackrel{\mathcal{E}_0}{\high R[r_b] = \mathtt{int}\ i_1} \and
+      \stackrel{\mathcal{E}_1}{\evalregs{\high R}{\high v}{\mathtt{int}\ i_2}}
+    }{
+      \execis{\high G}
+      {\high H, \high R, (\mathtt{add}\ r_a, r_b, \high v) ; \high I''}
+      {\high H, \high R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \high I''}
+    }
+  \end{mathpar}
+
+  By applying lemmas on $\mathcal{E}_0$ and $\mathcal{E}_1$ we get derivations
+  $\mathcal{E}_0', \mathcal{E}_1'$ of $R^{\mathrm{e}}[r_b] = \mathtt{int}\ i_1$ and
+  $\evalregs{\high R^{\mathrm{e}}}{\high v^{\mathrm{e}}}{\mathtt{int}\ i_2}$ respectively. From this
+  we can construct a derivation:
+
+  \begin{mathpar}
+    \infer{
+      \stackrel{\mathcal{E}_0'}{\high R^{\mathrm{e}}[r_b] = \mathtt{int}\ i_1} \and
+      \stackrel{\mathcal{E}_1'}{\evalregs{\high R^{\mathrm{e}}}{\high v^{\mathrm{e}}}{\mathtt{int}\ i_2}}
+    }{
+      \execis{\high G^{\mathrm{e}}}
+      {\high H^{\mathrm{e}}, \high R^{\mathrm{e}}, (\mathtt{add}\ r_a, r_b, \high v^{\mathrm{e}}) ; \high I''{}^{\mathrm{e}}}
+      {\high H^{\mathrm{e}}, \high R^{\mathrm{e}}[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \high I''{}^{\mathrm{e}}}
+    }
+  \end{mathpar}
+
+  We also have a lemma stating that
+  $\erase(\high R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)]) = \high R^{\mathrm{e}}[r_a
+  \mapsto \mathtt{int}\ (i_1 + i_2)]$, so this derivation is what we wanted.
+
+  \paragraph{Assume $\high I = \mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle ; \high I''$.}
+
+  Thus $\mathcal{S}$ must be of the form:
+
+  \begin{mathpar}
+    \infer{
+      \stackrel{\mathcal{E}_0}{\text{$\ell_{\mathrm{h}}$ is a fresh variable}} \and
+      \stackrel{\mathcal{E}_1}{\high h = \mathtt{tuple}\ \langle \tau_1, \dots, \tau_n \rangle\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n}
+    }{
+      \execis{\high G}
+      {\high H, \high R, (\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle) ; \high I''}
+      {\high H \cup \{\ell_{\mathrm{h}} |-> \high h\}, R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], \high I''}
+    }
+  \end{mathpar}
+
+  By applying a lemmas on $\mathcal{E}_1$ we get a derivation $\mathcal{E}_1'$
+  of
+  $\high h^{\mathrm{e}} = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots,
+    \mathtt{uninit} \rangle}^n$. From this we can construct a derivation:
+
+  \begin{mathpar}
+    \infer{
+      \stackrel{\mathcal{E}_0}{\text{$\ell_{\mathrm{h}}$ is a fresh variable}} \and
+      \stackrel{\mathcal{E}_1'}{\high h^{\mathrm{e}} = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n}
+    }{
+      \execis{\high G^{\mathrm{e}}}
+      {\high H^{\mathrm{e}}, \high R^{\mathrm{e}}, (\mathtt{malloc}\ r, n) ; \high I''{}^{\mathrm{e}}}
+      {\high H^{\mathrm{e}} \cup \{\ell_{\mathrm{h}} |-> \high h^{\mathrm{e}}\}, \high R^{\mathrm{e}}[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], \high I''{}^{\mathrm{e}}}
+    }
+  \end{mathpar}
+
+  Since we have a lemma showing that
+  $\erase(\high H \cup \{\ell_{\mathrm{h}} |-> \high h\}) = \high H^{\mathrm{e}}
+  \cup \{\ell_{\mathrm{h}} |-> \high h^{\mathrm{e}}\}$ and another showing that
+  $\erase(\high R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}]) = \high
+  R^{\mathrm{e}}[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}]$, this derivation is
+  what we wanted.
+\end{proof}
+
+The first part of the erasure property follows directly from this.
+
+\begin{corollary}[Erasure part 1]
+  \label{lemma:erasesteps}
+  If we have $\steps{\high P}{\high P'}$ in \ATAL, then we have
+  $\steps{\erase(\high P)}{\erase(\high P')}$ in \ATALe.
+\end{corollary}
+\begin{proof}
+  There is only a single case for the value of $\steps{\high P}{\high P'}$, and
+  in this case we can simply use \cref{lemma:erasestep}.
+\end{proof}
+
+The second part of the erasure property follows almost directly.
+\begin{lemma}[Erasure part 2]
+  \item If we have $\steps{\erase(\high P)}{\simple{P'}}$ in \ATALe, then one of
+  these two holds:
+  \begin{itemize}
+  \item There is a $\high P'$ such that $\steps{\high P}{\high P'}$ and
+    $\erase(\high P') = \simple{P'}$ or
+  \item $\high P$ is in a bad state, i.e. it is neither halting nor
+    progressing. Instead it is stuck, and specifically this occurs because some
+    substitution was impossible. We will later prove that cannot occur for
+    well-typed terms.
+  \end{itemize}
+\end{lemma}
+\begin{proof}
+  Assume we have $\steps{\erase(\high P)}{\simple{P'}}$. We have two
+  cases\footnote{Note that for this lemma to be provable in Agda, we need a
+    \emph{constructive} proof -- that is we cannot simply assume $Q \lor \neg Q$
+    for any $Q$. Luckily we have already proved that our small-step relation is
+    decidable, which is what we need here.}
+
+  \paragraph{Assume $\steps{\high P}{\high P'}$ for some $\high P'$.} By
+  \cref{lemma:erasesteps} this implies that
+  $\steps{\erase(\high P)}{\erase(\high P')}$. We have previously proven that
+  the small-step relation is a partial function, which implies
+  $\erase(\high P') = \simple{P'}$. This concludes the case, as we fulfill the
+  requirements for the first clause.
+
+  \paragraph{Assume no such $\high P'$ exists.} To fulfill the second clause, it
+  remains to be shown that $\high P$ is not halting. If $\high P$ was halting
+  then we would have
+  $\erase(\high P) = (\erase(\high G), \erase(\high H), \erase(\high R),
+  \mathtt{halt})$. However this is a contradiction, since it the derivation
+  $\steps{(\erase(\high G), \erase(\high H), \erase(\high R),
+    \mathtt{halt})}{\simple{P'}}$ can clearly not exist.
+\end{proof}

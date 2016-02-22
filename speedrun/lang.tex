@@ -18,7 +18,7 @@ sandbox. We will do this by:
 \end{itemize}
 
 The full implications of and reasoning behind having two languages related by
-erasure will be discussed later. \Cref{sec:erasure} will discuss some of the
+erasure will be discussed later. \Cref{chap:erasure} will discuss some of the
 issues along with the proof, while the full reasoning will not be apparent until
 \Cref{chap:safesound}. For now let us just state these two unbacked postulates
 over the alternative of using a single language:
@@ -174,6 +174,22 @@ The grammar for \ATALe: \\
 \end{tabular}
 }
 
+This definition follows fairly close to the information version we have already
+presented. The only new construction is that of a ``small value''. A small value
+is an argument to some instruction such as \texttt{add}. It allows one to write
+an immediate in the form of a reference to a basic block or
+number. Alternatively it allows one to specify a register which will be looked
+up at run-time. It does \emph{not} allow one to write heap values, as the exact
+value of heap values are not known at compile-time.
+
+Another interesting detail is the inclusion of a \texttt{malloc} instruction,
+which is typically not present in a real-world machine. This instruction is to
+be interpreted as a small group of instructions that always occurs together. On
+the real machine, this instruction would likely include branch to a subroutine
+in the Trusted Computing Base where malloc is implemented.
+
+\subsection{Notes on the Agda implementation}
+
 There is only one major differences between this version and the one in
 \texttt{Judgments/SimpleGrammar.agda}, and that is the issue of the dictionaries
 and variables. In the presented version we simply assumed an infinite number of
@@ -194,7 +210,20 @@ have $\ell_{\mathrm{g},0} = 0, \ell_{\mathrm{g},1} = 1$. The other valid choice
 would be $h_{\mathrm{e},1} :: h_{\mathrm{e},0} :: \mathtt{nil}$, but in this
 case we must have $\ell_{\mathrm{g},0} = 1, \ell_{\mathrm{g},1} = 0$.
 
-[Expand more. Do not assume the reader knows what you are doing or trying to do.]
+\subsection{Lemmas}
+
+At this point, we are already able to prove lemmas about our grammar. In the
+file \texttt{Lemmas/Equality.agda} we prove this and similar lemmas:
+
+\begin{lemma} Given two program states $\simple P, \simple P'$ we can decide
+  whether we have $\simple P = \simple P'$ or $\simple P \neq \simple P'$.
+\end{lemma}
+
+This lemma might seem trivial, and in a certain sense it is: It holds for all
+inductive data types. One could in principle just prove this by induction over
+the forms of $\simple P$ and $\simple P'$, however this turns out to give a
+quadratic number of cases in Agda. Our solution to this problem is to use an
+injective function to another data type. See \cref{sec:defeq} for more details.
 
 \section{Grammar for \ATAL}
 
@@ -228,7 +257,7 @@ Common definitions: \\
 \textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
 
 The type system for \ATAL: \\
-\textit{types}                    & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
+\textit{base types}               & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
 \textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
 \textit{stack types}              & $\sigma$ & ::= & $\rho \mid \nil \mid \tau :: \sigma$ \\
 \textit{type assignments}         & $\Delta$ & ::= & $\nil \mid a :: \Delta$ \\
@@ -260,12 +289,100 @@ The grammar for \ATAL itself: \\
 \end{tabular}
 }
 
-As we did for \ATALe, we will used natural numbers to represent the variables in
-\ATAL. $\ell_{\mathrm{g}}$ and $\ell_{\mathrm{h}}$ will be handled using the
-same technique, while $\alpha$ and $\rho$ will be represented using De Bruijn
-indices.
+The type system itself is somewhat complicated:
 
-[Expand more. Do not assume the reader knows what you are doing or trying to do.]
+\begin{itemize}
+\item The base types are best thought of as the types of word values and small
+  values. It also reused for global values and heap values, though these only
+  use a subset of the possible types (specifically function types and tuple types).
+\item Type assignments are the assumptions used in types. They serve the same
+  purpose as generics in Java.
+\item Stack types are the type of stacks.
+\item Global label assignments are the types of global collections.
+\item Heap label assignments are the types of heap collections.
+\item Register assignments are the types of register files.
+\item An instantiation is an encoding of a substitution. This substitution can
+  be applied to an expression. For instance we will write $\tau[\theta]$ as
+  substitution for base types and similar for other construction. As an example
+  we have
+  $(\langle \alpha_1, \alpha_2 \rangle)[\mathtt{int} / \alpha_1] = \langle
+  \mathtt{int}, \alpha_2 \rangle$.
+\item Instantiations are simply a chain of instantiations. We will write
+  $\tau[\Theta]$ for running multiple substitutions.  For instance
+  $(\langle \alpha_1, \alpha_2 \rangle)[\mathtt{int} / \alpha_1 :: \mathtt{ns} /
+  \alpha_2 :: \nil] = \langle \mathtt{int}, \mathtt{ns} \rangle$.
+\end{itemize}
+
+\subsection{Notes on the Agda implementation}
+
+As we did for \ATALe, we will used natural numbers to represent the variables in
+\ATAL. In \texttt{Judgments/HighGrammar.agda} we will handle $\ell_{\mathrm{g}}$
+and $\ell_{\mathrm{h}}$ using the same technique. The newly introduced variables
+$\alpha$ and $\rho$ will be represented using De Bruijn indices.
+
+The fact that we are based on De Bruijn indices also means that we need
+judgments for substitution and weakening. This also means that substitution is
+not a total relation in our Agda code -- a an expression might be ``wrong'' in
+the sense that it uses a De Bruijn index in the wrong way. It might for instance
+use a variable-index that refers to an $\alpha$ in the context of a
+stack-variable, and similarly an instantiation might also be ``wrong''.
+
+As such we have chosen implement substitution as a relation, which we will prove
+is a partial function. Weakening works by simply remapping some of the De Bruijn
+indices, and as such it is a total function. These are the type declarations
+from the file \texttt{Judgments/Substitution.agda}, where $A$ is one of the
+datatypes for which substitution is valid.
+
+\begin{code}
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaField{weaken} \AgdaSymbol{:} \AgdaDatatype{ℕ} \AgdaSymbol{→} \AgdaDatatype{ℕ} \AgdaSymbol{→} \AgdaBound{A} \AgdaSymbol{→} \AgdaBound{A}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaField{\_⟦\_/\_⟧≡\_} \AgdaSymbol{:} \AgdaBound{A} \AgdaSymbol{→} \AgdaDatatype{Instantiation} \AgdaSymbol{→} \AgdaDatatype{ℕ} \AgdaSymbol{→} \AgdaBound{A} \AgdaSymbol{→} \AgdaPrimitiveType{Set}\<%
+\end{code}
+
+\subsection{Lemmas}
+
+The file \texttt{Lemmas/Equality.agda} contains proofs for decidable equality
+using the same method as for \ATALe. In addition to the file
+\texttt{Lemmas/Substitution.agda} holds some lemmas about substitution such as:
+
+\begin{lemma}
+  \label{lemma:computsubst}
+  Substitution is a partial, computable function. More specifically:
+  \begin{itemize}
+  \item If $\tau[\theta]$ evaluates to both $\tau_1$ and $\tau_2$, then
+    $\tau_1 = \tau_2$.
+  \item It is decidable to check if $\tau[\theta]$ is well-defined.
+  \end{itemize}
+
+  Similar statements hold for the other syntactic categories.
+\end{lemma}
+
+These proofs are in principle trivial, and proved by simple structural induction
+over the arguments for the substitutions. In practice this involved a few tricky
+cases and a lot of boilerplate.
+
+The file additionally contains lemmas about the commutativity of substitutions
+and weakenings. A very informal version of this lemma is as follows:
+
+\begin{lemma}
+  Assume we have $\tau_1[\theta] = \tau_2$. This equation still holds if we
+  weaken $\tau_1, \tau_2$ and $\theta$. The weakening done on each part is not
+  exactly the same, but they are related A similar statement holds if we instead
+  of weakening run another substitution $\theta'$. This substitution will again
+  not be the exact same for each part, but the substitutions are related.
+
+  Similar statements hold for the other syntactic categories.
+\end{lemma}
+
+This statement is hard to state precisely, as it depends heavily on the details
+of our De Bruijn indices, which have been left out in this paper. A more precise
+definition of the lemma along with the proofs are available in the source code.
+
+The proofs themselves are for the most part done using structural induction. The
+only cases that are suprising are the cases dealing directly with De Bruijn
+notation -- but some of those require several sub-lemmas.
 
 \section{Semantics for \ATAL}
 
@@ -340,12 +457,10 @@ register file: \\
   \evalcode{\high G}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\high I}
 } \and
 \infer{
-  \evalcode{\high G}{w}{\high I} \\
-  \high I_1 = \high I[x_1 / a_1] \and \dots \and \high I_n = \high I_{n-1}[x_n / a_n] \\
-  \text{(this should be interpreted as recursively substituting $a_k$ with $x_k$ inside the values)} \\
-  \\
+  \evalcode{\high G}{w}{\high I} \and
+  \high I' = \high I[\Theta]
 }{
-  \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[x_1 / a_1, \dots, x_n / a_n]}{\high I_n}
+  \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[\Theta]}{\high I'}
 }
 \end{mathpar}
 
@@ -455,6 +570,65 @@ register file: \\
 }
 \end{mathpar}
 
+Additionally we have three judgments on program states:
+
+\fbox{$\halting{\high P}$}
+\begin{mathpar}
+  \infer{ }{
+    \halting{\high G, \high H, \high R, \mathtt{halt}}
+  }
+\end{mathpar}
+
+\fbox{$\progressing{\high P}$}
+\begin{mathpar}
+  \infer{
+    \steps{\high P}{\high P'}
+  }{
+    \progressing{\high P}
+  }
+\end{mathpar}
+
+\fbox{$\goodstate{\high P}$}
+\begin{mathpar}
+  \infer{
+    \halting{\high P}
+  }{
+    \goodstate{\high P}
+  } \and
+  \infer{
+    \progressing{\high P}
+  }{
+    \goodstate{\high P}
+  }
+\end{mathpar}
+
+\subsection{Notes on the Agda implementation}
+
+The file \texttt{Judgments/HighSemantics.agda} is very close in form to this
+presentation. We have deviated slightly from this form, as the Agda-version uses
+functions for some syntax where the report uses premises and vice versa.
+
+\subsection{Lemmas}
+
+It turns out that our small-semantics is deterministic, which implies that it is
+a partial function, so the following lemma is proved in the file
+\texttt{Lemmas/HighSemantics.agda}.
+
+\begin{lemma}
+  \label{lemma:computhigh}
+  Our small-step relation for \ATAL is a partial, computable functions. Or more
+  precisely:
+
+  \begin{itemize}
+  \item If $\high P, \high P', \high P''$ are a program states and we have both
+    $\steps{\high P}{\high P'}$ and $\steps{\high P}{\high P''}$, then
+    $P' = P''$.
+  \item It is decidable whether $\high P$ can small-step to some $P'$.
+  \end{itemize}
+
+  Similar lemmas exists for the other semantic judgments.
+\end{lemma}
+
 \section{Semantics for \ATALe}
 
 The semantics for \ATALe er mostly the same as for \ATAL -- it has the same 5
@@ -466,13 +640,13 @@ core judgments as. The difference are:
   instantiation syntax.
 \item For the same reason there is only fewer case for
   $\evalcode{\simple G}{\simple w}{\simple I}$. Note that this makes the
-  judgment almost trivial.
+  judgment mostly trivial.
 \item
   $\execis{\simple G}{\simple H, \simple R, \simple I}{\simple H', \simple R',
     \simple I'}$ has changed slightly. The cases for $\mathtt{ld}\ r_a, r_b(n)$
   and $\mathtt{st}\ r_a(n), r_b$ have been simplified in the obvious way as
-  tuples do not carry type information. The case for $\mathtt{malloc}$ has also
-  been changed slightly:
+  tuples do not carry type information. The case for $\mathtt{malloc}$ is the
+  only one that has a non-trivial change:
 \end{itemize}
 
 \begin{mathpar}
@@ -486,50 +660,31 @@ core judgments as. The difference are:
 } \and
 \end{mathpar}
 
-\section{Proof of erasure}
-\label{sec:erasure}
+The full semantics for \ATALe have been included in the appendix.\todo{Where in
+  the appendix?}
 
-% % Informally
-% % this means that the languages are essentially equivalent, however there are two
-% % good reasons for introducing it anyways:
+\subsection{Notes on the Agda implementation}
 
+The file \texttt{Judgments/SimpleSemantics.agda} is again very close in form to
+this presentation. We have made the same deviations as we did for \ATAL.
 
-% % A fundamental abstraction in \ATAL (and other TAL-based systems) is the
-% % basic-block. A basic-block is a collection of instructions with two properties:
+\subsection{Lemmas}
 
-% % \begin{itemize}
-% % \item There can only be references to the start of a basic-block, not into the
-% %   middle of one.
-% % \item A basic block will always contain exactly one unconditional jump or halt,
-% %   and that is the last instruction of the block.\footnote{Note that it is often
-% %     beneficial to weaken this assumption slightly, by also allowing an
-% %     \emph{implicit} unconditional jump to the basic-block at the next
-% %     address. We will not allow that in our definition, but could easily emulate
-% %     it.}
-% % \end{itemize}
+It should be no surprise that this small-step semantics is deterministic, given
+that it is mostly the same as for \ATAL. We prove the following lemma in
+\texttt{Lemmas/HighSemantics.agda}:
 
-% % A program-state in \ATAL is a tuple $\langle G, H, R, I \rangle$ consisting of
-% % \textbf{global values}, \textbf{heap values}, \textbf{register values} and
-% % \textbf{the current basic-block}. In \ATAL a global value is always a
-% % type-annotated basic-block, but it could be extended with other global values. A
-% % heap value is always a tuple of word-sized values (though it could be a tuple of
-% % size 1). In Agda we implement these collections as ordered lists, however other
-% % constructions such as dictionaries could be used.
+\begin{lemma}
+  \label{lemma:computsimple}
+  Our small-step relation for \ATALe is a partial, computable functions. Or more
+  precisely:
 
-% % The register values is a mapping from register names to a word values -- the
-% % only exception is the stack pointer, which is mapped to a stack of word values
-% % (again implemented as an ordered list).
+  \begin{itemize}
+  \item If $\simple P, \simple P', \simple P''$ are a program states and we have both
+    $\steps{\simple P}{\simple P'}$ and $\steps{\simple P}{\simple P''}$, then
+    $P' = P''$.
+  \item It is decidable whether $\simple P$ can small-step to some $P'$.
+  \end{itemize}
 
-% % We will then define a small-step semantics, which is a relation from
-% % program-states to program-states.
-
-
-% % \begin{itemize}
-% % \item \ATAL depends on types at run-time for its execution. while \ATALe does
-% %   not. Since the two languages are essentially equivalent, one can simply
-% %   translate from \ATAL to \ATALe before running the program.
-% % \item \ATALe is much simpler than \ATAL. This makes it easier to reason about
-% %   any implementation that runs \ATALe-code.
-% % \item It makes it possible to experiment with changes to \ATAL without changing
-% %   \ATALe or the system that runs \ATALe-code.
-% % \end{itemize}
+  Similar lemmas exists for the other semantic judgments.
+\end{lemma}

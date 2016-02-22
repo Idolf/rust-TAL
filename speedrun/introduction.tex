@@ -126,10 +126,11 @@ technique is as follows:
 \item Define a small-step semantics for this subset. A small-step semantics is a
   model for how to execute programs in the subset. For instance if our model
   states that a machine in state $p_1$ can transition to a machine in state
-  $p_2$, then we would write $p_1 -> p_2$. Furthermore this model will designate
-  some states as \emph{halting} states, i.e. states that will halt immediately
-  without error. If a program is neither transitioning nor in a valid halting
-  state, then we say that it is \emph{stuck} and we considered that an error.
+  $p_2$, then we would write $p_1 -> p_2$ in which case we say that $p_1$ is
+  \emph{progressing}. Furthermore this model will designate some states as
+  \emph{halting} states, i.e. states that will halt immediately without
+  error. If a program is neither progressing nor halting, then we say that it is
+  \emph{stuck} and we considered that an error.
 
 \item Define a type system for this subset. This type system should have a
   type-checker, i.e. a program that outputs true for well-typed programs and
@@ -202,9 +203,11 @@ support for exceptions and existential types have been removed, and a few
 details have been simplified without loss of generality. While introducing
 \ATAL, we also introduce a simplified version of the same language,
 \ATALe. After introducing the languages, we will define small-step semantics for
-both languages and prove that the two semantics are related by type
-erasure. \textbf{\Cref{chap:types}} introduces the type system for \ATAL and
-proves that it is sound. We will also prove that the type system is
+both languages. \textbf{\Cref{chap:erasure}} will prove that the two semantics
+essentially equivalent. We do this by introducing the notion of erasure
+semantics and prove that the two semantics are related by
+it. \textbf{\Cref{chap:types}} introduces the type system for \ATAL and proves
+that it is sound. We will also prove that the type system is
 decidable. \textbf{\Cref{chap:safesound}} will discuss the issue of safety and
 how it relates to the proof of soundness. Specifically we will give a high-level
 sketch of how one could implement a platform with a small trusted computing base

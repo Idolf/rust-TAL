@@ -8,11 +8,11 @@
 \newcommand \ATAL {ATAL\xspace}
 \newcommand \ATALe {\ensuremath{\textrm{ATAL}_{\mathrm{e}}}\xspace}
 
-\newcommand \embed {{\ensuremath{\mathbf{embed}}}}
-\newcommand \embedp {\ensuremath{\mathbf{embed}^\ast}}
+\newcommand \erase {{\ensuremath{\mathbf{erase}}}}
+\newcommand \erasep {\ensuremath{\mathbf{erase}^\ast}}
 
 \newcommand \native[1] {{\ensuremath{#1_N}}\xspace}
-\newcommand \simple[1] {{\ensuremath{#1_{\mathrm{e}}}}\xspace}
+\newcommand \simple[1] {{\ensuremath{{#1}_{\mathrm{e}}}}\xspace}
 \newcommand \high[1] {#1}
 \newcommand \typed[1] {{\ensuremath{#1_{\mathrm{T}}}}\xspace}
 
@@ -28,18 +28,21 @@
 \newcommand \highlang {\ensuremath{\lang_{\mathrm{H}}}\xspace}
 \newcommand \typedlang {\ensuremath{\lang_{\mathrm{T}}}\xspace}
 
-\newcommand \highembed {\ensuremath{\embed_{\highlang}}\xspace}
-\newcommand \simpleembed {\ensuremath{\embed_{\simplelang}}\xspace}
-\newcommand \simpleembedp {\ensuremath{\embedp_{\simplelang}}\xspace}
+\newcommand \higherase {\ensuremath{\erase_{\highlang}}\xspace}
+\newcommand \simpleerase {\ensuremath{\erase_{\simplelang}}\xspace}
+\newcommand \simpleerasep {\ensuremath{\erasep_{\simplelang}}\xspace}
 
 
 \newcommand \greek[1] {{\text{\selectlanguage{greek}#1\selectlanguage{english}}}}
 \newcommand \ttalpha{\greek{\ttfamily\textalpha}}
 \newcommand \ttrho{\greek{\ttfamily\textrho}}
 \newcommand \malicious {{\ensuremath{\mathtt{malicious}}}}
-\newcommand \halted {\ensuremath{\mathtt{halted}}}
 \newcommand \running {\ensuremath{\mathtt{running}}}
 \newcommand \halt {\ensuremath{\mathbf{halt}}}
+
+\newcommand \halting[1] {\ensuremath{\mathbf{Halting}({#1})}}
+\newcommand \progressing[1] {\ensuremath{\mathbf{Progressing}({#1})}}
+\newcommand \goodstate[1] {\ensuremath{\mathbf{GoodState}({#1})}}
 
 \newcommand \valid[2] {{#1} |- {#2}\ \mathbf{Valid}}
 \newcommand \subtype[3] {{#1} |- {#2} \le {#3}}
