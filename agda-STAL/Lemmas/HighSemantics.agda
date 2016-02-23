@@ -267,3 +267,13 @@ exec-decₕ P (suc n) with step-prg-decₕ P
     subst (λ P → ⊢ P ⇒ₙ n / P'') (step-prg-uniqueₕ step' step) exec
   )})
 ... | yes (P'' , exec) = yes (P'' , step ∷ exec)
+
+exec-dec-specificₕ : ∀ P n P' → Dec (⊢ P ⇒ₙ n / P')
+exec-dec-specificₕ P n P'
+  with exec-decₕ P n
+... | no ¬step = no (λ step → ¬step (P' , step))
+... | yes (P'' , step)
+  with P' ≟ P''
+... | no ¬eq = no (λ step' → ¬eq (exec-uniqueₕ step' step))
+exec-dec-specificₕ P n P'
+    | yes (.P' , step) | yes refl = yes step
