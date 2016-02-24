@@ -5,7 +5,7 @@ open import Judgments
 open import Lemmas.Types using (≤-refl ; ≤-trans)
 open import Lemmas.Substitution using (subst-unique-many)
 open import Lemmas.TypeSubstitution using (≤-++ ; subtype-weaken ; subtype-subst-exists-many)
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is to prove two theorems:
 -- * That WordValues can be casted to more general types.

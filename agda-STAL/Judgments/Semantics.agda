@@ -1,14 +1,14 @@
 module Judgments.Semantics where
 
 open import Util
-open import Judgments.Grammar
+open import Judgments.Syntax
 
 -- The purpose of this file is to rename the
 -- values in SimpleSemantics and HighSemantics
 
 module SimpleSemantics where
   open import Judgments.SimpleSemantics
-  open SimpleGrammar
+  open SimpleSyntax
 
   evalSmallValue : Vec WordValue ♯regs → SmallValue → WordValue
   evalSmallValue = evalSmallValueₛ
@@ -38,7 +38,7 @@ module SimpleSemantics where
 
 module HighSemantics where
   open import Judgments.HighSemantics
-  open HighGrammar
+  open HighSyntax
 
   evalSmallValue : Vec WordValue ♯regs → SmallValue → WordValue
   evalSmallValue = evalSmallValueₕ

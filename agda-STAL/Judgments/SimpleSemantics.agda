@@ -1,11 +1,11 @@
 module Judgments.SimpleSemantics where
 
 open import Util
-open import Judgments.Grammar
-open SimpleGrammar
+open import Judgments.Syntax
+open SimpleSyntax
 
 -- The purpose of this file is to define the
--- small-step semantics for the simple grammar
+-- small-step semantics for the simple syntax
 
 evalSmallValueₛ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₛ regs (reg ♯r) = lookup ♯r regs

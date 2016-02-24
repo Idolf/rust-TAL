@@ -2,7 +2,7 @@ module Lemmas.Substitution where
 
 open import Util
 open import Judgments
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is to include proofs that:
 -- * Substitution is deterministic.

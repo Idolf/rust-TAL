@@ -10,11 +10,11 @@ open import Lemmas.SimpleSemantics
 
 private
   module S where
-    open SimpleGrammar public
+    open SimpleSyntax public
     open SimpleSemantics public
 
   module H where
-    open HighGrammar public
+    open HighSyntax public
     open HighSemantics public
 
   erase-↓ : ∀ {A B : Set} {{E : Erase A B}}

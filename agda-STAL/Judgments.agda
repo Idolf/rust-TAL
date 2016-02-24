@@ -1,10 +1,10 @@
 module Judgments where
 
--- Step 1: Base Grammar
-open import Judgments.CommonGrammar public
-open import Judgments.SimpleGrammar public
-open import Judgments.HighGrammar public
-open import Judgments.Grammar public
+-- Step 1: Base Syntax
+open import Judgments.CommonSyntax public
+open import Judgments.SimpleSyntax public
+open import Judgments.HighSyntax public
+open import Judgments.Syntax public
 
 -- Step 2: Language translations
 open import Judgments.Erase public

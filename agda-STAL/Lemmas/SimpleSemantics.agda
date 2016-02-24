@@ -3,7 +3,7 @@ module Lemmas.SimpleSemantics where
 open import Util
 open import Judgments
 open import Lemmas.Equality using ()
-open SimpleGrammar
+open SimpleSyntax
 open SimpleSemantics
 
 -- The purpose of this file is to prove

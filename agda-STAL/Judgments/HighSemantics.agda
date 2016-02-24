@@ -1,12 +1,12 @@
 module Judgments.HighSemantics where
 
 open import Util
-open import Judgments.Grammar
+open import Judgments.Syntax
 open import Judgments.Substitution
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is to define the
--- small-step semantics for the high grammar
+-- small-step semantics for the high syntax
 
 evalSmallValueₕ : Vec WordValue ♯regs → SmallValue → WordValue
 evalSmallValueₕ regs (reg ♯r) = lookup ♯r regs

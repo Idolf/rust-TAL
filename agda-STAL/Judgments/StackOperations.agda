@@ -1,7 +1,7 @@
 module Judgments.StackOperations where
 
 open import Util
-open import Judgments.Grammar
+open import Judgments.HighSyntax
 
 -- The purpose of this file is to introduce some stack operations.
 -- They are morally identical to similar constructions for lists.

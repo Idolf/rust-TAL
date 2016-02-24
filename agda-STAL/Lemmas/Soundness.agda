@@ -11,7 +11,7 @@ open import Lemmas.HighSemantics using (step-prg-uniqueₕ)
 open import Lemmas.TermValidType using (wval-valid-type ; globals-valid-type)
 open import Lemmas.HeapSteps using (store-step ; load-step)
 open import Lemmas.MallocStep using (malloc-step)
-open HighGrammar
+open HighSyntax
 open HighSemantics
 
 -- The purpose if this file is to prove soundness.

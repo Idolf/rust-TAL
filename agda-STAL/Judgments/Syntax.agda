@@ -1,13 +1,13 @@
-module Judgments.Grammar where
+module Judgments.Syntax where
 
-open import Judgments.SimpleGrammar public
-open import Judgments.HighGrammar public
+open import Judgments.SimpleSyntax public
+open import Judgments.HighSyntax public
 
 -- The purpose of this file is to rename the
--- values in SimpleGrammar and HighGrammar
+-- values in SimpleSyntax and HighSyntax
 
-module SimpleGrammar where
-  open import Judgments.SimpleGrammar
+module SimpleSyntax where
+  open import Judgments.SimpleSyntax
 
   WordValue : Set
   WordValue = WordValueₛ
@@ -45,8 +45,8 @@ module SimpleGrammar where
   MutProgramState : Set
   MutProgramState = MutProgramStateₛ
 
-module HighGrammar where
-  open import Judgments.HighGrammar
+module HighSyntax where
+  open import Judgments.HighSyntax
 
   WordValue : Set
   WordValue = WordValueₕ

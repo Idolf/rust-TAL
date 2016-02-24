@@ -5,7 +5,7 @@ open import Judgments
 open import Lemmas.Equality using ()
 open import Lemmas.Substitution
 open import Lemmas.TypeSubstitution
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is to prove that
 -- substitution is possible for instruction

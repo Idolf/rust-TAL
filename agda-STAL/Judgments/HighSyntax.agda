@@ -1,9 +1,9 @@
-module Judgments.HighGrammar where
+module Judgments.HighSyntax where
 
 open import Util
-open import Judgments.CommonGrammar public
+open import Judgments.CommonSyntax public
 
--- The purpose of this file is to define the high grammar.
+-- The purpose of this file is to define the high syntax.
 
 -- Assignment index, ι
 AssignmentIndex : Set

@@ -1,8 +1,8 @@
 module Judgments.Substitution where
 
 open import Util
-open import Judgments.Grammar
-open HighGrammar
+open import Judgments.Syntax
+open HighSyntax
 
 -- The purpose of this file is
 -- to include instances of this record.

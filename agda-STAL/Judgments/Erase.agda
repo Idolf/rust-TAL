@@ -1,14 +1,14 @@
 module Judgments.Erase where
 
 open import Util
-open import Judgments.Grammar
-private module S = SimpleGrammar
-private module H = HighGrammar
+open import Judgments.Syntax
+private module S = SimpleSyntax
+private module H = HighSyntax
 
 -- The purpose of this file is
 -- to include instances of this record.
 -- It includes just a single function, erase, which
--- will translate from high grammar to simple grammar.
+-- will translate from high syntax to simple syntax.
 
 -- The second element of the record can safely be
 -- ignored -- it only exists because of a bug in Agda.

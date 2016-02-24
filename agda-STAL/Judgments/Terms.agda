@@ -1,14 +1,14 @@
 module Judgments.Terms where
 
 open import Util
-open import Judgments.Grammar
+open import Judgments.Syntax
 open import Judgments.Types
 open import Judgments.Substitution
 open import Judgments.StackOperations
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is to define the typing
--- judgments for the high grammar.
+-- judgments for the high syntax.
 
 lookup-regs : Register → RegisterAssignment → Type
 lookup-regs ♯r (registerₐ sp regs) = lookup ♯r regs

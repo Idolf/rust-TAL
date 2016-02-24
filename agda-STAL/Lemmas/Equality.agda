@@ -2,12 +2,12 @@ module Lemmas.Equality where
 
 open import Util
 open import Judgments
-private module S = SimpleGrammar
-private module H = HighGrammar
+private module S = SimpleSyntax
+private module H = HighSyntax
 
 -- The purpose of this file is implement a
 -- ToTree instance to every element in the
--- grammar, since this causes them to also
+-- syntax, since this causes them to also
 -- implement DecEq.
 
 private

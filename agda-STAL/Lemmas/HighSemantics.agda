@@ -4,7 +4,7 @@ open import Util
 open import Judgments
 open import Lemmas.Equality using ()
 open import Lemmas.Substitution using (subst-unique-many ; _⟦_/_⟧many?)
-open HighGrammar
+open HighSyntax
 open HighSemantics
 
 -- The purpose of this file is to prove

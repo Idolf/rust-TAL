@@ -3,7 +3,7 @@ module Lemmas.MallocStep where
 open import Util
 open import Judgments
 open import Lemmas.Types using (≤-refl)
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is prove the step related
 -- to malloc.

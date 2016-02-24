@@ -10,7 +10,7 @@ open import Lemmas.HighSemantics
 open import Lemmas.TermCast
 open import Lemmas.TermValidType
 open import Lemmas.TermHeapCast using (register-heapcast ; hvals-heapcast)
-open HighGrammar
+open HighSyntax
 
 -- The purpose of this file is to prove that type-checking
 -- is decidable.

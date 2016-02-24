@@ -1,9 +1,9 @@
-module Judgments.CommonGrammar where
+module Judgments.CommonSyntax where
 
 open import Util
 
 -- This file introduces some definitions that are useful for
--- both the simple and high grammar.
+-- both the simple and high syntax.
 
 ♯regs : ℕ
 ♯regs = 4

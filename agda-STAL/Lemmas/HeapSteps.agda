@@ -6,7 +6,7 @@ open import Lemmas.Types
 open import Lemmas.TermValidType
 open import Lemmas.TermCast using (wval-cast)
 open import Lemmas.TermHeapCast using (regs-heapcast ; stack-heapcast ; hvals-heapcast)
-open HighGrammar
+open HighSyntax
 open HighSemantics
 
 -- The purpose of this file is prove the step related

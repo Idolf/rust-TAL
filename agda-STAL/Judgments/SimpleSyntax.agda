@@ -1,9 +1,9 @@
-module Judgments.SimpleGrammar where
+module Judgments.SimpleSyntax where
 
 open import Util
-open import Judgments.CommonGrammar public
+open import Judgments.CommonSyntax public
 
--- The purpose of this file is to define the simple grammar.
+-- The purpose of this file is to define the simple syntax.
 
 -- Word value, w
 data WordValueₛ : Set where
