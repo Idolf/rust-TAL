@@ -1,7 +1,7 @@
 \chapter{Erasure Semantics}
 \label{chap:erasure}
 
-In Types and Programming\cite{typesandprog} erasure is defined as the following
+In Types and Programming Languages\cite{typesandprog} erasure is defined as the following
 property between a typed language and an untyped version of the same language:
 
 \begin{itemize}
@@ -13,8 +13,8 @@ property between a typed language and an untyped version of the same language:
   such that $t -> t'$ and $\erase(t') = m'$.
 \end{itemize}
 
-Unfortunately this is not quite true. Instead we will define an $\erase$ function
-such that the following holds:
+Unfortunately this property does not quite hold in our case. Instead we will
+define an $\erase$ function such that the following holds:
 
 \begin{itemize}
 \item If we have $\steps{\high P}{\high P'}$ in \ATAL, then we have
@@ -175,8 +175,8 @@ Finally, the core lemma of our proof:
 \end{lemma}
 \begin{proof}
   We will only do a sketch a few of the cases, as the actual proof depends on
-  many lemmas and has many cases. In the body of this proof we will write
-  $x^{\mathrm{e}}$ as shorthand for $\erase(x)$.
+  many lemmas and has many cases. In the body of this particular proof we will
+  write $x^{\mathrm{e}}$ as shorthand for $\erase(x)$, as some lines would be
 
   Let $\mathcal{S}$ be our derivation of
   $\execis{\high G}{\high H, \high R, \high I}{\high I', \high R', \high
@@ -222,7 +222,7 @@ Finally, the core lemma of our proof:
 
   \begin{mathpar}
     \infer{
-      \stackrel{\mathcal{E}_0}{\text{$\ell_{\mathrm{h}}$ is a fresh variable}} \and
+      \stackrel{\mathcal{E}_0}{\ell_{\mathrm{h}} \notin \mathbf{dom}(\high H)} \and
       \stackrel{\mathcal{E}_1}{\high h = \mathtt{tuple}\ \langle \tau_1, \dots, \tau_n \rangle\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n}
     }{
       \execis{\high G}
@@ -231,14 +231,15 @@ Finally, the core lemma of our proof:
     }
   \end{mathpar}
 
-  By applying a lemmas on $\mathcal{E}_1$ we get a derivation $\mathcal{E}_1'$
-  of
+  By applying a lemmas on $\mathcal{E}_0, \mathcal{E}_1$ we get a derivation
+  $\mathcal{E}_0', \mathcal{E}_1'$ of
+  $\ell_{\mathrm{h}} \notin \mathbf{dom}(\high H^{\mathrm{e}})$ and
   $\high h^{\mathrm{e}} = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots,
-    \mathtt{uninit} \rangle}^n$. From this we can construct a derivation:
+    \mathtt{uninit} \rangle}^n$ respectively. From this we can construct a derivation:
 
   \begin{mathpar}
     \infer{
-      \stackrel{\mathcal{E}_0}{\text{$\ell_{\mathrm{h}}$ is a fresh variable}} \and
+      \stackrel{\mathcal{E}_0}{\ell_{\mathrm{h}} \notin \mathbf{dom}(\high H^{\mathrm{e}})} \and
       \stackrel{\mathcal{E}_1'}{\high h^{\mathrm{e}} = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n}
     }{
       \execis{\high G^{\mathrm{e}}}

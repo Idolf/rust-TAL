@@ -4,10 +4,10 @@
 \section{The security ecosystem}
 You would be hard pressed to find more than a handful of system on the internet
 that has never contained a vulnerability. Many computers are even vulnerable to
-known remote exploits for months or years at a time. As a result a large
+known remote exploits for months or years at a time. As a result, a large
 percentage of the computers on the internet are infected by some form of
-malware. To try to combat these and similar problems, we have developed a number
-of tools.
+malware. To try to combat these and similar problems, a number of tools have
+been developed.
 
 \begin{itemize}
 \item Anti-virus software and intrusion detection systems try to catch malicious
@@ -15,13 +15,13 @@ of tools.
   the behaviors of the programs running on a machine.
 \item It is possible to use code-signing certificates and public-key
   infrastructure to prove that a program was written by a verified third-party.
-\item Sandboxes and virtual machines two examples of systems that try to limit
-  what a program is \emph{able} to do at run-time. They do this by limiting the
-  actions available to programs, for instance for not exposing dangerous
-  APIs. Other examples from this category are POSIX user permissions, memory
-  protections and firewalls. We will collectively refer to these and similar
-  approaches as ``run-time protections''.  \footnote{ While anti-virus and
-    code-signing certificates principally belong to the category of run-time
+\item Sandboxes and virtual machines are two examples of systems that try to
+  limit what a program is \emph{able} to do at run-time. They do this by
+  limiting the actions available to programs, for instance by not exposing
+  dangerous APIs. Other examples from this category are POSIX user permissions,
+  memory protections and firewalls. We will collectively refer to these and
+  similar approaches as ``run-time protections''.  \footnote{ While anti-virus
+    and code-signing certificates principally belong to the category of run-time
     protections, they are sufficiently different from most other such
     protections that they deserve their own point.  }
 \item Static analysis, fuzzing and type systems try to detect vulnerabilities in
@@ -32,44 +32,73 @@ of tools.
   ``compile-time protections''.
 \end{itemize}
 
-Note, that while all of these are valuable tools in the current security
-industry, none of them are perfect -- many are specifically designed to increase
-the cost of attacks as much as possible, not preventing them altogether.
+\subsection{Trusted Computing Base}
+A common concept among all protections is the Trusted Computing Base
+  (TCB). The TCB is typically defined as the collection of software, hardware,
+firmware, etc. that needs to be correct for a given protection to work. We have
+two avenues for improving a TCB: We can reduce our assumptions by having fewer
+or simpler components. Alternatively we might depend on multiple solutions,
+where more than one failure is required to compromise the system. We call both
+improvement a \emph{reduction} of the TCB, as both approaches will reduce the
+requirements for the system to be correct.
 
-Anti-virus software is inherently limited by Rice's Theorem. This theorem
-implies, that any attempt to classify programs as good or bad will have either
-false positives (good programs classified as bad) or false negatives (bad
-programs classified as good). In practice most real-world implementations have
-both. In addition, anti-virus software is often so low quality that they are
-effectively increasing the potential attack surface instead of decreasing
-it.\todo{Insert citation}
+As an example, consider a sandbox-solution. For this solution to be secure, we
+require the sandbox, operating system and CPU to all be implemented
+correctly. If we instead ran the program on a hypervisor, we would instead
+require a correct hypervisor and CPU. If the hypervisor is simpler than the OS
+and sandbox combined, then we have reduced our TCB.
+
+An obvious extension would be to allow proofs as part of our TCB. If we for
+instance proved a program bug-free, then our TCB might be the CPU, operating
+system and the proof itself. We include the proof, as it might not be
+correct. The proof could employ a carefully hidden logical fallacy somewhere, it
+might not model the CPU correctly -- or perhaps it did not imply the security
+properties we thought it did. We could try to reduce this TCB by encoding our
+proof in a proof engine. In this case any logical fallacy would \emph{also} need
+to exploit a bug in the proof engine -- and the proof engine might have been
+examined more carefully than the proof itself.
+
+\subsection{Weaknesses of protections}
+The above mentioned classes of protections are all valuable in the current
+security ecosystem, however none of them are perfect. Most have very large TCBs
+or can only be applied to specific use-cases. Additionally some of them are not
+designed to \emph{prevent} attacks altogether, only to increase the cost of
+doing them.
+
+Anti-virus software is inherently limited by Rice's Theorem.\footnote{TODO:
+  Rice's Theorem more generally states that: ... For an introduction see ...}
+This theorem implies that any attempt to classify programs as good or bad will
+have either false positives (good programs classified as bad) or false negatives
+(bad programs classified as good). In practice most real-world implementations
+have both. In addition there have been multiple examples of anti-virus software
+decreasing security instead of increasing it.\footnote{TODO: Insert reference to
+  project-zero lulz.}
 
 The core idea of code-signing is to include a certificate with any distributed
 programs. This certificate will prove that the program have been written by a
 real-world entity verified by a trusted third-party using a public key
-infrastructure (PKI). The purpose is to effectively increase the price of
-running malicious programs on other people's machines; ideally the only attack
-available would be to create a fake real-world identity (expensive!) and use it
-to buy a code-signing certificate. However in practice there are multiple other
-avenues available: One could steal a valid certificate, exploit another
-vulnerable (but signed) program or try to bypass the validation check
-altogether.
+infrastructure (PKI). The purpose is to effectively increase the price of doing
+an attack; ideally the only attack available would be to create a fake
+real-world identity (expensive!) and use it to buy a code-signing
+certificate. However in practice there are multiple other avenues available: One
+could steal a valid certificate, exploit another vulnerable (but signed) program
+or try to bypass the validation check altogether.
 
 Run-time protections have a long history in computer science, and could arguably
 be said to have had the biggest practical impact so far. One reason for their
-effectiveness, is that it is often possible to deploy many unrelated protections
-in parallel (a technique sometimes referred to as ``Defense in Depth''). It is
-for instance uncommon to see end-user machines without at least memory
-protections, file permissions and sandboxes for the most exposed
-applications. Another reason is that this system is not (directly) limited by
-Rice's Theorem.\footnote{Many implementations \emph{would} be limited by Rice's
-  Theorem, but that is not an inherent property of run-time protections. For
-  instance if one simply wanted to stop a system from ``firing the missiles'',
-  then one could cut the wire to the missile system.} It is for instance
-theoretically possible to design system where any potentially malicious actions
-must be approved by a user before execution -- however such a system would not
-be practical. In general one has to balance security with other priorities such
-as performance, usability and ease of development.
+effectiveness, is that they often allow many parallel protections (a technique
+sometimes referred to as ``Defense in Depth''). It is for instance common to see
+end-user machines both memory protections, file permissions and sandboxes for
+the most exposed applications among its protections. Another reason is that this
+system is not (directly) limited by Rice's Theorem.\footnote{Many potential
+  implementations \emph{would} be limited by Rice's Theorem, but that is not an
+  inherent property of run-time protections. For instance if one simply wanted
+  to stop a system from ``firing the missiles'', then one could cut the wire to
+  the missile system.} One ``perfect'' system would have the user approve any
+potentially malicious actions before execution -- however such a system would
+not be practical. This illustrates the biggest problem with run-time
+protections; one has to balance security with other priorities such as
+performance, usability and ease of development.
 
 Compile-time protections have also had huge influence in improving the quality
 of the code generated and distributed in the world, though it is harder to
@@ -86,14 +115,97 @@ negatives. A disadvantage is that, even though this approach \emph{is} effective
 at stopping problems, there is little possibility for users to \emph{verify}
 that this is the case.
 
-\paragraph{}
-This thesis discusses a technique known Typed Assembly Language (TAL). While
-this technique should probably be group with the run-time protections, it share
-properties with all four previously discussed protection-classes:
+\section{Typed Assembly Language}
+
+This thesis discusses a technique known Typed Assembly Language (TAL). It was
+first introduced in the paper ``From System F to Typed Assembly Language'' by
+Morrisett et al. The core idea of the paper is, that one can add types to binary
+programs. By distributing these types along with untrusted programs, one verify
+certain properties about the programs, and we can use this to build a
+sandbox-like system.
+
+While the paper introduced a specific instance of TAL for a specific system, its
+core idea is not unique to that system. Most designs following this idea will
+use a procedure similar to this:
 
 \begin{itemize}
-\item TAL needs compile-time support to be useful. The compiler must to
-  type-check the source program and use these types when compiling the code.
+\item Start by choosing a subset of a real-world assembly language.
+
+\item Define a small-step semantics for this subset. A small-step semantics is a
+  model for how to execute programs in the chosen subset. Our model might for
+  instance state that a machine in state $p_1$ can transition to a machine in
+  state $p_2$ (by e.g. running a single instruction), in which case we would
+  write $p_1 -> p_2$. Furthermore this model will designate some states as valid
+  programs that are valid, finished programs. This allows us to partition
+  programs states into exactly one of these categories:
+
+  \begin{itemize}
+  \item \emph{Progressing} states are those that can transition to other states.
+  \item \emph{Halting} states are valid, finished states.
+  \item \emph{Stuck} states are all other states, i.e. states that can neither
+    transition to other states nor represent our valid, finished
+    computations. We will consider these states to be bad/error states.
+  \end{itemize}
+
+\item Define a type system for this subset. This is a way to designate e.g. that
+  a register holds integer instead of a pointer. The type system should have a
+  type-checker. A type-checker is a program that is given a program and its
+  types, and outputs whether the types are valid for that program.
+
+  This type-checker is not required to correctly check \emph{all} programs -- it
+  might reject too large programs, or programs with specific properties. If a
+  perfect type-checker exists, i.e. one that can correctly checks all programs,
+  then we say that the type system is \emph{decidable}.
+
+\item Prove that this type-system is \emph{sound}. This means that if $p_1$ is
+  well-typed and if $p_1 -> \dots -> p_2$, then $p_2$ is not stuck.
+\end{itemize}
+
+The small-step semantics does not need to model the real-world perfectly. In
+fact it can simplify quite a bit, as long as it agrees with the real-world
+on some important points:
+
+\begin{itemize}
+\item If our model states that $p$ can transition to one of $p_1, \dots, p_n$
+  (with $n \geq 1$), then an equivalent real-world machine should ideally do the
+  same. We would want real-world equivalents of $p$ should transition to
+  real-world equivalents of one of $p_1, \dots, p_n$. If this is not possible
+  (for instance if the machine is out of memory), then the program \emph{must}
+  be aborted in a non-harmful way instead.
+\item If our model states that $p$ is halting, then the real world machine
+  must halt without error.
+\item If our model states that $p$ is stuck, then the real-world machine is
+  allowed to do anything.
+\item Our model should ideally be chosen such that the ``bad stuff'' is left
+  out. How one could hope to achieve this is discussed in \Cref{chap:safesound}.
+\end{itemize}
+
+If we create a TAL using this procedure, we can create our sandbox primitive as
+follows:
+
+\begin{enumerate}
+\item Receive a program $p$.
+\item Run the type-checker on $p$.
+\item If the type-checker outputs false, then abort.
+\item Compile or otherwise transform $p$ from a program in our model to a
+  program for the real-world machine. This will at least include erasing the
+  types.
+\item Run the transformed program without direct performance loss.
+\end{enumerate}
+
+If our soundness-proof and type-checker are correct and our model is valid, then
+this sandbox is safe, and its TCB is potentially very small: It only needs a
+correct model, soundness proof and type-checker. In practice the model will to
+some extent depend on a run-time, so this run-time will also be a part of the
+TCB.
+
+We could try to evaluate this sandbox construction in the context of the
+previous sections. If we do so, we see that it shares properties with all four
+of the mentioned protection categories:
+
+\begin{itemize}
+\item TAL needs compile-time support to be useful. The compiler must type-check
+  the source program and use these types when compiling the code.
 
 \item The compiler uses the types to output a ``certificate'' along with the
   code. This certificate proves the program to be non-malicious. A difference is
@@ -114,79 +226,24 @@ properties with all four previously discussed protection-classes:
   does not matter to an end-user.
 \end{itemize}
 
-\section{Typed Assembly Language}
-
-Typed Assembly Language was introduced in the paper ``From System F to Typed
-Assembly Language'' by Morrisett et al. The procedure set forth by this
-technique is as follows:
-
-\begin{itemize}
-\item Start by choosing a subset of a real-world assembly language.
-
-\item Define a small-step semantics for this subset. A small-step semantics is a
-  model for how to execute programs in the subset. For instance if our model
-  states that a machine in state $p_1$ can transition to a machine in state
-  $p_2$, then we would write $p_1 -> p_2$ in which case we say that $p_1$ is
-  \emph{progressing}. Furthermore this model will designate some states as
-  \emph{halting} states, i.e. states that will halt immediately without
-  error. If a program is neither progressing nor halting, then we say that it is
-  \emph{stuck} and we considered that an error.
-
-\item Define a type system for this subset. This type system should have a
-  type-checker, i.e. a program that outputs true for well-typed programs and
-  false for programs with type errors. The program is allowed to report some
-  valid programs as invalid, but ideally it should not. If such a perfect
-  type-checker exists, we say that the type system is \emph{decidable}.
-
-\item Prove that this type-system is \emph{sound}. This means that is $p_1$ is
-  well-typed and $p_1 -> \dots -> p_2$, then $p_2$ is not stuck.
-\end{itemize}
-
-It is okay for our small-step semantics to be a simplification of the real
-machine, as long as it agrees with the real-world on some important
-points:
-\begin{itemize}
-\item If our model states that $p$ can transition to one of $p_1, \dots, p_n$
-  (with $n \geq 1$), then the real-world machine should ideally transition to
-  one of these states too. If it cannot do this (for instance if it is out of
-  memory), then it must instead abort the program in a non-harmful way.
-\item If our model states that $p$ is halting, then the real world machine
-  must halt without error.
-\item If our model states that $p$ is stuck, then the real-world machine is
-  allowed to do anything.
-\item Our model should ideally be chosen such that the ``bad stuff'' is left
-  out. How one could hope to achieve this is discussed in \Cref{chap:safesound}.
-\end{itemize}
-
-We can now implement the sandbox as follows:
-
-\begin{enumerate}
-\item Receive a program $p$.
-\item Run the type-checker on $p$.
-\item If the type-checker outputs true, then run $p$.
-\end{enumerate}
-
-If our soundness-proof and type-checker are correct and our model is valid, then
-this is safe.
-
 \section{The Goal of the Thesis}
 \label{sec:goal}
 
 The goal of this thesis is ultimately how to design a secure sandbox primitive
 based on Typed Assembly Language with specific focus on how to minimize the
-Trusted Computing Base. This minimization takes two forms: By formalizing the
-meta-theory and by trying to simplify the components needed beyond this
-formalization. As a result most of the work revolves around proofs (particularly
-proof of soundness) how they can be mechanized.
+TCB. This minimization takes two forms: By formalizing the meta-theory and by
+trying to simplify the components needed beyond this formalization. As a result
+most of the work revolves around proofs (particularly proof of soundness) how
+they can be mechanized.
 
 This thesis is \emph{not} about:
 
 \begin{itemize}
 \item How to implement infrastructure for this system beyond the sandbox
   itself. In particular we will not discuss compiler implementations.
-\item How to reduce the Trusted Computing Base beyond reducing code size and
-  formalizing the metatheory. We will for example not talk about bugs in the
-  hardware or CPU specification.
+\item How to reduce the TCB beyond reducing code size and formalizing the
+  metatheory. We will for example not talk about bugs in the hardware or CPU
+  specification.
 \item Any form of detailed analysis of the performance characteristics of the
   system.  We will specifically not do any thorough analysis of the algorithmic
   complexity of any algorithms, though we might informally argue why we believe
@@ -200,22 +257,22 @@ The rest of this thesis is organized as follows:
 \textbf{\Cref{chap:lang}} formally defines a variant of STAL, which we will
 refer to as \ATAL (Agda-based TAL). \ATAL is mostly equivalent to STAL, however
 support for exceptions and existential types have been removed, and a few
-details have been simplified without loss of generality. While introducing
-\ATAL, we also introduce a simplified version of the same language,
-\ATALe. After introducing the languages, we will define small-step semantics for
-both languages. \textbf{\Cref{chap:erasure}} will prove that the two semantics
+details have been simplified. While introducing \ATAL, we also introduce a
+simplified version of the same language, \ATALe. After introducing the
+languages, we will define small-step semantics for both
+languages. \textbf{\Cref{chap:erasure}} will prove that the two semantics
 essentially equivalent. We do this by introducing the notion of erasure
 semantics and prove that the two semantics are related by
 it. \textbf{\Cref{chap:types}} introduces the type system for \ATAL and proves
 that it is sound. We will also prove that the type system is
 decidable. \textbf{\Cref{chap:safesound}} will discuss the issue of safety and
 how it relates to the proof of soundness. Specifically we will give a high-level
-sketch of how one could implement a platform with a small trusted computing base
-from the results in the previous chapters. \textbf{\Cref{chap:hindsight}} lists
-a few lessons lessons from working doing a project of this size in Agda. This
-includes both observations specific to implement a TAL-like language in Agda,
-but also a few more general tricks for making Agda easier to work with. It is
-mostly meant to be readable independently of the other
-chapters. \textbf{\Cref{chap:future}} discusses how the work could be extended
-and relates it to other work. Finally, \textbf{\Cref{chap:conclusion}} summaries
-my contributions and concludes.
+sketch of how one could implement a platform with a small TCB from the results
+in the previous chapters. \textbf{\Cref{chap:hindsight}} lists a few lessons
+lessons from doing a project of this size in Agda. This includes both
+observations specific to implement a TAL-like language in Agda, but also a few
+more general tricks for making Agda easier to work with. It is mostly meant to
+be readable independently of the other chapters. \textbf{\Cref{chap:future}}
+discusses how the work could be extended and relates it to other work. In
+particular the differences between STAL and \ATAL will be discussed. Finally,
+\textbf{\Cref{chap:conclusion}} summaries my contributions and concludes.
