@@ -41,7 +41,7 @@ private
     τ-refl : reflᵗ Type
     τ-refl (valid-α⁼ l) = α⁼-≤ l
     τ-refl valid-int = int-≤
-    τ-refl valid-ns = ns-≤
+    τ-refl valid-uninit = uninit-≤
     τ-refl (valid-∀ Γ⋆) = ∀-≤ (Γ-refl Γ⋆)
     τ-refl (valid-tuple τs⋆) = tuple-≤ (τs⁻-refl τs⋆)
 
@@ -76,7 +76,7 @@ private
     τ-trans : transᵗ Type
     τ-trans (α⁼-≤ l) (α⁼-≤ l') = α⁼-≤ l
     τ-trans int-≤ int-≤ = int-≤
-    τ-trans ns-≤ ns-≤ = ns-≤
+    τ-trans uninit-≤ uninit-≤ = uninit-≤
     τ-trans (∀-≤ Γ₂₁≤) (∀-≤ Γ₃₂≤) = ∀-≤ (Γ-trans Γ₃₂≤ Γ₂₁≤)
     τ-trans (tuple-≤ τs₁₂≤) (tuple-≤ τs₂₃≤) = tuple-≤ (τs⁻-trans τs₁₂≤ τs₂₃≤)
 
@@ -110,7 +110,7 @@ private
     τ-valid : validᵗ Type
     τ-valid (α⁼-≤ l) = valid-α⁼ l , valid-α⁼ l
     τ-valid int-≤ = valid-int , valid-int
-    τ-valid ns-≤ = valid-ns , valid-ns
+    τ-valid uninit-≤ = valid-uninit , valid-uninit
     τ-valid (∀-≤ Γ₂≤Γ₁) with Γ-valid Γ₂≤Γ₁
     ... | Γ₂⋆ , Γ₁⋆ = valid-∀ Γ₁⋆ , valid-∀ Γ₂⋆
     τ-valid (tuple-≤ τs⋆) with τs⁻-valid τs⋆
@@ -161,22 +161,22 @@ private
       where help : ∀ {Δ ι₁ ι₂} → Δ ⊢ α⁼ ι₁ ≤τ α⁼ ι₂ → ι₁ ≡ ι₂
             help (α⁼-≤ l) = refl
     Δ ⊢ α⁼ ι₁ ≤τ? int = no (λ ())
-    Δ ⊢ α⁼ ι₁ ≤τ? ns = no (λ ())
+    Δ ⊢ α⁼ ι₁ ≤τ? uninit = no (λ ())
     Δ ⊢ α⁼ ι₁ ≤τ? (∀[ Δ₂ ] Γ₂) = no (λ ())
     Δ ⊢ α⁼ ι₁ ≤τ? tuple τs₂ = no (λ ())
     Δ ⊢ int ≤τ? α⁼ ι₂ = no (λ ())
     Δ ⊢ int ≤τ? int = yes int-≤
-    Δ ⊢ int ≤τ? ns = no (λ ())
+    Δ ⊢ int ≤τ? uninit = no (λ ())
     Δ ⊢ int ≤τ? (∀[ Δ₂ ] Γ₂) = no (λ ())
     Δ ⊢ int ≤τ? tuple τs₂ = no (λ ())
-    Δ ⊢ ns ≤τ? α⁼ ι₂ = no (λ ())
-    Δ ⊢ ns ≤τ? int = no (λ ())
-    Δ ⊢ ns ≤τ? ns = yes ns-≤
-    Δ ⊢ ns ≤τ? (∀[ Δ₂ ] Γ₂) = no (λ ())
-    Δ ⊢ ns ≤τ? tuple τs₂ = no (λ ())
+    Δ ⊢ uninit ≤τ? α⁼ ι₂ = no (λ ())
+    Δ ⊢ uninit ≤τ? int = no (λ ())
+    Δ ⊢ uninit ≤τ? uninit = yes uninit-≤
+    Δ ⊢ uninit ≤τ? (∀[ Δ₂ ] Γ₂) = no (λ ())
+    Δ ⊢ uninit ≤τ? tuple τs₂ = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? α⁼ ι₂ = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? int = no (λ ())
-    Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? ns = no (λ ())
+    Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? uninit = no (λ ())
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? (∀[ Δ₂ ] Γ₂)
       with Δ₁ ≟ Δ₂ | Δ₁ ++ Δ ⊢ Γ₂ ≤Γ? Γ₁
     Δ ⊢ ∀[ Δ' ] Γ₁ ≤τ? (∀[ .Δ' ] Γ₂)
@@ -189,7 +189,7 @@ private
     Δ ⊢ ∀[ Δ₁ ] Γ₁ ≤τ? tuple τs₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? α⁼ ι₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? int = no (λ ())
-    Δ ⊢ tuple τs₁ ≤τ? ns = no (λ ())
+    Δ ⊢ tuple τs₁ ≤τ? uninit = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? ∀[ Δ₂ ] Γ₂ = no (λ ())
     Δ ⊢ tuple τs₁ ≤τ? tuple τs₂ with Δ ⊢ τs₁ ≤τs⁻? τs₂
     ... | yes τs₁≤τs₂ = yes (tuple-≤ τs₁≤τs₂)

@@ -147,9 +147,9 @@ step-progress' {I = sub ♯rd ♯rs v ~> I} I≢halt G⋆ H⋆ (of-register sp�
 
 step-progress' {ψ₁} {ψ₂} {sp} {Γ = registerₐ σ τs} {I = salloc n ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> of-salloc I⋆)
   = H⋆ / of-register (help n) regs⋆ / I⋆ / step-salloc
-    where help : ∀ n → ψ₁ , ψ₂ ⊢ replicate n uninit ++ sp of stack-append (replicate n ns) σ stack
+    where help : ∀ n → ψ₁ , ψ₂ ⊢ replicate n uninit ++ sp of stack-append (replicate n uninit) σ stack
           help 0 = sp⋆
-          help (suc n) = of-ns ∷ help n
+          help (suc n) = of-uninit ∷ help n
 
 step-progress' {I = sfree n ~> I} I≢halt G⋆ H⋆ (of-register sp⋆ regs⋆) (of-~> (of-sfree drop) I⋆)
   with help sp⋆ drop

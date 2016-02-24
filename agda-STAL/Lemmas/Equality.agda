@@ -15,27 +15,14 @@ private
     τ-from : Tree → Maybe Type
     τ-from (node 0 (ι ∷ _)) = α⁼ <$> fromTree ι
     τ-from (node 1 _) = just int
-    τ-from (node 2 _) = just ns
+    τ-from (node 2 _) = just uninit
     τ-from (node 3 (Δ ∷ Γ ∷ _)) = ∀[_]_ <$> Δ-from Δ <*> Γ-from Γ
     τ-from (node 4 τs) = tuple <$> τs-from τs
     τ-from _ = nothing
 
-    τ-sur : IsSurjective τ-from
-    τ-sur (α⁼ ι) = T₁ 0 ι , refl
-    τ-sur int = T₀ 1 , refl
-    τ-sur ns = T₀ 2 , refl
-    τ-sur (∀[ Δ ] Γ) = T₂ 3 (proj₁ (Δ-sur Δ)) (proj₁ (Γ-sur Γ)) ,
-      ∀[_]_ <$=> proj₂ (Δ-sur Δ) <*=> proj₂ (Γ-sur Γ)
-    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
-      tuple <$=> proj₂ (τs-sur τs)
-
     φ-from : Tree → Maybe InitializationFlag
     φ-from (node 0 _) = just init
     φ-from _ = just uninit
-
-    φ-sur : IsSurjective φ-from
-    φ-sur init = T₀ 0 , refl
-    φ-sur uninit = T₀ 1 , refl
 
     τs-from : List Tree → Maybe (List InitType)
     τs-from [] = just []
@@ -44,6 +31,47 @@ private
         <$> τ-from τ <*> φ-from φ <*> τs-from τs
     τs-from _ = nothing
 
+    σ-from : Tree → Maybe StackType
+    σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
+    σ-from (node 1 _) = just []
+    σ-from (node 2 (τ ∷ σ ∷ _)) = _∷_ <$> τ-from τ <*> σ-from σ
+    σ-from _ = nothing
+
+    Δ-from : Tree → Maybe TypeAssumptions
+    Δ-from (node 0 _) = just []
+    Δ-from (node 1 (a ∷ Δ ∷ _)) = _∷_ <$> a-from a <*> Δ-from Δ
+    Δ-from _ = nothing
+
+    a-from : Tree → Maybe TypeAssumptionValue
+    a-from (node 0 _) = just α
+    a-from (node 1 _) = just ρ
+    a-from _ = nothing
+
+    Γ-from : Tree → Maybe RegisterAssignment
+    Γ-from (node _ (sp ∷ regs)) =
+      registerₐ <$> σ-from sp <*> regs-from regs
+    Γ-from _ = nothing
+
+    regs-from : ∀ {m} → List Tree → Maybe (Vec Type m)
+    regs-from {zero}  []       = just []
+    regs-from {zero}  (τ ∷ τs) = nothing
+    regs-from {suc m} []       = nothing
+    regs-from {suc m} (τ ∷ τs) = _∷_ <$> τ-from τ <*> regs-from τs
+
+  mutual
+    τ-sur : IsSurjective τ-from
+    τ-sur (α⁼ ι) = T₁ 0 ι , refl
+    τ-sur int = T₀ 1 , refl
+    τ-sur uninit = T₀ 2 , refl
+    τ-sur (∀[ Δ ] Γ) = T₂ 3 (proj₁ (Δ-sur Δ)) (proj₁ (Γ-sur Γ)) ,
+      ∀[_]_ <$=> proj₂ (Δ-sur Δ) <*=> proj₂ (Γ-sur Γ)
+    τ-sur (tuple τs) = node 4 (proj₁ (τs-sur τs)) ,
+      tuple <$=> proj₂ (τs-sur τs)
+
+    φ-sur : IsSurjective φ-from
+    φ-sur init = T₀ 0 , refl
+    φ-sur uninit = T₀ 1 , refl
+
     τs-sur : IsSurjective τs-from
     τs-sur [] = [] , refl
     τs-sur ((τ , φ) ∷ τs) =
@@ -51,52 +79,25 @@ private
       (λ τ φ τs → (τ , φ) ∷ τs)
         <$=> proj₂ (τ-sur τ) <*=> proj₂ (φ-sur φ) <*=> proj₂ (τs-sur τs)
 
-    σ-from : Tree → Maybe StackType
-    σ-from (node 0 (ι ∷ _)) = ρ⁼ <$> fromTree ι
-    σ-from (node 1 _) = just []
-    σ-from (node 2 (τ ∷ σ ∷ _)) = _∷_ <$> τ-from τ <*> σ-from σ
-    σ-from _ = nothing
-
     σ-sur : IsSurjective σ-from
     σ-sur (ρ⁼ ι) = T₁ 0 ι , refl
     σ-sur [] = T₀ 1 , refl
     σ-sur (τ ∷ σ) = T₂ 2 (proj₁ (τ-sur τ)) (proj₁ (σ-sur σ)) ,
       _∷_ <$=> proj₂ (τ-sur τ) <*=> proj₂ (σ-sur σ)
 
-    Δ-from : Tree → Maybe TypeAssumptions
-    Δ-from (node 0 _) = just []
-    Δ-from (node 1 (a ∷ Δ ∷ _)) = _∷_ <$> a-from a <*> Δ-from Δ
-    Δ-from _ = nothing
-
     Δ-sur : IsSurjective Δ-from
     Δ-sur [] = T₀ 0 , refl
     Δ-sur (a ∷ Δ) = T₂ 1 (proj₁ (a-sur a)) (proj₁ (Δ-sur Δ)) ,
       _∷_ <$=> proj₂ (a-sur a) <*=> proj₂ (Δ-sur Δ)
 
-    a-from : Tree → Maybe TypeAssumptionValue
-    a-from (node 0 _) = just α
-    a-from (node 1 _) = just ρ
-    a-from _ = nothing
-
     a-sur : IsSurjective a-from
     a-sur α = T₀ 0 , refl
     a-sur ρ = T₀ 1 , refl
-
-    Γ-from : Tree → Maybe RegisterAssignment
-    Γ-from (node _ (sp ∷ regs)) =
-      registerₐ <$> σ-from sp <*> regs-from regs
-    Γ-from _ = nothing
 
     Γ-sur : IsSurjective Γ-from
     Γ-sur (registerₐ sp regs) =
       node 0 (proj₁ (σ-sur sp) ∷ proj₁ (regs-sur regs)) ,
       registerₐ <$=> proj₂ (σ-sur sp) <*=> proj₂ (regs-sur regs)
-
-    regs-from : ∀ {m} → List Tree → Maybe (Vec Type m)
-    regs-from {zero}  []       = just []
-    regs-from {zero}  (τ ∷ τs) = nothing
-    regs-from {suc m} []       = nothing
-    regs-from {suc m} (τ ∷ τs) = _∷_ <$> τ-from τ <*> regs-from τs
 
     regs-sur : ∀ {m} → IsSurjective (regs-from {m})
     regs-sur [] = [] , refl

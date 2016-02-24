@@ -67,14 +67,14 @@ private
   is-tuple : ∀ (τ : Type) → Dec (∃ λ τs⁻ → τ ≡ tuple τs⁻)
   is-tuple (α⁼ ι) = no (λ { (_ , ()) })
   is-tuple int = no (λ { (_ , ()) })
-  is-tuple ns = no (λ { (_ , ()) })
+  is-tuple uninit = no (λ { (_ , ()) })
   is-tuple (∀[ Δ ] Γ) = no (λ { (_ , ()) })
   is-tuple (tuple τs⁻) = yes (τs⁻ , refl)
 
   is-∀ : ∀ τ → Dec (∃₂ λ Δ Γ → τ ≡ ∀[ Δ ] Γ)
   is-∀ (α⁼ ι) = no (λ { (_ , _ , ()) })
   is-∀ int = no (λ { (_ , _ , ()) })
-  is-∀ ns = no (λ { (_ , _ , ()) })
+  is-∀ uninit = no (λ { (_ , _ , ()) })
   is-∀ (∀[ Δ ] Γ) = yes (Δ , Γ , refl)
   is-∀ (tuple τs) = no (λ { (_ , _ , ()) })
 
@@ -135,7 +135,7 @@ private
   ... | no ¬v⋆ = no (λ { (_ , of-Λ v⋆ θs⋆ subs-Γ) → ¬v⋆ (_ , v⋆) })
   ... | yes (α⁼ ι , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
   ... | yes (int , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
-  ... | yes (ns , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
+  ... | yes (uninit , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
   ... | yes (tuple τs , v⋆) = no (λ { (_ , of-Λ v⋆' θs⋆ subs-Γ) → vval-helper v⋆ v⋆' (λ ())})
   ... | yes (∀[ Δᵢ ] Γᵢ , v⋆)
     with instantiations-dec {Δₒ ++ Δ} θs Δᵢ
@@ -330,7 +330,7 @@ private
   ... | no ¬v⋆ = no (λ { (of-jmp v⋆ Γ≤Γ') → ¬v⋆ (_ , v⋆)})
   ... | yes (α⁼ ι , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
   ... | yes (int , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
-  ... | yes (ns , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
+  ... | yes (uninit , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
   ... | yes (tuple x , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
   ... | yes (∀[ a ∷ Δ' ] Γ' , v⋆) = no (λ { (of-jmp v⋆' Γ≤Γ') → vval-helper v⋆ v⋆' (λ ()) })
   ... | yes (∀[ [] ] Γ' , v⋆)
@@ -349,7 +349,7 @@ private
   gval-dec : ∀ {ψ₁} g τ → Dec (ψ₁ ⊢ g of τ gval)
   gval-dec (code[ Δ ] Γ ∙ I) (α⁼ ι) = no (λ ())
   gval-dec (code[ Δ ] Γ ∙ I) int = no (λ ())
-  gval-dec (code[ Δ ] Γ ∙ I) ns = no (λ ())
+  gval-dec (code[ Δ ] Γ ∙ I) uninit = no (λ ())
   gval-dec (code[ Δ₁ ] Γ₁ ∙ I) (∀[ Δ₂ ] Γ₂)
     with Δ₁ ≟ Δ₂ | Γ₁ ≟ Γ₂
   ... | no Δ₁≢Δ₂ | _ = no (help Δ₁≢Δ₂)
@@ -431,18 +431,18 @@ private
                  ∃ λ φ →
                    (∀ {ψ₁ ψ₂ φ'} → ψ₁ , ψ₂ ⊢ w of τ , φ' wval⁰ → φ ≤φ φ' × ψ₁ , ψ₂ ⊢ w of τ , φ wval⁰)
   wval⁰-best w τ
-    with w ≟ uninit | τ ≟ ns
-  wval⁰-best .uninit .ns
-      | yes refl | yes refl = init , (λ _ → φ-≤-init , of-init of-ns)
+    with w ≟ uninit | τ ≟ uninit
+  wval⁰-best .uninit .uninit
+      | yes refl | yes refl = init , (λ _ → φ-≤-init , of-init of-uninit)
   wval⁰-best .uninit τ
-      | yes refl | no τ≢ns = uninit , help τ≢ns
+      | yes refl | no τ≢uninit = uninit , help τ≢uninit
       where help : ∀ {ψ₁ ψ₂ φ' τ} →
-                     τ ≢ ns →
+                     τ ≢ uninit →
                      ψ₁ , ψ₂ ⊢ uninit of τ , φ' wval⁰ →
                      uninit ≤φ φ' × ψ₁ , ψ₂ ⊢ uninit of τ , uninit wval⁰
-            help τ≢ns (of-uninit τ⋆) = φ-≤-uninit , of-uninit τ⋆
-            help τ≢ns (of-init of-ns)
-              with τ≢ns refl
+            help τ≢uninit (of-uninit τ⋆) = φ-≤-uninit , of-uninit τ⋆
+            help τ≢uninit (of-init of-uninit)
+              with τ≢uninit refl
             ... | ()
   wval⁰-best w τ
       | no w≢uninit | _ = init , help w≢uninit
@@ -546,7 +546,7 @@ private
           help τ' (of-heapval l' τ≤τ')
             rewrite ↓-unique l' l = τ≤τ'
   wval-best (int n) = inj₂ (_ , of-int , (λ { .int of-int → int-≤ }))
-  wval-best uninit = inj₂ (_ , of-ns , (λ { .ns of-ns → ns-≤ }))
+  wval-best uninit = inj₂ (_ , of-uninit , (λ { .uninit of-uninit → uninit-≤ }))
   wval-best {ψ₁} {ψ₂} (Λ Δ₂ ∙ w ⟦ θs ⟧)
     with wval-best w
   ... | inj₁ ¬w⋆ = inj₁ (λ { (_ , of-Λ w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) → ¬w⋆ (_ , w⋆) })
@@ -640,7 +640,7 @@ private
   hval-dec : ∀ {ψ₁} {ψ₂} h τ → Dec (ψ₁ , ψ₂ ⊢ h of τ hval)
   hval-dec (tuple τs ws) (α⁼ ι) = no (λ ())
   hval-dec (tuple τs ws) int = no (λ ())
-  hval-dec (tuple τs ws) ns = no (λ ())
+  hval-dec (tuple τs ws) uninit = no (λ ())
   hval-dec (tuple τs ws) (∀[ Δ ] Γ) = no (λ ())
   hval-dec (tuple τs ws) (tuple τs⁻)
     with AllZip-dec (λ { τ (τ' , φ) → τ ≟ τ' }) τs τs⁻

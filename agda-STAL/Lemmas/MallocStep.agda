@@ -15,7 +15,7 @@ private
   wval-++ (of-globval l lookup≤τ) = of-globval l lookup≤τ
   wval-++ {ψ₂⁺ = ψ₂⁺} (of-heapval l lookup≤τ) = of-heapval (↓-add-right ψ₂⁺ l) lookup≤τ
   wval-++ of-int = of-int
-  wval-++ of-ns = of-ns
+  wval-++ of-uninit = of-uninit
   wval-++ (of-Λ w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-++ w⋆) θs⋆ subs-Γ Γ₃≤Γ₂
 
   wval⁰-++ : ∀ {ψ₁ ψ₂ ψ₂⁺ w τ⁻} →

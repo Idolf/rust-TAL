@@ -38,7 +38,7 @@ private
     ... | yes pos≤ι = α⁼ (inc + ι)
     ... | no pos≰ι = α⁼ ι
     weaken-τ pos inc int = int
-    weaken-τ pos inc ns = ns
+    weaken-τ pos inc uninit = uninit
     weaken-τ pos inc (∀[ Δ ] Γ) = ∀[ Δ ] (weaken-Γ (length Δ + pos) inc Γ)
     weaken-τ pos inc (tuple τs⁻) = tuple (weaken-τs⁻ pos inc τs⁻)
 
@@ -89,10 +89,10 @@ mutual
       -------------------
       int ⟦ θ / ι ⟧τ≡ int
 
-    subst-ns :
+    subst-uninit :
            ∀ {θ ι} →
-      -----------------
-      ns ⟦ θ / ι ⟧τ≡ ns
+      -------------------------
+      uninit ⟦ θ / ι ⟧τ≡ uninit
 
     subst-∀ :
               ∀ {Δ Γ Γ' θ ι} →

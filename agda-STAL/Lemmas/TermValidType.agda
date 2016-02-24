@@ -25,7 +25,7 @@ wval-valid-type : ∀ {ψ₁ ψ₂ w τ} →
 wval-valid-type (of-globval l lookup≤τ) = ≤-valid₂ lookup≤τ
 wval-valid-type (of-heapval l lookup≤τ) = ≤-valid₂ lookup≤τ
 wval-valid-type of-int = valid-int
-wval-valid-type of-ns = valid-ns
+wval-valid-type of-uninit = valid-uninit
 wval-valid-type (of-Λ {Δ₁ = Δ₁} {Δ₂} w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = valid-∀ (valid-++ (≤-valid₁ Γ₃≤Γ₂))
 
 wval⁰-valid-type : ∀ {ψ₁ ψ₂ w τ⁻} →

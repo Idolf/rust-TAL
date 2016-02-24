@@ -29,9 +29,9 @@ mutual
       ------------
       Δ ⊢ int Type
 
-    valid-ns :
-      ------------
-      Δ ⊢ ns Type
+    valid-uninit :
+      ---------------
+      Δ ⊢ uninit Type
 
     valid-∀ :
                  ∀ {Δ' Γ} →
@@ -95,9 +95,9 @@ mutual
       --------------
       Δ ⊢ int ≤τ int
 
-    ns-≤ :
-      ------------
-      Δ ⊢ ns ≤τ ns
+    uninit-≤ :
+      --------------------
+      Δ ⊢ uninit ≤τ uninit
 
     ∀-≤ :
             ∀ {Δ' Γ₁ Γ₂} →

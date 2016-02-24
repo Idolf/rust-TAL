@@ -150,7 +150,7 @@ private
       with 1+n≰n (Nat-≤-trans ι₂<len (Nat-≤-trans (m≤m+n (length Δ) ι₁) len+ι₁≤ι₂))
     ... | ()
     τ-weaken-outside-ctx ι inc valid-int = refl
-    τ-weaken-outside-ctx ι inc valid-ns = refl
+    τ-weaken-outside-ctx ι inc valid-uninit = refl
     τ-weaken-outside-ctx {Δ} ι inc {v = ∀[ Δ' ] Γ} (valid-∀ Γ⋆)
       with Γ-weaken-outside-ctx {Δ' ++ Δ} ι inc {Γ} Γ⋆
     ... | eq
@@ -216,7 +216,7 @@ private
     τ-subst-outside-ctx {Δ} {ι = ι} (valid-α⁼ l) =
       subst-α-< (Nat-≤-trans (↓-to-< l) (m≤m+n (length Δ) ι))
     τ-subst-outside-ctx valid-int = subst-int
-    τ-subst-outside-ctx valid-ns = subst-ns
+    τ-subst-outside-ctx valid-uninit = subst-uninit
     τ-subst-outside-ctx {Δ} {ι = ι} {∀[ Δ' ] Γ} (valid-∀ Γ⋆)
       with Γ-subst-outside-ctx {Δ' ++ Δ} {ι = ι} Γ⋆
     ... | sub-Γ
@@ -276,7 +276,7 @@ private
         ∎ where open Eq-Reasoning
     ... | eq rewrite eq = α⁼-≤ l'
     τ-subtype-weaken Δ₁ Δ₂ Δ₃ int-≤ = int-≤
-    τ-subtype-weaken Δ₁ Δ₂ Δ₃ ns-≤ = ns-≤
+    τ-subtype-weaken Δ₁ Δ₂ Δ₃ uninit-≤ = uninit-≤
     τ-subtype-weaken Δ₁ Δ₂ Δ₃ {∀[ Δ ] Γ} (∀-≤ Γ₁≤Γ₂)
       rewrite sym (List-++-assoc Δ Δ₁ Δ₃)
       with Γ-subtype-weaken (Δ ++ Δ₁) Δ₂ Δ₃ Γ₁≤Γ₂
@@ -359,7 +359,7 @@ private
             | m+n∸m≡n ι≥len
         = _ , _ , subst-α-> (s≤s ι≥len) , subst-α-> (s≤s ι≥len) , α⁼-≤ l'
     τ-subtype-subst-exists Δ₁ θ⋆ int-≤ = int , int , subst-int , subst-int , int-≤
-    τ-subtype-subst-exists Δ₁ θ⋆ ns-≤ = ns , ns , subst-ns , subst-ns , ns-≤
+    τ-subtype-subst-exists Δ₁ θ⋆ uninit-≤ = uninit , uninit , subst-uninit , subst-uninit , uninit-≤
     τ-subtype-subst-exists Δ₁ {Δ₂} {a} θ⋆ {∀[ Δ ] Γ} (∀-≤ Γ₂≤Γ₁)
       rewrite sym (List-++-assoc Δ Δ₁ (a ∷ Δ₂))
       with Γ-subtype-subst-exists (Δ ++ Δ₁) θ⋆ Γ₂≤Γ₁

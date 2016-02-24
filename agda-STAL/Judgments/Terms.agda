@@ -65,10 +65,10 @@ data _⊢_of_wval : GlobalLabelAssignment × HeapLabelAssignment →
     ---------------------------
     ψ₁ , ψ₂ ⊢ int n of int wval
 
-  of-ns :
-          ∀ {ψ₁ ψ₂} →
-    -----------------------
-    ψ₁ , ψ₂ ⊢ uninit of ns wval
+  of-uninit :
+               ∀ {ψ₁ ψ₂} →
+    -------------------------------
+    ψ₁ , ψ₂ ⊢ uninit of uninit wval
 
   of-Λ :
           ∀ {ψ₁ ψ₂ Δ₁ Δ₂ Γ₁ Γ₂ Γ₃ w θs} →
@@ -189,7 +189,7 @@ data _⊢_of_⇒_instruction : GlobalLabelAssignment × TypeAssumptions →
                        ∀ {ψ₁ Δ sp regs n} →
     ---------------------------------------------------------------
     ψ₁ , Δ ⊢ salloc n of registerₐ sp regs ⇒
-      registerₐ (stack-append (replicate n ns) sp) regs instruction
+      registerₐ (stack-append (replicate n uninit) sp) regs instruction
 
   of-sfree :
                            ∀ {ψ₁ Δ sp sp' regs n} →

@@ -13,11 +13,11 @@ mutual
   -- Types, τ
   infix 7  ∀[_]_
   data Type : Set where
-    α⁼    : AssignmentIndex → Type
-    int   : Type
-    ns    : Type
-    ∀[_]_ : TypeAssumptions → RegisterAssignment → Type
-    tuple : List InitType → Type
+    α⁼     : AssignmentIndex → Type
+    int    : Type
+    uninit : Type
+    ∀[_]_  : TypeAssumptions → RegisterAssignment → Type
+    tuple  : List InitType → Type
 
   -- Initialization flags, φ
   data InitializationFlag : Set where

@@ -173,9 +173,9 @@ private
     = , , , subst-salloc , help n sub-σ , sub-τs , of-salloc
       where help : ∀ n {pos θ σ σ'} →
                      σ ⟦ θ / pos ⟧≡ σ' →
-                     stack-append (replicate n ns) σ ⟦ θ / pos ⟧≡ stack-append (replicate n ns) σ'
+                     stack-append (replicate n uninit) σ ⟦ θ / pos ⟧≡ stack-append (replicate n uninit) σ'
             help zero sub-σ = sub-σ
-            help (suc n) sub-σ = subst-ns ∷ help n sub-σ
+            help (suc n) sub-σ = subst-uninit ∷ help n sub-σ
 
   instruction-subst Δ₁ Δ₂ ψ₁⋆ θ⋆ sub-σ sub-τs {sfree n} (of-sfree drop)
     with subst-stack-drop drop sub-σ

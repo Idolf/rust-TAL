@@ -123,7 +123,7 @@ private
     ... | ()
     τ-subst-unique (subst-α-< ι₁<ι₂) (subst-α-< ι₁<ι₂') = refl
     τ-subst-unique subst-int subst-int = refl
-    τ-subst-unique subst-ns subst-ns = refl
+    τ-subst-unique subst-uninit subst-uninit = refl
     τ-subst-unique (subst-∀ sub-Γ₁) (subst-∀ sub-Γ₂)
       rewrite Γ-subst-unique sub-Γ₁ sub-Γ₂ = refl
     τ-subst-unique (subst-tuple sub-τs⁻₁) (subst-tuple sub-τs⁻₂)
@@ -195,7 +195,7 @@ private
             ; (._ , subst-α-< ι<ι) → 1+n≰n ι<ι })
     ... | tri> _ _ ι₁>ι₂ = yes (α⁼ (pred ι₁) , subst-α-> ι₁>ι₂)
     τ-subst-dec θ ι int = yes (int , subst-int)
-    τ-subst-dec θ ι ns = yes (ns , subst-ns)
+    τ-subst-dec θ ι uninit = yes (uninit , subst-uninit)
     τ-subst-dec θ ι (∀[ Δ ] Γ)
       with Γ-subst-dec θ (length Δ + ι) Γ
     ... | yes (Γ' , sub-Γ) = yes (∀[ Δ ] Γ' , subst-∀ sub-Γ)
@@ -295,7 +295,7 @@ private
       with pos₁≰ι (Nat-≤-trans pos₁≤pos₂ pos₂≤ι)
     ... | ()
     τ-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ int = refl
-    τ-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ ns = refl
+    τ-weaken-weaken inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ uninit = refl
     τ-weaken-weaken {pos₁} {pos₂} inc₁ inc₂ pos₁≤pos₂ pos₂≤pos₁+inc₁ (∀[ Δ ] Γ)
       with l+m≤l+n (length Δ) pos₂≤pos₁+inc₁
     ... | pos≤pos
@@ -401,7 +401,7 @@ private
       rewrite +-comm pos₁ inc
       = subst-α-< (l+m<l+n inc ι<pos₁)
     τ-weaken-subst inc pos₂≤pos₁ subst-int = subst-int
-    τ-weaken-subst inc pos₂≤pos₁ subst-ns = subst-ns
+    τ-weaken-subst inc pos₂≤pos₁ subst-uninit = subst-uninit
     τ-weaken-subst {pos₁} {pos₂} inc pos₂≤pos₁ {v₁ = ∀[ Δ ] Γ} (subst-∀ sub-Γ)
       with Γ-weaken-subst inc (l+m≤l+n (length Δ) pos₂≤pos₁) sub-Γ
     ... | sub-Γ'
@@ -476,7 +476,7 @@ private
     ... | yes pos₁≤ι = subst-α-> (s≤s (Nat-≤-trans pos₂≤inc+pos₁ (l+m≤l+n inc pos₁≤ι)))
     ... | no pos₁≰ι = subst-α-< (Nat-≤-trans (≰⇒> pos₁≰ι) pos₁≤pos₂)
     τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ int = subst-int
-    τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ ns = subst-ns
+    τ-subst-weaken inc pos₁≤pos₂ pos₂≤inc+pos₁ uninit = subst-uninit
     τ-subst-weaken {pos₁} {pos₂} inc pos₁≤pos₂ pos₂≤inc+pos₁ (∀[ Δ ] Γ)
       with begin
         length Δ + pos₂
@@ -587,7 +587,7 @@ private
     τ-subst-subst {pos₁} {pos₂} sub-θ (subst-α-< ι<pos) (subst-α-< ι<pos')
       = _ , subst-α-< (Nat-≤-trans ι<pos' (m≤m+n pos₁ pos₂)) , subst-α-< ι<pos'
     τ-subst-subst sub-θ subst-int subst-int = int , subst-int , subst-int
-    τ-subst-subst sub-θ subst-ns subst-ns = ns , subst-ns , subst-ns
+    τ-subst-subst sub-θ subst-uninit subst-uninit = uninit , subst-uninit , subst-uninit
     τ-subst-subst {pos₁} {pos₂} sub-θ {∀[ Δ ] Γ₁} (subst-∀ sub-Γ₁) (subst-∀ sub-Γ₁')
       with begin
         length Δ + suc (pos₁ + pos₂)

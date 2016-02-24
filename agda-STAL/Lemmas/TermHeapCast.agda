@@ -18,7 +18,7 @@ private
     with allzip-lookup₂ l ψ₂'≤ψ₂
   ... | τ' , l' , τ''≤τ' = of-heapval l' (≤-trans τ''≤τ' τ'≤τ)
   wval-heapcast ψ₂'≤ψ₂ of-int = of-int
-  wval-heapcast ψ₂'≤ψ₂ of-ns = of-ns
+  wval-heapcast ψ₂'≤ψ₂ of-uninit = of-uninit
   wval-heapcast ψ₂'≤ψ₂ (of-Λ w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) = of-Λ (wval-heapcast ψ₂'≤ψ₂ w⋆) θs⋆ subs-Γ Γ₃≤Γ₂
 
   wval⁰-heapcast : ∀ {ψ₁ ψ₂ ψ₂' w τ⁻} →

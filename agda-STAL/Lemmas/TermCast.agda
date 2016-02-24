@@ -113,9 +113,9 @@ private
                       (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
     = _ , of-salloc , Γ-≤ (stack-append-subtype (replicate-subtype n) sp₁≤sp₂) regs₁≤regs₂
     where replicate-subtype : ∀ {Δ} n →
-                                Δ ⊢ replicate n ns ≤ replicate n ns
+                                Δ ⊢ replicate n uninit ≤ replicate n uninit
           replicate-subtype zero = []
-          replicate-subtype (suc n) = ns-≤ ∷ replicate-subtype n
+          replicate-subtype (suc n) = uninit-≤ ∷ replicate-subtype n
   instruction-cast ψ₁⋆ {ι = sfree n} (of-sfree drop₁)
                       (Γ-≤ sp₁≤sp₂ regs₁≤regs₂)
     with stack-drop-subtype sp₁≤sp₂ drop₁
@@ -193,6 +193,6 @@ wval-cast : ∀ {ψ₁ ψ₂ w τ₁ τ₂} →
 wval-cast (of-globval l τ≤τ₁) τ₁≤τ₂ = of-globval l (≤-trans τ≤τ₁ τ₁≤τ₂)
 wval-cast (of-heapval l τ≤τ₁) τ₁≤τ₂ = of-heapval l (≤-trans τ≤τ₁ τ₁≤τ₂)
 wval-cast of-int int-≤ = of-int
-wval-cast of-ns ns-≤ = of-ns
+wval-cast of-uninit uninit-≤ = of-uninit
 wval-cast (of-Λ {Δ₂ = Δ₂} w⋆ θs⋆ subs-Γ Γ₃≤Γ₂) (∀-≤ Γ₄≤Γ₃)
   rewrite List-++-right-identity Δ₂ = of-Λ w⋆ θs⋆ subs-Γ (≤-trans Γ₄≤Γ₃ Γ₃≤Γ₂)
