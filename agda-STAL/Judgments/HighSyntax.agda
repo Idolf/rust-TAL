@@ -100,7 +100,7 @@ data Instructionₕ : Set where
   beq    : Register → SmallValueₕ → Instructionₕ
 
 -- I
-infixr 6 _~>_
+infixr 8 _~>_
 data InstructionSequenceₕ : Set where
   _~>_ : Instructionₕ → InstructionSequenceₕ → InstructionSequenceₕ
   jmp : SmallValueₕ → InstructionSequenceₕ

@@ -33,7 +33,7 @@ data Instructionₛ : Set where
   beq    : Register → SmallValueₛ → Instructionₛ
 
 -- I
-infixr 6 _~>_
+infixr 8 _~>_
 data InstructionSequenceₛ : Set where
   _~>_ : Instructionₛ → InstructionSequenceₛ → InstructionSequenceₛ
   jmp : SmallValueₛ → InstructionSequenceₛ

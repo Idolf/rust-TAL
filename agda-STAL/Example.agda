@@ -7,23 +7,24 @@ open HighSemantics
 infloop : GlobalValue
 infloop =
   code[ α ∷ α ∷ α ∷ α ∷ ρ ∷ [] ]
-    registerₐ (ρ⁼ 4) (α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ α⁼ 3 ∷ []) ∙
-    (jmp Λ [] ∙ globval 0 ⟦ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ ρ (ρ⁼ 4) ∷ [] ⟧)
+  registerₐ (ρ⁼ 4) (α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ α⁼ 3 ∷ []) ∙
+    jmp Λ [] ∙ globval 0 ⟦ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ ρ (ρ⁼ 4) ∷ [] ⟧
 
 addloop =
   code[ α ∷ α ∷ α ∷ ρ ∷ [] ]
-    registerₐ (ρ⁼ 3) (int ∷ α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ []) ∙
-    (add (# 0) (# 0) (int 1) ~> jmp Λ [] ∙ globval 1 ⟦ α (α⁼ 3) ∷ α (α⁼ 3) ∷ α (α⁼ 3) ∷ ρ (ρ⁼ 3) ∷ [] ⟧)
+  registerₐ (ρ⁼ 3) (int ∷ α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ []) ∙
+    add (# 0) (# 0) (int 1) ~>
+    jmp Λ [] ∙ globval 1 ⟦ α (α⁼ 3) ∷ α (α⁼ 3) ∷ α (α⁼ 3) ∷ ρ (ρ⁼ 3) ∷ [] ⟧
 
 fiboloop =
   code[ α ∷ α ∷ ρ ∷ [] ]
-    registerₐ (ρ⁼ 2) (int ∷ int ∷ α⁼ 0 ∷ α⁼ 1 ∷ []) ∙
-    (salloc 1 ~>
+  registerₐ (ρ⁼ 2) (int ∷ int ∷ α⁼ 0 ∷ α⁼ 1 ∷ []) ∙
+     salloc 1 ~>
      sst 0 (# 0) ~>
      add (# 0) (# 0) (reg (# 1)) ~>
      sld (# 1) 0 ~>
      sfree 1 ~>
-     jmp Λ [] ∙ globval 2 ⟦ α (α⁼ 2) ∷ α (α⁼ 2) ∷ ρ (ρ⁼ 2) ∷ [] ⟧)
+     jmp Λ [] ∙ globval 2 ⟦ α (α⁼ 2) ∷ α (α⁼ 2) ∷ ρ (ρ⁼ 2) ∷ [] ⟧
 
 myglobals : Globals
 myglobals = infloop ∷ addloop ∷ fiboloop ∷ []
