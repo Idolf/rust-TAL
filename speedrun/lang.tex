@@ -8,11 +8,11 @@ sandbox. We will do this by:
 
 \begin{itemize}
 \item Defining \ATAL and \ATALe in terms of their program states.
-\item The set of possible program states are defined in terms a Context-Free
-  Grammar in our Agda formalization. In our paper definition, we have chosen to
-  use some syntax that is not Context-Free for increased readability. As we
-  shall see, this is not a problem as there is a trivial correspondence between
-  the two presentations.
+\item The set of possible program states are defined in terms a syntax. In our
+  Agda formalization this syntax is specified by a collection of inductive data
+  types. In our paper definition, we have chosen to use some slightly more
+  advanced syntax for increased readability. As we shall see, this is not a
+  problem as there is a trivial correspondence between the two presentations.
 \item We will present a small-step semantics for the two languages and prove
   that they are related by the erasure property.
 \end{itemize}
@@ -20,323 +20,345 @@ sandbox. We will do this by:
 The full implications of and reasoning behind having two languages related by
 erasure will be discussed later. \Cref{chap:erasure} will discuss some of the
 issues along with the proof, while the full reasoning will not be apparent until
-\Cref{chap:safesound}. For now let us just state these two unbacked postulates
-over the alternative of using a single language:
+\Cref{chap:safesound}. For now we will simply postulate two advantages of this
+approach over the alternative of using a single:
 
 \begin{itemize}
 \item By having two languages we are mostly able to separate our type system
-  from our model simplification. This is advantageous for instance when
-  reasoning about the sandbox implementation.
+  from our model simplification. This would ideally make our presentation
+  easier, but it is also an advantage when reasoning about the sandbox
+  implementation.
 \item This separation also allows one to experiment with different type systems:
   As long as the type system is sound, decidable and has the erasure property,
-  then it should be able to use the same sandbox infrastructure.
+  then it should be able to use the same sandbox infrastructure. In fact the
+  same sandbox might have multiple type-checkers, if some features turn out to
+  be incompatible in the type system.
 \end{itemize}
 
 Before formally defining the languages, we will give an informal understanding
 of our model by comparing it to real-world CPUs.
 
-\section{Architecture and Evaluation Model}
+\section{Syntax for \ATALe}
 
-Most real-world CPUs use some kind of a von Neumann architecture. In its
-simplest form, you only need memory and registers each holding some number of
-machine words along with a procedure to fetch an instruction from memory, decode
-and execute it. This executing (optionally) changes the memory and registers,
-after which the process is repeated. We will refer to this model as the
-real-world model; even though many modern CPU-architectures are more complicated
-than this, the difference are for the most part not relevant to this discussion.
+Before introducing \ATAL, let us introduce \ATALe. It is both simpler and better
+captures the intended meaning of the language. The syntax for \ATALe is
+presented in \cref{fig:esyntax}. To understand this syntax, it is useful to
+compare it real-world CPUs.
 
-In the real-world model there are only two conceptual abstractions: Machine
-words are fixed-width integers and instructions are just decoded machine
-words. This simplicity makes it easier to implement and analyze CPU designs,
-however it makes hard to analyze programs for the platform.
+Most real-world CPUs use some kind of a von Neumann architecture. In (a
+simplified version of) the von Neumann architecture, you only have memory and
+registers each holding some number of machine words. Additionally you need a
+procedure to fetch, decode and execute the current instruction from memory by
+using a special-purpose register called the instruction pointer. This execution
+might change either memory or registers. To run the CPU simply, we repeats the
+execution procedure indefinitely.
 
-To support effective program analysis, both \ATAL and \ATALe deviates from this
-model in a number of ways. As \ATALe deviates the least, we will start by
-introducing it.
+In this architecture there are only two conceptual abstractions: Machine words
+are fixed-width integers and instructions are just decoded machine words. This
+simplicity makes it easier to implement and analyze CPU designs, however it
+makes hard to analyze programs.
 
-\subsection{Difference between \ATALe and the real-world model}
-
-In the real-world model machine words are simply fixed-size integers and these
-are used for multiple purposes. In \ATALe every machine word have been
-statically tagged with their intended usage. This tag is only relevant in our
-model and it not present in the real-world. While any machine word can still be
-copied or overwritten additional operations are only defined for some tags:
-
-\begin{itemize}
-\item Words tagged as numbers can be used for arithmetics.
-\item Words tagged as pointers can only be used to dereference memory. Depending
-  on the pointer, this dereference could be a read or a write.
-\item Words tagged as uninitialized does not have any additional operations.
-\end{itemize}
-
-Another difference is that instructions are no longer decoded machine
-words. Instead they are collected into pre-decoded basic blocks. A basic block
-is an immutable series of instructions that ends with an unconditional jump or a
-halt instruction.
-
-Memory is no longer a continuous array of machine words. Instead it has been
-split into three parts each with difference functions:
+As in the von Neumann architecture \ATALe consists of program states that can
+transition to each other. However these states are somewhat more complicated, as
+a number of new concepts are introduced. Machine words are in our model
+represented by \emph{word values}. These are not the simple fixed-width numbers
+from the von Neumann architecture, instead there are a number of different
+constructions distinguished by a tag. This tag is only present in our model;
+when translating to a real-world CPU, the tag will be discarded. All word values
+can be copied or overwritten, however other uses depend on the tag:
 
 \begin{itemize}
-\item The global values/globals is where code is stored. It is a collection of
-  basic blocks. The only operation supported by the global values is to fetch a
-  specific basic block.
-\item The heap is where long-lived mutable data lives. It is a collection of
-  tuples, where each tuple is a collection of machine words. It supports three
-  operations: allocating a new tuple of a given size along with reading/write a
-  machine word given a pointer to a tuple and a tuple-index. It does not support
-  deallocating tuples. This is an unfortunate part of our model, and we will in
-  \Cref{chap:safesound} discuss this problem including how to partially mitigate
-  it by using garbage collection.
-\item The stack is where short-lived mutable data lives. It is a collection of
-  machine words. It supports four operations: Adding a number of uninitialized
-  machine words to the top of the stack, deallocating a number of machine words
-  (no matter their tag) from the top of the stack, reading or writing a machine
-  words indexes by distance from the top of the stack.
+\item Words tagged with \texttt{int} are numbers and can be used for
+  arithmetic.
+\item Words tagged with \texttt{globval} are pointers to code. We can use these
+  pointers as destination for code branching.
+\item Words tagged with \texttt{heapval} are pointers to mutable data. We can
+  use these pointers to read or write data.
+\item Words tagged with \texttt{uninit} are uninitialized. They occur for
+  instance when allocating a new tuple or when allocating space on the
+  stack. They cannot be used for anything (besides being copied or overwritten).
 \end{itemize}
 
-The registers are still a collection of machine words with the exception of the
-special-purpose register \texttt{sp}. This register is no longer a machine word,
-but instead always points to the top of the stack.
+Another difference is that instructions are no longer machine words decoded at
+run-time. Instead they are pre-decoded and are organized into basic blocks. A
+basic block is an immutable series of instructions that ends with a \texttt{jmp}
+or \texttt{halt} instruction. It should be noted that we have included an
+instruction that is not typically encoded directly in the CPU, namely
+\texttt{malloc}. When translating to the real-world CPU, this will require
+assistance from a memory manager. Since we have not included a
+\texttt{free}-instruction, it will also require a garbage collector if we wish
+to avoid memory leaks.
 
-In addition to splitting memory, we will also restrict the possible values a
-pointer can take. A pointer can only point to the beginning of a heap-tuple or
-to the beginning of a basic block\footnote{On the surface this seems to disallow
-  some cases of code re-use, however it turns out to not be so much of a problem
-  in practice. If we wanted to refer to some point in the middle of a basic
-  block, then we could simply split it and insert an unconditional jump at the
-  end of the first block. We might even make this jump implicit to avoid wasting
-  space.}. Machine words cannot point to the stack; the only reference to the
-stack is \texttt{sp}.
+The \emph{global collection} is where we store immutable, global data. In our
+model there is only one type of global value: code organized into basic
+blocks. Our \texttt{global}-pointers will always point to the beginning of a
+global value. Initially this might seem restrictive, as it prevents some forms
+of code re-use, but it turns out to not be a problem in practice. If we wanted
+to refer to some point in the middle of a basic block, then we could simply
+split it and insert an unconditional jump at the end of the first block. We
+might even make this jump implicit to avoid wasting space.
 
-Finally the issue of memory organization have been abstracted away. It is no
-longer meaningful to talk about the ``location'' of values in memory. As an
-example the stack is neither below nor above the heap, it simply \emph{is}.  An
-indirect consequence of this is also that memory is effectively infinite in our
-model. This has some interesting consequences for the relation to the real-world
-model which we will discuss in \Cref{chap:safesound}. Until then we will ignore
-the issue by staying inside our models.
+\begin{figure}
+  {\footnotesize
+    \begin{tabular}{lrcl}
+      Variables: \\
+      \textit{global pointers} & $\ell_{\mathrm{g}}$ \\
+      \textit{heap pointers}   & $\ell_{\mathrm{h}}$ \\\\
 
-\subsection{Additional differences introduced by \ATAL}
+      Common definitions: \\
+      \textit{integer}            & $n$ & ::= & $0, 1, \dots$ \\
+      \textit{machine integers}   & $i$ & ::= & $0, 1, \dots, 2^{\mathrm{wordsize}}-1$ \\
+      \textit{registers}          & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
 
-The \ATAL model goes a step further by introducing a type system, which is used
-during the run-time. The fundamental concept is that of a \emph{type}. Some
-informal examples of types are ``integer'', ``basic block taking an integer as
-argument'' or ``tuple of two integers''. This type system includes the
-parametric polymorphism and subtyping. The only types that are allowed to be
-polymorphic is the types of basic blocks.
+      The syntax for \ATALe: \\
+      \textit{word values}        & $\simple w$ & ::= & $\mathtt{int}\ i \mid \mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{heapval}\ \ell_{\mathrm{h}} \mid \mathtt{uninit}$ \\
+      \textit{small values}       & $\simple v$ & ::= & $\mathtt{int}\ i \mid \mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{reg}\ r$ \\
+      \textit{global values}      & $\simple g$ & ::= & $\mathtt{code}\ \simple I$ \\
+      \textit{heap values}        & $\simple h$ & ::= & $\mathtt{tuple}\ \langle \simple w, \dots, \simple w \rangle$ \\
+      \textit{stacks}             & $\simple S$ & ::= & $\nil \mid \simple w :: \simple S$ \\\\
 
-In \ATAL all basic blocks and tuples have a type associated with them. This
-associated type is superficially similar to the tag added to machine words. The
-biggest difference is that the tags for machine words matter at run-time, while
-the associated types do not.
+      \textit{instructions} & $\simple \iota$ & ::= & $\mathtt{add}\ r, r, \simple v \mid \mathtt{sub}\ r, r, \simple v \mid$ \\
+                               &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
+                               &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
+                               &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
+                               &&& $\mathtt{malloc}\ r,\ n \mid $ \\
+                               &&& $\mathtt{mov}\ r, \simple v \mid \mathtt{beq}\ r, \simple v$ \\
+      \textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v \mid \mathtt{halt}$ \\\\
 
-Another change with \ATAL is that places where one could refer to a basic block
-(such as inside an instruction or word value), one can now \emph{additionally}
-add generalization and instantiation information to the value.
+      \textit{global collections} & $\simple G$ & ::= & $\{\ell_{\mathrm{g}} |-> \simple{g}, \dots, \ell_{\mathrm{g}} |-> \simple{g}\}$ \\
+      \textit{heap collections}   & $\simple H$ & ::= & $\{\ell_{\mathrm{h}} |-> \simple{h}, \dots, \ell_{\mathrm{h}} |-> \simple{h}\}$ \\
+      \textit{register files}     & $\simple R$ & ::= & $\{\mathtt{sp} |-> \simple{S}, \mathtt{r}_1 |-> \simple{w}, \dots, \mathtt{r}_{\mathrm{max}} |-> \simple{w}\}$ \\
+      \textit{program states} & $\simple P$ & ::= & $(\simple G, \simple H, \simple R, \simple I)$ \\\\
+    \end{tabular}
+  }
+  \caption{The syntax for \ATALe}
+  \label{fig:esyntax}
+\end{figure}
 
-\section{Grammar for \ATALe}
+We store long-lived, mutable data in the \emph{heap collection}; specifically
+our only type of heap value is a tuple of word values. Again we will only allow
+pointers to the beginning of objects, so \texttt{heapval}-pointers always point
+to an entire tuple. This will prevent some useful programs from being
+represented in our model. It should be possible to extend the model to allow
+this, however doing so is outside the scope of this thesis.
 
-Before introducing \ATAL, let us introduce \ATALe, as it is simpler and better
-captures the intended meaning of the language. The language itself is a set of
-states. In the Agda-implementation uses a context-free grammar for this, though
-the version presented here is strictly speaking not context free, as it uses
-dictionaries.
+The \emph{stack} is used for short-lived, mutable data. There can be no pointers
+to the stack; we only reference the stack directly through offsets from the top
+of the stack, which is saved in the register \texttt{sp}. Besides reading or
+writing through indexing of the stack, we have instructions for allocating and
+deallocating word values from the stack.
 
-{\footnotesize
-\begin{tabular}{lrcl}
-Variables: \\
-\textit{global pointers} & $\ell_{\mathrm{g}}$ \\
-\textit{heap pointers}   & $\ell_{\mathrm{h}}$ \\\\
+\emph{Small value} are arguments used as part of many instruction. These
+arguments can refer either to registers, constant integers or be code
+pointers. This allows us to write e.g.
+$\mathtt{add}\ r_a, r_b, \mathtt{reg}\ r_c$ and
+$\mathtt{add}\ r_a, r_b, \mathtt{int}\ i$. A small value can be thought of as a
+description of how to generate a particular word value when the code is
+executed.
 
-Common definitions: \\
-\textit{integer}            & $n,k$ & ::= & $0, 1, \dots$ \\
-\textit{machine integers}   & $i$   & ::= & $0, 1, \dots, 2^{\mathrm{wordsize}}-1$ \\
-\textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
+Finally we can state that \emph{program states} in \ATALe consists of a global
+collection, a heap collection, a register file and the current block. This is
+different from the von Neumann architecture, where states are simply some
+registers and some memory. While certainly more complicated, one could also
+argue that \ATALe is in a sense a specialization of the von Neumann
+architecture:
 
-The grammar for \ATALe: \\
-\textit{word values}        & $\simple w$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{heapval}\ \ell_{\mathrm{h}} \mid \mathtt{int}\ i \mid \mathtt{uninit}$ \\
-\textit{small values}       & $\simple v$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{reg}\ r \mid \mathtt{int}\ i$ \\
-\textit{global values}      & $\simple g$ & ::= & $\mathtt{code}\ \simple I$ \\
-\textit{global collections} & $\simple G$ & ::= & $\{\ell_{\mathrm{g}} |-> \simple{g}, \dots, \ell_{\mathrm{g}} |-> \simple{g}\}$ \\
-\textit{heap values}        & $\simple h$ & ::= & $\mathtt{tuple}\ \langle \simple w, \dots, \simple w \rangle$ \\
-\textit{heap collections}   & $\simple H$ & ::= & $\{\ell_{\mathrm{h}} |-> \simple{h}, \dots, \ell_{\mathrm{h}} |-> \simple{h}\}$ \\
-\textit{stacks}             & $\simple S$ & ::= & $\nil \mid \simple w :: \simple S$ \\
-\textit{register files}     & $\simple R$ & ::= & $\{\mathtt{sp} |-> \simple{S}, \mathtt{r}_1 |-> \simple{w}, \dots, \mathtt{r}_{\mathrm{max}} |-> \simple{w}\}$ \\\\
-
-\textit{instructions} & $\simple \iota$ & ::= & $\mathtt{add}\ r, r, \simple v \mid \mathtt{sub}\ r, r, \simple v \mid$ \\
-        &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
-        &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
-        &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
-        &&& $\mathtt{malloc}\ r,\ n \mid $ \\
-        &&& $\mathtt{mov}\ r, \simple v \mid \mathtt{beq}\ r, \simple v$ \\
-\textit{instruction sequences} & $\simple I$ & ::= & $\simple\iota ; \simple I \mid \mathtt{jmp}\ \simple v \mid \mathtt{halt}$ \\
-\textit{program states} & $\simple P$ & ::= & $(\simple G, \simple H, \simple R, \simple I)$ \\\\
-\end{tabular}
-}
-
-This definition follows fairly close to the information version we have already
-presented. The only new construction is that of a ``small value''. A small value
-is an argument to some instruction such as \texttt{add}. It allows one to write
-an immediate in the form of a reference to a basic block or
-number. Alternatively it allows one to specify a register which will be looked
-up at run-time. It does \emph{not} allow one to write heap values, as the exact
-value of heap values are not known at compile-time.
-
-Another interesting detail is the inclusion of a \texttt{malloc} instruction,
-which is typically not present in a real-world machine. This instruction is to
-be interpreted as a small group of instructions that always occurs together. On
-the real machine, this instruction would likely include branch to a subroutine
-in the TCB where malloc is implemented.
+\begin{itemize}
+\item Memory have been split up and specialized for different use-cases.
+\item A register have been dedicated to the stack. It will always point to the
+  top of the stack, and it is in fact the only reference to the stack.
+\item The instruction pointer have been similarly specialized. Instead of
+  pointer into memory, we hold a reference to the remainder of the current basic
+  block.
+\end{itemize}
 
 \subsection{Notes on the Agda implementation}
 
-There is only one major difference between this version and the one in
-\texttt{Judgments/SimpleGrammar.agda}, and that is the issue of the dictionaries
-and variables. In the presented version we simply assumed an infinite number of
-variables
-$\ell_{\mathrm{g},0}, \ell_{\mathrm{h},0}, \ell_{\mathrm{g},1}, \dots$, and
-created dictionaries using these variables as keys.
+Our Agda-version of this syntax is implemented in the
+\texttt{Judgments/SimpleSyntax.agda}, and it is very close to the above
+presentation. Most of the above syntax can be represented directly in Agda using
+inductive data types. The exception to this is that we have used dictionaries
+and variables drawn from an infinite, enumerable sets. Neither of these can be
+represented directly in Agda.
 
-This approach is not suitable in the Agda-version, as the Agda-version uses a
-context-free grammar. Instead we will assign these abstract variables to natural
-numbers. This means that we can use ordered lists instead of dictionaries, and
-ordered lists can be represented using a context-free grammar.
-
-For instance: The globals collection
+We solve these problems by representing the variables and registers using
+natural numbers. This means that we can use ordered lists instead of
+dictionaries, and ordered lists can be represented directly in Agda. The globals
+collection
 $\{\ell_{\mathrm{g},0} |-> g_{\mathrm{e},0}, \ell_{\mathrm{g},1} |->
-h_{\mathrm{e},1}\}$ could be represented in the Agda-code by the list
-$h_{\mathrm{e},0} :: h_{\mathrm{e},1} :: \mathtt{nil}$ in which case we would
-have $\ell_{\mathrm{g},0} = 0, \ell_{\mathrm{g},1} = 1$. The other valid choice
-would be $h_{\mathrm{e},1} :: h_{\mathrm{e},0} :: \mathtt{nil}$, but in this
-case we must have $\ell_{\mathrm{g},0} = 1, \ell_{\mathrm{g},1} = 0$.
+h_{\mathrm{e},1}\}$ could for instance be represented in the Agda-code by the
+list $h_{\mathrm{e},0} :: h_{\mathrm{e},1} :: \mathtt{nil}$ in which case we
+would have $\ell_{\mathrm{g},0} = 0, \ell_{\mathrm{g},1} = 1$. The other valid
+choice would be $h_{\mathrm{e},1} :: h_{\mathrm{e},0} :: \mathtt{nil}$, but in
+this case we must have $\ell_{\mathrm{g},0} = 1, \ell_{\mathrm{g},1} = 0$.
+
+This difference between the two versions is of no particular importance, and it
+exists mostly for readability and to conform with earlier papers (see
+\cref{sec:rel-stal}). There are however two interesting consequences of the
+differences:
+
+\begin{itemize}
+\item As we have seen, terms that are equal in our paper-notation might not be
+  equal in the Agda-representation (though the reverse direction holds). This
+  difference will have no real consequence of any of our results, but is worth
+  keeping in mind.
+\item Some of the lemmas proven in the Agda-code will be very hard to even state
+  when using the paper notation. This will be very noticeable when talking about
+  substitution in \ATAL. Luckily these lemmas are for the most part not
+  particularly interesting themselves; they are simply needed for other
+  results. We will bypass the issue by leaving out trivial lemmas and stating
+  the non-trivial ones in an informal fashion (while referring to the relevant
+  functions in Agda).
+\end{itemize}
 
 \subsection{Lemmas}
 
-At this point, we are already able to prove lemmas about our grammar. In the
-file \texttt{Lemmas/Equality.agda} we prove this and similar lemmas:
+At this point, we are already able to prove lemmas about our syntax. In the file
+\texttt{Lemmas/Equality.agda} we prove this:
 
-\begin{lemma} Given two program states $\simple{P}, \simple{P'}$ we can decide
-  whether we have $\simple P = \simple{P'}$ or $\simple P \neq \simple{P'}$.
+\begin{lemma}
+  Given two program states $\simple{P}, \simple{P'}$ we can decide whether we
+  have $\simple P = \simple{P'}$ or $\simple P \neq \simple{P'}$. Similar
+  statements hold for the other syntactic classes.
 \end{lemma}
 
 This lemma might seem trivial, and in a certain sense it is: It holds for all
-inductive data types. One could in principle just prove this by induction over
-the forms of $\simple P$ and $\simple{P'}$, however this turns out to give a
-quadratic number of cases in Agda. Our solution to this problem is to use an
-injective function to another data type. See \cref{sec:deceq} for more details.
+inductive data types. One could in principle prove this by induction over the
+forms of $\simple P$ and $\simple{P'}$, however this turns out to give a
+quadratic number of lines in Agda. Our solution to this problem involves using
+an injective function to another data type. See \cref{sec:deceq} for more
+details.
 
-\section{Grammar for \ATAL}
+\section{Syntax for \ATAL}
 
-The grammar for \ATAL is very similar. There are very few syntactic
-differences (besides the addition of the type system itself):
+The syntax for \ATAL is presented \cref{fig:syntax} and is very similar to that
+of \ATALe. The biggest addition is the type system which is present during the
+run-time. This type system includes the parametric polymorphism and subtyping.
 
-\begin{itemize}
-\item Global values have had a type added to them. This type is only added as
-  hint to the type-checker -- it is not actually used at run-time. This type is
-  added to specify which generics a basic block supports.
-\item Heap values have had a type added to them as well. These types only have
-  relevance for the \texttt{malloc} instruction -- and even then they do not
-  affect any other aspects of the run-time.
-\item Instantiations have been added to word values and small values. This
-  syntax is used to instantiate the type variables of a basic block.
-\item The \texttt{malloc} instruction no longer takes a number as the second
-  argument. Instead it takes a list of types.
-\end{itemize}
-
-{\footnotesize
-\begin{tabular}{lrcl}
-Variables: \\
-\textit{global pointers} & $\ell_{\mathrm{g}}$ \\
-\textit{heap pointers}   & $\ell_{\mathrm{h}}$ \\
-\textit{type variable}   & $\alpha$ \\
-\textit{stack variable}  & $\rho$ \\\\
-
-Common definitions: \\
-\textit{integer}            & $n,k$ & ::= & $0, 1, \dots$ \\
-\textit{machine integers}   & $i$   & ::= & $0, 1, \dots, 2^{\mathrm{wordsize}}-1$ \\
-\textit{registers}          & $r$   & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
-
-The type system for \ATAL: \\
-\textit{base types}               & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{ns} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
-\textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
-\textit{stack types}              & $\sigma$ & ::= & $\rho \mid \nil \mid \tau :: \sigma$ \\
-\textit{type assignments}         & $\Delta$ & ::= & $\nil \mid a :: \Delta$ \\
-\textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
-\textit{global label assignments} & $\Psi_{\mathrm{g}}$ & ::= & $\{\ell_{\mathrm{g}} |-> \tau, \dots, \ell_{\mathrm{g}} |-> \tau\}$ \\
-\textit{heap label assignmentss}  & $\Psi_{\mathrm{h}}$ & ::= & $\{\ell_{\mathrm{h}} |-> \tau, \dots, \ell_{\mathrm{h}} |-> \tau\}$ \\
-\textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau\}$ \\
-\textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\
-\textit{instantiations}           & $\Theta$ & ::= & $\theta :: \Theta \mid \nil$ \\\\
-
-The grammar for \ATAL itself: \\
-\textit{word values}              & $\high w$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{heapval}\ \ell_{\mathrm{h}} \mid \mathtt{int}\ i \mid \mathtt{uninit} \mid \Lambda\ \Delta \cdot \high{w}[\Theta]$ \\
-\textit{small values}             & $\high v$ & ::= & $\mathtt{globval}\ \ell_{\mathrm{g}} \mid \mathtt{reg}\ r \mid \mathtt{int}\ i \mid \Lambda\ \Delta \cdot \high{v}[\Theta]$ \\
-\textit{global values}            & $\high g$ & ::= & $\mathtt{code}[ \Delta ] \Gamma \cdot \high I$ \\
-\textit{global collections}       & $\high G$ & ::= & $\{\ell_{\mathrm{g}} |-> \high{g}, \dots, \ell_{\mathrm{g}} |-> \high{g}\}$ \\
-\textit{heap values}              & $\high h$ & ::= & $\mathtt{tuple}\ \langle \tau, \dots, \tau \rangle\ \langle \high w, \dots, \high w \rangle$ \\
-\textit{heap collections}         & $\high H$ & ::= & $\{\ell_{\mathrm{h}} |-> \high{h}, \dots, \ell_{\mathrm{h}} |-> \high{h}\}$ \\
-\textit{stacks}                   & $\high S$ & ::= & $\nil \mid \high w :: \high S$ \\
-\textit{register files}           & $\high R$ & ::= & $\{\mathtt{sp} |-> \high{S}, \mathtt{r}_1 |-> \high{w}, \dots, \mathtt{r}_{\mathrm{max}} |-> \high{w}\}$ \\\\
-
-\textit{instructions} & $\high\iota$ & ::= & $\mathtt{add}\ r, r, \high v \mid \mathtt{sub}\ r, r, \high v \mid$ \\
-        &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
-        &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
-        &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
-        &&& $\mathtt{malloc}\ r,\ \langle \tau, \dots, \tau \rangle \mid $ \\
-        &&& $\mathtt{mov}\ r, \high v \mid \mathtt{beq}\ r, \high v$ \\
-\textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v \mid \mathtt{halt}$ \\
-\textit{program states} & $\high P$ & ::= & $(\high G, \high H, \high R, \high I)$ \\
-\end{tabular}
-}
-
-The type system itself is somewhat complicated:
+\todo{Explain parametric polymorphism and subtyping.}
+\todo{Explain $\alpha$, $\rho$.}
 
 \begin{itemize}
-\item The base types are best thought of as the types of word values and small
-  values. It also reused for global values and heap values, though these only
-  use a subset of the possible types (specifically function types and tuple types).
-\item Type assignments are the assumptions used in types. They serve the same
-  purpose as generics in Java.
-\item Stack types are the type of stacks.
-\item Global label assignments are the types of global collections.
-\item Heap label assignments are the types of heap collections.
-\item Register assignments are the types of register files.
-\item An instantiation is an encoding of a substitution. This substitution can
+\item The \emph{base types} are best thought of as the types of word values and
+  small values. It also reused for global values and heap values, though these
+  only use a subset of the possible types (specifically function types and tuple
+  types). Some informal examples of types encodable in this system are ``an
+  integer'', ``a basic block taking an integer as argument'' or ``a tuple of two
+  integers''.
+\item \emph{Type assignments} are the assumptions used in types. They are used
+  for parametric polymorphism.
+\item \emph{Stack types} are the type of stacks.
+\item \emph{Global label assignments} are the types of global collections.
+\item \emph{Heap label assignments} are the types of heap collections.
+\item \emph{Register assignments} are the types of register files.
+\item An \emph{instantiation} is an encoding of a substitution. This substitution can
   be applied to an expression. For instance we will write $\tau[\theta]$ as
   substitution for base types and similar for other construction. As an example
   we have
   $(\langle \alpha_1, \alpha_2 \rangle)[\mathtt{int} / \alpha_1] = \langle
   \mathtt{int}, \alpha_2 \rangle$.
-\item Instantiations are simply a chain of instantiations. We will write
-  $\tau[\Theta]$ for running multiple substitutions.  For instance
-  $(\langle \alpha_1, \alpha_2 \rangle)[\mathtt{int} / \alpha_1 :: \mathtt{ns} /
-  \alpha_2 :: \nil] = \langle \mathtt{int}, \mathtt{ns} \rangle$.
+\item Sometimes it is useful to run more than one instantiation. The syntactic
+  category \emph{instantiations} is used for this. We will write $\tau[\Theta]$
+  for running multiple substitutions.  For instance
+  $(\langle \alpha_1, \alpha_2 \rangle)[\mathtt{int} / \alpha_1 :: \mathtt{uninit} /
+  \alpha_2 :: \nil] = \langle \mathtt{int}, \mathtt{uninit} \rangle$.
 \end{itemize}
+
+The other differences are:
+
+\begin{itemize}
+\item The global values and heap values have had a type added to them. This is
+  mostly used to allow decidable type-checking, as nothing will depend on these
+  values at run-time. The $\Delta$ in the definition of global values is a
+  binder which allows parametric polymorphism.
+\item The \texttt{malloc} instruction have been changed to include the type of
+  the allocated tuple.
+\item Instantiations have been added to word values and small values. This is
+  used to instantiate and weaken the parametric polymorphism of code
+  pointers. To give an example, assume that $\high w$ is a small-value referring
+  to some basic block with the polymorphic parameters $\Delta$. In that case
+  $\Lambda\ \Delta' \cdot \high{w}[\Theta]$ refers to a basic block with
+  polymorphic parameters $\Delta'$. This basic block is the result of using
+  $\Theta$ to instantiate $\Delta$. Here $\Theta$ is allowed to use $\Delta'$ in
+  its instantiation.
+\end{itemize}
+
+\begin{figure}
+  {\footnotesize
+    \begin{tabular}{lrcl}
+      Variables: \\
+      \textit{global pointers} & $\ell_{\mathrm{g}}$ \\
+      \textit{heap pointers}   & $\ell_{\mathrm{h}}$ \\
+      \textit{type variable}   & $\alpha$ \\
+      \textit{stack variable}  & $\rho$ \\\\
+
+      Common definitions: \\
+      \textit{integer}            & $n$ & ::= & $0, 1, \dots$ \\
+      \textit{machine integers}   & $i$ & ::= & $0, 1, \dots, 2^{\mathrm{wordsize}}-1$ \\
+      \textit{registers}          & $r$ & ::= & $\mathtt{r}_1 \mid \dots \mid \mathtt{r}_{\mathrm{max}}$ \\\\
+
+      The type system for \ATAL: \\
+      \textit{base types}               & $\tau$ & ::= & $\alpha \mid \mathtt{int} \mid \mathtt{uninit} \mid \mathtt\forall[ \Delta ] \Gamma \mid \langle\tau^\phi,\dots,\tau^\phi\rangle$ \\
+      \textit{initialization flags}     & $\phi$ & ::= & $\mathtt{init} \mid \mathtt{uninit}$ \\
+      \textit{stack types}              & $\sigma$ & ::= & $\rho \mid \nil \mid \tau :: \sigma$ \\
+      \textit{type assignments}         & $\Delta$ & ::= & $\nil \mid a :: \Delta$ \\
+      \textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
+      \textit{global label assignments} & $\Psi_{\mathrm{g}}$ & ::= & $\{\ell_{\mathrm{g}} |-> \tau, \dots, \ell_{\mathrm{g}} |-> \tau\}$ \\
+      \textit{heap label assignmentss}  & $\Psi_{\mathrm{h}}$ & ::= & $\{\ell_{\mathrm{h}} |-> \tau, \dots, \ell_{\mathrm{h}} |-> \tau\}$ \\
+      \textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau\}$ \\
+      \textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\
+      \textit{instantiations}           & $\Theta$ & ::= & $\theta :: \Theta \mid \nil$ \\\\
+
+      The syntax for \ATAL itself: \\
+      \textit{word values}              & $\high w$ & ::= & $\mathtt{int}\ i \mid \mathtt{globval}\ \ell_{\mathrm{g}} \mid \Lambda\ \Delta \cdot \high{w}[\Theta] \mid \mathtt{heapval}\ \ell_{\mathrm{h}} \mid \mathtt{uninit}$ \\
+      \textit{small values}             & $\high v$ & ::= & $\mathtt{int}\ i \mid \mathtt{globval}\ \ell_{\mathrm{g}} \mid \Lambda\ \Delta \cdot \high{v}[\Theta] \mid \mathtt{reg}\ r$ \\
+      \textit{global values}            & $\high g$ & ::= & $\mathtt{code}[ \Delta ] \Gamma \cdot \high I$ \\
+      \textit{heap values}              & $\high h$ & ::= & $\mathtt{tuple}\ \langle \tau, \dots, \tau \rangle\ \langle \high w, \dots, \high w \rangle$ \\
+      \textit{stacks}                   & $\high S$ & ::= & $\nil \mid \high w :: \high S$ \\\\
+
+      \textit{instructions} & $\high\iota$ & ::= & $\mathtt{add}\ r, r, \high v \mid \mathtt{sub}\ r, r, \high v \mid$ \\
+                               &&& $\mathtt{salloc}\ n \mid \mathtt{sfree}\ n \mid$ \\
+                               &&& $\mathtt{ld}\ r, \mathtt{sp}(n) \mid \mathtt{ld}\ r, r(n) \mid$ \\
+                               &&& $\mathtt{st}\ \mathtt{sp}(n), r \mid \mathtt{st}\ r(n), r \mid$ \\
+                               &&& $\mathtt{malloc}\ r,\ \langle \tau, \dots, \tau \rangle \mid $ \\
+                               &&& $\mathtt{mov}\ r, \high v \mid \mathtt{beq}\ r, \high v$ \\
+      \textit{instruction sequences} & $\high I$ & ::= & $\high\iota ; \high I \mid \mathtt{jmp}\ \high v \mid \mathtt{halt}$ \\\\
+
+      \textit{global collections}       & $\high G$ & ::= & $\{\ell_{\mathrm{g}} |-> \high{g}, \dots, \ell_{\mathrm{g}} |-> \high{g}\}$ \\
+      \textit{heap collections}         & $\high H$ & ::= & $\{\ell_{\mathrm{h}} |-> \high{h}, \dots, \ell_{\mathrm{h}} |-> \high{h}\}$ \\
+      \textit{register files}           & $\high R$ & ::= & $\{\mathtt{sp} |-> \high{S}, \mathtt{r}_1 |-> \high{w}, \dots, \mathtt{r}_{\mathrm{max}} |-> \high{w}\}$ \\
+      \textit{program states} & $\high P$ & ::= & $(\high G, \high H, \high R, \high I)$ \\
+    \end{tabular}
+  }
+  \caption{The syntax for \ATAL}
+  \label{fig:syntax}
+\end{figure}
 
 \subsection{Notes on the Agda implementation}
 
-As we did for \ATALe, we will used natural numbers to represent the variables in
-\ATAL. In \texttt{Judgments/HighGrammar.agda} we will handle $\ell_{\mathrm{g}}$
-and $\ell_{\mathrm{h}}$ using the same technique. The newly introduced variables
-$\alpha$ and $\rho$ will be represented using De Bruijn indices. In practice
-there is little difference between the two techniques. In both cases we
-represent variables using natural numbers and these numbers are used to look up
-elements in ordered lists.
+Our Agda-version of this syntax is implemented in the
+\texttt{Judgments/HighSyntax.agda}, and it is again very close to the above
+presentation. Additionally the file \texttt{Judgments/Substitution.agda}
+contains definitions of substitution and weakening.
 
-The fact that we use De Bruijn indices also means that we need judgments for
-substitution and weakening. In fact substitution is not a total relation in our
-Agda code -- an expression might be ``wrong'' in the sense that it could use a
-De Bruijn index in the wrong way (by referring to a $\rho$ where an $\alpha$ is
-needed). It might for instance use a variable-index that refers to an $\alpha$
-in the context of a stack-variable, and similarly an instantiation might also be
-``wrong''.
+Our handling of $\ell_{\mathrm{g}}, \ell_{\mathrm{h}}$, registers and
+dictionaries is completely equivalent to what we did in \ATALe. The newly
+introduced variables $\alpha$ and $\rho$ are used for name-binding instead of
+looking up values in dictionaries. In practice we still represent them using
+natural numbers by using De Bruijn indices.
+
+The fact that we are using De Bruijn indices for variables of in different
+syntactic categories turns out to be slightly problematic. In our paper notation
+a substitution is always well-defined, however in our Agda-code we might use a
+particular De Bruijn index wrong. This implies that substitution is not a total
+relation in our Agda code -- an substitution might fail if referring to a $\rho$
+where an $\alpha$ is needed.
 
 As such we have chosen implement to substitution as a relation, which we will
-prove is a partial function. Weakening works by simply remapping some of the De
-Bruijn indices, and as such it is a total function. These are the type
-declarations from the file \texttt{Judgments/Substitution.agda}, where $A$ is
-one of the datatypes for which substitution is valid.
+prove is a partial, computable function. We also need to implement weakening
+explicitly, which we do using a total function. These are the type declarations
+from the file \texttt{Judgments/Substitution.agda}, where $A$ is one of the
+datatypes for which substitution is valid.
 
 \begin{code}
 \>[2]\AgdaIndent{4}{}\<[4]%
@@ -383,12 +405,14 @@ and weakenings. A very informal version of this lemma is as follows:
 \end{lemma}
 
 This statement is hard to state precisely, as it depends heavily on the details
-of our De Bruijn indices, which have been left out in this paper. A more precise
-definition of the lemma along with the proofs are available in the source code.
+of our De Bruijn indices, which we have left out in this paper. A more precise
+definition of the lemma along with the proofs are available in the source
+code\footnote{Specifically see the functions \texttt{weaken-subst} and
+  \texttt{subst-subst} in \texttt{Lemmas/Substitution.agda}}.
 
 The proofs themselves are for the most part done using structural induction. The
-only cases that are suprising are the cases dealing directly with De Bruijn
-notation -- but some of those require several sub-lemmas.
+only non-trivial cases are those dealing directly with De Bruijn notation -- but
+some of those require several sub-lemmas.
 
 \section{Semantics for \ATAL}
 
@@ -430,8 +454,8 @@ Let us start with the last two judgments as they are the simplest: \\
   }
 \end{mathpar}
 
-The definition for $\evalregs{\high R}{\high v}{\high w}$ is also pretty simple --
-it simply replaces \texttt{reg}-values by looking up the register in the
+The definition for $\evalregs{\high R}{\high v}{\high w}$ is also pretty simple
+-- it simply replaces \texttt{reg}-values by looking up the register in the
 register file: \\
 
 \fbox{$\evalregs{\high R}{\high v}{\high w}$}
@@ -455,6 +479,8 @@ register file: \\
   }
 \end{mathpar}
 
+\todo{More text}
+
 \fbox{$\evalcode{\high G}{\high w}{I}$}
 \begin{mathpar}
 \infer{
@@ -469,6 +495,8 @@ register file: \\
   \evalcode{\high G}{\Lambda\ \Delta \cdot \high w[\Theta]}{\high I'}
 }
 \end{mathpar}
+
+\todo{More text}
 
 \fbox{$\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$}
 \begin{mathpar}
@@ -576,7 +604,7 @@ register file: \\
 }
 \end{mathpar}
 
-Additionally we have three judgments on program states:
+Additionally we have three judgments on program states:\todo{Better text}
 
 \fbox{$\halting{\high P}$}
 \begin{mathpar}
@@ -628,8 +656,8 @@ a partial function, so the following lemma is proved in the file
   \begin{itemize}
   \item If $\high P, \high P', \high P''$ are a program states and we have both
     $\steps{\high P}{\high P'}$ and $\steps{\high P}{\high P''}$, then
-    $P' = P''$.
-  \item It is decidable whether $\high P$ can small-step to some $P'$.
+    $\high{P'} = \high{P''}$.
+  \item It is decidable whether $\high P$ can small-step to some $\high P'$.
   \end{itemize}
 
   Similar lemmas exists for the other semantic judgments.
@@ -688,8 +716,8 @@ that it is mostly the same as for \ATAL. We prove the following lemma in
   \begin{itemize}
   \item If $\simple P, \simple{P'}, \simple{P''}$ are a program states and we
     have both $\steps{\simple P}{\simple{P'}}$ and
-    $\steps{\simple P}{\simple{P''}}$, then $P' = P''$.
-  \item It is decidable whether $\simple P$ can small-step to some $P'$.
+    $\steps{\simple P}{\simple{P''}}$, then $\simple{P'} = \simple{P''}$.
+  \item It is decidable whether $\simple P$ can small-step to some $\simple{P'}$.
   \end{itemize}
 
   Similar lemmas exists for the other semantic judgments.
