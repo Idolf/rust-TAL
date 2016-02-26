@@ -8,7 +8,7 @@
   Judgment & \multicolumn{1}{|c|}{Meaning} \\
   \hline
 
-  $\valid{\Delta}{\tau}$ & $\tau$ is a well-formed type (i.e. does not contain invalid variables) \\
+  $\valid{\Delta}{\tau}$ & $\tau$ is a well-formed type (i.e., does not contain invalid variables) \\
   $\valid{\Delta}{\sigma}$ & $\sigma$ is a well-formed stack type \\
   $\valid{\Delta}{\Gamma}$ & $\Gamma$ is a well-formed register assignment \\
   $\valid{\Delta}{\Psi_{\mathrm{h}}}$ & $\Psi_{\mathrm{h}}$ is a well-formed heap label assignments \\
@@ -214,7 +214,7 @@
   \hline
 
   $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high w : \tau$ & $\high w$ is a well-formed word value of type $\tau$ \\
-  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high w : \tau^{\phi}$ & $\high w$ is a well-formed (and possibly uninitialized) word value of type $\tau^\phi$ (i.e. either $\high w : \tau$ or $\high w = \mathtt{uninit}$ and $\phi = \mathtt{uninit}$) \\
+  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high w : \tau^{\phi}$ & $\high w$ is a well-formed (and possibly uninitialized) word value of type $\tau^\phi$ (i.e., either $\high w : \tau$ or $\high w = \mathtt{uninit}$ and $\phi = \mathtt{uninit}$) \\
   $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high S : \sigma$ & $\high S$ is a well-formed stack of type $\sigma$ \\
   $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high R : \Gamma$ & $\high R$ is a well-formed register file of type $\Gamma$ \\
   $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high h : \tau$ & $\high h$ is a well-formed heap value of type $\tau$ \\

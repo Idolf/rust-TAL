@@ -221,12 +221,20 @@ At this point, we are already able to prove lemmas about our syntax. In the file
   statements hold for the other syntactic classes.
 \end{lemma}
 
-This lemma might seem trivial, and in a certain sense it is: It holds for all
-inductive data types. One could in principle prove this by induction over the
-forms of $\simple P$ and $\simple{P'}$, however this turns out to give a
-quadratic number of lines in Agda. Our solution to this problem involves using
-an injective function to another data type. See \cref{sec:deceq} for more
-details.
+The equality referred to in the above lemma is syntactic equality in the Agda
+notation, which as previously mentioned will even distinguish between some
+objects that are equal in the paper-notation. Since we are representing our
+variables using natural numbers, this is equivalent to equality up to alpha
+conversion (but not up to reordering the content of dictionaries).
+
+This lemma is trivial in the sense that it can be proven for any inductively
+defined datatype. We still mention it, because it is not automatically derived
+in Agda. The naive approach to implementing it in Agda would use structural
+induction over both arguments. This has the disadvantage, that it often results
+in very long proofs, specifically a quadratic number\footnote{Quadratic in the
+  number of constructors for the datatype.} of lines. We have instead chosen to
+use a more space-efficient solution, which involves using an injective function
+to another datatype. See \cref{sec:deceq} for more details.
 
 \section{Syntax for \ATAL}
 

@@ -20,10 +20,11 @@ been developed.
   limiting the actions available to programs, for instance by not exposing
   dangerous APIs. Other examples from this category are POSIX user permissions,
   memory protections and firewalls. We will collectively refer to these and
-  similar approaches as ``run-time protections''.  \footnote{ While anti-virus
+  similar approaches as ``run-time protections''.  \footnote{While anti-virus
     and code-signing certificates principally belong to the category of run-time
     protections, they are sufficiently different from most other such
     protections that they deserve their own point.  }
+  \todo{Monitors?}
 \item Static analysis, fuzzing and type systems try to detect vulnerabilities in
   programs before they are deployed. Compiler modifcations such as stack-cookies
   or printf-hardening try to generate code that is hard to exploit even in the
@@ -143,9 +144,9 @@ variations of it using the following procedure:
   \begin{itemize}
   \item \emph{Progressing} states are those that can transition to other states.
   \item \emph{Halting} states are the valid, finished states.
-  \item \emph{Stuck} states are all other states, i.e. states that can neither
-    transition to other states nor represent our valid, finished
-    computations. We will consider these states to be bad/error states.
+  \item \emph{Stuck} states are all other states. These are the states that can
+    neither continue or halt in a valid way, and as such they are considered to
+    be bad/error states.
   \end{itemize}
 
 \item Define a type system for this subset. This is a way to designate e.g. that
@@ -192,8 +193,8 @@ follows:
 \item Run the type-checker on $p$.
 \item If the type-checker outputs false, then abort.
 \item Compile or otherwise transform $p$ from a program in our model to a
-  program for the real-world machine. This will at least include erasing the
-  types.
+  program for the real-world machine. In our case, this includes erasing the
+  types and running an assembler on the result.
 \item Run the transformed program without direct performance loss.
 \end{enumerate}
 

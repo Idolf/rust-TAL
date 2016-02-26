@@ -5,16 +5,16 @@ In Types and Programming Languages\cite{typesandprog} erasure is defined as the 
 property between a typed language and an untyped version of the same language:
 
 \begin{itemize}
-\item There must be a function $\erase$ which maps values from the typed language
-  to the untyped language.
+\item There must be a function $\erase$ which maps values from the typed
+  language to the untyped language.
 \item If we have $t -> t'$ in the typed language, then we must have
   $\erase(t) -> \erase(t')$ in the untyped language.
 \item If we have $\erase(t) -> m'$ in the untyped semantics, then there is a $t'$
   such that $t -> t'$ and $\erase(t') = m'$.
 \end{itemize}
 
-Unfortunately this property does not quite hold in our case. Instead we will
-define an $\erase$ function such that the following holds:
+Unfortunately the above property does not quite hold in our case. Instead we
+will define an $\erase$ function such that the following holds:
 
 \begin{itemize}
 \item If we have $\steps{\high P}{\high P'}$ in \ATAL, then we have
@@ -24,10 +24,10 @@ define an $\erase$ function such that the following holds:
   \begin{itemize}
   \item There is a $\high P'$ such that $\steps{\high P}{\high P'}$ and
     $\erase(\high P') = \simple{P'}$ or
-  \item $\high P$ is in a bad state, i.e. it is neither halting nor
-    progressing. Instead it is stuck, and specifically this occurs because some
-    substitution was impossible. We will later prove that cannot occur for
-    well-typed terms.
+  \item $\high P$ is in a bad state (i.e., it is neither halting nor
+    progressing). Instead it is stuck, and specifically this occurs because some
+    substitution was impossible. We prove in \Cref{chap:types} that this cannot
+    occur for well-typed terms.
   \end{itemize}
 \end{itemize}
 
@@ -36,13 +36,15 @@ useful property when working with TALs. There are a few good reasons for
 including erasure as part of the work on \ATAL:
 
 \begin{itemize}
-\item \ATAL depends on types at run-time for its execution. while \ATALe does
-  not. Since the two languages are essentially equivalent, one can simply
-  translate from \ATAL to \ATALe before running the program.
-\item A real-world CPU is not able to run \ATAL. While it is not able to \ATALe
-  either, it is closer to the real-world model. If one wanted to justify
-  correctness of our semantics it is much easier to argue why the small-step
-  semantics of \ATALe correctly models the world than that of \ATAL.
+\item \ATAL maintains types during run-time, though it will not depend on them
+  for its execution, while \ATALe does not. Since the two languages are
+  essentially equivalent, one can simply translate from \ATAL to \ATALe before
+  running the program.
+\item A real-world CPU is not able to run \ATAL. While it is not able to run
+  \ATALe either, it is somewhat closer to a real machine. If one wanted to
+  justify correctness of our semantics it is much easier to argue why the
+  small-step semantics of \ATALe correctly models a real-world CPU than that of
+  \ATAL.
 \item We can once and for all define \ATALe and convince ourselves of its
   adequacy. We are then free to experiment with different type-systems as long
   as they all have the erasure property.
@@ -275,8 +277,8 @@ The second part of the erasure property follows almost directly.
   \begin{itemize}
   \item There is a $\high P'$ such that $\steps{\high P}{\high P'}$ and
     $\erase(\high P') = \simple{P'}$ or
-  \item $\high P$ is in a bad state, i.e. it is neither halting nor
-    progressing. Instead it is stuck, and specifically this occurs because some
+  \item $\high P$ is in a bad state, (i.e., it is neither halting nor
+    progressing). Instead it is stuck, and specifically this occurs because some
     substitution was impossible. We will later prove that cannot occur for
     well-typed terms.
   \end{itemize}
