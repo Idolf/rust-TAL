@@ -244,7 +244,11 @@ run-time. This type system includes the parametric polymorphism and subtyping.
   only use a subset of the possible types (specifically function types and tuple
   types). Some informal examples of types encodable in this system are ``an
   integer'', ``a basic block taking an integer as argument'' or ``a tuple of two
-  integers''.
+  integers''. \todo{Write something similar to: The syntax
+    $\forall[\Delta] \Gamma$ should be interpreted as the type of a basic block
+    with type parameters $\Delta$ taking registers with types $\Gamma$. This
+    could intuitively be interpreted as a function taking $\Gamma$ as an
+    argument and never returning.}
 \item \emph{Type assignments} are the assumptions used in types. They are used
   for parametric polymorphism.
 \item \emph{Stack types} are the type of stacks.
@@ -423,7 +427,7 @@ used:
   \hline
   Judgment & \multicolumn{1}{|c|}{Meaning} \\\hline
   $\evalregs{\high R}{\high v}{\high w}$ & Here $\high v$ is a small value, that is used an argument to an instruction. This judgment states that we can evaluate $v$ to $\high w$ by looking up registers in the register file $\high R$. \\\hline
-  $\evalcode{\high G}{\high w}{I}$ & Here $\high w$ is a word value that we intend to jump to. This judgment states that we can evaluate $\high w$ to the basic block $\high I$ by looking up basic blocks in $\high G$ and possibly instantiating some of the type variables. \\\hline
+  $\evalcode{\high G}{\high w}{\high I}$ & Here $\high w$ is a word value that we intend to jump to. This judgment states that we can evaluate $\high w$ to the basic block $\high I$ by looking up basic blocks in $\high G$ and possibly instantiating some of the type variables. \\\hline
   $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$ & This is our main small-step relation. It is a judgment that asserts that if a program is in state $(\high G, \high H, \high R, \high I)$, then it can transition to $(\high G, \high H', \high R', \high I')$. Note that $G$ is immutable. \\\hline
   $\steps{\high P}{\high P'}$ & This states that the program state $\high P$ can small-step to $\high P'$. It has only a single rule which uses the judgment above. \\\hline
   $\stepsn{\high P}{n}{\high P'}$ & This states that the program state $\high P$' can small-step to $\high P'$ in $n$ steps. \\\hline
@@ -602,38 +606,6 @@ register file: \\
     {\high H, \high R, \mathtt{jmp}\ \high v}
     {\high H, \high R, \high I}
 }
-\end{mathpar}
-
-Additionally we have three judgments on program states:\todo{Better text}
-
-\fbox{$\halting{\high P}$}
-\begin{mathpar}
-  \infer{ }{
-    \halting{\high G, \high H, \high R, \mathtt{halt}}
-  }
-\end{mathpar}
-
-\fbox{$\progressing{\high P}$}
-\begin{mathpar}
-  \infer{
-    \steps{\high P}{\high P'}
-  }{
-    \progressing{\high P}
-  }
-\end{mathpar}
-
-\fbox{$\goodstate{\high P}$}
-\begin{mathpar}
-  \infer{
-    \halting{\high P}
-  }{
-    \goodstate{\high P}
-  } \and
-  \infer{
-    \progressing{\high P}
-  }{
-    \goodstate{\high P}
-  }
 \end{mathpar}
 
 \subsection{Notes on the Agda implementation}

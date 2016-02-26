@@ -1,10 +1,691 @@
 \chapter{Type System for \ATAL}
 \label{chap:types}
 
+\section{Judgments about types}
+
 \begin{tabular}{|c|p{7.5 cm}|}
   \hline
-  Judgment & \multicolumn{1}{|c|}{Meaning} \\\hline
+  Judgment & \multicolumn{1}{|c|}{Meaning} \\
+  \hline
+
   $\valid{\Delta}{\tau}$ & $\tau$ is a well-formed type (i.e. does not contain invalid variables) \\
   $\valid{\Delta}{\sigma}$ & $\sigma$ is a well-formed stack type \\
   $\valid{\Delta}{\Gamma}$ & $\Gamma$ is a well-formed register assignment \\
+  $\valid{\Delta}{\Psi_{\mathrm{h}}}$ & $\Psi_{\mathrm{h}}$ is a well-formed heap label assignments \\
+  \hline
+
+  $\subtype{\Delta}{\tau_1}{\tau_2}$ & $\tau_1$ is a subtype of $\tau_2$ \\
+  $\subtype{\Delta}{\phi_1}{\phi_2}$ & $\phi_1$ is a subtype of $\phi_2$ \\
+  $\subtype{\Delta}{\sigma_1}{\sigma_2}$ & $\sigma_1$ is a subtype of $\sigma_2$ \\
+  $\subtype{\Delta}{\Gamma_1}{\Gamma_2}$ & $\Gamma_1$ is a subtype of $\Gamma_2$ \\
+  $\subtype{\Delta}{\Psi_{\mathrm{h},1}}{\Psi_{\mathrm{h}_2}}$ & $\Psi_{\mathrm{h},1}$ is a subtype of $\Psi_{\mathrm{h},2}$ \\
+  \hline
+
+  $\Delta |- \theta : a$ & $\theta$ is a valid instantiation of the variable $a$ \\
+  $\Delta |- \Theta : \Delta'$ & $\Theta$ are valid instantiations of the variables $\Delta'$ \\
+  \hline
 \end{tabular}
+
+
+\subsection{Valid types}
+\fbox{$\valid{\Delta}{\tau}$}
+\begin{mathpar}
+\infer{\alpha \in \Delta}{\valid{\Delta}{\alpha}} \and
+\infer{ }{\valid{\Delta}{\mathtt{int}}} \and
+\infer{ }{\valid{\Delta}{\mathtt{uninit}}} \and
+\infer{\valid{\Delta' ++ \Delta}{\Gamma}}{\valid{\Delta}{\forall[ \Delta' ] \Gamma}} \and
+\infer{\valid{\Delta}{\tau_1} \and \dots \and \valid{\Delta}{\tau_n}}
+      {\valid{\Delta}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\sigma}$}
+\begin{mathpar}
+\infer{\rho \in \Delta}{\valid{\Delta}{\rho}} \and
+\infer{ }{\valid{\Delta}{\nil}} \and
+\infer{
+  \valid{\Delta}{\tau} \and \valid{\Delta}{\sigma}
+}{
+  \valid{\Delta}{\tau :: \sigma}
+}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\Gamma}$}
+\begin{mathpar}
+\infer{
+  \valid{\Delta}{\sigma} \and
+  \valid{\Delta}{\tau_1} \and
+  \dots \and
+  \valid{\Delta}{\tau_{\mathrm{\mathrm{max}}}}
+}{
+  \valid{\Delta}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{\mathrm{\mathrm{max}}} |-> \tau_{\mathrm{\mathrm{max}}}\}}
+}
+\end{mathpar}
+
+\fbox{$\valid{\Delta}{\Psi_{\mathrm{h}}}$}
+\begin{mathpar}
+\infer{
+  \valid{\Delta}{\tau_1} \and
+  \dots \and
+  \valid{\Delta}{\tau_{n}}
+}{
+  \valid{\Delta}{\{\ell_{\mathrm{h},1} |-> \tau_1, \dots, \ell_{\mathrm{h},n} |-> \tau_{n}\}}
+}
+\end{mathpar}
+
+\subsection{Subtypes}
+\fbox{$\subtype{\Delta}{\tau_1}{\tau_2}$}
+\begin{mathpar}
+\infer{\alpha \in \Delta}{\subtype{\Delta}{\alpha}{\alpha}} \and
+\infer{ }{\subtype{\Delta}{\mathtt{int}}{\mathtt{int}}} \and
+\infer{ }{\subtype{\Delta}{\mathtt{uninit}}{\mathtt{uninit}}} \and
+\infer{
+  \subtype{\Delta' ++ \Delta}{\Gamma_2}{\Gamma_1}
+}{
+  \subtype{\Delta}{\forall[\Delta'] \Gamma_1}{\forall[\Delta'] \Gamma_2}
+} \and
+\infer{
+  \subtype{}{\phi_1}{\phi_1'} \and
+  \dots \and
+  \subtype{}{\phi_n}{\phi_n'}
+}{
+  \subtype{\Delta}
+          {\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}
+          {\langle \tau_1^{\phi'_1}, \dots, \tau_n^{\phi'_n} \rangle}
+}
+\end{mathpar}
+
+\fbox{$\subtype{}{\phi_1}{\phi_2}$}
+\begin{mathpar}
+\infer{ }{\subtype{}{\mathtt{init}}{\phi}} \and
+\infer{ }{\subtype{}{\mathtt{uninit}}{\mathtt{uninit}}}
+\end{mathpar}
+
+\fbox{$\subtype{\Delta}{\sigma}{\sigma}$}
+\begin{mathpar}
+\infer{\rho \in \Delta}{\subtype{\Delta}{\rho}{\rho}} \and
+\infer{ }{\subtype{\Delta}{\nil}{\nil}} \and
+\infer{
+  \subtype{\Delta}{\tau}{\tau'} \and
+  \subtype{\Delta}{\sigma}{\sigma'} \and
+}{
+  \subtype{\Delta}{\tau :: \sigma}{\tau' :: \sigma'}
+}
+\end{mathpar}
+
+\fbox{$\subtype{\Delta}{\Gamma}{\Gamma}$}
+\begin{mathpar}
+\infer{
+  \subtype{\Delta}{\sigma}{\sigma'} \and
+  \subtype{\Delta}{\tau_1}{\tau_1'} \and
+  \dots \and
+  \subtype{\Delta}{\tau_{\mathrm{\mathrm{max}}}}{\tau_{\mathrm{\mathrm{max}}}'}
+}{
+  \subtype{\Delta}
+          {\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{\mathrm{\mathrm{max}}} |-> \tau_{\mathrm{\mathrm{max}}}\}}
+          {\{\mathtt{sp} |-> \sigma', \mathtt{r}_1 |-> \tau_1', \dots, \mathtt{r}_{\mathrm{\mathrm{max}}} |-> \tau_{\mathrm{\mathrm{max}}}'\}}
+}
+\end{mathpar}
+
+\fbox{$\subtype{\Delta}{\Psi_{\mathrm{h}}}{\Psi_{\mathrm{h}}}$}
+\begin{mathpar}
+\infer{
+  \subtype{\Delta}{\tau_1}{\tau_1'} \and
+  \dots \and
+  \subtype{\Delta}{\tau_{n}}{\tau_{n}'}
+}{
+  \subtype{\Delta}
+          {\{\ell_{\mathrm{h},1} |-> \tau_1, \dots, \ell_{\mathrm{h},n} |-> \tau_{n}\}}
+          {\{\ell_{\mathrm{h},1} |-> \tau_1', \dots, \ell_{\mathrm{h},n} |-> \tau_{n}'\}}
+}
+\end{mathpar}
+
+\subsection{Instantiations}
+
+\fbox{$\ofinstantiation{\Delta}{\theta}{a}$}
+\begin{mathpar}
+\infer{
+  \alpha \notin \Delta \and
+  \valid{\Delta}{\tau}
+}{
+  \ofinstantiation{\Delta}{\tau / \alpha}{\alpha}
+} \and
+\infer{
+  \rho \notin \Delta \and
+  \valid{\Delta}{\sigma}
+}{
+  \ofinstantiation{\Delta}{\sigma / \rho}{\rho}
+}
+\end{mathpar}
+
+\fbox{$\ofinstantiations{\Delta}{\Theta}{\Delta}$}
+\begin{mathpar}
+\infer{ }{
+  \ofinstantiations{\Delta}{\nil}{\nil}
+} \and
+\infer{
+  \ofinstantiation{\Delta' ++ \Delta}{\theta}{a} \and
+  \ofinstantiations{\Delta}{\Theta}{\Delta'}
+}{
+  \ofinstantiations{\Delta}{(\theta :: \Theta)}{(a :: \Delta')}
+}
+\end{mathpar}
+
+\subsection{Notes on the Agda implementation}
+\texttt{Judgments/Types.agda} and some of \texttt{Judgments/Terms.agda}.
+
+\subsection{Lemmas}
+
+\texttt{Lemmas/Types.agda} and \texttt{Lemmas/TypeSubstitution.agda}.
+
+\begin{lemma}
+  \label{lemma:typdec}
+  Validity and subtyping is decidable. So are the judgments
+  $\ofinstantiation{\Delta}{\theta}{a}$ and
+  $\ofinstantiations{\Delta}{\Theta}{\Delta'}$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lemma:typeq}
+  Validity implies subtyping and vice versa.
+\end{lemma}
+
+\begin{lemma}
+  \label{lemma:transitive}
+  Subtyping is transitive.
+\end{lemma}
+
+\begin{lemma}
+  \label{lemma:typ-context}
+  Validity and subtyping is preserved by weakening or instantiation variables
+  from the context.\footnote{Remember that substitution is a partial function in
+    the Agda-code. In the Agda-code this lemma also implies totality of
+    substitution given certain additional assumptions.}
+\end{lemma}
+
+\section{Judgments about values}
+\begin{tabular}{|c|p{7.5 cm}|}
+  \hline
+  Judgment & \multicolumn{1}{|c|}{Meaning} \\
+  \hline
+
+  $\Psi_{\mathrm{g}}, \Delta |- \high v : \Gamma => \tau$ & $\high v$ is a well-formed small value evaluating register files of type $\Gamma$ to word values of type $\tau$ \\
+  $\Psi_{\mathrm{g}}, \Delta |- \high \iota : \Gamma_1 => \Gamma_2$ & $\high \iota$ is a well-formed instruction which evaluating registers of type $\Gamma_1$ to registers of type $\Gamma_2$ \\
+  $\Psi_{\mathrm{g}}, \Delta |- \high I : \Gamma$ & $\high I$ is a well-formed instruction sequence which will correctly evaluate registers of type $\Gamma$. \\
+  \hline
+
+  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high w : \tau$ & $\high w$ is a well-formed word value of type $\tau$ \\
+  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high w : \tau^{\phi}$ & $\high w$ is a well-formed (and possibly uninitialized) word value of type $\tau^\phi$ (i.e. either $\high w : \tau$ or $\high w = \mathtt{uninit}$ and $\phi = \mathtt{uninit}$) \\
+  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high S : \sigma$ & $\high S$ is a well-formed stack of type $\sigma$ \\
+  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high R : \Gamma$ & $\high R$ is a well-formed register file of type $\Gamma$ \\
+  $\Psi_{\mathrm{g}}, \Psi_{\mathrm{h}} |- \high h : \tau$ & $\high h$ is a well-formed heap value of type $\tau$ \\
+  $\Psi_{\mathrm{g}} |- \high g : \tau$ & $\high g$ is a well-formed global value of type $\tau$. \\
+  $\Psi_{\mathrm{g}} |- \high H : \Psi_{\mathrm{h}}$ & $\high H$ is a well-formed heap collection of type $\Psi_{\mathrm{h}}$ \\
+  $|- \high G : \Psi_{\mathrm{g}}$ & $\high G$ is a well-formed global collection of type $\Psi_{\mathrm{g}}$. \\
+  \hline
+
+  $\Psi_{\mathrm{g}} |- (\high H, \high R, \high I) : (\Psi_{\mathrm{h}}, \Gamma)$ & $(\high H, \high R, \high I)$ are all valid while using types $\Psi_{\mathrm{h}}$ and $\Gamma$ for the heap and registers. \\
+  $\valid{}{\high P}$ & $\high P$ is a well-formed and well-typed program. \\
+  \hline
+\end{tabular}
+
+\subsection{Evaluation types}
+
+\fbox{$\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$}
+\begin{mathpar}
+\infer{ }{
+  \ofvval{\Psi_{\mathrm{g}},\Delta}{\mathtt{reg}\ r}{\Gamma => \Gamma[r]}
+}\and
+\infer{
+}{
+  \ofvval{\Psi_{\mathrm{g}},\Delta}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\Gamma => \Psi_{\mathrm{g}}[\ell_{\mathrm{g}}]}
+}\and
+\infer{ }{\ofvval{\Psi_{\mathrm{g}},\Delta}{\mathtt{int}\ i}{\Gamma => \mathtt{int}}} \and
+\infer{
+  \ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \forall[\Delta_1]\Gamma_1} \and
+  \ofinstantiations{\Delta_2 ++ \Delta}{\Theta}{\Delta_1} \and
+  \Gamma_2 = \Gamma_1[\Theta] \\
+}{
+  \ofvval{\Psi_{\mathrm{g}},\Delta}{\Lambda\ \Delta \cdot \high v[\Theta]}{\Gamma => \forall[\Delta_2]\Gamma_2}
+}
+\end{mathpar}
+
+\fbox{$\ofinstruction{\Psi_{\mathrm{g}}, \Delta}{\high \iota}{\Gamma_1 => \Gamma_2}$}
+\begin{mathpar}
+\infer{
+  \Gamma[r_b] = \mathtt{int} \and
+  \ofvval{\Psi_{\mathrm{g}}, \Delta}{\high v}{\Gamma => \mathtt{int}}
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{add}\ r_a, r_b, \high v}
+    {\Gamma => \Gamma[r_a |-> \mathtt{int}]}
+} \and
+\infer{
+  \Gamma[r_b] = \mathtt{int} \and
+  \ofvval{\Psi_{\mathrm{g}}, \Delta}{\high v}{\Gamma => \mathtt{int}}
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{sub}\ r_a, r_b, \high v}
+    {\Gamma => \Gamma[r_a |-> \mathtt{int}]}
+} \\
+\infer{
+  \sigma = \overbrace{\mathtt{uninit} :: \dots :: \mathtt{uninit}}^n :: \Gamma[\mathtt{sp}]
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{salloc}\ n}
+    {\Gamma => \Gamma[\mathtt{sp} |-> \sigma]}
+} \and
+\infer{
+  \Gamma[\mathtt{sp}] = \overbrace{\tau_1 :: \dots :: \tau_n}^n :: \sigma
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{sfree}\ n}
+    {\Gamma => \Gamma[\mathtt{sp} |-> \sigma]}
+} \and
+\infer{
+  \Gamma[\mathtt{sp}] = \sigma
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{ld}\ r, \mathtt{sp}(n)}
+    {\Gamma => \Gamma[r |-> \sigma[n]]}
+} \and
+\infer{
+  \Gamma[r_b] = \langle \tau_1^{\phi_1}, \dots, \tau_n^{\mathtt{init}}, \dots\rangle \and
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{ld}\ r_a, r_b(n)}
+    {\Gamma => \Gamma[r_a |-> \tau_n]}
+} \and
+\infer{
+  \Gamma[r] = \tau \and
+  \Gamma[\mathtt{sp}] = \sigma
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{st}\ \mathtt{sp}(n), r}
+    {\Gamma => \Gamma[\mathtt{sp} |-> \sigma[n |-> \tau]]}
+} \and
+\infer{
+  \Gamma[r_a] = \langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_i}, \dots \rangle \and
+  \Gamma[r_b] = \tau_n' \and
+  \subtype{\Delta}{\tau_n'}{\tau_n}
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{st}\ r_a(n), r_b}
+    {\Gamma => \Gamma[r_a |-> \langle \tau_1^{\phi_1}, \dots, \tau_n^{\mathtt{init}}, \dots, \rangle]}
+} \and
+\infer{
+  \valid{\Delta}{\tau_1} \and
+  \dots \and
+  \valid{\Delta}{\tau_n}
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle}
+    {\Gamma => \Gamma[r |-> \langle \tau_1^{\mathtt{uninit}}, \dots, \tau_n^{\mathtt{uninit}}\rangle]}
+} \and
+\infer{
+  \ofvval{\Psi_{\mathrm{g}}, \Delta}{\high v}{\Gamma => \tau}
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{mov}\ r, \high v}
+    {\Gamma => \Gamma[r |-> \tau]}
+} \and
+\infer{
+  \Gamma[r] = \mathtt{int} \and
+  \ofvval{\Psi_{\mathrm{g}}, \Delta}{\high v}{\Gamma => \forall[ \nil ] \Gamma'} \and
+  \subtype{\Delta}{\Gamma}{\Gamma'}
+}{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}
+    {\mathtt{beq}\ r, \high v}
+    {\Gamma => \Gamma}
+}
+\end{mathpar}
+
+
+\fbox{$\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$}
+\begin{mathpar}
+\infer{
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta}{\high \iota}{\Gamma => \Gamma'} \and
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma'}
+}{
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high \iota ; \high I}{\Gamma}
+} \and
+\infer{
+  \ofvval{\Psi_1, \Delta}{\high v}{\Gamma => \forall[ \nil ]\Gamma'} \and
+  \subtype{\Delta}{\Gamma}{\Gamma'}
+}{
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\mathtt{jmp}\ \high v}{\Gamma}
+} \and
+\infer{
+}{
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\mathtt{halt}}{\Gamma}
+}
+\end{mathpar}
+
+\subsection{Memory constructs}
+
+\fbox{$\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$}
+\begin{mathpar}
+\infer{
+  \Psi_{\mathrm{g}}[\ell_{\mathrm{g}}] = \tau_1 \and
+  \subtype{\nil}{\tau_1}{\tau_2}
+}{
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\tau_2}
+}\and
+\infer{
+  \Psi_{\mathrm{h}}[\ell_{\mathrm{h}}] = \tau_1 \and
+  \subtype{\nil}{\tau_1}{\tau_2}
+}{
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{heapval}\ \ell_{\mathrm{h}}}{\tau_2}
+}\and
+\infer{ }{\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{int}\ i}{\mathtt{int}}} \and
+\infer{ }{\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{uninit}}{\mathtt{uninit}}} \and
+\infer{
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\forall[\Delta_1]\Gamma_1} \and
+  \ofinstantiations{\Delta_2}{\Theta}{\Delta_1} \and
+  \subtype{\Delta_2}{\Gamma_2}{\Gamma_1[\Theta]} \\
+}{
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\Lambda\ \Delta_2 \cdot \high w[\Theta]}{\forall[\Delta_2]\Gamma_2}
+}
+\end{mathpar}
+
+\fbox{$\ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau^\phi}$}
+\begin{mathpar}
+\infer{
+  \valid{\nil}{\tau}
+}{
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{uninit}}{\tau^{\mathtt{uninit}}}
+} \and
+\infer{
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}
+}{
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau^{\mathtt{init}}}
+}
+\end{mathpar}
+
+\fbox{$\ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high S}{\sigma}$}
+\begin{mathpar}
+\infer{ }{\ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\nil}{\nil}} \and
+\infer{
+  \ofword{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau} \and
+  \ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high S}{\sigma}
+}{
+  \ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w :: \high S}{\tau :: \sigma}
+}
+\end{mathpar}
+
+\fbox{$\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$}
+\begin{mathpar}
+\infer{
+  \ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high S}{\sigma} \and
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_1}{\tau_1} \and
+  \dots \and
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_{\mathrm{max}}}{\tau_{\mathrm{max}}} \and
+}{
+  \ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\{\mathtt{sp} |->  \high S, \mathtt{r}_1 |->  \high w_1, \dots, \mathtt{r}_{\mathrm{max}} |->  \high w_{\mathrm{max}}\}}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau_{\mathrm{max}}\}}
+}
+\end{mathpar}
+
+\fbox{$\ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h}{\tau}$}
+\begin{mathpar}
+\infer{
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_1}{\tau_1^{\phi_1}} \and
+  \dots \and
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_n}{\tau_n^{\phi_n}}
+}{
+  \ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{tuple}\ \langle \high \tau_1, \dots, \high \tau_n \rangle\ \langle \high w_1, \dots, \high w_n \rangle}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n}\rangle}
+}
+\end{mathpar}
+
+\fbox{$\ofgval{\Psi_{\mathrm{g}}}{\high g}{\tau}$}
+\begin{mathpar}
+\infer{
+  \valid{\Delta}{\Gamma} \and
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}
+}{
+  \ofgval{\Psi_{\mathrm{g}}}{\mathtt{code}[\Delta]\Gamma \cdot \high I}{\forall[\Delta]\Gamma}
+}
+\end{mathpar}
+
+\fbox{$\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$}
+\begin{mathpar}
+\infer{
+  \ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h_1}{\tau_1} \and
+  \dots \and
+  \ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h_n}{\tau_n} \and
+  \Psi_{\mathrm{h}} = \{\ell_{h,1} |-> \tau_1, \dots, \ell_{h,n} |-> \tau_n\}
+}{
+  \ofheap{\Psi_{\mathrm{g}}}{\{\ell_{h,1} |->  \high h_1, \dots, \ell_{h,n}  |->  \high h_n\}}{\Psi_{\mathrm{h}}}
+}
+\end{mathpar}
+
+\fbox{$\ofglobs{\high G}{\Psi_{\mathrm{g}}}$}
+\begin{mathpar}
+\infer{
+  \ofgval{\Psi_{\mathrm{g}}}{\high g_1}{\tau_1} \and
+  \dots \and
+  \ofgval{\Psi_{\mathrm{g}}}{\high g_n}{\tau_n} \and
+  \Psi_{\mathrm{g}} = \{\ell_{g,1} |-> \tau_1, \dots, \ell_{g,n} |-> \tau_n\}
+}{
+  \ofglobs{\{\ell_{g,1} |->  \high g_1, \dots, \ell_{g,n}  |->  \high g_n\}}{\Psi_{\mathrm{g}}}
+}
+\end{mathpar}
+
+\subsection{Program states}
+
+\fbox{$\ofprogramstate{\Psi_{\mathrm{g}}}{(\high H, \high R, \high I)}{(\Psi_{\mathrm{h}},\Gamma)}$}
+\begin{mathpar}
+\infer{
+  \ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}} \\
+  \ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma} \and
+  \ofinstructions{\Psi_{\mathrm{g}},\nil}{\high I}{\Gamma}
+}{
+  \ofprogramstate{\Psi_{\mathrm{g}}}{(\high H,\high R,\high I)}{(\Psi_{\mathrm{h}},\Gamma)}
+}
+\end{mathpar}
+
+\fbox{$\valid{}{\high P}$}
+\begin{mathpar}
+\infer{
+  \ofglobs{\high G}{\Psi_{\mathrm{g}}} \and
+  \ofprogramstate{\Psi_{\mathrm{g}}}{(\high H, \high R, \high I)}{(\Psi_{\mathrm{h}}, \Gamma)}
+}{
+  \valid{}{(\high G,\high H, \high R, \high I)}
+}
+\end{mathpar}
+
+\subsection{Notes on the Agda implementation}
+\texttt{Judgments/Terms.agda}
+
+\subsection{Lemmas}
+
+\texttt{Lemmas/TermWeaken.agda} and \texttt{Lemmas/TermSubstitution.agda}.
+
+\begin{lemma}
+  \label{lemma:instructions-context}
+  The judgment $\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$ is
+  preserved by weakening or instantiation variables
+  from the context.\footnote{Remember that substitution is a partial function in
+    the Agda-code. In the Agda-code this lemma also implies totality of
+    substitution given certain additional assumptions.}
+\end{lemma}
+
+\texttt{Lemmas/TermCast.agda}
+\begin{lemma}
+  \label{lemma:evaluatin-casting}
+  \begin{itemize}
+  \item Assume $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$
+    and $\subtype{\Delta}{\Gamma'}{\Gamma}$. In that case there is some
+    $\tau'$ such that
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma' => \tau'}$.
+
+  \item Assume $\ofinstruction{\Psi_{\mathrm{g}},\Delta}{\high \iota}{\Gamma_1 => \Gamma_2}$
+    and $\subtype{\Delta}{\Gamma_1'}{\Gamma_1}$. In that case there is some
+    $\Gamma_2'$ such that
+    $\ofinstruction{\Psi_{\mathrm{g}},\Delta}{\high \iota}{\Gamma_1' => \Gamma_2'}$.
+
+  \item Assume $\ofinstructions{\Psi_{\mathrm{g}},\Delta}{\high I}{\Gamma}$ and
+    $\subtype{\Delta}{\Gamma'}{\Gamma}$. In that case
+    $\ofinstructions{\Psi_{\mathrm{g}},\Delta}{\high I}{\Gamma'}$.
+  \end{itemize}
+\end{lemma}
+
+\begin{lemma}
+  \label{lemma:value-casting}
+  Assume $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$ and that
+  $\subtype{\nil}{\tau}{\tau'}$. In that case
+  $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau'}$. Similar
+  statements hold for stacks, register files and heap values.
+\end{lemma}
+
+\texttt{Lemmas/TermHeapCast.agda}
+\begin{lemma}
+  \label{lemma:heap-casting}
+  Assume $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$ and that
+  $\subtype{\nil}{\Psi_{\mathrm{h}}'}{\Psi_{\mathrm{h}}}$. In that case
+  $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}'}{\high w}{\tau}$. Similar
+  statements hold for stacks, register files and heap values.
+\end{lemma}
+
+\section{Soundness proof}
+
+\subsection{Proof sketch}
+
+\todo{Overall idea including what we mean by ``typed progress''}
+
+The file \texttt{Lemmas/Soundness.agda} contains our proof, though some of the
+larger cases have been split into the files \texttt{Lemmas/MallocStep.agda} and
+\texttt{Lemmas/HeapSteps.agda}.
+
+\begin{lemma}[Small value typed progress]
+  Assume we have derivations of
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ and
+  $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$. In that case we
+  can find a $\high w$ with derivations $\evalregs{\high R}{\high v}{\high w}$
+  and $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$.
+\end{lemma}
+
+\begin{lemma}[Word value typed progress]
+  Assume we have derivations of $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$,
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$ and
+  $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\forall[ \Delta ]
+    \Gamma}$. In that case we can find an $\high I$ with derivation of
+  $\evalcode{\high G}{\high w}{\high I}$ and
+  $\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$.
+\end{lemma}
+
+\begin{lemma}[Step typed progress]
+  Assume we have derivations of $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$,
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$,
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ and
+  $\ofinstructions{\Psi_{\mathrm{g}}, \nil}{\high I}{\Gamma}$. In that case
+  there are two possibilities:
+  \begin{itemize}
+  \item Either $\high I = \mathtt{halt}$.
+  \item We can find $\high H', \high R', \high I', \Psi_{\mathrm{h}}'$ with
+    derivations of:
+    \begin{itemize}
+    \item $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$
+    \item $\ofheap{\Psi_{\mathrm{g}}}{\high H'}{\Psi_{\mathrm{h}}'}$
+    \item $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}'}{\high R'}{\Gamma'}$
+    \item $\ofinstructions{\Psi_{\mathrm{g}}, \nil}{\high I'}{\Gamma'}$
+    \end{itemize}
+  \end{itemize}
+\end{lemma}
+
+\begin{lemma}[Typed progress]
+  Assume we have a derivation of $\valid{}{\high P}$. In that case we can either
+  find:
+  \begin{itemize}
+  \item A proof that $\high P = (\high G, \high H, \high R, \mathtt{halt})$ or
+  \item A $\high{P'}$ with derivations $\steps{\high P}{\high P'}$ and $\valid{}{\high P}$.
+  \end{itemize}
+\end{lemma}
+
+\section{Decidable type-checking}
+
+\subsection{Proof sketch}
+
+The file \texttt{Lemmas/TermDec.agda} contains our proof. We will here sketch
+the approach used in the file, while leaving out the actual proofs.
+
+\begin{lemma}
+  \label{lemma:dec-v}
+  For any $\Psi_{\mathrm{g}},\Delta, \high v,\Gamma$ the following holds:
+
+  \begin{itemize}
+  \item When given derivations of
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$ and
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau'}$ we can
+    conclude that $\tau = \tau'$.
+  \item We decide if any $\tau$ exists such that
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$ is derivable.
+  \end{itemize}
+
+  We can prove similar lemmas for instructions and instruction sequences.
+\end{lemma}
+
+\begin{lemma}
+  \label{lemma:dec-g}
+  For any $\high g$ the following holds:
+
+  \begin{itemize}
+  \item We can find a $\tau$ such that any derivation of
+    $\ofgval{\Psi_{\mathrm{g}}}{\high g}{\tau'}$ will have $\tau = \tau'$.
+  \item When given $\Psi_{\mathrm{g}}$ and $\tau$ we can decide if
+    $\ofgval{\Psi_{\mathrm{g}}}{\high g}{\tau}$ is derivable.
+  \end{itemize}
+
+  We can prove a similar lemma for global collections.
+\end{lemma}
+
+\begin{lemma}
+  For any $\Psi_{\mathrm{g}},\Psi_{\mathrm{h}},\high w$ one of the following
+  is true:
+
+  \begin{itemize}
+  \item No $\tau$ exists making
+    $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$ derivable or
+  \item We can find a $\tau$ such that:
+    \begin{itemize}
+    \item $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$ is
+      derivable and
+    \item When given $\tau'$ we can decide if
+      $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau'}$ is
+      derivable. If it is derivable, then $\subtype{\nil}{\tau}{\tau'}$ is also
+      derivable.
+    \end{itemize}
+  \end{itemize}
+
+  We can prove similar lemmas for stacks and register files.
+\end{lemma}
+
+\begin{lemma}
+  For any $\high h$ the following holds:
+
+  \begin{itemize}
+  \item We can find a $\tau$ such that any derivation of
+    $\ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h}{\tau'}$ will have
+    $\subtype{\nil}{\tau}{\tau'}$.
+  \item When given a $\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}$ and $\tau$ we can
+    decide if $\ofhval{\Psi_{\mathrm{g}}}{\high h}{\tau}$ is derivable.
+  \end{itemize}
+
+  We can prove a similar lemma for heap collections.
+\end{lemma}
+
+\begin{lemma}
+  For any $\Psi_{\mathrm{g}},\high H, \high R, \high I$ the following is true:
+
+  \begin{itemize}
+  \item We can decide if any $\Psi_{\mathrm{h}},\Gamma$ exists such that
+    $\ofprogramstate{\Psi_{\mathrm{g}}}{(\high H, \high R, \high
+      I)}{(\Psi_{\mathrm{h}},\Gamma)}$ is derivable.
+  \end{itemize}
+\end{lemma}
+
+\begin{lemma}
+  For any $\high P$, we can decide if $\valid{}{P}$ is derivable.
+\end{lemma}
+
+\todo{Give a short idea of why this is interesting and/or possible. Specifically
+  it works because we have tagged our global values and heap values with their
+  only possible type.}

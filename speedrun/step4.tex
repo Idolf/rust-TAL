@@ -5,7 +5,7 @@
 \begin{mathpar}
 \infer{\alpha \in \Delta}{\valid{\Delta}{\alpha}} \and
 \infer{ }{\valid{\Delta}{\mathtt{int}}} \and
-\infer{ }{\valid{\Delta}{\mathtt{ns}}} \and
+\infer{ }{\valid{\Delta}{\mathtt{uninit}}} \and
 \infer{\valid{\Delta' ++ \Delta}{\Gamma}}{\valid{\Delta}{\forall[ \Delta' ] \Gamma}} \and
 \infer{\valid{\Delta}{\tau_1^{\phi_1}} \and \dots \and \valid{\Delta}{\tau_n^{\phi_n}}}
       {\valid{\Delta}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}}
@@ -33,9 +33,9 @@
   \valid{\Delta}{\sigma} \and
   \valid{\Delta}{\tau_1} \and
   \dots \and
-  \valid{\Delta}{\tau_{max}}
+  \valid{\Delta}{\tau_{\mathrm{max}}}
 }{
-  \valid{\Delta}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{max} |-> \tau_{max}\}}
+  \valid{\Delta}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau_{\mathrm{max}}\}}
 }
 \end{mathpar}
 
@@ -44,7 +44,7 @@
 \begin{mathpar}
 \infer{\alpha \in \Delta}{\subtype{\Delta}{\alpha}{\alpha}} \and
 \infer{ }{\subtype{\Delta}{\mathtt{int}}{\mathtt{int}}} \and
-\infer{ }{\subtype{\Delta}{\mathtt{ns}}{\mathtt{ns}}} \and
+\infer{ }{\subtype{\Delta}{\mathtt{uninit}}{\mathtt{uninit}}} \and
 \infer{
   \subtype{\Delta' ++ \Delta}{\Gamma_2}{\Gamma_1}
 }{
@@ -95,11 +95,11 @@
   \subtype{\Delta}{\sigma}{\sigma'} \and
   \subtype{\Delta}{\tau_1}{\tau_1'} \and
   \dots \and
-  \subtype{\Delta}{\tau_{max}}{\tau_{max}'}
+  \subtype{\Delta}{\tau_{\mathrm{max}}}{\tau_{\mathrm{max}}'}
 }{
   \subtype{\Delta}
-          {\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{max} |-> \tau_{max}\}}
-          {\{\mathtt{sp} |-> \sigma', \mathtt{r}_1 |-> \tau_1', \dots, \mathtt{r}_{max} |-> \tau_{max}'\}}
+          {\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau_{\mathrm{max}}\}}
+          {\{\mathtt{sp} |-> \sigma', \mathtt{r}_1 |-> \tau_1', \dots, \mathtt{r}_{\mathrm{max}} |-> \tau_{\mathrm{max}}'\}}
 }
 \end{mathpar}
 
@@ -111,9 +111,9 @@
 \item $\Theta : \Delta$ means are replacements for all the variables inside
   $\Delta$ (in the same order). Furthermore the first replacement is allowed
   to use the variables present in later replacements.
-\item $\Psi_g, \Delta, \Gamma |- \high{\iota} : \Gamma'$. This means that if
+\item $\Psi_{\mathrm{g}}, \Delta, \Gamma |- \high{\iota} : \Gamma'$. This means that if
   we run the instruction $\high \iota$ with registers of type $\Gamma$ and
-  globals of type $\Psi_g$, then we can be certain that the registers will be
+  globals of type $\Psi_{\mathrm{g}}$, then we can be certain that the registers will be
   of type $\Gamma'$ afterwards (though this might not be the most specific
   type). Furthermore both $\Gamma, \Gamma'$ and $\high \iota$ are allowed to
   use the variables in $\Delta$ (though these will of course have to be
@@ -151,155 +151,155 @@
 }
 \end{mathpar}
 
-\fbox{$\ofwval{\Psi_g,\Psi_h}{\high w}{\tau}$}
+\fbox{$\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$}
 \begin{mathpar}
 \infer{
-  \Psi_g[\ell_g] = \tau_1 \and
+  \Psi_{\mathrm{g}}[\ell_{\mathrm{g}}] = \tau_1 \and
   \subtype{\nil}{\tau_1}{\tau_2}
 }{
-  \ofwval{\Psi_g,\Psi_h}{\mathtt{globval}\ \ell_g}{\tau_2}
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\tau_2}
 }\and
 \infer{
-  \Psi_h[\ell_h] = \tau_1 \and
+  \Psi_{\mathrm{h}}[\ell_{\mathrm{h}}] = \tau_1 \and
   \subtype{\nil}{\tau_1}{\tau_2}
 }{
-  \ofwval{\Psi_g,\Psi_h}{\mathtt{heapval}\ \ell_h}{\tau_2}
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{heapval}\ \ell_{\mathrm{h}}}{\tau_2}
 }\and
-\infer{ }{\ofwval{\Psi_g,\Psi_h}{\mathtt{int}\ i}{\mathtt{int}}} \and
-\infer{ }{\ofwval{\Psi_g,\Psi_h}{\mathtt{uninit}}{\mathtt{ns}}} \and
+\infer{ }{\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{int}\ i}{\mathtt{int}}} \and
+\infer{ }{\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{uninit}}{\mathtt{uninit}}} \and
 \infer{
-  \ofwval{\Psi_g,\Psi_h}{\high w}{\forall[\Delta_1]\Gamma_1} \and
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\forall[\Delta_1]\Gamma_1} \and
   \ofinstantiations{\Delta_2}{\Theta}{\Delta_1} \and
   \subtype{\Delta_2}{\Gamma_2}{\Gamma_1[\Theta]} \\
   \text{($\Gamma_1[\Theta]$ should be interpreted as recursively running substitutions inside $\Theta$ on $\Gamma_1$one by one)} \\
 }{
-  \ofwval{\Psi_g,\Psi_h}{\Lambda\ \Delta_2 \cdot \high w[\Theta]}{\forall[\Delta_2]\Gamma_2}
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\Lambda\ \Delta_2 \cdot \high w[\Theta]}{\forall[\Delta_2]\Gamma_2}
 }
 \end{mathpar}
 
-\fbox{$\ofwvaln{\Psi_g,\Psi_h}{\high w}{\tau^\phi}$}
+\fbox{$\ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau^\phi}$}
 \begin{mathpar}
 \infer{
   \valid{\nil}{\tau}
 }{
-  \ofwvaln{\Psi_g,\Psi_h}{\mathtt{uninit}}{\tau^{\mathtt{uninit}}}
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\mathtt{uninit}}{\tau^{\mathtt{uninit}}}
 } \and
 \infer{
-  \ofwval{\Psi_g,\Psi_h}{\high w}{\tau}
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}
 }{
-  \ofwvaln{\Psi_g,\Psi_h}{\high w}{\tau^{\mathtt{init}}}
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau^{\mathtt{init}}}
 }
 \end{mathpar}
 
-\fbox{$\ofvval{\Psi_g,\Delta,\Gamma}{\high v}{\tau}$}
+\fbox{$\ofvval{\Psi_{\mathrm{g}},\Delta,\Gamma}{\high v}{\tau}$}
 \begin{mathpar}
 \infer{ }{
-  \ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{reg}\ r}{\Gamma[r]}
+  \ofvval{\Psi_{\mathrm{g}},\Delta,\Gamma}{\mathtt{reg}\ r}{\Gamma[r]}
 }\and
 \infer{
 }{
-  \ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{globval}\ \ell_g}{\Psi_g[\ell_g]}
+  \ofvval{\Psi_{\mathrm{g}},\Delta,\Gamma}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\Psi_{\mathrm{g}}[\ell_{\mathrm{g}}]}
 }\and
-\infer{ }{\ofvval{\Psi_g,\Delta,\Gamma}{\mathtt{int}\ i}{\mathtt{int}}} \and
+\infer{ }{\ofvval{\Psi_{\mathrm{g}},\Delta,\Gamma}{\mathtt{int}\ i}{\mathtt{int}}} \and
 \infer{
-  \ofvval{\Psi_g,\Delta,\Gamma}{\high v}{\forall[\Delta_1]\Gamma_1} \and
+  \ofvval{\Psi_{\mathrm{g}},\Delta,\Gamma}{\high v}{\forall[\Delta_1]\Gamma_1} \and
   \ofinstantiations{\Delta_2 ++ \Delta}{[\Theta]}{\Delta_1} \and
   \Gamma_2 = \Gamma_1[\Theta] \\
   \text{($\Gamma_1[\Theta]$ should be interpreted as recursively running substitutions inside $\Theta$ on $\Gamma_1$one by one)} \\
 }{
-  \ofvval{\Psi_g,\Delta,\Gamma}{\Lambda\ \Delta \cdot \high v[\Theta]}{\forall[\Delta_2]\Gamma_2}
+  \ofvval{\Psi_{\mathrm{g}},\Delta,\Gamma}{\Lambda\ \Delta \cdot \high v[\Theta]}{\forall[\Delta_2]\Gamma_2}
 }
 \end{mathpar}
 
-\fbox{$\ofhval{\Psi_g,\Psi_h}{\high h}{\tau}$}
+\fbox{$\ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h}{\tau}$}
 \begin{mathpar}
 \infer{
-  \ofwvaln{\Psi_g,\Psi_h}{\high w_1}{\tau_1^{\phi_1}} \and
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_1}{\tau_1^{\phi_1}} \and
   \dots \and
-  \ofwvaln{\Psi_g,\Psi_h}{\high w_n}{\tau_n^{\phi_n}}
+  \ofwvaln{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_n}{\tau_n^{\phi_n}}
 }{
-  \ofgval{\Psi_g,\Psi_h}{\langle \high w_1, \dots, \high w_n \rangle}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n}\rangle}
+  \ofgval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\langle \high w_1, \dots, \high w_n \rangle}{\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n}\rangle}
 }
 \end{mathpar}
 
-\fbox{$\ofheap{\Psi_g}{H}{\Psi_h}$}
+\fbox{$\ofheap{\Psi_{\mathrm{g}}}{H}{\Psi_{\mathrm{h}}}$}
 \begin{mathpar}
 \infer{
-  \ofhval{\Psi_g,\Psi_h}{\high h_1}{\tau_1} \and
+  \ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h_1}{\tau_1} \and
   \dots \and
-  \ofhval{\Psi_g,\Psi_h}{\high h_n}{\tau_n} \and
-  \Psi_h = \{\ell_{h,1} |-> \tau_1, \dots, \ell_{h,n} |-> \tau_n\}
+  \ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h_n}{\tau_n} \and
+  \Psi_{\mathrm{h}} = \{\ell_{h,1} |-> \tau_1, \dots, \ell_{h,n} |-> \tau_n\}
 }{
-  \ofheap{\Psi_g}{\{\ell_{h,1} |->  \high h_1, \dots, \ell_{h,n}  |->  \high h_n\}}{\Psi_h}
+  \ofheap{\Psi_{\mathrm{g}}}{\{\ell_{h,1} |->  \high h_1, \dots, \ell_{h,n}  |->  \high h_n\}}{\Psi_{\mathrm{h}}}
 }
 \end{mathpar}
 
-\fbox{$\ofstack{\Psi_g,\Psi_h}{\high S}{\sigma}$}
+\fbox{$\ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high S}{\sigma}$}
 \begin{mathpar}
-\infer{ }{\ofstack{\Psi_g,\Psi_h}{\nil}{\nil}} \and
+\infer{ }{\ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\nil}{\nil}} \and
 \infer{
-  \ofword{\Psi_g,\Psi_h}{\high w}{\tau} \and
-  \ofstack{\Psi_g,\Psi_h}{\high S}{\sigma}
+  \ofword{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau} \and
+  \ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high S}{\sigma}
 }{
-  \ofstack{\Psi_g,\Psi_h}{\high w :: \high S}{\tau :: \sigma}
+  \ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w :: \high S}{\tau :: \sigma}
 }
 \end{mathpar}
 
-\fbox{$\ofregister{\Psi_g,\Psi_h}{\high R}{\Gamma}$}
+\fbox{$\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$}
 \begin{mathpar}
 \infer{
-  \ofstack{\Psi_g,\Psi_h}{\high S}{\sigma} \and
-  \ofwval{\Psi_g,\Psi_h}{\high w_1}{\tau_1} \and
+  \ofstack{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high S}{\sigma} \and
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_1}{\tau_1} \and
   \dots
-  \ofwval{\Psi_g,\Psi_h}{\high w_{max}}{\tau_{max}} \and
+  \ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w_{\mathrm{max}}}{\tau_{\mathrm{max}}} \and
 }{
-  \ofregister{\Psi_g,\Psi_h}{\{\mathtt{sp} |->  \high S, \mathtt{r}_1 |->  \high w_1, \dots, \mathtt{r}_{max} |->  \high w_{max}\}}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{max} |-> \tau_{max}\}}
+  \ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\{\mathtt{sp} |->  \high S, \mathtt{r}_1 |->  \high w_1, \dots, \mathtt{r}_{\mathrm{max}} |->  \high w_{\mathrm{max}}\}}{\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau_1, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau_{\mathrm{max}}\}}
 }
 \end{mathpar}
 
-\fbox{$\ofinstruction{\Psi_g, \Delta, \Gamma}{\high \iota}{\Gamma'}$}
+\fbox{$\ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high \iota}{\Gamma'}$}
 \begin{mathpar}
 \infer{
   \Gamma[r_b] = \mathtt{int} \and
-  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\mathtt{int}}
+  \ofvval{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high v}{\mathtt{int}}
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{add}\ r_a, r_b, \high v}
     {\Gamma[r_a |-> \mathtt{int}]}
 } \and
 \infer{
   \Gamma[r_b] = \mathtt{int} \and
-  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\mathtt{int}}
+  \ofvval{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high v}{\mathtt{int}}
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{sub}\ r_a, r_b, \high v}
     {\Gamma[r_a |-> \mathtt{int}]}
 } \\
 \infer{
-  \sigma = \overbrace{\mathtt{ns} :: \dots :: \mathtt{ns}}^n :: \Gamma[\mathtt{sp}]
+  \sigma = \overbrace{\mathtt{uninit} :: \dots :: \mathtt{uninit}}^n :: \Gamma[\mathtt{sp}]
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{salloc}\ n}
     {\Gamma[\mathtt{sp} |-> \sigma]}
 } \and
 \infer{
   \Gamma[\mathtt{sp}] = \overbrace{\tau_1 :: \dots :: \tau_n}^n :: \sigma
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{sfree}\ n}
     {\Gamma[\mathtt{sp} |-> \sigma]}
 } \and
 \infer{
   \Gamma[\mathtt{sp}] = \sigma
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{ld}\ r, \mathtt{sp}(n)}
     {\Gamma[r |-> \sigma[n]]}
 } \and
 \infer{
   \Gamma[r_b] = \langle \tau_1^{\phi_1}, \dots, \tau_n^{\mathtt{init}}, \dots\rangle \and
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{ld}\ r_a, r_b(n)}
     {\Gamma[r_a |-> \tau_n]}
 } \and
@@ -307,7 +307,7 @@
   \Gamma[r] = \tau \and
   \Gamma[\mathtt{sp}] = \sigma
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{st}\ \mathtt{sp}(n), r}
     {\Gamma[\mathtt{sp} |-> \sigma[n |-> \tau]]}
 } \and
@@ -316,7 +316,7 @@
   \Gamma[r_b] = \tau_n' \and
   \subtype{\Delta}{\tau_n'}{\tau_n}
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{st}\ r_a(n), r_b}
     {\Gamma[r_a |-> \langle \tau_1^{\phi_1}, \dots, \tau_n^{\mathtt{init}}, \dots, \rangle]}
 } \and
@@ -325,86 +325,86 @@
   \dots \and
   \valid{\Delta}{\tau_n}
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle}
     {\Gamma[r |-> \langle \tau_1^{\mathtt{uninit}}, \dots, \tau_n^{\mathtt{uninit}}\rangle]}
 } \and
 \infer{
-  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\tau}
+  \ofvval{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high v}{\tau}
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{mov}\ r, \high v}
     {\Gamma[r |-> \tau]}
 } \and
 \infer{
   \Gamma[r] = \mathtt{int} \and
-  \ofvval{\Psi_g, \Delta, \Gamma}{\high v}{\forall[ \nil ] \Gamma'} \and
+  \ofvval{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high v}{\forall[ \nil ] \Gamma'} \and
   \subtype{\Delta}{\Gamma}{\Gamma'}
 }{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}
     {\mathtt{beq}\ r, \high v}
     {\Gamma}
 }
 \end{mathpar}
 
-\fbox{$\ofinstructions{\Psi_g, \Delta, \Gamma}{\high I}$}
+\fbox{$\ofinstructions{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high I}$}
 \begin{mathpar}
 \infer{
-  \ofinstruction{\Psi_g, \Delta, \Gamma}{\high \iota}{\Gamma'} \and
-  \ofinstructions{\Psi_g, \Delta, \Gamma'}{\high I}
+  \ofinstruction{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high \iota}{\Gamma'} \and
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta, \Gamma'}{\high I}
 }{
-  \ofinstructions{\Psi_g, \Delta, \Gamma}{\high \iota ; \high I}
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high \iota ; \high I}
 } \and
 \infer{
   \ofvval{\Psi_1, \Delta, \Gamma}{\high v}{\forall[ \nil ]\Gamma'} \and
   \subtype{\Delta}{\Gamma}{\Gamma'}
 }{
-  \ofinstructions{\Psi_g, \Delta, \Gamma}{\mathtt{jmp}\ \high v}
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\mathtt{jmp}\ \high v}
 } \and
 \infer{
 }{
-  \ofinstructions{\Psi_g, \Delta, \Gamma}{\mathtt{halt}}
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\mathtt{halt}}
 }
 \end{mathpar}
 
-\fbox{$\ofgval{\Psi_g}{\high g}{\tau}$}
+\fbox{$\ofgval{\Psi_{\mathrm{g}}}{\high g}{\tau}$}
 \begin{mathpar}
 \infer{
   \valid{\Delta}{\Gamma} \and
-  \ofinstructions{\Psi_g, \Delta, \Gamma}{\high I}
+  \ofinstructions{\Psi_{\mathrm{g}}, \Delta, \Gamma}{\high I}
 }{
-  \ofgval{\Psi_g}{\mathtt{code}[\Delta]\Gamma \cdot \high I}{\forall[\Delta]\Gamma}
+  \ofgval{\Psi_{\mathrm{g}}}{\mathtt{code}[\Delta]\Gamma \cdot \high I}{\forall[\Delta]\Gamma}
 }
 \end{mathpar}
 
-\fbox{$\ofglobs{\high G}{\Psi_g}$}
+\fbox{$\ofglobs{\high G}{\Psi_{\mathrm{g}}}$}
 \begin{mathpar}
 \infer{
-  \ofgval{\Psi_g}{\high g_1}{\tau_1} \and
+  \ofgval{\Psi_{\mathrm{g}}}{\high g_1}{\tau_1} \and
   \dots \and
-  \ofgval{\Psi_g}{\high g_n}{\tau_n} \and
-  \Psi_g = \{\ell_{g,1} |-> \tau_1, \dots, \ell_{g,n} |-> \tau_n\}
+  \ofgval{\Psi_{\mathrm{g}}}{\high g_n}{\tau_n} \and
+  \Psi_{\mathrm{g}} = \{\ell_{g,1} |-> \tau_1, \dots, \ell_{g,n} |-> \tau_n\}
 }{
-  \ofglobs{\{\ell_{g,1} |->  \high g_1, \dots, \ell_{g,n}  |->  \high g_n\}}{\Psi_g}
+  \ofglobs{\{\ell_{g,1} |->  \high g_1, \dots, \ell_{g,n}  |->  \high g_n\}}{\Psi_{\mathrm{g}}}
 }
 \end{mathpar}
 
-\fbox{$\ofprogramstate{\Psi_g}{\high P}{(\Psi_h,\Gamma)}$}
+\fbox{$\ofprogramstate{\Psi_{\mathrm{g}}}{\high P}{(\Psi_{\mathrm{h}},\Gamma)}$}
 \begin{mathpar}
 \infer{
-  \ofheap{\Psi_g}{\high H}{\Psi_h} \\
-  \ofregister{\Psi_g,\Psi_h}{\high R}{\Gamma} \and
-  \ofinstructions{\Psi_g,\nil,\Gamma}{\high I}
+  \ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}} \\
+  \ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma} \and
+  \ofinstructions{\Psi_{\mathrm{g}},\nil,\Gamma}{\high I}
 }{
-  \ofprogramstate{\high G}{(\high H,\high R,\high I)}{(\Psi_h,\Gamma)}
+  \ofprogramstate{\high G}{(\high H,\high R,\high I)}{(\Psi_{\mathrm{h}},\Gamma)}
 }
 \end{mathpar}
 
 \fbox{$\ofprogram{\highlang}$}
 \begin{mathpar}
 \infer{
-  \ofglobs{\high G}{\Psi_g} \and
-  \ofprogramstate{\Psi_g}{\high P}{(\Psi_h, \Gamma)}
+  \ofglobs{\high G}{\Psi_{\mathrm{g}}} \and
+  \ofprogramstate{\Psi_{\mathrm{g}}}{\high P}{(\Psi_{\mathrm{h}}, \Gamma)}
 }{
   \ofprogram{\running (\high G,\high P)}
 } \and
