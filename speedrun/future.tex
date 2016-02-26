@@ -1,8 +1,48 @@
-\chapter{Future Work and Related Work}
+\chapter{Related Work and Future Work}
 \label{chap:future}
-\section{Future Work}
 \section{Related Work}
 \subsection{Relation to STAL}
 \label{sec:rel-stal}
 
 \section{Original Goal}
+
+The original title of this project was ``A Rust-like Typed Assembly Language --
+Using affine types to avoid garbage collection''.
+
+The goal of this proposed thesis was to design a Typed Assembly Language based
+on linear types. Linear types have been tried before in the context of TAL, in
+particular in the paper ``A linearly typed assembly language''\cite{ltal} from
+2003. In this paper the authors design a TAL based in linear types, but they
+conclude the approach has serious drawbacks in particular with regards to
+sharing.
+
+I thought it interesting to revisit the idea, since the programming language
+Rust\cite{rust} have proven that is \emph{can} be practical to use linear type
+systems for memory management\footnote{Technically Rust uses an affine type
+  system, not a linear one. In this particular case the differences are minor
+  and mostly related to usability of the language.}. I found the paper ``Patina:
+A Formalization of the Rust Programming Language''\cite{patina} by Eric Reed,
+and after skimming it, it was my hope that I could use the same techniques in a
+TAL.
+
+I changed focus during the project for a number of reasons. One of my issues was
+that the original paper fell short of actually proving soundness, as several of
+the later proofs are missing. This was quite naturally detrimental to my effort
+and I should have noticed this before settling on a thesis subject.
+
+However the much bigger issue in my thesis turned out to be implementing
+variables and substitutions correctly in Agda using de Bruijn
+indices. Substitutions take up about 25\% of my final code-base (including the
+utilities not specifically related to TAL. This is after rewriting that part
+several times and removing unused lemmas.
+
+I do not think that this is an issue with Agda, but rather I think that de
+Bruijn indices could simply be hard to formalize correctly -- at least they were
+to me. This seems consistent with the results from ``An Untrusted Verifier for
+Typed Assembly Language''\cite{untrusted}[5.1], in which the authors had similar
+problems when formalizing a TAL in Coq also using a similar approach.
+
+This meant that I used most of my time simply re-implementing known results in a
+different framework.
+
+\section{Future Work}
