@@ -1,2 +1,149 @@
 \appendix
-\chapter{Appendix something something}
+\chapter{Proof sketch of soundness}
+\label{sec:soundness-proof}
+
+The file \texttt{Lemmas/Soundness.agda} contains our proof, though some of the
+larger cases have been split into the files \texttt{Lemmas/MallocStep.agda} and
+\texttt{Lemmas/HeapSteps.agda}.
+
+\todo{Make this follow the original structure closer.}
+
+\begin{lemma}[Small value typed progress]
+  Assume we have derivations of
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ and
+  $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$. In that case we
+  can find a $\high w$ with derivations $\evalregs{\high R}{\high v}{\high w}$
+  and $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$.
+\end{lemma}
+
+\begin{lemma}[Word value typed progress]
+  Assume we have derivations of $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$,
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$ and
+  $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\forall[ \Delta ]
+    \Gamma}$. In that case we can find an $\high I$ with derivation of
+  $\evalcode{\high G}{\high w}{\high I}$ and
+  $\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$.
+\end{lemma}
+
+\begin{lemma}[Step typed progress]
+  Assume we have derivations of $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$,
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$,
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ and
+  $\ofinstructions{\Psi_{\mathrm{g}}, \nil}{\high I}{\Gamma}$. In that case
+  there are two possibilities:
+  \begin{itemize}
+  \item Either $\high I = \mathtt{halt}$.
+  \item We can find $\high H', \high R', \high I', \Psi_{\mathrm{h}}'$ with
+    derivations of:
+    \begin{itemize}
+    \item $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$
+    \item $\ofheap{\Psi_{\mathrm{g}}}{\high H'}{\Psi_{\mathrm{h}}'}$
+    \item $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}'}{\high R'}{\Gamma'}$
+    \item $\ofinstructions{\Psi_{\mathrm{g}}, \nil}{\high I'}{\Gamma'}$
+    \end{itemize}
+  \end{itemize}
+\end{lemma}
+
+\begin{lemma}[Typed progress]
+  Assume we have a derivation of $\valid{}{\high P}$. In that case we can either
+  find:
+  \begin{itemize}
+  \item A proof that $\high P = (\high G, \high H, \high R, \mathtt{halt})$ or
+  \item A $\high{P'}$ with derivations $\steps{\high P}{\high P'}$ and $\valid{}{\high P}$.
+  \end{itemize}
+\end{lemma}
+
+\chapter{Proof sketch of decidable type-checking}
+\label{sec:decproof}
+
+This is a proof sketch that the type system of \ATAL is decidable. It follows
+the structure of the file \texttt{Lemmas/TermDec.agda}, which contain our
+Agda-checked proof. The main result of the file is the following function:
+
+\begin{code}
+\>\AgdaFunction{programstate-dec} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaBound{P} \AgdaSymbol{→} \AgdaDatatype{Dec} \AgdaSymbol{(}\AgdaDatatype{⊢} \AgdaBound{P} \AgdaDatatype{programstate}\AgdaSymbol{)}\<%
+\end{code}
+
+We will here present a slightly simplified sketch of how the result is shown in
+that file. The actual proof bodies are quite repetitive and have been left
+out. Instead we only present the structure of the proofs, which is much more
+interesting.
+
+\begin{lemma}
+  \label{lemma:dec-v}
+  For any $\Psi_{\mathrm{g}},\Delta, \high v,\Gamma$ the following holds:
+
+  \begin{itemize}
+  \item When given derivations of
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$ and
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau'}$ we can
+    conclude that $\tau = \tau'$.
+  \item We decide if any $\tau$ exists such that
+    $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$ is derivable.
+  \end{itemize}
+
+  We can prove similar lemmas for instructions and instruction sequences.
+\end{lemma}
+
+\begin{lemma}
+  \label{lemma:dec-g}
+  For any $\high g$ the following holds:
+
+  \begin{itemize}
+  \item We can find a $\tau$ such that any derivation of
+    $\ofgval{\Psi_{\mathrm{g}}}{\high g}{\tau'}$ will have $\tau = \tau'$.
+  \item When given $\Psi_{\mathrm{g}}$ and $\tau$ we can decide if
+    $\ofgval{\Psi_{\mathrm{g}}}{\high g}{\tau}$ is derivable.
+  \end{itemize}
+
+  We can prove a similar lemma for global collections.
+\end{lemma}
+
+\begin{lemma}
+  For any $\Psi_{\mathrm{g}},\Psi_{\mathrm{h}},\high w$ one of the following
+  is true:
+
+  \begin{itemize}
+  \item No $\tau$ exists making
+    $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$ derivable or
+  \item We can find a $\tau$ such that:
+    \begin{itemize}
+    \item $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$ is
+      derivable and
+    \item When given $\tau'$ we can decide if
+      $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau'}$ is
+      derivable. If it is derivable, then $\subtype{\nil}{\tau}{\tau'}$ is also
+      derivable.
+    \end{itemize}
+  \end{itemize}
+
+  We can prove similar lemmas for stacks and register files.
+\end{lemma}
+
+\begin{lemma}
+  For any $\high h$ the following holds:
+
+  \begin{itemize}
+  \item We can find a $\tau$ such that any derivation of
+    $\ofhval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high h}{\tau'}$ will have
+    $\subtype{\nil}{\tau}{\tau'}$.
+  \item When given a $\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}$ and $\tau$ we can
+    decide if $\ofhval{\Psi_{\mathrm{g}}}{\high h}{\tau}$ is derivable.
+  \end{itemize}
+
+  We can prove a similar lemma for heap collections.
+\end{lemma}
+
+\begin{lemma}
+  For any $\Psi_{\mathrm{g}},\high H, \high R, \high I$ the following is true:
+
+  \begin{itemize}
+  \item We can decide if any $\Psi_{\mathrm{h}},\Gamma$ exists such that
+    $\ofprogramstate{\Psi_{\mathrm{g}}}{(\high H, \high R, \high
+      I)}{(\Psi_{\mathrm{h}},\Gamma)}$ is derivable.
+  \end{itemize}
+\end{lemma}
+
+\begin{lemma}
+  For any $\high P$, we can decide if $\valid{}{P}$ is derivable.
+\end{lemma}

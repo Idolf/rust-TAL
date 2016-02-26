@@ -9,7 +9,6 @@ open import Relation.Binary using (tri< ; tri≈ ; tri> ; Trichotomous) public
 open import Util.Eq
 open import Util.Function
 open import Data.Product using (proj₁ ; proj₂ ; _×_)
-open import Relation.Nullary.Decidable using (toWitness)
 
 -- A "typeclass" for decidable equality
 -- I know there is one in the standard library, but this one is simpler
@@ -76,4 +75,5 @@ dec-inj₂ f g _ (no ¬b) = no (¬b ∘ proj₂ ∘ g)
 dec-force : ∀ {a} {A : Set a} →
               (p : Dec A) → {{_ : True p}} →
               A
-dec-force p {{w}} = toWitness w
+dec-force (yes p) = p
+dec-force (no ¬p) {{()}}
