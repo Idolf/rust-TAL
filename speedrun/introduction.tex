@@ -44,9 +44,9 @@ requirements for the system to be correct.
 
 As an example, consider a sandbox-solution. For this solution to be secure, we
 require the sandbox, operating system and CPU to all be implemented
-correctly. If we instead ran the program on a hypervisor, we would instead
-require a correct hypervisor and CPU. If the hypervisor is simpler than the OS
-and sandbox combined, then we have reduced our TCB.
+correctly. If we instead ran the program on a hypervisor, we would only require
+a correct hypervisor and CPU. If the hypervisor is simpler than the OS and
+sandbox combined, then we have reduced our TCB.
 
 An obvious extension would be to allow proofs as part of our TCB. If we for
 instance proved a program bug-free, then our TCB might be the CPU, operating
@@ -87,10 +87,10 @@ or try to bypass the validation check altogether.
 Run-time protections have a long history in computer science, and could arguably
 be said to have had the biggest practical impact so far. One reason for their
 effectiveness, is that they often allow many parallel protections (a technique
-sometimes referred to as ``Defense in Depth''). It is for instance common to see
-end-user machines both memory protections, file permissions and sandboxes for
-the most exposed applications among its protections. Another reason is that this
-system is not (directly) limited by Rice's Theorem.\footnote{Many potential
+sometimes referred to as ``Defense in Depth''). It is for instance uncommon to
+see end-user machines without memory protections, file permissions and sandboxes
+for the most exposed applications among its protections. Another reason is that
+this system is not (directly) limited by Rice's Theorem.\footnote{Many potential
   implementations \emph{would} be limited by Rice's Theorem, but that is not an
   inherent property of run-time protections. For instance if one simply wanted
   to stop a system from ``firing the missiles'', then one could cut the wire to
@@ -117,16 +117,17 @@ that this is the case.
 
 \section{Typed Assembly Language}
 
-This thesis discusses a technique known Typed Assembly Language (TAL). It was
+This thesis discusses a technique known as Typed Assembly Language (TAL). It was
 first introduced in the paper ``From System F to Typed Assembly Language'' by
-Morrisett et al. The core idea of the paper is, that one can add types to binary
-programs. By distributing these types along with untrusted programs, one verify
-certain properties about the programs, and we can use this to build a
-sandbox-like system.
+Morrisett et al. Its core idea is to add types to binary programs. By
+distributing these types along with untrusted programs, one can verify certain
+properties about the programs, and we can use this to build a system similar to
+a sandbox. Specifically this system would, like sandboxes, take untrusted
+programs as input and run them in a secure manner.
 
-While the paper introduced a specific instance of TAL for a specific system, its
-core idea is not unique to that system. Most designs following this idea will
-use a procedure similar to this:
+While the paper introduced a specific instance of TAL for a specific system, the
+core idea is much more general. In fact it is possible to generate many
+variations of it using the following procedure:
 
 \begin{itemize}
 \item Start by choosing a subset of a real-world assembly language.
@@ -135,26 +136,26 @@ use a procedure similar to this:
   model for how to execute programs in the chosen subset. Our model might for
   instance state that a machine in state $p_1$ can transition to a machine in
   state $p_2$ (by e.g. running a single instruction), in which case we would
-  write $p_1 -> p_2$. Furthermore this model will designate some states as valid
-  programs that are valid, finished programs. This allows us to partition
-  programs states into exactly one of these categories:
+  write $p_1 -> p_2$. Furthermore this model will designate some states as
+  valid, finished programs. This allows us to place any program state into
+  exactly one of the these categories:
 
   \begin{itemize}
   \item \emph{Progressing} states are those that can transition to other states.
-  \item \emph{Halting} states are valid, finished states.
+  \item \emph{Halting} states are the valid, finished states.
   \item \emph{Stuck} states are all other states, i.e. states that can neither
     transition to other states nor represent our valid, finished
     computations. We will consider these states to be bad/error states.
   \end{itemize}
 
 \item Define a type system for this subset. This is a way to designate e.g. that
-  a register holds integer instead of a pointer. The type system should have a
-  type-checker. A type-checker is a program that is given a program and its
-  types, and outputs whether the types are valid for that program.
+  a register holds an integer instead of a pointer. We also want a type-checker
+  for this type system. This is a procedure that, when given a program state and
+  its type, will output whether the type matches the state.
 
-  This type-checker is not required to correctly check \emph{all} programs -- it
-  might reject too large programs, or programs with specific properties. If a
-  perfect type-checker exists, i.e. one that can correctly checks all programs,
+  The type-checker is allowed to be wrong sometimes, as long as it will never
+  output \texttt{valid} by mistake. We allow this, as this sometimes allows
+  greater efficiency. If we can implement a type-checker without such errors,
   then we say that the type system is \emph{decidable}.
 
 \item Prove that this type-system is \emph{sound}. This means that if $p_1$ is
@@ -176,8 +177,11 @@ on some important points:
   must halt without error.
 \item If our model states that $p$ is stuck, then the real-world machine is
   allowed to do anything.
-\item Our model should ideally be chosen such that the ``bad stuff'' is left
-  out. How one could hope to achieve this is discussed in \Cref{chap:safesound}.
+\item Our model should be chosen such that the ``bad stuff'' is left out. What
+  is meant by ``bad stuff'' might vary between use-cases, though it will likely
+  include accessing unmapped memory or executing attacker-controlled code. For
+  an attempt at clarifying this and how one could hope to achieve it see
+  \Cref{chap:safesound}.
 \end{itemize}
 
 If we create a TAL using this procedure, we can create our sandbox primitive as
@@ -232,9 +236,9 @@ of the mentioned protection categories:
 The goal of this thesis is ultimately how to design a secure sandbox primitive
 based on Typed Assembly Language with specific focus on how to minimize the
 TCB. This minimization takes two forms: By formalizing the meta-theory and by
-trying to simplify the components needed beyond this formalization. As a result
-most of the work revolves around proofs (particularly proof of soundness) how
-they can be mechanized.
+trying to simplify the components needed beyond this formalization. As a result,
+most of the work revolves around proofs (particularly proof of soundness) and
+how they can be mechanized.
 
 This thesis is \emph{not} about:
 
@@ -242,7 +246,7 @@ This thesis is \emph{not} about:
 \item How to implement infrastructure for this system beyond the sandbox
   itself. In particular we will not discuss compiler implementations.
 \item How to reduce the TCB beyond reducing code size and formalizing the
-  metatheory. We will for example not talk about bugs in the hardware or CPU
+  meta-theory. We will for example not talk about bugs in the hardware or CPU
   specification.
 \item Any form of detailed analysis of the performance characteristics of the
   system.  We will specifically not do any thorough analysis of the algorithmic
@@ -260,7 +264,7 @@ support for exceptions and existential types have been removed, and a few
 details have been simplified. While introducing \ATAL, we also introduce a
 simplified version of the same language, \ATALe. After introducing the
 languages, we will define small-step semantics for both
-languages. \textbf{\Cref{chap:erasure}} will prove that the two semantics
+languages. \textbf{\Cref{chap:erasure}} will prove that the two semantics are
 essentially equivalent. We do this by introducing the notion of erasure
 semantics and prove that the two semantics are related by
 it. \textbf{\Cref{chap:types}} introduces the type system for \ATAL and proves
@@ -271,8 +275,8 @@ sketch of how one could implement a platform with a small TCB from the results
 in the previous chapters. \textbf{\Cref{chap:hindsight}} lists a few lessons
 lessons from doing a project of this size in Agda. This includes both
 observations specific to implement a TAL-like language in Agda, but also a few
-more general tricks for making Agda easier to work with. It is mostly meant to
-be readable independently of the other chapters. \textbf{\Cref{chap:future}}
+more general tricks for making Agda easier to work with. It is meant to be
+readable independently of the other chapters. \textbf{\Cref{chap:future}}
 discusses how the work could be extended and relates it to other work. In
 particular the differences between STAL and \ATAL will be discussed. Finally,
 \textbf{\Cref{chap:conclusion}} summaries my contributions and concludes.
