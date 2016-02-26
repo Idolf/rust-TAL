@@ -3,10 +3,9 @@ module Lemmas.TermDec where
 open import Util
 open import Judgments
 open import Lemmas.Equality using ()
-open import Lemmas.Substitution
-open import Lemmas.Types
+open import Lemmas.Substitution using (subst-unique-many ; _⟦_/_⟧many?)
+open import Lemmas.Types using (_⊢?_Valid ; _⊢_≤?_ ; ≤-valid₁ ; ≤-refl ; ≤-valid₂ ; ≤-trans)
 open import Lemmas.TypeSubstitution
-open import Lemmas.HighSemantics
 open import Lemmas.TermCast
 open import Lemmas.TermValidType
 open import Lemmas.TermHeapCast using (register-heapcast ; hvals-heapcast)
@@ -206,9 +205,11 @@ private
     with lookup-regs ♯rs Γ ≟ int | τ ≟ int
   ... | no lookup≢int | _ = no (λ { (._ , of-add lookup≡int v⋆') → lookup≢int lookup≡int })
   ... | _ | no τ≢int = no (λ { (._ , of-add lookup≡int v⋆') → τ≢int (vval-unique v⋆ v⋆') })
+
   instruction-dec Γ (add ♯rd ♯rs v)
       | yes (int , v⋆) | yes lookup≡eq | yes refl
         = yes (_ , of-add lookup≡eq v⋆)
+
   instruction-dec {ψ₁} {Δ} Γ (sub ♯rd ♯rs v)
     with vval-dec v
   ... | no ¬v⋆ = no (λ { (._ , of-sub lookup≡int v⋆) → ¬v⋆ (_ , v⋆) })
@@ -216,22 +217,28 @@ private
     with lookup-regs ♯rs Γ ≟ int | τ ≟ int
   ... | no lookup≢int | _ = no (λ { (._ , of-sub lookup≡int v⋆') → lookup≢int lookup≡int })
   ... | _ | no τ≢int = no (λ { (._ , of-sub lookup≡int v⋆') → τ≢int (vval-unique v⋆ v⋆') })
+
   instruction-dec Γ (sub ♯rd ♯rs v)
       | yes (int , v⋆) | yes lookup≡eq | yes refl
         = yes (_ , of-sub lookup≡eq v⋆)
+
   instruction-dec (registerₐ σ τs) (salloc n) = yes (_ , of-salloc)
+
   instruction-dec (registerₐ σ τs) (sfree n)
     with stack-drop-dec n σ
   ... | yes (σ' , drop) = yes (registerₐ σ' τs , of-sfree drop)
   ... | no ¬drop = no (λ { (_ , of-sfree drop) → ¬drop (_ , drop)})
+
   instruction-dec (registerₐ σ τs) (sld ♯rd i)
     with stack-lookup-dec i σ
   ... | no ¬lookup = no (λ { (_ , of-sld lookup) → ¬lookup (_ , lookup)})
   ... | yes (τ , lookup) = yes (_ , of-sld lookup)
+
   instruction-dec (registerₐ σ τs) (sst i ♯rs)
     with stack-update-dec i (lookup ♯rs τs) σ
   ... | no ¬update = no (λ { (_ , of-sst update) → ¬update (_ , update)})
   ... | yes (σ' , update) = yes (_ , of-sst update)
+
   instruction-dec {ψ₁} {Δ} (registerₐ σ τs) (ld ♯rd ♯rs i)
     with is-tuple (lookup ♯rs τs)
   ... | no lookup≢tuple = no (λ { (_ , of-ld lookup≡tuple lookup) → lookup≢tuple (_ , lookup≡tuple)})
@@ -278,10 +285,12 @@ private
     with <-to-← τs⁻ (τ , init) (↓-to-< l)
   ... | τs⁻' , up
     = yes (_ , of-st lookup≡tuple lookup≤τ l up)
+
   instruction-dec {Δ = Δ} Γ (malloc ♯r τs)
     with Δ ⊢? τs Valid
   ... | yes τs⋆ = yes (_ , of-malloc τs⋆)
   ... | no ¬τs⋆ = no (λ { (_ , of-malloc τs⋆) → ¬τs⋆ τs⋆})
+
   instruction-dec Γ (mov ♯rd v)
     with vval-dec v
   ... | yes (τ , v⋆) = yes (_ , of-mov v⋆)
@@ -380,16 +389,15 @@ private
   ... | no ¬g⋆ | _ = no (λ { (g⋆ ∷ gs⋆) → ¬g⋆ g⋆ })
   ... | _ | no ¬gs⋆ = no (λ { (g⋆ ∷ gs⋆) → ¬gs⋆ gs⋆ })
 
-  gval-unique-helper : ∀ {ψ₁ Δ Γ I τ} →
-                         ψ₁ ⊢ code[ Δ ] Γ ∙ I of τ gval →
-                         τ ≡ ∀[ Δ ] Γ
-  gval-unique-helper (of-gval Γ⋆ I⋆) = refl
-
   gval-unique : ∀ g →
-                  ∃ λ τ →
-                      (∀ {ψ₁ τ'} → ψ₁ ⊢ g of τ' gval → τ' ≡ τ)
+                ∃ λ τ →
+                  (∀ {ψ₁ τ'} → ψ₁ ⊢ g of τ' gval → τ' ≡ τ)
   gval-unique (code[ Δ ] Γ ∙ I)
-    = ∀[ Δ ] Γ , gval-unique-helper
+    = ∀[ Δ ] Γ , help
+      where help : ∀ {ψ₁ Δ Γ I τ} →
+                     ψ₁ ⊢ code[ Δ ] Γ ∙ I of τ gval →
+                     τ ≡ ∀[ Δ ] Γ
+            help (of-gval Γ⋆ I⋆) = refl
 
   gvals-unique : ∀ gs →
                    ∃ λ τs →
@@ -399,15 +407,7 @@ private
   gvals-unique (g ∷ gs)
     with gval-unique g | gvals-unique gs
   ... | τ , τ-eq | τs , τs-eq
-    = τ ∷ τs , help τ-eq τs-eq
-      where help : ∀ {g gs τ τs} →
-                     (∀ {ψ₁ τ'}  → ψ₁ ⊢ g of τ' gval → τ' ≡ τ) →
-                     (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) gs τs' → τs' ≡ τs) →
-                     (∀ {ψ₁ τs'} → AllZip (λ g τ → ψ₁ ⊢ g of τ gval) (g ∷ gs) τs' → τs' ≡ τ ∷ τs)
-            help τ-eq τs-eq (g⋆ ∷ gs⋆)
-              rewrite τ-eq g⋆
-                    | τs-eq gs⋆
-                = refl
+    = τ ∷ τs , λ { {ψ₁} {τ' ∷ τs'} (g⋆ ∷ gs⋆) → cong₂ _∷_ (τ-eq g⋆) (τs-eq gs⋆) }
 
   globals-dec : ∀ G →
                   ¬ (∃ λ τs  → ⊢ G of τs globals) ∨
