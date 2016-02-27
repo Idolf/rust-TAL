@@ -192,4 +192,4 @@ erase-step-prg-backwards {G , H , R , .halt} (step-inner ())
                  I ≢ halt →
                  ¬ (H.GoodState (G , H , R , I))
         help ¬step I≢halt halting = I≢halt refl
-        help ¬step I≢halt (transitioning step) = ¬step (_ , step)
+        help ¬step I≢halt (progressing step) = ¬step (_ , step)

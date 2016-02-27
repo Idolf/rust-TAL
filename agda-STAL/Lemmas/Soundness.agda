@@ -7,10 +7,12 @@ open import Lemmas.TypeSubstitution using (valid-weaken ; weaken-outside-ctx-0 ;
 open import Lemmas.TermWeaken using (instructionsequence-weaken)
 open import Lemmas.TermSubstitution using (instructionsequence-subst-many)
 open import Lemmas.TermCast using (instructionsequence-cast)
+open import Lemmas.SimpleSemantics using (step-prg-uniqueₛ)
 open import Lemmas.HighSemantics using (step-prg-uniqueₕ)
 open import Lemmas.TermValidType using (wval-valid-type ; globals-valid-type)
 open import Lemmas.HeapSteps using (store-step ; load-step)
 open import Lemmas.MallocStep using (malloc-step)
+open import Lemmas.Erase using (erase-step-prg ; erase-step-prg-backwards)
 open HighSyntax
 open HighSemantics
 
@@ -250,7 +252,7 @@ step-progress P⋆
   with step-progress⁺ P⋆
 step-progress P⋆
     | inj₁ halting = halting
-... | inj₂ (P' , P'⋆ , step) = transitioning step
+... | inj₂ (P' , P'⋆ , step) = progressing step
 
 step-reduction : ∀ {P}  → ⊢ P programstate →
                  ∀ {P'} → ⊢ P ⇒ P' →
@@ -276,3 +278,22 @@ steps-soundness : ∀ {n P₁ P₂} →
                     ⊢ P₁ ⇒ₙ n / P₂ →
                     GoodState P₂
 steps-soundness P⋆ steps = step-progress (steps-reduction P⋆ steps)
+
+steps-soundnessₛ : ∀ {n P₁ P₂'} →
+                     ⊢ P₁ programstate →
+                     ⊢ₛ erase P₁ ⇒ₙ n / P₂' →
+                     GoodStateₛ P₂'
+steps-soundnessₛ P₁⋆ []
+  with step-progress P₁⋆
+steps-soundnessₛ P₁⋆ []
+    | halting = halting
+... | progressing step = progressing (erase-step-prg step)
+steps-soundnessₛ P₁⋆ (step ∷ steps)
+  with erase-step-prg-backwards step
+... | inj₂ ¬good
+  with ¬good (step-progress P₁⋆)
+... | ()
+steps-soundnessₛ P₁⋆ (step ∷ steps)
+    | inj₁ (P₂ , step' , eq)
+  rewrite sym eq
+  = steps-soundnessₛ (step-reduction P₁⋆ step') steps

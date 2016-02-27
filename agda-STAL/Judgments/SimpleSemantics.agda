@@ -148,7 +148,7 @@ data Haltingₛ : ProgramState → Set where
     Haltingₛ (G , H , R , halt)
 
 data Progressingₛ : ProgramState → Set where
-  transitioning :
+  progressing :
       ∀ {P P'} →
       ⊢ₛ P ⇒ P' →
     --------------
@@ -160,7 +160,7 @@ data GoodStateₛ : ProgramState → Set where
     -----------------------------
     GoodStateₛ (G , H , R , halt)
 
-  transitioning :
+  progressing :
      ∀ {P P'} →
      ⊢ₛ P ⇒ P' →
     ------------
