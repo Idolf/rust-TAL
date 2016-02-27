@@ -27,10 +27,9 @@ fiboloop =
      jmp Λ [] ∙ globval 2 ⟦ α (α⁼ 2) ∷ α (α⁼ 2) ∷ ρ (ρ⁼ 2) ∷ [] ⟧
 
 badloop =
-  code[ α ∷ α ∷ α ∷ α ∷ ρ ∷ [] ]
-  registerₐ (ρ⁼ 4) (α⁼ 0 ∷ α⁼ 1 ∷ α⁼ 2 ∷ α⁼ 3 ∷ []) ∙
-    malloc (# 0) (α⁼ 0 ∷ α⁼ 0 ∷ []) ~>
-    jmp Λ [] ∙ globval 3 ⟦ α (tuple ((α⁼ 4 , uninit) ∷ (α⁼ 4 , uninit) ∷ [])) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ α (α⁼ 4) ∷ ρ (ρ⁼ 4) ∷ [] ⟧
+  code[ α ∷ [] ]
+  registerₐ [] (int ∷ int ∷ int ∷ int ∷ []) ∙
+    jmp Λ [] ∙ globval 3 ⟦ α (tuple ((α⁼ 0 , uninit) ∷ (α⁼ 0 , uninit) ∷ [])) ∷ [] ⟧
 
 myglobals : Globals
 myglobals = infloop ∷ addloop ∷ fiboloop ∷ badloop ∷ []
@@ -101,53 +100,37 @@ myprogram3-step = dec-force (exec-dec-specificₕ _ _ _)
 
 -- The bad program that cases exponential type blowup
 mytupletype : ℕ → Type
-mytupletype 0 = uninit
+mytupletype 0 = int
 mytupletype (suc n)
   with mytupletype n
 ... | τ = tuple ((τ , uninit) ∷ (τ , uninit) ∷ [])
 
-mytupletypes : ℕ → List Type
-mytupletypes 0 = []
-mytupletypes (suc n) = mytupletypes n ∷ʳ mytupletype (suc n)
-
-myheapval : ℕ → HeapValue
-myheapval n
-  with mytupletype n
-... | τ = tuple (τ ∷ τ ∷ []) (uninit ∷ uninit ∷ [])
-
-myheapvals : ℕ → List HeapValue
-myheapvals 0 = []
-myheapvals (suc n) = myheapvals n ∷ʳ myheapval n
-
-mystart4 : ℕ → InstructionSequence
-mystart4 n =
-  jmp Λ [] ∙ globval 3 ⟦ α (mytupletype (suc n)) ∷ α int ∷ α int ∷ α int ∷ ρ [] ∷ [] ⟧
-
 myprogram4 : ℕ → ProgramState
-myprogram4 n = myglobals , myheapvals (suc n) , register [] (heapval n ∷ int 1 ∷ int 2 ∷ int 3 ∷ []) , mystart4 n
+myprogram4 n = myglobals , [] , register [] (int 0 ∷ int 1 ∷ int 2 ∷ int 3 ∷ []) , jmp Λ [] ∙ globval 3 ⟦ α (mytupletype n) ∷ [] ⟧
 
-myprogram4' : ℕ → ProgramStateₛ
-myprogram4' n = erase myglobals , heap (suc n) , register [] (heapval n ∷ int 1 ∷ int 2 ∷ int 3 ∷ []) , jmp (globval 3)
-  where heap : ℕ → Heapₛ
-        heap zero = []
-        heap (suc n) = tuple (uninit ∷ uninit ∷ []) ∷ heap n
+myprogram4' : ProgramStateₛ
+myprogram4' = erase myglobals , [] , register [] (int 0 ∷ int 1 ∷ int 2 ∷ int 3 ∷ []) , jmp (globval 3)
 
-myprogram4-valid : ⊢ myprogram4 2 programstate
-myprogram4-valid = dec-force (programstate-dec _)
+myprogram5-valid : ⊢ myprogram4 0 programstate
+myprogram5-valid = dec-force (programstate-dec _)
 
 -- Exponential blowup, do not put this too high!
-step4 : ℕ
-step4 = 3
+step-count : ℕ
+step-count = 5
 
-myprogram4-step : ⊢ myprogram4 0 ⇒ₙ (2 * step4) / myprogram4 step4
+myprogram4-step : ⊢ myprogram4 0 ⇒ₙ step-count / myprogram4 step-count
 myprogram4-step = dec-force (exec-dec-specificₕ _ _ _)
 
-myprogram4-step' : ⊢ₛ erase (myprogram4 0) ⇒ₙ (2 * step4) / myprogram4' step4
-myprogram4-step' = dec-force (exec-dec-specificₛ _ _ _)
+erasure-proof1 : erase (myprogram4 0) ≡ myprogram4'
+erasure-proof1 = dec-force (_ ≟ _)
 
--- Only doable in the simple semantics
-step4' : ℕ
-step4' = 20
+erasure-proof2 : erase (myprogram4 10) ≡ myprogram4'
+erasure-proof2 = dec-force (_ ≟ _)
 
-myprogram4-step'' : ⊢ₛ erase (myprogram4 0) ⇒ₙ (2 * step4') / myprogram4' step4'
+-- As long as we stay in the untyped semantics, there is no blowup in program
+-- size and only a linear blowup in proof size and time to calculate it.
+step-count' : ℕ
+step-count' = 2000
+
+myprogram4-step'' : ⊢ₛ erase (myprogram4 0) ⇒ₙ step-count' / myprogram4'
 myprogram4-step'' = dec-force (exec-dec-specificₛ _ _ _)
