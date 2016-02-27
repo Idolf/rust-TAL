@@ -1,4 +1,3 @@
-\chapter{Type System for \ATAL}
 \label{chap:types}
 
 \section{Judgments about types}
@@ -11,14 +10,14 @@
   $\valid{\Delta}{\tau}$ & $\tau$ is a well-formed type (i.e., does not contain invalid variables) \\
   $\valid{\Delta}{\sigma}$ & $\sigma$ is a well-formed stack type \\
   $\valid{\Delta}{\Gamma}$ & $\Gamma$ is a well-formed register assignment \\
-  $\valid{\Delta}{\Psi_{\mathrm{h}}}$ & $\Psi_{\mathrm{h}}$ is a well-formed heap label assignments \\
+  $\valid{}{\Psi_{\mathrm{h}}}$ & $\Psi_{\mathrm{h}}$ is a well-formed heap label assignments \\
   \hline
 
   $\subtype{\Delta}{\tau_1}{\tau_2}$ & $\tau_1$ is a subtype of $\tau_2$ \\
   $\subtype{\Delta}{\phi_1}{\phi_2}$ & $\phi_1$ is a subtype of $\phi_2$ \\
   $\subtype{\Delta}{\sigma_1}{\sigma_2}$ & $\sigma_1$ is a subtype of $\sigma_2$ \\
   $\subtype{\Delta}{\Gamma_1}{\Gamma_2}$ & $\Gamma_1$ is a subtype of $\Gamma_2$ \\
-  $\subtype{\Delta}{\Psi_{\mathrm{h},1}}{\Psi_{\mathrm{h}_2}}$ & $\Psi_{\mathrm{h},1}$ is a subtype of $\Psi_{\mathrm{h},2}$ \\
+  $\subtype{}{\Psi_{\mathrm{h},1}}{\Psi_{\mathrm{h}_2}}$ & $\Psi_{\mathrm{h},1}$ is a subtype of $\Psi_{\mathrm{h},2}$ \\
   \hline
 
   $\Delta |- \theta : a$ & $\theta$ is a valid instantiation of the variable $a$ \\
@@ -61,14 +60,14 @@
 }
 \end{mathpar}
 
-\fbox{$\valid{\Delta}{\Psi_{\mathrm{h}}}$}
+\fbox{$\valid{}{\Psi_{\mathrm{h}}}$}
 \begin{mathpar}
 \infer{
-  \valid{\Delta}{\tau_1} \and
+  \valid{\nil}{\tau_1} \and
   \dots \and
-  \valid{\Delta}{\tau_{n}}
+  \valid{\nil}{\tau_{n}}
 }{
-  \valid{\Delta}{\{\ell_{\mathrm{h},1} |-> \tau_1, \dots, \ell_{\mathrm{h},n} |-> \tau_{n}\}}
+  \valid{}{\{\ell_{\mathrm{h},1} |-> \tau_1, \dots, \ell_{\mathrm{h},n} |-> \tau_{n}\}}
 }
 \end{mathpar}
 
@@ -126,14 +125,14 @@
 }
 \end{mathpar}
 
-\fbox{$\subtype{\Delta}{\Psi_{\mathrm{h}}}{\Psi_{\mathrm{h}}}$}
+\fbox{$\subtype{}{\Psi_{\mathrm{h}}}{\Psi_{\mathrm{h}}}$}
 \begin{mathpar}
 \infer{
-  \subtype{\Delta}{\tau_1}{\tau_1'} \and
+  \subtype{\nil}{\tau_1}{\tau_1'} \and
   \dots \and
-  \subtype{\Delta}{\tau_{n}}{\tau_{n}'}
+  \subtype{\nil}{\tau_{n}}{\tau_{n}'}
 }{
-  \subtype{\Delta}
+  \subtype{}
           {\{\ell_{\mathrm{h},1} |-> \tau_1, \dots, \ell_{\mathrm{h},n} |-> \tau_{n}\}}
           {\{\ell_{\mathrm{h},1} |-> \tau_1', \dots, \ell_{\mathrm{h},n} |-> \tau_{n}'\}}
 }
@@ -569,7 +568,95 @@ For the actual proof of this statement, we will refer to the file. In
 structure of the this proof. Here we will instead discuss the very broad lines
 included how the language was designed to permit this result.
 
-\todo{Discuss why this is possible.}
+Soundness is defined in ``Types and Programming Languages''\cite{typesandprog}
+type systems that prevent terms from becomming stuck\footnote{In this context,
+  terms are either \emph{values}, \emph{stuck} or they are not done
+  evaluating. This corresponds loosely to our contexts of \emph{halting},
+  \emph{stuck} or \emph{progressing}.} during the run-time. Instead of
+formalizing soundness directly, they instead require the following two lemmas to
+be provable:
+
+\begin{theorem}[Progress]
+  Suppose $\mathtt{t}$ is a well-typed term (that is, $\mathtt{t} : \mathtt{T}$
+  for some $\mathtt{T}$). Then either $\mathtt{t}$ is a value\footnote{In TAPL,
+    this refers to a value in canonical form.} or else there is some
+  $\mathtt{t'}$ with $\mathtt{t} -> \mathtt{t'}$.
+\end{theorem}
+
+\begin{theorem}[Preservation]
+  If $\mathtt{t} : \mathtt{T}$ and $\mathtt{t} -> \mathtt{t'}$, then
+  $\mathtt{t'} : \mathtt{T}$.
+\end{theorem}
+
+It is clear that progress and preservation implies soundness. These theorems
+need to be changed slightly to fit into the context of \ATAL:
+
+\begin{theorem}[\ATAL Progress]
+  Suppose $\high P$ is a well-typed program state (that is,
+  $\valid{}{\high P}$). Then either $\high P$ is a of the form
+  $(\high G, \high H, \high R, \mathtt{halt})$ or else there is some $\high P'$
+  with $\steps{\high P}{\high P'}$.
+\end{theorem}
+
+\begin{theorem}[\ATAL Preservation]
+  If $\valid{}{P}$ and $\high P -> \high P'$, then $\valid{}{P'}$.
+\end{theorem}
+
+For \ATAL will not try to prove progress and preservation \emph{directly}
+(though it should be possible to do so). We will instead prove the following
+theorem:
+
+\begin{theorem}[\ATAL Typed progress]
+  Suppose $\high P$ is a well-typed program state (that is,
+  $\valid{}{\high P}$). Then either $\high P$ is a of the form
+  $(\high G, \high H, \high R, \mathtt{halt})$ or else there is some $\high P'$
+  with $\steps{\high P}{\high P'}$ and $\valid{}{\high P'}$.
+\end{theorem}
+
+In our Agda-code this is represented by the function:
+
+\begin{code}
+\>\AgdaFunction{step-progress⁺} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaSymbol{\{}\AgdaBound{P}\AgdaSymbol{\}} \AgdaSymbol{→}\<%
+\\
+\>[2]\AgdaIndent{19}{}\<[19]%
+\>[19]\AgdaDatatype{⊢} \AgdaBound{P} \AgdaDatatype{programstate} \AgdaSymbol{→}\<%
+\\
+\>[2]\AgdaIndent{19}{}\<[19]%
+\>[19]\AgdaFunction{Halting} \AgdaBound{P} \AgdaDatatype{∨}\<%
+\\
+\>[2]\AgdaIndent{19}{}\<[19]%
+\>[19]\AgdaSymbol{(}\AgdaFunction{∃} \AgdaSymbol{λ} \AgdaBound{P'} \AgdaSymbol{→}\<%
+\\
+\>[19]\AgdaIndent{21}{}\<[21]%
+\>[21]\AgdaDatatype{⊢} \AgdaBound{P'} \AgdaDatatype{programstate} \AgdaFunction{×}\<%
+\\
+\>[19]\AgdaIndent{21}{}\<[21]%
+\>[21]\AgdaFunction{⊢} \AgdaBound{P} \AgdaFunction{⇒} \AgdaBound{P'}\AgdaSymbol{)}\<%
+\end{code}
+
+It is obvious that typed progress implies progress, since it is a strictly
+stronger result. The proof that typed progress implies preservation depends on
+our previous result that our small-step relation is deterministic:
+
+\begin{proof}
+  Assume $\valid{}{\high P}$ and $\high P -> \high P'$. By applying typed
+  progress there are two possibilies:
+
+  \begin{itemize}
+  \item Either $\high P$ is of the form
+    $(\high G, \high H, \high R, \mathtt{halt})$. However this is a
+    contradiction, since we have a derivation of $\high P -> \high P'$.
+
+  \item Otherwise there is some $\high P''$ with $\high P -> \high P''$ and
+    $\valid{}{\high P''}$. In this case we can use \cref{lemma:computhigh},
+    which implies that $\high P' = \high P''$. This means that our derivation of
+    $\valid{}{\high P''}$ is also a derivation of $\valid{}{\high P'}$.
+  \end{itemize}
+\end{proof}
+
+The proof of typed progress is not particularly interesting in itself -- we have
+already seen most of the lemmas needed to prove it. For a sketch of how the
+proof was structured, see \cref{sec:soundness-proof}.
 
 \section{Decidability}
 
@@ -582,6 +669,88 @@ particular the file \texttt{Lemmas/TermDec.agda} contains the function:
 
 The actual proof is not particularly interesting, though we have given a sketch
 of it in \cref{sec:decproof}. What is more interesting to discuss is how our
-language was designed to allow this result to be achieved.
+language was designed to allow this result to be achieved. To see this, it is
+beneficial to interpret \texttt{programstate-dec} not as a proof, but as the
+algorithm for our type-checker. Consider how it would type-check a program-state
+$(\high G, \high H, \high R, \high I)$.
 
-\todo{Discuss why this is possible.}
+\paragraph{Step 1, type-check the globals.} We want to know if
+$\ofglobs{\high G}{\Psi_{\mathrm{g}}}$ for some $\Psi_{\mathrm{g}}$. However we
+cannot check each individual global value \emph{before} we know the value of
+$\Psi_{\mathrm{g}}$; an apparent contradiction.
+
+We solved this problem by adding a type to the constructor of our global
+values. This allows us to type-check $\high G$ using two passes: The first pass
+is used to generate $\Psi_{\mathrm{g}}$, since each global value can only have a
+single unique type. The second pass then checks if the global values are
+actually well-typed when using $\Psi_{\mathrm{g}}$ as the context. Finally we
+can return the output of this step, which is either:
+
+\begin{itemize}
+\item A value for $\Psi_{\mathrm{g}}$ such that
+  $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$ is derivable.
+\item A proof that no value of $\Psi_{\mathrm{g}}$ can make
+  $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$ derivable, in which case the entire
+  type-checker fails.
+\end{itemize}
+
+\paragraph{Step 2, type-check the heap.} A similar two-pass approach is used to
+check the heap. Here we have a slight complication, since heap-values does not
+have a single unique type; they can be casted to less specific values. Instead
+we find the most specific type for each heap value. This works, because
+\cref{lemma:heap-casting} states that types are preserved even if we choose a
+more specific heap. This means that the output from this step is either:
+
+\begin{itemize}
+\item A value for $\Psi_{\mathrm{h}}$ such that
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$ is derivable. Furthermore we
+  output a proof that any $\Psi_{\mathrm{h}}'$ making
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}'}$ derivable will have
+  $\subtype{}{\Psi_{\mathrm{h}}}{\Psi_{\mathrm{h}}'}$.
+\item A proof that no value of $\Psi_{\mathrm{h}}$ can make
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$ derivable, in which
+  case the entire type-checker fails.
+\end{itemize}
+
+\paragraph{Step 3, type-check the register file.} We no longer have the
+ambiguity associated with not knowing $\Psi_{\mathrm{g}}$ or
+$\Psi_{\mathrm{h}}$. We will again find the most specific type
+instead. Specifically this step will either either:
+
+\begin{itemize}
+\item A value for $\Gamma$ such that
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ is
+  derivable. Furthermore we output a proof that any $\Gamma'$ making
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma'}$ derivable
+  will have $\subtype{}{\Gamma}{\Gamma'}$.
+\item Proof that no value of $\Gamma$ can make
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ derivable,
+  in which case the entire type-checker fails.
+\end{itemize}
+
+\paragraph{Step 4, type-check the instruction sequence.} Compared to the
+previous step, this step is somewhat forward: We have been given all of the
+types, and simply need to check if
+$\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$ is derivable.
+
+\paragraph{Combining it all.} If we ignore all the generated proofs, this can be
+summed up using a very simple algorithm:
+
+\begin{enumerate}
+\item Scan $\high G$ superficially to find the only possible value of
+  $\Psi_{\mathrm{g}}$.
+\item Traverse $\high G$ in depth using the found value. This time to check if
+  $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$ is actually derivable. If not, then
+  abort the algorithm.
+\item Scan $\high H$ superficially to find the most specific value of
+  $\Psi_{\mathrm{h}}$.
+\item Traverse $\high H$ in depth using the found value. This time check if
+  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$ is actually
+  derivable. If not, then abort the algorithm.
+\item Traverse $\high R$ in depth to check if
+  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ is
+  derivable for some value of $\Gamma$. If it is, find the most specific value
+  of $\Gamma$, if not then abort the algorithm.
+\item Traverse $\high I$ in depth see if
+  $\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$ is derivable.
+\end{enumerate}

@@ -9,12 +9,12 @@ property between a typed language and an untyped version of the same language:
   language to the untyped language.
 \item If we have $t -> t'$ in the typed language, then we must have
   $\erase(t) -> \erase(t')$ in the untyped language.
-\item If we have $\erase(t) -> m'$ in the untyped semantics, then there is a $t'$
-  such that $t -> t'$ and $\erase(t') = m'$.
+\item If we have $\erase(t) -> m'$ in the untyped semantics, then there is a
+  $t'$ such that $t -> t'$ and $\erase(t') = m'$.
 \end{itemize}
 
 Unfortunately the above property does not quite hold in our case. Instead we
-will define an $\erase$ function such that the following holds:
+will define an $\erase$ function such that this weaker property holds:
 
 \begin{itemize}
 \item If we have $\steps{\high P}{\high P'}$ in \ATAL, then we have

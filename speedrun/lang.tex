@@ -211,6 +211,7 @@ differences:
 \end{itemize}
 
 \subsection{Lemmas}
+\label{sec:equality}
 
 At this point, we are already able to prove lemmas about our syntax. In the file
 \texttt{Lemmas/Equality.agda} we prove this:
@@ -634,7 +635,8 @@ a partial function, so the following lemma is proved in the file
   \begin{itemize}
   \item If $\high P, \high P', \high P''$ are a program states and we have both
     $\steps{\high P}{\high P'}$ and $\steps{\high P}{\high P''}$, then
-    $\high{P'} = \high{P''}$.
+    $\high{P'} = \high{P''}$.\footnote{This equality refers to syntactic
+      equality. See \cref{sec:equality} for notes on this equality.}
   \item It is decidable whether $\high P$ can small-step to some $\high P'$.
   \end{itemize}
 
@@ -694,8 +696,11 @@ that it is mostly the same as for \ATAL. We prove the following lemma in
   \begin{itemize}
   \item If $\simple P, \simple{P'}, \simple{P''}$ are a program states and we
     have both $\steps{\simple P}{\simple{P'}}$ and
-    $\steps{\simple P}{\simple{P''}}$, then $\simple{P'} = \simple{P''}$.
-  \item It is decidable whether $\simple P$ can small-step to some $\simple{P'}$.
+    $\steps{\simple P}{\simple{P''}}$, then
+    $\simple{P'} = \simple{P''}$.\footnote{This equality refers to syntactic
+      equality. See \cref{sec:equality} for notes on this equality.}
+  \item It is decidable whether $\simple P$ can small-step to some
+    $\simple{P'}$.
   \end{itemize}
 
   Similar lemmas exists for the other semantic judgments.

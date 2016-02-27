@@ -393,11 +393,7 @@ private
                 ∃ λ τ →
                   (∀ {ψ₁ τ'} → ψ₁ ⊢ g of τ' gval → τ' ≡ τ)
   gval-unique (code[ Δ ] Γ ∙ I)
-    = ∀[ Δ ] Γ , help
-      where help : ∀ {ψ₁ Δ Γ I τ} →
-                     ψ₁ ⊢ code[ Δ ] Γ ∙ I of τ gval →
-                     τ ≡ ∀[ Δ ] Γ
-            help (of-gval Γ⋆ I⋆) = refl
+    = ∀[ Δ ] Γ , λ { {ψ₁} {._} (of-gval Γ⋆ I⋆) → refl}
 
   gvals-unique : ∀ gs →
                    ∃ λ τs →
@@ -407,7 +403,7 @@ private
   gvals-unique (g ∷ gs)
     with gval-unique g | gvals-unique gs
   ... | τ , τ-eq | τs , τs-eq
-    = τ ∷ τs , λ { {ψ₁} {τ' ∷ τs'} (g⋆ ∷ gs⋆) → cong₂ _∷_ (τ-eq g⋆) (τs-eq gs⋆) }
+    = τ ∷ τs , λ { {ψ₁} {._} (g⋆ ∷ gs⋆) → cong₂ _∷_ (τ-eq g⋆) (τs-eq gs⋆) }
 
   globals-dec : ∀ G →
                   ¬ (∃ λ τs  → ⊢ G of τs globals) ∨
@@ -492,15 +488,8 @@ private
   hval-best (tuple τs ws)
     with wvals⁰-best ws τs
   ... | τs⁻ , eqs , τs⁻-best
-    = tuple τs⁻ , help
-      where help : ∀ {ψ₁ ψ₂ τ'} →
-                     [] ⊢ τ' Type →
-                     ψ₁ , ψ₂ ⊢ tuple τs ws of τ' hval →
-                     [] ⊢ tuple τs⁻ ≤ τ' ×
-                     (ψ₁ , ψ₂ ⊢ tuple τs ws of tuple τs⁻ hval)
-            help (valid-tuple τs⁻⋆) (of-tuple eqs' ws⋆)
-              with τs⁻-best τs⁻⋆ eqs' ws⋆
-            ... | τs⁻≤τs⁻' , ws⋆' = tuple-≤ τs⁻≤τs⁻' , of-tuple eqs ws⋆'
+    = tuple τs⁻ , λ { {τ' = ._} (valid-tuple τs⁻⋆) (of-tuple eqs' ws⋆) →
+                    Σ-map tuple-≤ (of-tuple eqs) (τs⁻-best τs⁻⋆ eqs' ws⋆) }
 
   hvals-best : ∀ hs →
                  ∃ λ τs →
@@ -511,9 +500,9 @@ private
                       AllZip (λ h τ → ψ₁ , ψ₂ ⊢ h of τ hval) hs τs)
   hvals-best [] = [] , (λ { {τs' = []} [] [] → [] , []})
   hvals-best (h ∷ hs)
-    with hval-best h | hvals-best hs
-  ... | τ , τ-best | τs , τs-best
-    = τ ∷ τs , (λ { {τs' = τ' ∷ τs'} (τ'⋆ ∷ τs'⋆) (h⋆ ∷ hs⋆) → Σ-zip _∷_ _∷_ (τ-best τ'⋆ h⋆) (τs-best τs'⋆ hs⋆)})
+    = Σ-zip _∷_ (λ τ-best τs-best →
+        λ { {τs' = ._} (τ'⋆ ∷ τs'⋆) (h⋆ ∷ hs⋆) → Σ-zip _∷_ _∷_ (τ-best τ'⋆ h⋆) (τs-best τs'⋆ hs⋆)}
+      ) (hval-best h) (hvals-best hs)
 
   wval-best : ∀ {ψ₁} {ψ₂} w →
                 ¬ (∃ λ τ → ψ₁ , ψ₂ ⊢ w of τ wval) ∨
@@ -666,11 +655,7 @@ private
             with τs-best (AllZip-extract→ hval-valid-type hs⋆) hs⋆
           ... | τs≤ψ₂ , hs⋆' = ¬H⋆ (of-heap (hvals-heapcast τs≤ψ₂ hs⋆'))
   ... | yes H⋆
-    = inj₂ (τs , H⋆ , help)
-    where help : ∀ ψ₂' → ψ₁ ⊢ H of ψ₂' heap → [] ⊢ τs ≤ ψ₂'
-          help ψ₂' (of-heap hs⋆)
-            with τs-best (AllZip-extract→ hval-valid-type hs⋆) hs⋆
-          ... | τs≤ψ₂' , hs⋆' = τs≤ψ₂'
+    = inj₂ (τs , H⋆ , λ { ψ₂' (of-heap hs⋆) → proj₁ (τs-best (AllZip-extract→ hval-valid-type hs⋆) hs⋆)})
 
   stack-best : ∀ {ψ₁} {ψ₂} sp →
                   ¬ (∃ λ σ → ψ₁ , ψ₂ ⊢ sp of σ stack) ∨
@@ -715,25 +700,11 @@ private
   ... | inj₁ ¬H⋆ = no (λ { (ψ₂ , Γ , of-mutprogramstate H⋆ R⋆ I⋆) → ¬H⋆ (_ , H⋆)})
   ... | inj₂ (ψ₂ , H⋆ , ψ₂-best)
     with register-best R
-  ... | inj₁ ¬R⋆ = no help
-    where help : ¬ (∃₂ λ ψ₂ Γ → ψ₁ ⊢ H , R , I of ψ₂ , Γ mutprogramstate)
-          help (ψ₂' , Γ , of-mutprogramstate H⋆ R⋆ I⋆)
-            with ψ₂-best _ H⋆
-          ... | ψ₂≤ψ₂'
-            = ¬R⋆ (_ , register-heapcast ψ₂≤ψ₂' R⋆)
+  ... | inj₁ ¬R⋆ = no (λ { (ψ₂' , Γ , of-mutprogramstate H⋆ R⋆ I⋆) → ¬R⋆ (_ , register-heapcast (ψ₂-best _ H⋆) R⋆)})
   ... | inj₂ (Γ , R⋆ , Γ-best)
     with instructionsequence-dec I Γ
   ... | yes I⋆ = yes (ψ₂ , Γ , of-mutprogramstate H⋆ R⋆ I⋆)
-  ... | no ¬I⋆ = no help
-    where help : ¬ (∃₂ λ ψ₂ Γ → ψ₁ ⊢ H , R , I of ψ₂ , Γ mutprogramstate)
-          help (ψ₂' , Γ' , of-mutprogramstate H⋆ R⋆ I⋆)
-            with ψ₂-best _ H⋆
-          ... | ψ₂≤ψ₂'
-            with Γ-best _ (register-heapcast ψ₂≤ψ₂' R⋆)
-          ... | Γ≤Γ'
-            with instructionsequence-cast ψ₁⋆ I⋆ Γ≤Γ'
-          ... | I⋆'
-            = ¬I⋆ I⋆'
+  ... | no ¬I⋆ = no (λ { (ψ₂' , Γ' , of-mutprogramstate H⋆ R⋆ I⋆) → ¬I⋆ (instructionsequence-cast ψ₁⋆ I⋆ (Γ-best _ (register-heapcast (ψ₂-best _ H⋆) R⋆)))})
 
 programstate-dec : ∀ P → Dec (⊢ P programstate)
 programstate-dec (G , Pₘ)
@@ -742,8 +713,7 @@ programstate-dec (G , Pₘ)
 ... | inj₂ (ψ₁ , G⋆ , ψ₁-unique)
   with mutprogramstate-dec (globals-valid-type G⋆) Pₘ
 ... | yes (ψ₂ , Γ , Pₘ⋆) = yes (of-programstate G⋆ Pₘ⋆)
-... | no ¬Pₘ⋆ =
-  no help
+... | no ¬Pₘ⋆ = no help
   where help : ¬ ⊢ G , Pₘ programstate
         help (of-programstate G⋆' Pₘ⋆)
           rewrite ψ₁-unique _ G⋆' = ¬Pₘ⋆ (_ , _ , Pₘ⋆)

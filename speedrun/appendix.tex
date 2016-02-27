@@ -44,14 +44,15 @@ larger cases have been split into the files \texttt{Lemmas/MallocStep.agda} and
   \end{itemize}
 \end{lemma}
 
-\begin{lemma}[Typed progress]
+\begin{theorem}[Typed progress]
   Assume we have a derivation of $\valid{}{\high P}$. In that case we can either
   find:
   \begin{itemize}
-  \item A proof that $\high P = (\high G, \high H, \high R, \mathtt{halt})$ or
-  \item A $\high{P'}$ with derivations $\steps{\high P}{\high P'}$ and $\valid{}{\high P}$.
+  \item A proof that $\high P$ is of the form
+    $(\high G, \high H, \high R, \mathtt{halt})$ or
+  \item A $\high{P'}$ with derivations $\steps{\high P}{\high P'}$ and $\valid{}{\high P'}$.
   \end{itemize}
-\end{lemma}
+\end{theorem}
 
 \chapter{Proof sketch of decidable type-checking}
 \label{sec:decproof}
@@ -84,6 +85,7 @@ interesting.
 
   We can prove similar lemmas for instructions and instruction sequences.
 \end{lemma}
+
 
 \begin{lemma}
   \label{lemma:dec-g}
