@@ -1,2 +1,33 @@
 \chapter{Conclusion}
 \label{chap:conclusion}
+
+In this thesis I have presented my Typed Assembly Language called \ATAL along
+with the type-erased version \ATALe. \ATAL is largely inspired by the language
+STAL defined in ``Stack-based Typed Assembly Language''\cite{STAL} by Morrisett
+et al., though I have made a number of small improvements.
+
+I have formalized the meta-theory of the presented languages in
+Agda. Specifically this included:
+
+\begin{itemize}
+\item I formalized a small-step relation for each language and proved that the
+  relation is deterministic.
+\item I proved that the two semantic are related by the erasure property.
+\item I introduced a type-system for \ATAL and proved soundness for the system.
+\item I proved that the type-system is decidable. Specifically this was done by
+  implementing a provably correct type-checker.
+\end{itemize}
+
+Additionally have argued, why I believe this formalization is useful. In
+particular I have argued:
+
+\begin{itemize}
+\item How machine-verifiable proofs of soundness reduce the TCB.
+\item Why an Agda-implementation is an interesting contribution.
+\item How one can build on top of this Agda implementation.
+\end{itemize}
+
+Finally I presented several observations and lessons learned about doing a
+project of this size in particular as a programmer new to the language Agda.
+
+\todo{Less meh}
