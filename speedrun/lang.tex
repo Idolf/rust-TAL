@@ -47,10 +47,10 @@ compare it real-world CPUs.
 
 Most real-world CPUs use some kind of a von Neumann architecture. In (a
 simplified version of) the von Neumann architecture, you only have memory and
-registers each holding some number of machine words. Additionally you need a
+registers each holding some number of machine words. Additionally you have a
 procedure to fetch, decode and execute the current instruction from memory by
 using a special-purpose register called the instruction pointer. This execution
-might change either memory or registers. To run the CPU simply, we repeats the
+might change either memory or registers. To run the CPU simply, we repeat the
 execution procedure indefinitely.
 
 In this architecture there are only two conceptual abstractions: Machine words
@@ -91,7 +91,7 @@ to avoid memory leaks.
 
 The \emph{global collections} are where we store immutable, global data. In our
 model there is only one type of global value: code organized into basic
-blocks. Our \texttt{global}-pointers will always point to the beginning of a
+blocks. Our \texttt{globval}-pointers will always point to the beginning of a
 global value. Initially this might seem restrictive, as it prevents some forms
 of code re-use, but it turns out to not be a problem in practice. If we wanted
 to refer to some point in the middle of a basic block, then we could simply
@@ -138,8 +138,9 @@ We store long-lived, mutable data in the \emph{heap collection}; specifically
 our only type of heap value is a tuple of word values. Again we will only allow
 pointers to the beginning of objects, so \texttt{heapval}-pointers always point
 to an entire tuple. This will prevent some useful programs from being
-represented in our model. It should be possible to extend the model to allow
-this, however doing so is outside the scope of this thesis.
+represented in our model. It should be possible to extend the model to
+accommodate this and similar use-cases, however doing so is outside the scope of
+this thesis.
 
 The \emph{stack} is used for short-lived, mutable data. There can be no pointers
 to the stack; we only reference the stack directly through offsets from the top
@@ -171,6 +172,8 @@ architecture:
   block.
 \end{itemize}
 
+\todo{A note on equality}
+
 \subsection{Notes on the Agda implementation}
 
 Our Agda-version of this syntax is implemented in the
@@ -197,11 +200,11 @@ exists mostly for readability and to conform with earlier papers (see
 differences:
 
 \begin{itemize}
-\item It is at this point worth emphasizing that terms that are equal in our
-  paper-notation might not be equal in the Agda-representation (though the
-  reverse direction holds). In fact, we have just seen an example where this is
-  the case. Luckily, this difference will have no real consequence, as our
-  results does not depend on it.
+\item It is at this point worth emphasizing that terms that are syntactically
+  equal in our paper-notation might not be syntactically equal in the
+  Agda-representation (though the reverse direction holds). In fact, we have
+  just seen an example where this is the case. Luckily, this difference will
+  have no real consequence, as our results does not depend on it.
 \item Some of the lemmas proven in the Agda-code will be very hard to even state
   when using the paper notation. This will be particularly noticeable after we
   introduce variable substitution in \ATAL. Luckily these lemmas are not
@@ -223,19 +226,21 @@ At this point, we are already able to prove lemmas about our syntax. In the file
 \end{lemma}
 
 The equality referred to in the above lemma is syntactic equality in the Agda
-notation, which as previously mentioned will even distinguish between some
-objects that are equal in the paper-notation. Since we are representing our
-variables using natural numbers, this is equivalent to equality up to alpha
-conversion (but not up to reordering the content of dictionaries).
+notation, which as previously mentioned will even distinguish between some terms
+that are equal in the paper-notation. Since we are representing our variables
+using natural numbers, this is equivalent to equality up to alpha conversion
+(but not up to reordering the order of objects in a dictionaries).
 
 This lemma is trivial in the sense that it can be proven for any inductively
 defined datatype. We still mention it, because it is not automatically derived
-in Agda. The naive approach to implementing it in Agda would use structural
-induction over both arguments. This has the disadvantage, that it often results
-in very long proofs, specifically a quadratic number\footnote{Quadratic in the
-  number of constructors for the datatype.} of lines. We have instead chosen to
-use a more space-efficient solution, which involves using an injective function
-to another datatype. See \cref{sec:deceq} for more details.
+in Agda, since equality is defined as part of the standard library and not the
+language itself. The naive approach to implementing it in Agda would use
+structural induction over both arguments. This has the disadvantage, that it
+often results in very long proofs, specifically a quadratic
+number\footnote{Quadratic in the number of constructors for the datatype.} of
+lines. We have instead chosen to use a more space-efficient solution, which
+involves using an injective function to another datatype. See \cref{sec:deceq}
+for more details.
 
 \section{Syntax for \ATAL}
 
@@ -345,6 +350,11 @@ The other differences are:
   \label{fig:syntax}
 \end{figure}
 
+\subsection{Differences between STAL and \ATAL}
+\label{sec:rel-stal}
+
+\todo{Write this}
+
 \subsection{Notes on the Agda implementation}
 
 Our Agda-version of this syntax is implemented in the
@@ -406,11 +416,8 @@ and weakenings. A very informal version of this lemma is as follows:
 
 \begin{lemma}
   Assume we have $\tau_1[\theta] = \tau_2$. This equation still holds if we
-  weaken $\tau_1, \tau_2$ and $\theta$. The weakening done on each part is not
-  exactly the same, but they are related. A similar statement holds if we
-  instead of weakening run another substitution $\theta'$. This substitution
-  will again not be the exact same for each part, but the substitutions are
-  related.
+  weaken $\tau_1, \tau_2$ and $\theta$. A similar statement holds if we
+  instead of weakening run another substitution $\theta'$ on each part.
 
   Similar statements hold for the other syntactic categories.
 \end{lemma}
@@ -635,8 +642,7 @@ a partial function, so the following lemma is proved in the file
   \begin{itemize}
   \item If $\high P, \high P', \high P''$ are a program states and we have both
     $\steps{\high P}{\high P'}$ and $\steps{\high P}{\high P''}$, then
-    $\high{P'} = \high{P''}$.\footnote{This equality refers to syntactic
-      equality. See \cref{sec:equality} for notes on this equality.}
+    $\high{P'} = \high{P''}$.
   \item It is decidable whether $\high P$ can small-step to some $\high P'$.
   \end{itemize}
 
@@ -697,8 +703,7 @@ that it is mostly the same as for \ATAL. We prove the following lemma in
   \item If $\simple P, \simple{P'}, \simple{P''}$ are a program states and we
     have both $\steps{\simple P}{\simple{P'}}$ and
     $\steps{\simple P}{\simple{P''}}$, then
-    $\simple{P'} = \simple{P''}$.\footnote{This equality refers to syntactic
-      equality. See \cref{sec:equality} for notes on this equality.}
+    $\simple{P'} = \simple{P''}$.
   \item It is decidable whether $\simple P$ can small-step to some
     $\simple{P'}$.
   \end{itemize}

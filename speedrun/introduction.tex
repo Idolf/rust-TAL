@@ -120,11 +120,63 @@ that this is the case.
 
 This thesis discusses a technique known as Typed Assembly Language (TAL). It was
 first introduced in the paper ``From System F to Typed Assembly Language'' by
-Morrisett et al. Its core idea is to add types to binary programs. By
-distributing these types along with untrusted programs, one can verify certain
-properties about the programs, and we can use this to build a system similar to
-a sandbox. Specifically this system would, like sandboxes, take untrusted
-programs as input and run them in a secure manner.
+Morrisett et al. Its core idea is to add types to binary programs or programs
+written in assembler code. As an example, consider \cref{fig:example}. This is
+two versions of the same program: an infinite loop for calculating Fibonacci
+numbers. The only difference between the versions is syntax; one uses Mips and
+can be interfaced with existing tools, while the other is our internal
+representation of the same program.
+
+\begin{figure}
+\begin{verbatim}
+      fibonacci: // < T1, T2, S >: {a0: int, a1: int, a2: T1, a3: T2, sp: S}
+        sub $sp, $sp, 4
+        sw $a0, 0($sp)
+        add $a0, $a0, $a1
+        lw $a1, 0($sp)
+        add $sp, $sp, 4
+        j fibonacci // < T1, T2, S >
+\end{verbatim}
+
+\begin{code}
+  \>\AgdaFunction{fiboloop} \AgdaSymbol{=}\<%
+  \\
+  \>[0]\AgdaIndent{2}{}\<[2]%
+  \>[2]\AgdaInductiveConstructor{code[} \AgdaInductiveConstructor{$\alpha$} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\rho$} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{]}\<%
+  \\
+  \>[0]\AgdaIndent{2}{}\<[2]%
+  \>[2]\AgdaInductiveConstructor{registerₐ} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaInductiveConstructor{int} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{int} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{0} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{1} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]}\AgdaSymbol{)} \AgdaInductiveConstructor{∙}\<%
+  \\
+  \>[2]\AgdaIndent{5}{}\<[5]%
+  \>[5]\AgdaInductiveConstructor{salloc} \AgdaNumber{1} \AgdaInductiveConstructor{\textasciitilde>}\<%
+  \\
+  \>[2]\AgdaIndent{5}{}\<[5]%
+  \>[5]\AgdaInductiveConstructor{sst} \AgdaNumber{0} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{0}\AgdaSymbol{)} \AgdaInductiveConstructor{\textasciitilde>}\<%
+  \\
+  \>[2]\AgdaIndent{5}{}\<[5]%
+  \>[5]\AgdaInductiveConstructor{add} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{0}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{0}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaInductiveConstructor{reg} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{1}\AgdaSymbol{))} \AgdaInductiveConstructor{\textasciitilde>}\<%
+  \\
+  \>[2]\AgdaIndent{5}{}\<[5]%
+  \>[5]\AgdaInductiveConstructor{sld} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{1}\AgdaSymbol{)} \AgdaNumber{0} \AgdaInductiveConstructor{\textasciitilde>}\<%
+  \\
+  \>[2]\AgdaIndent{5}{}\<[5]%
+  \>[5]\AgdaInductiveConstructor{sfree} \AgdaNumber{1} \AgdaInductiveConstructor{\textasciitilde>}\<%
+  \\
+  \>[2]\AgdaIndent{5}{}\<[5]%
+  \>[5]\AgdaInductiveConstructor{jmp} \AgdaInductiveConstructor{$\Lambda$} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{∙} \AgdaInductiveConstructor{globval} \AgdaNumber{2} \AgdaInductiveConstructor{⟦} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\rho$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{⟧}\<%
+\end{code}
+\caption{Two presentations of the same program, which is an infinite loop that
+    will forever calculate the Fibonacci numbers. The first version is valid Mips
+    and has the type annotations as comments. The second version is the one used
+    internally in our Agda implementation.}
+  \label{fig:example}
+\end{figure}
+
+By distributing types such as those in the example along with (untrusted)
+programs, one can verify certain properties about the programs, and we can use
+this to build a system similar to a sandbox. Specifically this system would,
+like sandboxes, take untrusted programs as input and run them in a secure
+manner.
 
 While the paper introduced a specific instance of TAL for a specific system, the
 core idea is much more general. In fact it is possible to generate many
@@ -201,8 +253,7 @@ follows:
 If our soundness-proof and type-checker are correct and our model is valid, then
 this sandbox is safe, and its TCB is potentially very small: It only needs a
 correct model, soundness proof and type-checker. In practice the model will to
-some extent depend on a run-time, so this run-time will also be a part of the
-TCB.
+some extent depend on a run-time, which will also have to be a part of the TCB.
 
 We could try to evaluate this sandbox construction in the context of the
 previous sections. If we do so, we see that it shares properties with all four
@@ -250,7 +301,7 @@ This thesis is \emph{not} about:
   meta-theory. We will for example not talk about bugs in the hardware or CPU
   specification.
 \item Any form of detailed analysis of the performance characteristics of the
-  system.  We will specifically not do any thorough analysis of the algorithmic
+  system.  We will specifically not do any analysis of the algorithmic
   complexity of any algorithms, though we might informally argue why we believe
   that an algorithm will run within a certain bound.
 \end{itemize}

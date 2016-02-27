@@ -12,6 +12,9 @@
 \usepackage{url}
 \usepackage{xspace}
 \usepackage{scrextend}
+\usepackage{chngcntr}
+\usepackage{apptools}
+\AtAppendix{\counterwithin{theorem}{chapter}}
 
 % Agda stuff
 \usepackage{latex/agda}
@@ -20,6 +23,8 @@
 \DeclareUnicodeCharacter{8347}{\ensuremath{{}_{\mathrm{s}}}}
 \DeclareUnicodeCharacter{8344}{\ensuremath{{}_{\mathrm{m}}}}
 \DeclareUnicodeCharacter{8345}{\ensuremath{{}_{\mathrm{n}}}}
+\DeclareUnicodeCharacter{8336}{\ensuremath{{}_{\mathrm{a}}}}
+\DeclareUnicodeCharacter{8759}{\ensuremath{::}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \newcommand{\later}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}

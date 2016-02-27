@@ -37,9 +37,9 @@ including erasure as part of the work on \ATAL:
 
 \begin{itemize}
 \item \ATAL maintains types during run-time, though it will not depend on them
-  for its execution, while \ATALe does not. Since the two languages are
-  essentially equivalent, one can simply translate from \ATAL to \ATALe before
-  running the program.
+  for its execution. \ATALe does not. Since the two languages are essentially
+  equivalent, one can simply translate from \ATAL to \ATALe before running the
+  program.
 \item A real-world CPU is not able to run \ATAL. While it is not able to run
   \ATALe either, it is somewhat closer to a real machine. If one wanted to
   justify correctness of our semantics it is much easier to argue why the
@@ -104,8 +104,8 @@ appendix.\todo{Where in the appendix?}
 \end{array}\]
 }
 
-As the subscript can be inferred unambigiously in most cases, we will leave them
-out when possible.
+As the subscript can always be inferred unambiguously, we will leave them
+out in the remainder of this thesis.
 
 \section{Sketch proof of erasure}
 
@@ -178,7 +178,8 @@ Finally, the core lemma of our proof:
 \begin{proof}
   We will only do a sketch a few of the cases, as the actual proof depends on
   many lemmas and has many cases. In the body of this particular proof we will
-  write $x^{\mathrm{e}}$ as shorthand for $\erase(x)$, as some lines would be
+  write $|x|$ as shorthand for $\erase(x)$, as some lines would be unmanageably
+  long otherwise.
 
   Let $\mathcal{S}$ be our derivation of
   $\execis{\high G}{\high H, \high R, \high I}{\high I', \high R', \high
@@ -199,24 +200,24 @@ Finally, the core lemma of our proof:
   \end{mathpar}
 
   By applying lemmas on $\mathcal{E}_0$ and $\mathcal{E}_1$ we get derivations
-  $\mathcal{E}_0', \mathcal{E}_1'$ of $R^{\mathrm{e}}[r_b] = \mathtt{int}\ i_1$ and
-  $\evalregs{\high R^{\mathrm{e}}}{\high v^{\mathrm{e}}}{\mathtt{int}\ i_2}$ respectively. From this
+  $\mathcal{E}_0', \mathcal{E}_1'$ of $|\high R| [r_b] = \mathtt{int}\ i_1$ and
+  $\evalregs{|\high R|}{|\high v|}{\mathtt{int}\ i_2}$ respectively. From this
   we can construct a derivation:
 
   \begin{mathpar}
     \infer{
-      \stackrel{\mathcal{E}_0'}{\high R^{\mathrm{e}}[r_b] = \mathtt{int}\ i_1} \and
-      \stackrel{\mathcal{E}_1'}{\evalregs{\high R^{\mathrm{e}}}{\high v^{\mathrm{e}}}{\mathtt{int}\ i_2}}
+      \stackrel{\mathcal{E}_0'}{|\high R| [r_b] = \mathtt{int}\ i_1} \and
+      \stackrel{\mathcal{E}_1'}{\evalregs{|\high R|}{|\high v|}{\mathtt{int}\ i_2}}
     }{
-      \execis{\high G^{\mathrm{e}}}
-      {\high H^{\mathrm{e}}, \high R^{\mathrm{e}}, (\mathtt{add}\ r_a, r_b, \high v^{\mathrm{e}}) ; \high I''{}^{\mathrm{e}}}
-      {\high H^{\mathrm{e}}, \high R^{\mathrm{e}}[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \high I''{}^{\mathrm{e}}}
+      \execis{|\high G|}
+      {|\high H|, |\high R|, (\mathtt{add}\ r_a, r_b, |\high v|) ; |\high I''|}
+      {|\high H|, |\high R| [r_a \mapsto \mathtt{int}\ (i_1 + i_2)], |\high I''|}
     }
   \end{mathpar}
 
   We also have a lemma stating that
-  $\erase(\high R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)]) = \high R^{\mathrm{e}}[r_a
-  \mapsto \mathtt{int}\ (i_1 + i_2)]$, so this derivation is what we wanted.
+  $|\high R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)]| = |\high R| [r_a \mapsto
+  \mathtt{int}\ (i_1 + i_2)]$, so this derivation is what we wanted.
 
   \paragraph{Assume $\high I = \mathtt{malloc}\ r, \langle \tau_1, \dots, \tau_n \rangle ; \high I''$.}
 
@@ -235,26 +236,26 @@ Finally, the core lemma of our proof:
 
   By applying a lemmas on $\mathcal{E}_0, \mathcal{E}_1$ we get a derivation
   $\mathcal{E}_0', \mathcal{E}_1'$ of
-  $\ell_{\mathrm{h}} \notin \mathbf{dom}(\high H^{\mathrm{e}})$ and
-  $\high h^{\mathrm{e}} = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots,
+  $\ell_{\mathrm{h}} \notin \mathbf{dom}(|\high H|)$ and
+  $|\high h| = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots,
     \mathtt{uninit} \rangle}^n$ respectively. From this we can construct a derivation:
 
   \begin{mathpar}
     \infer{
-      \stackrel{\mathcal{E}_0}{\ell_{\mathrm{h}} \notin \mathbf{dom}(\high H^{\mathrm{e}})} \and
-      \stackrel{\mathcal{E}_1'}{\high h^{\mathrm{e}} = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n}
+      \stackrel{\mathcal{E}_0}{\ell_{\mathrm{h}} \notin \mathbf{dom}(|\high H|)} \and
+      \stackrel{\mathcal{E}_1'}{|\high h| = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n}
     }{
-      \execis{\high G^{\mathrm{e}}}
-      {\high H^{\mathrm{e}}, \high R^{\mathrm{e}}, (\mathtt{malloc}\ r, n) ; \high I''{}^{\mathrm{e}}}
-      {\high H^{\mathrm{e}} \cup \{\ell_{\mathrm{h}} |-> \high h^{\mathrm{e}}\}, \high R^{\mathrm{e}}[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], \high I''{}^{\mathrm{e}}}
+      \execis{|\high G|}
+      {|\high H|, |\high R|, (\mathtt{malloc}\ r, n) ; |\high I''|}
+      {|\high H| \cup \{\ell_{\mathrm{h}} |-> |\high h|\}, |\high R| [r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], |\high I''|}
     }
   \end{mathpar}
 
   Since we have a lemma showing that
-  $\erase(\high H \cup \{\ell_{\mathrm{h}} |-> \high h\}) = \high H^{\mathrm{e}}
-  \cup \{\ell_{\mathrm{h}} |-> \high h^{\mathrm{e}}\}$ and another showing that
-  $\erase(\high R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}]) = \high
-  R^{\mathrm{e}}[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}]$, this derivation is
+  $|\high H \cup \{\ell_{\mathrm{h}} |-> \high h\}| = |\high H|
+  \cup \{\ell_{\mathrm{h}} |-> |\high h|\}$ and another showing that
+  $|\high R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}]| = |\high
+  R| [r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}]$, this derivation is
   what we wanted.
 \end{proof}
 
@@ -272,8 +273,9 @@ The first part of the erasure property follows directly from this.
 
 The second part of the erasure property follows almost directly.
 \begin{lemma}[Erasure part 2]
+  \label{lemma:erasestepsbck}
   \item If we have $\steps{\erase(\high P)}{\simple{P'}}$ in \ATALe, then one of
-  these two holds:
+  these two hold:
   \begin{itemize}
   \item There is a $\high P'$ such that $\steps{\high P}{\high P'}$ and
     $\erase(\high P') = \simple{P'}$ or
