@@ -2,13 +2,12 @@
 \label{chap:hindsight}
 
 The purpose of this chapter is to give document some of my experiences with
-learning Agda and using it to implement my TAL. This was my first real project
-in Agda, and as such I have made a lot of errors that could have been avoided
-had I known the language better.
+learning Agda and using it to implement my TAL. This has been my first real
+project in Agda, and as such I have made a lot of errors that could have been
+avoided had I known the language better.
 
-As such this chapter will contain some nice tips-and-tricks I have discovered
-mixed with some of my (hopefully) interesting observations about learning the
-language.
+As such this chapter will contain some ricks I have discovered mixed with some
+of my (hopefully) interesting observations about learning the language.
 
 \section{Extending the Standard Library}
 
@@ -105,7 +104,7 @@ This last step is a slight further optimization, as it turns out to take fewer
 lines of code in Agda to specify a $g$ and prove it surjective, than to specify
 a function $f$ and prove it injective.
 
-For each additional type $T$ for which you want to prove decidable equality, you
+For each additional type $T$ for which one want to prove decidable equality, one
 now only need to:
 
 \begin{itemize}
@@ -169,9 +168,9 @@ All, AllZip, lookup, update and variants.
 \section{Decidable Propositions}
 
 The interfaces in Agda for producing decidable interfaces is very nice to work
-with. If you have some proposition $P : A -> \mathtt{Set}$ and want to prove
-that it is decidable, then you simply create a value of type
-$(x : A) -> \mathtt{Dec} (P\ x)$. To do this, you pattern-match on $x$ and
+with. If one has some proposition $P : A -> \mathtt{Set}$ and want to prove that
+it is decidable, then one simply creates a value of type
+$(x : A) -> \mathtt{Dec} (P\ x)$. To do this, one pattern-matches on $x$ and
 return either $\mathtt{yes}\ proof$ or $\mathtt{no}\ proof$, where $proof$ has
 the type $P\ x$ and $P\ x -> \bot$ respectively.
 

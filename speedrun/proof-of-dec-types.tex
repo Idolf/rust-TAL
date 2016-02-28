@@ -1,64 +1,8 @@
-\appendix
-\chapter{Sketch Proof of Soundness}
-\label{sec:soundness-proof}
-
-The file \texttt{Lemmas/Soundness.agda} contains our proof, though some of the
-larger cases have been split into the files \texttt{Lemmas/MallocStep.agda} and
-\texttt{Lemmas/HeapSteps.agda}.
-
-\todo{Make the sketch of soundness follow the original proof closer}
-
-\begin{lemma}[Small value typed progress]
-  Assume we have derivations of
-  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ and
-  $\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$. In that case we
-  can find a $\high w$ with derivations $\evalregs{\high R}{\high v}{\high w}$
-  and $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$.
-\end{lemma}
-
-\begin{lemma}[Word value typed progress]
-  Assume we have derivations of $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$,
-  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$ and
-  $\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\forall[ \Delta ]
-    \Gamma}$. In that case we can find an $\high I$ with derivation of
-  $\evalcode{\high G}{\high w}{\high I}$ and
-  $\ofinstructions{\Psi_{\mathrm{g}}, \Delta}{\high I}{\Gamma}$.
-\end{lemma}
-
-\begin{lemma}[Step typed progress]
-  Assume we have derivations of $\ofglobs{\high G}{\Psi_{\mathrm{g}}}$,
-  $\ofheap{\Psi_{\mathrm{g}}}{\high H}{\Psi_{\mathrm{h}}}$,
-  $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high R}{\Gamma}$ and
-  $\ofinstructions{\Psi_{\mathrm{g}}, \nil}{\high I}{\Gamma}$. In that case
-  there are two possibilities:
-  \begin{itemize}
-  \item Either $\high I = \mathtt{halt}$.
-  \item We can find $\high H', \high R', \high I', \Psi_{\mathrm{h}}'$ with
-    derivations of:
-    \begin{itemize}
-    \item $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$
-    \item $\ofheap{\Psi_{\mathrm{g}}}{\high H'}{\Psi_{\mathrm{h}}'}$
-    \item $\ofregister{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}'}{\high R'}{\Gamma'}$
-    \item $\ofinstructions{\Psi_{\mathrm{g}}, \nil}{\high I'}{\Gamma'}$
-    \end{itemize}
-  \end{itemize}
-\end{lemma}
-
-\begin{theorem}[Typed progress]
-  Assume we have a derivation of $\valid{}{\high P}$. In that case we can either
-  find:
-  \begin{itemize}
-  \item A proof that $\high P$ is of the form
-    $(\high G, \high H, \high R, \mathtt{halt})$ or
-  \item A $\high{P'}$ with derivations $\steps{\high P}{\high P'}$ and $\valid{}{\high P'}$.
-  \end{itemize}
-\end{theorem}
-
 \chapter{Sketch Proof of Decidable Type-Checking}
 \label{sec:decproof}
 
 This is a proof sketch that the type system of \ATAL is decidable. It follows
-the structure of the file \texttt{Lemmas/TermDec.agda}, which contain our
+the structure of the file \texttt{Lemmas/TermDec.agda}, which contains our
 Agda-checked proof. The main result of the file is the following function:
 
 \begin{code}

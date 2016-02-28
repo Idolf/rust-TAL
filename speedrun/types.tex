@@ -566,15 +566,16 @@ type-signature:
 \>[20]\AgdaFunction{GoodState} \AgdaBound{P₂}\<%
 \end{code}
 
-For the actual proof of this statement, we will refer to the file. In
-\cref{sec:soundness-proof} you will also find a proof sketch that follows the
-structure of the proof in the file. Here we will instead discuss the very broad
-lines included how the language was designed to permit this result.
+For the actual proof of this statement, we will refer to the file, however we
+have also included a proof sketch in \cref{sec:soundness-proof}. This proof
+sketch for the most part follows the structure of the proof in the file. Here we
+will instead discuss the very broad lines included how the language was designed
+to permit this result.
 
 Soundness is defined in ``Types and Programming Languages''\cite{typesandprog}
-type systems that prevent terms from becomming stuck\footnote{In the context in
-  the book, terms are either \emph{values}, \emph{stuck} or they can transition
-  to another term. This corresponds loosely to our definitions of
+as type systems that prevent terms from becomming stuck\footnote{In the context
+  in the book, terms are either \emph{values}, \emph{stuck} or they can
+  transition to another term. This corresponds loosely to our definitions of
   \emph{halting}, \emph{stuck} or \emph{progressing}.} during the
 run-time. Instead of formalizing soundness directly, they instead require the
 following two lemmas to be provable:

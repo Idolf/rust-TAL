@@ -8,9 +8,9 @@ do this by:
 
 \begin{itemize}
 \item Defining \ATAL and \ATALe in terms of their program states.
-\item The set of possible program states are defined in terms a syntax. In our
-  Agda formalization this syntax is specified by a collection of inductive data
-  types. In our paper definition, we have chosen to use some slightly more
+\item The set of possible program states are defined in terms of a syntax. In
+  our Agda formalization this syntax is specified by a collection of inductive
+  data types. In our paper definition, we have chosen to use some slightly more
   advanced syntax for increased readability. As we shall see, this is not a
   problem as there is a trivial correspondence between the two presentations.
 \item We will present a small-step semantics for the two languages and prove
@@ -45,12 +45,12 @@ captures the intended meaning of the language. The syntax for \ATALe is
 presented in \cref{fig:esyntax}. To understand this syntax, it is useful to
 compare it real-world CPUs.
 
-Most real-world CPUs use some kind of a von Neumann architecture. In (a
-simplified version of) the von Neumann architecture, you only have memory and
-registers each holding some number of machine words. Additionally you have a
-procedure to fetch, decode and execute the current instruction from memory by
-using a special-purpose register called the instruction pointer. This execution
-might change either memory or registers. To run the CPU simply, we repeat the
+Most real-world CPUs are in essence Von Neumann architectures. In (a simplified
+version of) the Von Neumann architecture, one only has memory and registers each
+holding some number of machine words. Additionally one has a procedure to fetch,
+decode and execute the current instruction from memory by using a
+special-purpose register called the instruction pointer. This execution might
+change either memory or registers. To run the CPU simply, we repeat the
 execution procedure indefinitely.
 
 In this architecture there are only two conceptual abstractions: Machine words
@@ -59,8 +59,8 @@ simplicity makes it easier to implement and analyze CPU designs, however it
 makes hard to analyze programs.
 
 As in the von Neumann architecture \ATALe consists of program states that can
-transition to each other. However these states are somewhat more complicated, as
-a number of new concepts are introduced. Machine words are in our model
+transition to each other. However these states are somewhat more complex, as a
+number of new concepts are introduced. Machine words are in our model
 represented by \emph{word values}. These are not the simple fixed-width numbers
 from the von Neumann architecture, instead there are a number of different
 constructions distinguished by a tag. This tag is only present in our model;
@@ -399,7 +399,7 @@ $A$ is one of the datatypes for which substitution is valid:
 
 \subsection{Lemmas}
 
-The file \texttt{Lemmas/Equality.agda} contains proofs for decidable equality
+The file \texttt{Lemmas/Equality.agda} contains proofs of decidable equality
 using the same method as for \ATALe. Additionally the file
 \texttt{Lemmas/Substitution.agda} holds some lemmas about substitution such as:
 
@@ -417,7 +417,7 @@ using the same method as for \ATALe. Additionally the file
 
 These proofs are in principle trivial, and proved by simple structural induction
 over the arguments for the substitutions. In practice this involved a few tricky
-cases and a lot of boilerplate.
+cases and a lot of boilerplate code.
 
 The file additionally contains lemmas about the commutativity of substitutions
 and weakenings. A very informal version of this lemma is as follows:
@@ -452,7 +452,7 @@ used:
   $\evalcode{\high G}{\high w}{\high I}$ & Here $\high w$ is a word value that we intend to jump to. This judgment states that we can evaluate $\high w$ to the basic block $\high I$ by looking up basic blocks in $\high G$ and possibly instantiating some of the type variables. \\\hline
   $\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$ & This is our main small-step relation. It is a judgment that asserts that if a program is in state $(\high G, \high H, \high R, \high I)$, then it can transition to $(\high G, \high H', \high R', \high I')$. Note that $G$ is immutable. \\\hline
   $\steps{\high P}{\high P'}$ & This states that the program state $\high P$ can small-step to $\high P'$. It has only a single rule which uses the judgment above. \\\hline
-  $\stepsn{\high P}{n}{\high P'}$ & This states that the program state $\high P$' can small-step to $\high P'$ in $n$ steps. \\\hline
+  $\stepsn{\high P}{n}{\high P'}$ & This states that the program state $\high P$ can small-step to $\high P'$ in $n$ steps. \\\hline
 \end{tabular} \\
 
 Let us start with the last two judgments as they are the simplest: \\
@@ -586,7 +586,7 @@ register file: \\
 }{
   \execis{\high G}
     {\high H, \high R, (\mathtt{st}\ r_a(n), r_b) ; \high I}
-    {\high H[\ell_{\mathrm{h}} |-> \mathtt{tuple}\ \langle \tau_1, \dots, \rangle\ \langle \high w_1, \dots, w, \dots \rangle], \high R, \high I}
+    {\high H[\ell_{\mathrm{h}} |-> \mathtt{tuple}\ \langle \tau_1, \dots, \rangle\ \langle \high w_1, \dots, \high w, \dots \rangle], \high R, \high I}
 } \and
 \infer{
   \ell_{\mathrm{h}} \notin \mathbf{dom}(\high H) \and
@@ -659,7 +659,7 @@ a partial function, so the following lemma is proved in the file
 
 \section{Semantics for \ATALe}
 
-The semantics for \ATALe er mostly the same as for \ATAL -- it has the same 5
+The semantics for \ATALe er mostly the same as for \ATAL\ -- it has the same 5
 core judgments as. The difference are:
 
 \begin{itemize}
@@ -688,8 +688,8 @@ core judgments as. The difference are:
 } \and
 \end{mathpar}
 
-The full semantics for \ATALe have been included in the appendix.\todo{Where in
-  the appendix is there the full semantics for \ATALe?}
+The full semantics for \ATALe have been included in the in
+\cref{sec:full-atale}.
 
 \subsection{Notes on the Agda Implementation}
 

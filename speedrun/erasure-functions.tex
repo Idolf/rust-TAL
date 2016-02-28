@@ -1,0 +1,294 @@
+\chapter{Full List of the Erasure Functions}
+\label{sec:full-atale}
+
+This is a full listing of the erasure functions from
+\texttt{Judgments/Erase.agda}:
+
+\begin{code}%
+\>\AgdaKeyword{module} \AgdaModule{Judgments.Erase} \AgdaKeyword{where}\<%
+\\
+%
+\\
+\>\AgdaKeyword{open} \AgdaKeyword{import} \AgdaModule{Util}\<%
+\\
+\>\AgdaKeyword{open} \AgdaKeyword{import} \AgdaModule{Judgments.Syntax}\<%
+\\
+\>\AgdaKeyword{private} \AgdaKeyword{module} \AgdaModule{S} \AgdaSymbol{=} \AgdaModule{SimpleSyntax}\<%
+\\
+\>\AgdaKeyword{private} \AgdaKeyword{module} \AgdaModule{H} \AgdaSymbol{=} \AgdaModule{HighSyntax}\<%
+\\
+%
+\\
+\>\AgdaComment{-- The purpose of this file is}\<%
+\\
+\>\AgdaComment{-- to include instances of this record.}\<%
+\\
+\>\AgdaComment{-- It includes just a single function, erase, which}\<%
+\\
+\>\AgdaComment{-- will translate from high syntax to simple syntax.}\<%
+\\
+%
+\\
+\>\AgdaComment{-- The second element of the record can safely be}\<%
+\\
+\>\AgdaComment{-- ignored -- it only exists because of a bug in Agda.}\<%
+\\
+%
+\\
+\>\AgdaKeyword{record} \AgdaRecord{Erase} \AgdaSymbol{(}\AgdaBound{H} \AgdaSymbol{:} \AgdaPrimitiveType{Set}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaBound{S} \AgdaSymbol{:} \AgdaPrimitiveType{Set}\AgdaSymbol{)} \AgdaSymbol{:} \AgdaPrimitiveType{Set} \AgdaKeyword{where}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaKeyword{constructor} \AgdaInductiveConstructor{mkErase'}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaKeyword{field}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaField{erase} \AgdaSymbol{:} \AgdaBound{H} \AgdaSymbol{→} \AgdaBound{S}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaField{bogus} \AgdaSymbol{:} \AgdaRecord{⊤}\<%
+\\
+\>\AgdaKeyword{open} \AgdaModule{Erase} \AgdaSymbol{\{\{...\}\}} \AgdaKeyword{public}\<%
+\\
+%
+\\
+\>\AgdaKeyword{private}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{mkErase} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaSymbol{\{}\AgdaBound{H} \AgdaBound{S}\AgdaSymbol{\}} \AgdaSymbol{→} \AgdaSymbol{(}\AgdaBound{H} \AgdaSymbol{→} \AgdaBound{S}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaRecord{Erase} \AgdaBound{H} \AgdaBound{S}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{mkErase} \AgdaBound{f} \AgdaSymbol{=} \AgdaInductiveConstructor{mkErase'} \AgdaBound{f} \AgdaInductiveConstructor{tt}\<%
+\\
+%
+\\
+\>\AgdaKeyword{instance}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseWordValue} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.WordValue} \AgdaFunction{S.WordValue}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseWordValue} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.WordValue} \AgdaSymbol{→} \AgdaFunction{S.WordValue}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{globval} \AgdaBound{lab}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{globval} \AgdaBound{lab}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{heapval} \AgdaBound{labₕ}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{heapval} \AgdaBound{labₕ}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{int} \AgdaBound{n}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{int} \AgdaBound{n}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaInductiveConstructor{uninit} \AgdaSymbol{=} \AgdaInductiveConstructor{uninit}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{$\Lambda$} \AgdaBound{$\Delta$} \AgdaInductiveConstructor{∙} \AgdaBound{w} \AgdaInductiveConstructor{⟦} \AgdaBound{$\theta$s} \AgdaInductiveConstructor{⟧}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaFunction{f} \AgdaBound{w}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseListWordValue} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaSymbol{(}\AgdaDatatype{List} \AgdaFunction{H.WordValue}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaDatatype{List} \AgdaFunction{S.WordValue}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseListWordValue} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaSymbol{(}\AgdaFunction{map} \AgdaField{erase}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseVecWordValues} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaSymbol{\{}\AgdaBound{n}\AgdaSymbol{\}} \AgdaSymbol{→} \AgdaRecord{Erase} \AgdaSymbol{(}\AgdaDatatype{Vec} \AgdaFunction{H.WordValue} \AgdaBound{n}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaDatatype{Vec} \AgdaFunction{S.WordValue} \AgdaBound{n}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseVecWordValues} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaSymbol{(}\AgdaFunction{Vec-map} \AgdaField{erase}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseSmallValue} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.SmallValue} \AgdaFunction{S.SmallValue}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseSmallValue} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.SmallValue} \AgdaSymbol{→} \AgdaFunction{S.SmallValue}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{reg} \AgdaBound{♯r}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{reg} \AgdaBound{♯r}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{globval} \AgdaBound{lab}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{globval} \AgdaBound{lab}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{int} \AgdaBound{n}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{int} \AgdaBound{n}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{$\Lambda$} \AgdaBound{$\Delta$} \AgdaInductiveConstructor{∙} \AgdaBound{v} \AgdaInductiveConstructor{⟦} \AgdaBound{$\theta$s} \AgdaInductiveConstructor{⟧}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaFunction{f} \AgdaBound{v}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseInstruction} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.Instruction} \AgdaFunction{S.Instruction}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseInstruction} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.Instruction} \AgdaSymbol{→} \AgdaFunction{S.Instruction}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{add} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaBound{v}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{add} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{v}\AgdaSymbol{)}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{sub} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaBound{v}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{sub} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{v}\AgdaSymbol{)}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{salloc} \AgdaBound{n}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{salloc} \AgdaBound{n}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{sfree} \AgdaBound{n}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{sfree} \AgdaBound{n}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{sld} \AgdaBound{♯rd} \AgdaBound{i}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{sld} \AgdaBound{♯rd} \AgdaBound{i}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{sst} \AgdaBound{i} \AgdaBound{♯rs}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{sst} \AgdaBound{i} \AgdaBound{♯rs}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{ld} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaBound{i}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{ld} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaBound{i}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{st} \AgdaBound{♯rd} \AgdaBound{i} \AgdaBound{♯rs}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{st} \AgdaBound{♯rd} \AgdaBound{i} \AgdaBound{♯rs}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{malloc} \AgdaBound{♯rd} \AgdaBound{$\tau$s}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{malloc} \AgdaBound{♯rd} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{$\tau$s}\AgdaSymbol{)}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{mov} \AgdaBound{♯rd} \AgdaBound{v}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{mov} \AgdaBound{♯rd} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{v}\AgdaSymbol{)}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{beq} \AgdaBound{♯r} \AgdaBound{v}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{beq} \AgdaBound{♯r} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{v}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseInstructionSequence} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.InstructionSequence} \AgdaFunction{S.InstructionSequence}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseInstructionSequence} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.InstructionSequence} \AgdaSymbol{→} \AgdaFunction{S.InstructionSequence}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaBound{$\iota$} \AgdaInductiveConstructor{\textasciitilde>} \AgdaBound{I}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaField{erase} \AgdaBound{$\iota$} \AgdaInductiveConstructor{\textasciitilde>} \AgdaFunction{f} \AgdaBound{I}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{jmp} \AgdaBound{v}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{jmp} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{v}\AgdaSymbol{)}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaInductiveConstructor{halt} \AgdaSymbol{=} \AgdaInductiveConstructor{halt}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseGlobalValue} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.GlobalValue} \AgdaFunction{S.GlobalValue}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseGlobalValue} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.GlobalValue} \AgdaSymbol{→} \AgdaFunction{S.GlobalValue}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{code[} \AgdaBound{$\Delta$} \AgdaInductiveConstructor{]} \AgdaBound{$\Gamma$} \AgdaInductiveConstructor{∙} \AgdaBound{I}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{code} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{I}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseGlobals} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.Globals} \AgdaFunction{S.Globals}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseGlobals} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaSymbol{(}\AgdaFunction{map} \AgdaField{erase}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseHeapValue} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.HeapValue} \AgdaFunction{S.HeapValue}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseHeapValue} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.HeapValue} \AgdaSymbol{→} \AgdaFunction{S.HeapValue}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{tuple} \AgdaBound{$\tau$s} \AgdaBound{ws}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{tuple} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{ws}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseHeap} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.Heap} \AgdaFunction{S.Heap}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseHeap} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaSymbol{(}\AgdaFunction{map} \AgdaField{erase}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaComment{-- This is already covered earlier, since Stack == List WordValue.}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaComment{-- It is only included for completeness.}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaComment{-- eraseStack : Erase H.Stack S.Stack}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaComment{-- eraseStack = mkErase (map erase)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseRegisterFile} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.RegisterFile} \AgdaFunction{S.RegisterFile}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseRegisterFile} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.RegisterFile} \AgdaSymbol{→} \AgdaFunction{S.RegisterFile}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaInductiveConstructor{register} \AgdaBound{sp} \AgdaBound{regs}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaInductiveConstructor{register} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{sp}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaField{erase} \AgdaBound{regs}\AgdaSymbol{)}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseMutProgramState} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.MutProgramState} \AgdaFunction{S.MutProgramState}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseMutProgramState} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.MutProgramState} \AgdaSymbol{→} \AgdaFunction{S.MutProgramState}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaBound{H} \AgdaInductiveConstructor{,} \AgdaBound{R} \AgdaInductiveConstructor{,} \AgdaBound{I}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaField{erase} \AgdaBound{H} \AgdaInductiveConstructor{,} \AgdaField{erase} \AgdaBound{R} \AgdaInductiveConstructor{,} \AgdaField{erase} \AgdaBound{I}\<%
+\\
+%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseProgramState} \AgdaSymbol{:} \AgdaRecord{Erase} \AgdaFunction{H.ProgramState} \AgdaFunction{S.ProgramState}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{eraseProgramState} \AgdaSymbol{=} \AgdaFunction{mkErase} \AgdaFunction{f}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{f} \AgdaSymbol{:} \AgdaFunction{H.ProgramState} \AgdaSymbol{→} \AgdaFunction{S.ProgramState}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{f} \AgdaSymbol{(}\AgdaBound{G} \AgdaInductiveConstructor{,} \AgdaBound{H} \AgdaInductiveConstructor{,} \AgdaBound{R} \AgdaInductiveConstructor{,} \AgdaBound{I}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaField{erase} \AgdaBound{G} \AgdaInductiveConstructor{,} \AgdaField{erase} \AgdaBound{H} \AgdaInductiveConstructor{,} \AgdaField{erase} \AgdaBound{R} \AgdaInductiveConstructor{,} \AgdaField{erase} \AgdaBound{I}\<%
+\end{code}

@@ -1,0 +1,168 @@
+\chapter{Full Semantics for \ATALe}
+\label{sec:full-atale}
+
+This is the full semantics for \ATALe. There are a few different judgments used:
+
+\begin{tabular}{|c|p{7.5 cm}|}
+  \hline
+  Judgment & \multicolumn{1}{|c|}{Meaning} \\\hline
+  $\evalregs{\simple R}{\simple v}{\simple w}$ & Here $\simple v$ is a small value, that is used an argument to an instruction. This judgment states that we can evaluate $v$ to $\simple w$ by looking up registers in the register file $\simple R$. \\\hline
+  $\evalcode{\simple G}{\simple w}{\simple I}$ & Here $\simple w$ is a word value that we intend to jump to. This judgment states that we can evaluate $\simple w$ to the basic block $\simple I$ by looking up basic blocks in $\simple G$ and possibly instantiating some of the type variables. \\\hline
+  $\execis{\simple G}{\simple H, \simple R, \simple I}{\simple{H'}, \simple{R'}, \simple{I'}}$ & This is our main small-step relation. It is a judgment that asserts that if a program is in state $(\simple G, \simple H, \simple R, \simple I)$, then it can transition to $(\simple G, \simple{H'}, \simple{R'}, \simple{I'})$. Note that $G$ is immutable. \\\hline
+  $\steps{\simple P}{\simple{P'}}$ & This states that the program state $\simple P$ can small-step to $\simple{P'}$. It has only a single rule which uses the judgment above. \\\hline
+  $\stepsn{\simple P}{n}{\simple{P'}}$ & This states that the program state $\simple{P}$ can small-step to $\simple{P'}$ in $n$ steps. \\\hline
+\end{tabular} \\
+
+\fbox{$\evalregs{\simple R}{\simple v}{\simple w}$}
+\begin{mathpar}
+  \infer{
+  }{
+    \evalregs{\simple R}{\mathtt{reg}\ r}{\simple R[r]}
+  } \and
+  \infer{
+  }{
+    \evalregs{\simple R}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\mathtt{globval}\ \ell_{\mathrm{g}}}
+  } \and
+  \infer{
+  }{
+    \evalregs{\simple R}{\mathtt{int}\ i}{\mathtt{int}\ i}
+  }
+\end{mathpar}
+
+\fbox{$\evalcode{\simple G}{\simple w}{I}$}
+\begin{mathpar}
+\infer{
+  \simple G[\ell_{\mathrm{g}}] = \mathtt{code}\ \simple I
+}{
+  \evalcode{\simple G}{\mathtt{globval}\ \ell_{\mathrm{g}}}{\simple I}
+}
+\end{mathpar}
+
+\fbox{$\execis{\simple G}{\simple H, \simple R, \simple I}{\simple{H'}, \simple{R'}, \simple{I'}}$}
+\begin{mathpar}
+\infer{
+  \simple R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\simple R}{\simple v}{\mathtt{int}\ i_2}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{add}\ r_a, r_b, \simple v) ; \simple I}
+    {\simple H, \simple R[r_a \mapsto \mathtt{int}\ (i_1 + i_2)], \simple I}
+} \and
+\infer{
+  \simple R[r_b] = \mathtt{int}\ i_1 \and
+  \evalregs{\simple R}{\simple v}{\mathtt{int}\ i_2}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{sub}\ r_a, r_b, \simple v) ; \simple I}
+    {\simple H, \simple R[r_1 \mapsto \mathtt{int}\ (i_1 - i_2)], \simple I}
+} \and
+\infer{
+  \simple S = \overbrace{\mathtt{uninit} :: \dots :: \mathtt{uninit}}^n :: \simple R[\mathtt{sp}]
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{salloc}\ n) ; \simple I}
+    {\simple H, \simple R[\mathtt{sp} |-> \simple S], \simple I}
+} \and
+\infer{
+  \simple R[\mathtt{sp}] = \overbrace{w_{\mathrm{e},1} :: \dots :: w_{\mathrm{e},n}}^n :: \simple S
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{sfree}\ n) ; \simple I}
+    {\simple H, \simple R[\mathtt{sp} |-> \simple S], \simple I}
+} \and
+\infer{
+  \simple R[\mathtt{sp}][n] = \simple w
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{ld}\ r, \mathtt{sp}(n)) ; \simple I}
+    {\simple H, \simple R[r |-> \simple w], \simple I}
+} \and
+\infer{
+  \simple R[r_b] = \mathtt{heapval}\ \ell_{\mathrm{h}} \and
+  \simple H[\ell_{\mathrm{h}}] = \mathtt{tuple}\ \langle w_{\mathrm{e},1}, \dots, w_{\mathrm{e},n}, \dots \rangle
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{ld}\ r_a, r_b(n)) ; \simple I}
+    {\simple H, \simple R[r_a |-> w_{\mathrm{e},n}], \simple I}
+} \and
+\infer{
+  R[r] = \simple w \and
+  R[\mathtt{sp}] = \simple S
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{st}\ \mathtt{sp}(n), r) ; \simple I}
+    {\simple H, \simple R[\mathtt{sp} |-> \simple S[n |-> \simple w]], \simple I}
+} \and
+\infer{
+  \simple R[r_a] = \mathtt{heapval}\ \ell_{\mathrm{h}} \and
+  \simple H[\ell_{\mathrm{h}}] = \mathtt{tuple}\ \langle w_{\mathrm{e},1}, \dots w_{\mathrm{e},n}, \dots \rangle \and
+  \simple R[r_b] = \simple w \and
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{st}\ r_a(n), r_b) ; \simple I}
+    {\simple H[\ell_{\mathrm{h}} |-> \mathtt{tuple}\ \langle w_{\mathrm{e},1}, \dots, \simple{w}, \dots \rangle], \simple R, \simple I}
+} \and
+\infer{
+  \ell_{\mathrm{h}} \notin \mathbf{dom}(\simple H) \and
+  \simple h = \mathtt{tuple}\ \overbrace{\langle \mathtt{uninit}, \dots, \mathtt{uninit} \rangle}^n
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{malloc}\ r, n) ; \simple I}
+    {\simple H \cup \{\ell_{\mathrm{h}} |-> \simple h\}, R[r |-> \mathtt{heapval}\ \ell_{\mathrm{h}}], \simple I}
+} \and
+\infer{
+  \evalregs{\simple R}{\simple v}{\simple w}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{mov}\ r, \simple v) ; \simple I}
+    {\simple H, \simple R[r |-> \simple w], \simple I}
+} \and
+\infer{
+  \simple R[r] = \mathtt{int}\ 0 \and
+  \evalregs{\simple R}{\simple v}{\simple w} \and
+  \evalcode{\simple G}{\simple w}{I'}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{beq}\ r, \simple v) ; \simple I}
+    {\simple H, \simple R, \simple{I'}}
+} \and
+\infer{
+  \simple R[r] = \mathtt{int}\ i \and
+  i \neq 0
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, (\mathtt{beq}\ r, \simple v) ; \simple I}
+    {\simple H, \simple R, \simple I}
+} \and
+\infer{
+  \evalregs{\simple R}{\simple v}{\simple w} \and
+  \evalcode{\simple G}{\simple w}{I}
+}{
+  \execis{\simple G}
+    {\simple H, \simple R, \mathtt{jmp}\ \simple v}
+    {\simple H, \simple R, \simple I}
+}
+\end{mathpar}
+
+\fbox{$\steps{\simple P}{\simple{P'}}$}
+\begin{mathpar}
+  \infer{
+    \execis{\simple G}{(\simple H, \simple R, \simple I)}{(\simple{H'}, \simple{R'}, \simple{I'})}
+  }{
+    \steps{(\simple G, \simple H, \simple R, \simple I)}{(\simple G, \simple{H'}, \simple{R'}, \simple{I'})}
+  }
+\end{mathpar}
+
+\fbox{$\stepsn{\simple P}{n}{\simple{P'}}$}
+\begin{mathpar}
+  \infer{
+  }{
+    \stepsn{\simple P}{0}{\simple P}
+  } \and
+  \infer{
+    \steps{\simple P}{}{\simple{P'}} \and
+    \stepsn{\simple{P'}}{n}{\simple{P''}}
+  }{
+    \stepsn{\simple P}{1+n}{\simple{P''}}
+  }
+\end{mathpar}

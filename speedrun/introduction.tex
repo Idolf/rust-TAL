@@ -2,17 +2,17 @@
 \label{chap:introduction}
 
 \section{The Security Ecosystem}
-You would be hard pressed to find more than a handful of system on the internet
-that has never contained a vulnerability. Many computers are even vulnerable to
+One would be hard pressed to find more than a handful of system on the internet
+that has never contained a vulnerability. Many systems are even vulnerable to
 known remote exploits for months or years at a time. As a result, a large
 percentage of the computers on the internet are infected by some form of
-malware. To try to combat these and similar problems, a number of tools have
+malware. To try to combat this (and related) problems, a number of tools have
 been developed.
 
 \begin{itemize}
-\item Anti-virus software and intrusion detection systems try to catch malicious
-  events in the making, by looking at e.g. network streams, files on disk and
-  the behaviors of the programs running on a machine.
+\item Anti-virus software and intrusion detection systems attempt to catch
+  malicious events in the making, by looking at e.g. network streams, files on
+  disk and the behaviors of the programs running on a machine.
 \item It is possible to use code-signing certificates and public-key
   infrastructure to prove that a program was written by a verified third-party.
 \item Sandboxes and virtual machines are two examples of systems that try to
@@ -69,13 +69,12 @@ doing them.
 Anti-virus software is inherently limited by Rice's Theorem.\footnote{Rice's
   Theorem more generally states that if $P$ is a non-trivial property on partial
   functions, then there is no general, effective algorithm to decide the partial
-  function implemented by a specific program will make $P$ true.}\todo{Insert
-  citation on Rice's Theorem.} This theorem implies that any attempt to classify
-programs as good or bad will have either false positives (good programs
-classified as bad) or false negatives (bad programs classified as good). In
-practice most real-world implementations have both. In addition there have been
-multiple examples of anti-virus software decreasing security instead of
-increasing it.\cite{antivirus}
+  function implemented by a specific program will make $P$ true.} This theorem
+implies that any attempt to classify programs as good or bad will have either
+false positives (good programs classified as bad) or false negatives (bad
+programs classified as good). In practice most real-world implementations have
+both. In addition there have been multiple examples of anti-virus software
+decreasing security instead of increasing it.\cite{antivirus}
 
 The core idea of code-signing is to include a certificate with any distributed
 programs. This certificate will prove that the program have been written by a
@@ -112,8 +111,8 @@ permanently improving code quality or are so integrated into the
 compilation-process that they cannot be turned off. Many of these protections
 are superficially similar to anti-virus software, as they work by analyzing code
 and detecting potential problems, however they have an advantage in that they
-are able to interact directly with the programmer. He can ignore false
-positives, or he can improve the detection algorithms if he finds false
+are able to interact directly with the programmer. She can ignore false
+positives, or she can improve the detection algorithms if she finds false
 negatives. A disadvantage is that, even though this approach \emph{is} effective
 at stopping problems, there is little possibility for users to \emph{verify}
 that this is the case.
@@ -245,7 +244,7 @@ follows:
 \begin{enumerate}
 \item Receive a program $p$.
 \item Run the type-checker on $p$.
-\item If the type-checker outputs false, then abort.
+\item If the type-checker outputs false, abort.
 \item Compile or otherwise transform $p$ from a program in our model to a
   program for the real-world machine. In our case, this includes erasing the
   types and running an assembler on the result.
