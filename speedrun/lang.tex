@@ -230,7 +230,7 @@ At this point, we are already able to prove lemmas about our syntax. In the file
 \begin{lemma}
   Given two program states $\simple{P}, \simple{P'}$ we can decide whether we
   have $\simple P = \simple{P'}$ or $\simple P \neq \simple{P'}$. Similar
-  statements hold for the other syntactic classes.
+  statements hold for the other syntactic categories (e.g. word values).
 \end{lemma}
 
 This lemma is trivial in the sense that it can be proven for any inductively
@@ -379,7 +379,9 @@ syntactic categories turns out to be slightly problematic. In our paper notation
 a substitution is always well-defined, however in our Agda-code we might use a
 particular De Bruijn index wrong. This implies that substitution is not a total
 function in our Agda code -- a substitution might fail if referring to a $\rho$
-where an $\alpha$ is needed.
+where an $\alpha$ is needed.\footnote{I think this problem might have been
+  avoided, but using the De Bruijn indices slightly different. I have written a
+  bit about this idea in the Future Work section.}
 
 For this reason, we have chosen to implement substitution as a relation, which
 we will prove to be a partial, computable function. We also need to implement

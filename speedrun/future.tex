@@ -46,4 +46,49 @@ This meant that I used most of my time simply re-implementing known results in a
 different framework.
 
 \section{Future Work}
-\hightodo{Write future work}
+
+I think there are a number of ways, one might expand upon the work in this
+thesis.
+
+\paragraph{Extending the type system:}
+There are several ways in which it would be interesting to extend the type
+system. I am particularly interested extending it with linear types, though
+other extensions such as sum types or arrays (with run-time checked indices) are
+also obvious improvements.
+
+\paragraph{Substitutions:}
+The single problem that took the longest time to solve in this thesis was
+substitutions with a clear margin. While I think that my solution is possibly
+the most obvious solution to the problem, I do not think that it is the only
+one, nor do I think that it is necessarily the nicest.
+
+If I were to redo the project, I would probably try to solve this issue in a
+different way. I have a couple of different ideas for how to achieve this:
+
+\begin{itemize}
+\item One might change the way De Bruijn indices are used. If we for instance
+  that $\Delta = \alpha :: \alpha :: \rho :: \nil$ in the current model, then
+  the indices would be $0, 1$ and $2$ respectively. One might alternatively use
+  the indices $0, 1, 0$. Here the index is no longer the absolute position in
+  the list, but instead the position if one only values of the correct type is
+  considered.
+\item Alternatively one could split the $\Delta$ into two different lists based
+  on type. This would likely work in the current model (and possibly be
+  equivalent to the above suggestion), but it would likely work differently if
+  we included assumptions that depend on other assumptions.
+\item One might try to avoid De Bruijn indices all-together by e.g. encoding the
+  variables using function.
+\end{itemize}
+
+\paragraph{Research the exact relation to STAL:}
+It might be interesting to see exactly how much of STAL can be expressed in
+\ATAL and vice versa. There is the obvious slack of compound stacks and
+exceptions, but besides this I believe that most, if not all of STAL is
+expressible in \ATAL. It would be interesting to verify if this is indeed the
+case.
+
+\paragraph{Practical infrastructure:}
+It would be interesting to try and develop some infrastructure based on the
+implementation. There have been experiments in code extraction from Agda to
+e.g. Haskell, and it should be possible to use the code in actual
+infrastructure.
