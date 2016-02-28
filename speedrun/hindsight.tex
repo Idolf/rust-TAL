@@ -155,15 +155,121 @@ from \texttt{Lemmas/Equality.tex}:
 \>[10]\AgdaFunction{sur} \AgdaInductiveConstructor{halt} \AgdaSymbol{=} \AgdaFunction{T₀} \AgdaNumber{2} \AgdaInductiveConstructor{,} \AgdaInductiveConstructor{refl}\<%
 \end{code}
 
-\section{Predicates on Lists}
-\todo{Write about predicates on lists}
-All, AllZip, lookup, update and variants.
+\section{Working with Lists}
+When doing the project, I needed many operations on lists and vectors that where
+either not provided by the standard library or were very inconsistently
+implemented.
 
-\section{Using Records to Emulate Type-Classes}
-\todo{Write about records-as-type-classes}
+Specifically I needed:
 
-\section{Experiments with the MixFix Parser}
-\todo{Write about the mix-fix-parser}
+\begin{itemize}
+\item Relations for looking up values along with updating them.
+\item Applying a predicate to an entire list or vector (e.g., ``this list of types are all well-formed'').
+\item Applying a predicate to two lists in parallel (e.g., ``this list of word values and list of types match each other'')
+\item Looking up values and updating those said predicate lists.
+\item Other ways to transform said predicate lists.
+\item Decidability lemmas for all of the above.
+\item Etc.
+\end{itemize}
+
+A few of those needs can be filled directly by the standard library, however
+those that can have for the most part only been implemented for either lists or
+vectors. I have implemented a mostly consistent interface for all of those
+features which work with both lists and vectors.
+
+I am considering cleaning up the interface somewhat and trying to get it
+accepted into the Agda standard library.
+
+\section{Extensions to Equality Reasoning}
+Ideally one would prefer to deal with proving stuff about equalities as little
+as possible when doing Agda, as they quickly become very cumbersome to work
+with. As long as a single or two invocations of the congruence, transitivity or
+reflexivity will suffice, it is somewhat managable, but sometimes much more
+convoluted proofs are (unfortunately) necessary.
+
+To deal with this, the standard library has a tool called Equality
+Reasoning. This is some special-purpose functions for dealing with
+equalities.\footnote{It is likely best thought of as an embedded domain-specific
+  language, though the line between EDSL and ``useful functions'' are somewhat
+  blurred in Agda.}
+
+They are in principle simply a way of chaining a lot of equalities using
+transitivity, however in practice it does not feel that way. It allows one to
+write long-yet-managable proofs such as:
+
+\begin{code}
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4] \AgdaFunction{begin}\<%
+\\
+\>[4]\AgdaIndent{6}{}\<[6]%
+\>[6]\AgdaSymbol{(}\AgdaBound{pos₂} \AgdaPrimitive{+} \AgdaInductiveConstructor{suc} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{θs₁}\AgdaSymbol{))} \AgdaPrimitive{+} \AgdaBound{pos₁}\<%
+\\
+\>[0]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaFunction{≡⟨} \AgdaFunction{+-comm} \AgdaBound{pos₂} \AgdaSymbol{(}\AgdaInductiveConstructor{suc} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{θs₁}\AgdaSymbol{))} \AgdaFunction{∥} \AgdaSymbol{(λ} \AgdaBound{v} \AgdaSymbol{→} \AgdaBound{v} \AgdaPrimitive{+} \AgdaBound{pos₁}\AgdaSymbol{)} \AgdaFunction{⟩}\<%
+\\
+\>[4]\AgdaIndent{6}{}\<[6]%
+\>[6]\AgdaSymbol{(}\AgdaInductiveConstructor{suc} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{θs₁}\AgdaSymbol{)} \AgdaPrimitive{+} \AgdaBound{pos₂}\AgdaSymbol{)} \AgdaPrimitive{+} \AgdaBound{pos₁}\<%
+\\
+\>[0]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaFunction{≡⟨} \AgdaFunction{+-comm} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{θs₁}\AgdaSymbol{)} \AgdaBound{pos₂} \AgdaFunction{∥} \AgdaSymbol{(λ} \AgdaBound{v} \AgdaSymbol{→} \AgdaInductiveConstructor{suc} \AgdaBound{v} \AgdaPrimitive{+} \AgdaBound{pos₁}\AgdaSymbol{)} \AgdaFunction{⟩}\<%
+\\
+\>[4]\AgdaIndent{6}{}\<[6]%
+\>[6]\AgdaSymbol{(}\AgdaInductiveConstructor{suc} \AgdaBound{pos₂} \AgdaPrimitive{+} \AgdaFunction{length} \AgdaBound{θs₁}\AgdaSymbol{)} \AgdaPrimitive{+} \AgdaBound{pos₁}\<%
+\\
+\>[0]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaFunction{≡⟨} \AgdaFunction{+-assoc} \AgdaSymbol{(}\AgdaInductiveConstructor{suc} \AgdaBound{pos₂}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{θs₁}\AgdaSymbol{)} \AgdaBound{pos₁} \AgdaFunction{⟩}\<%
+\\
+\>[4]\AgdaIndent{6}{}\<[6]%
+\>[6]\AgdaInductiveConstructor{suc} \AgdaBound{pos₂} \AgdaPrimitive{+} \AgdaSymbol{(}\AgdaFunction{length} \AgdaBound{θs₁} \AgdaPrimitive{+} \AgdaBound{pos₁}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaFunction{∎} \AgdaKeyword{where} \AgdaKeyword{open} \AgdaModule{Eq-Reasoning}\<%
+\end{code}
+
+In my opinion there are however a few problems with equality reasoning defined
+in the standard library, for which reason I chose to implement my own version
+instead:
+
+\begin{itemize}
+\item The standard library is generalized to the point that it is \emph{very}
+  hard to understand for new-comers. I begun my implementation before I figured
+  out how to even use version in the standard library (and I am still not very
+  comfortable with the version in the standard library).
+\item The version in the standard library has a fairly week interface. It is
+  \emph{in principle} just as strong as my version -- though then again, so use
+  direct manipulation of congruence, transitivity and reflexivity.
+\end{itemize}
+
+For a long time, I had simply written an entire sentence in place of this entire
+section. I chosen to leave it, as it provides a fairly good illustration of my
+ambivalence towards this technique:
+
+\begin{quote}
+``One would rather try to avoid equality reasoning, but if that is not possible,
+one might as well have as strong a hacksaw as possible.''
+\end{quote}
+
+\section{Managing Name using Records and Modules}
+A recent feature in Agda, is that records can be used in more-or-less the same
+way as Haskell typeclasses. It should not be underestimated how useful it is,
+even beyond how it is used in Haskell. This was used a lot during the project,
+in particular for two purposes:
+
+\begin{itemize}
+\item It allowed use of overloaded functions, such as \texttt{erase} or lemmas
+  such as \texttt{subst-subst}. These functions could then be used for many
+  datatypes, just like one would expect from Haskell.
+\item More interestingly it also allowed for overloaded syntax. For instance of
+  one types $|-\ x\ \mathbf{Valid}$ in the Agda-code, then this can refer to
+  many different datatypes/judgments depending on the type of $x$.
+\end{itemize}
+
+In addition to using records to overload syntax, I also using module scoping to
+provide a uniform interface to both \ATAL and \ATALe. This allowed me to reuse
+code in a non-traditional way. I did this by having nearly-identical files which
+would only differ in what module why imported. While is not very satisfying from
+a technical perspective, it is much nicer than the naive alternative of simply
+having two diverging implementations.
 
 \section{Decidable Propositions}
 
@@ -265,13 +371,6 @@ our program was \emph{not} valid:
 \\
 \>\AgdaFunction{myprogram-valid} \AgdaSymbol{=} \AgdaFunction{dec-force} \AgdaSymbol{(}\AgdaFunction{programstate-dec} \AgdaSymbol{\_)}\<%
 \end{code}
-
-\section{Extensions to Equality Reasoning}
-Not that smart or interesting. One would rather try to avoid equality reasoning,
-but if that is not possible, one might as well have as strong a hacksaw as
-possible.
-
-\todo{Write about equality reasoning}
 
 \section{Substitutions}
 I think I should be able to same something semi-smart about this.
