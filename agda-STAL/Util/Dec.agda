@@ -9,6 +9,7 @@ open import Relation.Binary using (tri< ; tri≈ ; tri> ; Trichotomous) public
 open import Util.Eq
 open import Util.Function
 open import Data.Product using (proj₁ ; proj₂ ; _×_)
+open import Data.Unit using (⊤ ; tt)
 
 -- A "typeclass" for decidable equality
 -- I know there is one in the standard library, but this one is simpler
@@ -16,25 +17,16 @@ DecEqFun : ∀ {ℓ} (A : Set ℓ) → Set ℓ
 DecEqFun A = (x y : A) → Dec (x ≡ y)
 
 record DecEq {ℓ} (A : Set ℓ) : Set ℓ where
-  constructor decEq
+  constructor decEq'
   field
     _≟_ : DecEqFun A
+    junk : ⊤ -- This is an ugly hack, because of a bug in Agda.
+open DecEq {{...}} public
 
--- These two should be equivalent, but they are apparently not
--- then there is only a single field
--- open DecEq {{...}} public
-_≟_ : ∀ {ℓ} {A : Set ℓ} {{r : DecEq A}} → DecEqFun A
-_≟_ {{eq}} = DecEq._≟_ eq
+decEq : ∀ {ℓ} {A : Set ℓ} → DecEqFun A → DecEq A
+decEq F = decEq' F tt
 
 -- Some useful helper functions
-dec-cong : ∀ {a b} {A : Set a} {B : Set b}
-             {x₁ x₂} →
-             {f : A → B} → IsInjective f →
-             Dec (x₁ ≡ x₂) →
-             Dec (f x₁ ≡ f x₂)
-dec-cong isInj (yes refl) = yes refl
-dec-cong isInj (no ¬eq) = no (¬eq ∘ isInj)
-
 dec-cong₂ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c}
               {x₁ x₂ y₁ y₂} →
               {f : A → B → C} → IsInjective₂ f →
@@ -73,7 +65,7 @@ dec-inj₂ f g (no ¬a) _ = no (¬a ∘ proj₁ ∘ g)
 dec-inj₂ f g _ (no ¬b) = no (¬b ∘ proj₂ ∘ g)
 
 dec-force : ∀ {a} {A : Set a} →
-              (p : Dec A) → {{_ : True p}} →
+              (p : Dec A) → {_ : True p} →
               A
 dec-force (yes p) = p
-dec-force (no ¬p) {{()}}
+dec-force (no ¬p) {()}

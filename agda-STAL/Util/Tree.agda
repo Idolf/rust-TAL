@@ -9,6 +9,7 @@ open import Data.Product using (_,_ ; proj₁ ; proj₂)
 open import Data.Nat as N using (ℕ)
 open import Data.List using (List ; [] ; _∷_)
 open import Data.List.Properties using (∷-injective)
+open import Data.Unit using (tt)
 
 
 -- The goal of this module is to establish an easy way to

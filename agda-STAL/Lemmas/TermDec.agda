@@ -79,12 +79,10 @@ private
 
   instantiation-dec : ∀ {Δ} θ a →
                         Dec (Δ ⊢ θ of a instantiation)
-  instantiation-dec {Δ} (α τ) α
-    = dec-inj of-α (λ { (of-α τ⋆) → τ⋆ }) (Δ ⊢? τ Valid)
+  instantiation-dec {Δ} (α τ) α = dec-inj of-α (λ { (of-α τ⋆) → τ⋆ }) (Δ ⊢? τ Valid)
   instantiation-dec (α τ) ρ = no (λ ())
   instantiation-dec (ρ σ) α = no (λ ())
-  instantiation-dec {Δ} (ρ σ) ρ
-    = dec-inj of-ρ (λ { (of-ρ σ⋆) → σ⋆ }) (Δ ⊢? σ Valid)
+  instantiation-dec {Δ} (ρ σ) ρ = dec-inj of-ρ (λ { (of-ρ σ⋆) → σ⋆ }) (Δ ⊢? σ Valid)
 
   instantiations-dec : ∀ {Δ₁} θs Δ₂ →
                          Dec (Δ₁ ⊢ θs of Δ₂ instantiations)

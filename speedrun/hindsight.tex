@@ -115,9 +115,46 @@ now only need to:
 
 For most datatypes, will only require $2k+3$ lines (or slightly more if we wrap
 long lines), where $k$ is the number of number of constructors in the definition
-of $T$.
+of $T$. To illustrate how this method works in practice, here is small example
+from \texttt{Lemmas/Equality.tex}:
 
-\todo{Insert reference to appendix, with example how to use our decidable equality}
+\begin{code}
+  \>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{InstructionSequenceₕ-Tree} \AgdaSymbol{:} \AgdaRecord{ToTree} \AgdaFunction{H.InstructionSequence}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{InstructionSequenceₕ-Tree} \AgdaSymbol{=} \AgdaFunction{tree⋆} \AgdaFunction{from} \AgdaFunction{sur}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{where} \AgdaFunction{from} \AgdaSymbol{:} \AgdaDatatype{Tree} \AgdaSymbol{→} \AgdaDatatype{Maybe} \AgdaFunction{H.InstructionSequence}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{from} \AgdaSymbol{(}\AgdaInductiveConstructor{node} \AgdaNumber{0} \AgdaSymbol{(}\AgdaBound{ι} \AgdaInductiveConstructor{∷} \AgdaBound{I} \AgdaInductiveConstructor{∷} \AgdaSymbol{\_))} \AgdaSymbol{=} \AgdaInductiveConstructor{\_\textasciitilde>\_} \AgdaFunction{<\$>} \AgdaFunction{fromTree} \AgdaBound{ι} \AgdaFunction{<*>} \AgdaFunction{from} \AgdaBound{I}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{from} \AgdaSymbol{(}\AgdaInductiveConstructor{node} \AgdaNumber{1} \AgdaSymbol{(}\AgdaBound{v} \AgdaInductiveConstructor{∷} \AgdaSymbol{\_))} \AgdaSymbol{=} \AgdaInductiveConstructor{jmp} \AgdaFunction{<\$>} \AgdaFunction{fromTree} \AgdaBound{v}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{from} \AgdaSymbol{(}\AgdaInductiveConstructor{node} \AgdaNumber{2} \AgdaSymbol{\_)} \AgdaSymbol{=} \AgdaInductiveConstructor{just} \AgdaInductiveConstructor{halt}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{from} \AgdaSymbol{\_} \AgdaSymbol{=} \AgdaInductiveConstructor{nothing}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{sur} \AgdaSymbol{:} \AgdaFunction{IsSurjective} \AgdaFunction{from}\<%
+\\
+\>[4]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{sur} \AgdaSymbol{(}\AgdaBound{ι} \AgdaInductiveConstructor{\textasciitilde>} \AgdaBound{I}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaFunction{T₂} \AgdaNumber{0} \AgdaBound{ι} \AgdaSymbol{(}\AgdaField{proj₁} \AgdaSymbol{(}\AgdaFunction{sur} \AgdaBound{I}\AgdaSymbol{))} \AgdaInductiveConstructor{,}\<%
+\\
+\>[10]\AgdaIndent{12}{}\<[12]%
+\>[12]\AgdaInductiveConstructor{\_\textasciitilde>\_} \AgdaFunction{<\$=>} \AgdaFunction{invTree} \AgdaBound{ι} \AgdaFunction{<*=>} \AgdaField{proj₂} \AgdaSymbol{(}\AgdaFunction{sur} \AgdaBound{I}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{sur} \AgdaSymbol{(}\AgdaInductiveConstructor{jmp} \AgdaBound{v}\AgdaSymbol{)} \AgdaSymbol{=} \AgdaFunction{T₁} \AgdaNumber{1} \AgdaBound{v} \AgdaInductiveConstructor{,} \AgdaInductiveConstructor{jmp} \AgdaFunction{<\$=>} \AgdaFunction{invTree} \AgdaBound{v}\<%
+\\
+\>[0]\AgdaIndent{10}{}\<[10]%
+\>[10]\AgdaFunction{sur} \AgdaInductiveConstructor{halt} \AgdaSymbol{=} \AgdaFunction{T₀} \AgdaNumber{2} \AgdaInductiveConstructor{,} \AgdaInductiveConstructor{refl}\<%
+\end{code}
 
 \section{Predicates on Lists}
 \todo{Write about predicates on lists}
@@ -129,9 +166,106 @@ All, AllZip, lookup, update and variants.
 \section{Experiments with the MixFix parser}
 \todo{Write about the mix-fix-parser}
 
-\section{Something about decidable propositions}
-Include something about \texttt{dec-force}.
-\todo{Write something about decidable propositions}
+\section{Decidable propositions}
+
+The interfaces in Agda for producing decidable interfaces is very nice to work
+with. If you have some proposition $P : A -> \mathtt{Set}$ and want to prove
+that it is decidable, then you simply create a value of type
+$(x : A) -> \mathtt{Dec} (P\ x)$. To do this, you pattern-match on $x$ and
+return either $\mathtt{yes}\ proof$ or $\mathtt{no}\ proof$, where $proof$ has
+the type $P\ x$ and $P\ x -> \bot$ respectively.
+
+Even though it is very nice to work with proving decidability, it is not in my
+opinion very nice working with lemmas that prove decidability. In particular
+there are two things one might want to do with such a lemma:
+
+\begin{itemize}
+\item Use it to prove other decidability lemmas.
+\item Use it to get a proof of $P\ x$ for some specific value of $x$.
+\end{itemize}
+
+The first problem can be solved by using the \texttt{with}-syntax. One example
+of doing this can be seen in $\texttt{Lemmas/TermDec.agda}$:
+
+\begin{code}
+  \>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instruction-dec} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaSymbol{\{}\AgdaBound{$\psi$₁} \AgdaBound{$\Delta$}\AgdaSymbol{\}} \AgdaBound{$\Gamma$} \AgdaBound{ι} \AgdaSymbol{→}\<%
+\\
+\>[2]\AgdaIndent{22}{}\<[22]%
+\>[22]\AgdaDatatype{Dec} \AgdaSymbol{(}\AgdaFunction{∃} \AgdaSymbol{λ} \AgdaBound{$\Gamma$'} \AgdaSymbol{→} \AgdaBound{$\psi$₁} \AgdaInductiveConstructor{,} \AgdaBound{$\Delta$} \AgdaDatatype{⊢} \AgdaBound{ι} \AgdaDatatype{of} \AgdaBound{$\Gamma$} \AgdaDatatype{⇒} \AgdaBound{$\Gamma$'} \AgdaDatatype{instruction}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instruction-dec} \AgdaSymbol{\{}\AgdaBound{$\psi$₁}\AgdaSymbol{\}} \AgdaSymbol{\{}\AgdaBound{$\Delta$}\AgdaSymbol{\}} \AgdaBound{$\Gamma$} \AgdaSymbol{(}\AgdaInductiveConstructor{add} \AgdaBound{♯rd} \AgdaBound{♯rs} \AgdaBound{v}\AgdaSymbol{)}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{with} \AgdaFunction{vval-dec} \AgdaBound{v}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaSymbol{...} \AgdaSymbol{|} \AgdaInductiveConstructor{no} \AgdaBound{¬v⋆} \AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{(λ} \AgdaSymbol{\{} \AgdaSymbol{(}\AgdaSymbol{.\_} \AgdaInductiveConstructor{,} \AgdaInductiveConstructor{of-add} \AgdaBound{lookup≡int} \AgdaBound{v⋆}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaBound{¬v⋆} \AgdaSymbol{(\_} \AgdaInductiveConstructor{,} \AgdaBound{v⋆}\AgdaSymbol{)} \AgdaSymbol{\})}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaSymbol{...} \AgdaSymbol{|} \AgdaInductiveConstructor{yes} \AgdaSymbol{(}\AgdaBound{$\tau$} \AgdaInductiveConstructor{,} \AgdaBound{v⋆}\AgdaSymbol{)}\<%
+\\
+\>[2]\AgdaIndent{4}{}\<[4]%
+\>[4]\AgdaKeyword{with} \AgdaFunction{lookup-regs} \AgdaBound{♯rs} \AgdaBound{$\Gamma$} \AgdaFunction{≟} \AgdaInductiveConstructor{int} \AgdaSymbol{|} \AgdaBound{$\tau$} \AgdaFunction{≟} \AgdaInductiveConstructor{int}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaSymbol{...} \AgdaSymbol{|} \AgdaInductiveConstructor{no} \AgdaBound{lookup≢int} \AgdaSymbol{|} \AgdaSymbol{\_} \AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{(λ} \AgdaSymbol{\{} \AgdaSymbol{(}\AgdaSymbol{.\_} \AgdaInductiveConstructor{,} \AgdaInductiveConstructor{of-add} \AgdaBound{lookup≡int} \AgdaBound{v⋆'}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaBound{lookup≢int} \AgdaBound{lookup≡int} \AgdaSymbol{\})}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaSymbol{...} \AgdaSymbol{|} \AgdaSymbol{\_} \AgdaSymbol{|} \AgdaInductiveConstructor{no} \AgdaBound{$\tau$≢int} \AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{(λ} \AgdaSymbol{\{} \AgdaSymbol{(}\AgdaSymbol{.\_} \AgdaInductiveConstructor{,} \AgdaInductiveConstructor{of-add} \AgdaBound{lookup≡int} \AgdaBound{v⋆'}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaBound{$\tau$≢int} \AgdaSymbol{(}\AgdaFunction{vval-unique} \AgdaBound{v⋆} \AgdaBound{v⋆'}\AgdaSymbol{)} \AgdaSymbol{\})}\<%
+\end{code}
+
+While this method is function, it is somewhat impractical to work with. As an
+alternative, I have created a function $\texttt{dec-inj}$, which can sometimes
+make this easier to work with. Unfortunately it does not always work, but when
+it does, it allows one simplify to something like this:
+
+\begin{code}
+  \>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instantiation-dec} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaSymbol{\{}\AgdaBound{$\Delta$}\AgdaSymbol{\}} \AgdaBound{θ} \AgdaBound{a} \AgdaSymbol{→}\<%
+\\
+\>[2]\AgdaIndent{24}{}\<[24]%
+\>[24]\AgdaDatatype{Dec} \AgdaSymbol{(}\AgdaBound{$\Delta$} \AgdaDatatype{⊢} \AgdaBound{θ} \AgdaDatatype{of} \AgdaBound{a} \AgdaDatatype{instantiation}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instantiation-dec} \AgdaSymbol{\{}\AgdaBound{$\Delta$}\AgdaSymbol{\}} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$} \AgdaBound{$\tau$}\AgdaSymbol{)} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{=} \AgdaFunction{dec-inj} \AgdaInductiveConstructor{of-$\alpha$} \AgdaSymbol{(λ} \AgdaSymbol{\{} \AgdaSymbol{(}\AgdaInductiveConstructor{of-$\alpha$} \AgdaBound{$\tau$⋆}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaBound{$\tau$⋆} \AgdaSymbol{\})} \AgdaSymbol{(}\AgdaBound{$\Delta$} \AgdaFunction{⊢?} \AgdaBound{$\tau$} \AgdaFunction{Valid}\AgdaSymbol{)}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instantiation-dec} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$} \AgdaBound{$\tau$}\AgdaSymbol{)} \AgdaInductiveConstructor{$\rho$} \AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{(λ} \AgdaSymbol{())}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instantiation-dec} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$} \AgdaBound{$\sigma$}\AgdaSymbol{)} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{=} \AgdaInductiveConstructor{no} \AgdaSymbol{(λ} \AgdaSymbol{())}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaFunction{instantiation-dec} \AgdaSymbol{\{}\AgdaBound{$\Delta$}\AgdaSymbol{\}} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$} \AgdaBound{$\sigma$}\AgdaSymbol{)} \AgdaInductiveConstructor{$\rho$} \AgdaSymbol{=} \AgdaFunction{dec-inj} \AgdaInductiveConstructor{of-$\rho$} \AgdaSymbol{(λ} \AgdaSymbol{\{} \AgdaSymbol{(}\AgdaInductiveConstructor{of-$\rho$} \AgdaBound{$\sigma$⋆}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaBound{$\sigma$⋆} \AgdaSymbol{\})} \AgdaSymbol{(}\AgdaBound{$\Delta$} \AgdaFunction{⊢?} \AgdaBound{$\sigma$} \AgdaFunction{Valid}\AgdaSymbol{)}\<%
+\end{code}
+
+The second example is slightly more tricky. Essentially we want to use our
+decidability lemma as a compile-time guarantee that the predicate is
+derivable. Additionally we may want to use the predicate in later
+code. Conceptually we want a function $\mathtt{Dec}(P\ x) -> P\ x$ that can fail at compile-time. Having this function directly is clearly inconsistent (and it cannot fail at compile-time), however we can modify it slightly to get the behavior we want:
+
+\begin{code}
+\>\AgdaFunction{dec-force} \AgdaSymbol{:} \AgdaSymbol{∀} \AgdaSymbol{\{}\AgdaBound{a}\AgdaSymbol{\}} \AgdaSymbol{\{}\AgdaBound{A} \AgdaSymbol{:} \AgdaPrimitiveType{Set} \AgdaBound{a}\AgdaSymbol{\}} \AgdaSymbol{→}\<%
+\\
+\>[13]\AgdaIndent{14}{}\<[14]%
+\>[14]\AgdaSymbol{(}\AgdaBound{p} \AgdaSymbol{:} \AgdaDatatype{Dec} \AgdaBound{A}\AgdaSymbol{)} \AgdaSymbol{→} \AgdaSymbol{\{}\AgdaBound{\_} \AgdaSymbol{:} \AgdaFunction{True} \AgdaBound{p}\AgdaSymbol{\}} \AgdaSymbol{→}\<%
+\\
+\>[13]\AgdaIndent{14}{}\<[14]%
+\>[14]\AgdaBound{A}\<%
+\end{code}
+
+This function will not type-check unless it can derive an instance of
+$\AgdaFunction{True} \AgdaBound{p}$, which is exactly the behavior we
+wanted. This allows us to write e.g. the following function, which would fail if
+our program was \emph{not} valid:
+
+\begin{code}
+\>\AgdaFunction{myprogram-valid} \AgdaSymbol{:} \AgdaDatatype{⊢} \AgdaFunction{myprogram} \AgdaDatatype{programstate}\<%
+\\
+\>\AgdaFunction{myprogram-valid} \AgdaSymbol{=} \AgdaFunction{dec-force} \AgdaSymbol{(}\AgdaFunction{programstate-dec} \AgdaSymbol{\_)}\<%
+\end{code}
 
 \section{Extensions to Equality Reasoning}
 Not that smart or interesting. One would rather try to avoid equality reasoning,
