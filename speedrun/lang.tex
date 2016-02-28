@@ -442,50 +442,54 @@ There are a number of differences between STAL and \ATAL. We will here list,
 what we believe to be a comprehensive list.
 
 \begin{itemize}
-\item Compound stacks and existential types have been removed from \ATAL.
+\item Compound stacks and existential types are not present in \ATAL. They could
+  possibly be added later.
 \item The concepts of uninitalized values and nonsense values were separate in
   STAL and have been unified in \ATAL.
 \item \ATAL have fewer arithmetic instructions and fewer conditional branch
   instructions (though adding the remaining ones would be trivial).
-\item STAL had an unlimited number of registers, while \ATAL has a fixed number
+\item STAL had an unbounded number of registers, while \ATAL has a fixed number
   of registers. The exact number does not matter for any of our proofs, though
-  it required that the number is fixed.
+  we require the number to be fixed.
 \item In STAL, heaps contained both code and data. This was split out in the
   definition of \ATAL. This is by itself quite a small change, but it has
-  influence on some of the other changes.
-\item Tuples have been tagged with their type. STAL did not have a fully
-  decidable type system, as it could not type-check program states with tuples
-  on the heap. As we will see later, this change is what allows us to type-check
-  any program state for \ATAL (in reasonable time). If one wishes to remain
-  compatible with STAL, we could simply disallow tuples too with no negative
-  effect.
+  influence on the following change.
 \item Small values no longer depend on word values, and instead re-state some of
   the clauses of word values. A side-effect of this is that small values cannot
   refer to values on the heap, which makes our typing judgments simpler.
+\item Tuples have been tagged with their types. STAL did not have a fully
+  decidable type system, as it could not type-check program states with tuples
+  on the heap. As we will see in \cref{sec:decidability}, this change is what
+  allows us to type-check any program state for \ATAL\footnote{It seems likely
+    that the type system would still be decidable even if this change was not
+    implemented, though it would be much more involved to check the heap.}. If
+  one strongly desired to remain compatible with STAL, we could simply disallow
+  tuples before running the type-checker with no negative effect.
 \item Our handling of parametric polymorphism have been generalized. Instead of
   simply allowing instantiating the type parameters, we also allow generalizing
-  them.
+  them using a unified syntactic construct.
 \item In \cref{chap:types} we will introduce our subtyping relation. Here we
-  will introduce the last minor change. In STAL, there were two sources of
-  subtyping: A tuple could be cast to a less initialized one and a function
+  will introduce the last change of importance. In STAL, there were two sources
+  of subtyping: A tuple could be cast to a less initialized one and a function
   could be cast to one that had more requirements for its registers. \ATAL only
   has the first source of subtyping, though it is the authors belief that any
   use if this feature could alternatively have been achieved using parametric
   polymorphism.
 \item Also in \cref{chap:types}, we will see that our typing judgments have in
   general been implemented slightly differently. We believe that our
-  implementation is equivalent and slightly simpler. In particular it has
-  avoided the judgment $\Delta |- \tau = \tau$, since we believe that any
-  purpose it serves can be achieved in Agda using simpler means.
+  implementation is equivalent while slightly simpler. In particular it has
+  avoided the judgment $\Delta |- \tau = \tau$. We believe that we have achieved
+  the same goal simplyer using the syntactic equality from Agda's standard
+  library.
 \end{itemize}
 
 To sum up: We believe that \ATAL is fundamentally compatible with STAL though
 somewhat simpler, with the only significant missing features being compound
 stacks (and hence exceptions) along with existential types. Additionally many
-examples of existential types usage in STAL could be rewritten using parametric
-polymorphism instead.\footnote{The author have not yet seen an example that
-  could not be rewritten. He conjectures that all cases can in fact be
-  rewritten, though he has not spent much time considering it in depth.}
+examples of existential types usage in STAL seems to be rewritable using
+parametric polymorphism instead.\footnote{The author have not yet seen an
+  example that could not be rewritten. He conjectures that all cases can in fact
+  be rewritten, though he has not spent much time pondering it in depth.}
 
 \section{Semantics for \ATAL}
 
