@@ -3,7 +3,7 @@
 
 \hightodo{Write \emph{something} about the type system!}
 
-\section{Judgments about types}
+\section{Judgments About Types}
 
 \begin{tabular}{|c|p{7.5 cm}|}
   \hline
@@ -29,7 +29,7 @@
 \end{tabular}
 
 
-\subsection{Valid types}
+\subsection{Valid Types}
 \fbox{$\valid{\Delta}{\tau}$}
 \begin{mathpar}
 \infer{\alpha \in \Delta}{\valid{\Delta}{\alpha}} \and
@@ -172,7 +172,7 @@
 }
 \end{mathpar}
 
-\subsection{Notes on the Agda implementation}
+\subsection{Notes on the Agda Implementation}
 \texttt{Judgments/Types.agda} and some of \texttt{Judgments/Terms.agda}.
 
 \subsection{Lemmas}
@@ -204,7 +204,7 @@
     substitution given certain additional assumptions.}
 \end{lemma}
 
-\section{Judgments about values}
+\section{Judgments About Values}
 \begin{tabular}{|c|p{7.5 cm}|}
   \hline
   Judgment & \multicolumn{1}{|c|}{Meaning} \\
@@ -230,7 +230,7 @@
   \hline
 \end{tabular}
 
-\subsection{Evaluation types}
+\subsection{Evaluation Types}
 
 \fbox{$\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$}
 \begin{mathpar}
@@ -362,7 +362,7 @@
 }
 \end{mathpar}
 
-\subsection{Memory constructs}
+\subsection{Memory Constructs}
 
 \fbox{$\ofwval{\Psi_{\mathrm{g}},\Psi_{\mathrm{h}}}{\high w}{\tau}$}
 \begin{mathpar}
@@ -471,7 +471,7 @@
 }
 \end{mathpar}
 
-\subsection{Program states}
+\subsection{Program States}
 
 \fbox{$\ofprogramstate{\Psi_{\mathrm{g}}}{(\high H, \high R, \high I)}{(\Psi_{\mathrm{h}},\Gamma)}$}
 \begin{mathpar}
@@ -494,7 +494,7 @@
 }
 \end{mathpar}
 
-\subsection{Notes on the Agda implementation}
+\subsection{Notes on the Agda Implementation}
 \texttt{Judgments/Terms.agda}
 
 \subsection{Lemmas}
@@ -547,7 +547,7 @@
   statements hold for stacks, register files and heap values.
 \end{lemma}
 
-\section{Soundness proof}
+\section{Soundness Proof}
 
 This section will give a very broad outline of the proof of soundness. The
 actual proof is implemented in \texttt{Lemmas/Soundness.agda} and has the
