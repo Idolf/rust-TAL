@@ -66,15 +66,16 @@ or can only be applied to specific use-cases. Additionally some of them are not
 designed to \emph{prevent} attacks altogether, only to increase the cost of
 doing them.
 
-Anti-virus software is inherently limited by Rice's Theorem.\todo{Footnote:
-  Rice's Theorem more generally states that ..., for a more thorough
-  introduction see ...} This theorem implies that any attempt to classify
+Anti-virus software is inherently limited by Rice's Theorem.\footnote{Rice's
+  Theorem more generally states that if $P$ is a non-trivial property on partial
+  functions, then there is no general, effective algorithm to decide the partial
+  function implemented by a specific program will make $P$ true.}\todo{Insert
+  citation on Rice's Theorem.} This theorem implies that any attempt to classify
 programs as good or bad will have either false positives (good programs
 classified as bad) or false negatives (bad programs classified as good). In
 practice most real-world implementations have both. In addition there have been
 multiple examples of anti-virus software decreasing security instead of
-increasing it.\todo{Footnote: Snide comment about and reference to project-zero
-  lulz}
+increasing it.\cite{antivirus}
 
 The core idea of code-signing is to include a certificate with any distributed
 programs. This certificate will prove that the program have been written by a

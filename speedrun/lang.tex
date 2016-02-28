@@ -172,8 +172,6 @@ architecture:
   block.
 \end{itemize}
 
-\subsection{A note on equality}
-\hightodo{A note on equality}
 
 \subsection{Notes on the Agda implementation}
 
@@ -214,6 +212,15 @@ differences:
   stating the non-trivial ones in a slightly informal fashion.
 \end{itemize}
 
+\paragraph{A note on equality:}
+In the remainder of the report, we will at times talk about equality between
+program states or other objects in the grammar. When doing so, we will
+exclusively talk about syntactic equality, specifically syntactic equality in
+the Agda implementation. Since we are representing variables using natural
+numbers and dictionaries as lists, this will be equivalent to equality up to
+alpha conversion, but \emph{not} up to changing the order of objects in a
+dictionary.
+
 \subsection{Lemmas}
 \label{sec:equality}
 
@@ -226,22 +233,21 @@ At this point, we are already able to prove lemmas about our syntax. In the file
   statements hold for the other syntactic classes.
 \end{lemma}
 
-The equality referred to in the above lemma is syntactic equality in the Agda
-notation, which as previously mentioned will even distinguish between some terms
-that are equal in the paper-notation. Since we are representing our variables
-using natural numbers, this is equivalent to equality up to alpha conversion
-(but not up to reordering the order of objects in a dictionaries).
-
 This lemma is trivial in the sense that it can be proven for any inductively
 defined datatype. We still mention it, because it is not automatically derived
-in Agda, since equality is defined as part of the standard library and not the
-language itself. The naive approach to implementing it in Agda would use
-structural induction over both arguments. This has the disadvantage, that it
-often results in very long proofs, specifically a quadratic
-number\footnote{Quadratic in the number of constructors for the datatype.} of
-lines. We have instead chosen to use a more space-efficient solution, which
-involves using an injective function to another datatype. See \cref{sec:deceq}
-for more details.
+in Agda. Since equality is defined as part of the standard library and not the
+language, and there is currently no way to automatically derive the
+lemma.\footnote{This is not quite true, as there is currently a lot of work
+  being done on reflection, meta-programming and tactic systems, each of which
+  could potentially implement this lemma automatically. Nevertheless the
+  \emph{current} version of the standard library does not allow one to
+  automatically derive this lemma.} The naive approach to implementing this
+lemma in Agda would use structural induction over both arguments. This has the
+disadvantage, that it often results in very long proofs, specifically a
+quadratic number\footnote{Quadratic in the number of constructors for the
+  datatype.} of lines. We have instead chosen to use a more space-efficient
+solution, which involves using an injective function to another datatype. See
+\cref{sec:deceq} for more details.
 
 \section{Syntax for \ATAL}
 
