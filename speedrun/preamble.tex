@@ -14,6 +14,7 @@
 \usepackage{scrextend}
 \usepackage{chngcntr}
 \usepackage{apptools}
+\usepackage{xargs}
 \AtAppendix{\counterwithin{theorem}{chapter}}
 
 % Agda stuff
@@ -27,7 +28,7 @@
 \DeclareUnicodeCharacter{8759}{\ensuremath{::}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
-\newcommand{\later}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\hightodo}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 
 \author{\Large Mathias Svensson \quad {\ttfamily\large tpx783@alumni.ku.dk}}
 \date{\today}
