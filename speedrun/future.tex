@@ -1,5 +1,28 @@
 \chapter{Related Work and Future Work}
 \label{chap:future}
+
+\section{Related Work}
+
+The work presented in this thesis is to a large extend based on previous
+work. It is for the most part a compatible implementation of the language
+introduced in ``Stack-based Typed Assembly Language''\cite{STAL}, which was
+itself an improvement upon the paper ``From System F to typed assembly
+language''\cite{TAL}. We improve upon these results by formalizing the
+meta-theory and simplifying some of the constructs.
+
+We are not the first to try and formalize the soundness result. This has been
+done in Coq with the paper ``An Untrusted Verifier for Typed Assembly
+Language''\cite{untrusted} and earlier in Twelf in ``A Provably Sound TAL for
+Back-end Optimization''\cite{provably} and ``Toward a Foundational Typed
+Assembly Language''\cite{toward}. Our implementation is as far as I know the
+first implementation of a TAL in Agda. Additionally, I think that our
+implementation can be argued to be the smallest, and thus simplest: It uses the
+fewest lines, when excluding the the standard library, but includes my
+extensions to the library.\footnote{Note that this is not a very fair
+  comparison, as Twelf does not have a standard library. Additionally it does
+  not show that our implementation is safer nor inherently better. It is most
+  just an interesting factoid, that we managed to implement it shorter in Agda.}
+
 \section{Original Goal}
 
 The original title of this project was ``A Rust-like Typed Assembly Language --
@@ -40,23 +63,18 @@ describe how they encountered similar problems, when they used a similar
 approach to formalizing a TAL in Coq.
 
 This meant that I used most of my time simply re-implementing known results in a
-different framework.
-
-\section{Related Work}
-
-\cite{TAL}, \cite{STAL}, \cite{untrusted}, \cite{ltal}, \cite{patina}.
-\hightodo{Write related work.}
+different language.
 
 \section{Future Work}
 
-I think there are a number of ways, one might expand upon the work in this
-thesis.
+I am personally mostly interested in extending this work towards the original
+goal of the thesis, however there are a number of other ways one might extend
+it:
 
 \paragraph{Extending the type system:}
 There are several ways in which it would be interesting to extend the type
-system. I am particularly interested extending it with linear types, though
-other extensions such as sum types or arrays (with run-time checked indices) are
-also obvious improvements.
+system beyond trying to implement linear types. Other extensions such as sum
+types or arrays (with run-time checked indices) are also obvious improvements.
 
 \paragraph{Substitutions:}
 The single problem that took the longest time to solve in this thesis was
@@ -88,6 +106,12 @@ It might be interesting to see exactly how much of STAL can be expressed in
 and existential types, but besides this I believe that most, if not all of STAL
 is expressible in \ATAL. It would be interesting to verify if this is indeed the
 case.
+
+\paragraph{Garbage collection:}
+It would be interesting to see if one could to a certain extend model the
+garbage collector inside our model, instead of assuming it completely
+external. This could potentially be used to reduce the Trusted Computing Base
+further.
 
 \paragraph{Practical infrastructure:}
 It would be interesting to try and develop some infrastructure based on the

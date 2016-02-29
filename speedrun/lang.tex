@@ -466,27 +466,27 @@ some of those require several sub-lemmas.
 \section{Differences between STAL and \ATAL}
 \label{sec:rel-stal}
 
-There are a number of differences between STAL and \ATAL. We will here list,
-what we believe to be a comprehensive list.
+We believe that the following is a comprehensive list of the differences between
+STAL and \ATAL.
 
 \begin{itemize}
 \item Compound stacks and existential types are not present in \ATAL. They could
   possibly be added later.
-\item The concepts of uninitalized values and nonsense values were separate in
+\item The concepts of uninitialized values and nonsense values are separate in
   STAL and have been unified in \ATAL.
 \item \ATAL have fewer arithmetic instructions and fewer conditional branch
-  instructions (though adding the remaining ones would be trivial).
-\item STAL had an unbounded number of registers, while \ATAL has a fixed number
+  instructions -- adding the remaining ones would be trivial.
+\item STAL has an unbounded number of registers, while \ATAL has a fixed number
   of registers. The exact number does not matter for any of our proofs, though
   we require the number to be fixed.
-\item In STAL, heaps contained both code and data. This was split out in the
+\item In STAL, heaps contains both code and data. This is split out in the
   definition of \ATAL. This is by itself quite a small change, but it has
   influence on the following change.
-\item Small values no longer depend on word values, and instead re-state some of
-  the clauses of word values. A side-effect of this is that small values cannot
-  refer to values on the heap, which makes our typing judgments simpler.
-\item Tuples have been tagged with their types. STAL did not have a fully
-  decidable type system, as it could not type-check program states with tuples
+\item in STAL, small values depend on word values. \ATAL have instead chosen to
+  repeat some of the constructs.. A side-effect of this is that small values
+  cannot refer to values on the heap, which makes our typing judgments simpler.
+\item Tuples have been tagged with their types. STAL does not have a fully
+  decidable type system, as it cannot type-check program states with tuples
   on the heap. As we will see in \cref{sec:decidability}, this change is what
   allows us to type-check any program state for \ATAL\footnote{It seems likely
     that the type system would still be decidable even if this change was not
@@ -497,9 +497,9 @@ what we believe to be a comprehensive list.
   simply allowing instantiating the type parameters, we also allow generalizing
   them using a unified syntactic construct.
 \item In \cref{chap:types} we will introduce our subtyping relation. Here we
-  will introduce the last change of importance. In STAL, there were two sources
-  of subtyping: A tuple could be cast to a less initialized one and a function
-  could be cast to one that had more requirements for its registers. \ATAL only
+  will introduce the last change of importance. In STAL, there are two sources
+  of subtyping: A tuple can be cast to a less initialized one and a function
+  can be cast to one that had more requirements for its registers. \ATAL only
   has the first source of subtyping. It is the authors belief that any use if
   this feature could alternatively have been achieved using parametric
   polymorphism, though as seen in \cref{fig:parexample} the result is not
