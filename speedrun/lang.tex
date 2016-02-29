@@ -158,9 +158,9 @@ executed.
 
 Finally we can state that \emph{program states} in \ATALe consists of a global
 collection, a heap collection, a register file and the current block. This is
-different from the von Neumann architecture, where states are simply some
+different from the Von Neumann architecture, where states are simply some
 registers and some memory. While certainly more complicated, one could also
-argue that \ATALe is in a sense a specialization of the von Neumann
+argue that \ATALe is in a sense a specialization of the Von Neumann
 architecture:
 
 \begin{itemize}
@@ -337,7 +337,7 @@ The other differences are:
       \textit{type assignments}         & $\Delta$ & ::= & $\nil \mid a :: \Delta$ \\
       \textit{type assignment value}    & $a$ & ::= & $\alpha \mid \rho$ \\
       \textit{global label assignments} & $\Psi_{\mathrm{g}}$ & ::= & $\{\ell_{\mathrm{g}} |-> \tau, \dots, \ell_{\mathrm{g}} |-> \tau\}$ \\
-      \textit{heap label assignmentss}  & $\Psi_{\mathrm{h}}$ & ::= & $\{\ell_{\mathrm{h}} |-> \tau, \dots, \ell_{\mathrm{h}} |-> \tau\}$ \\
+      \textit{heap label assignments}  & $\Psi_{\mathrm{h}}$ & ::= & $\{\ell_{\mathrm{h}} |-> \tau, \dots, \ell_{\mathrm{h}} |-> \tau\}$ \\
       \textit{register assignments}     & $\Gamma$ & ::= & $\{\mathtt{sp} |-> \sigma, \mathtt{r}_1 |-> \tau, \dots, \mathtt{r}_{\mathrm{max}} |-> \tau\}$ \\
       \textit{instantiation}            & $\theta$ & ::= & $\tau/\alpha \mid \sigma/\rho$ \\
       \textit{instantiations}           & $\Theta$ & ::= & $\theta :: \Theta \mid \nil$ \\\\
@@ -508,17 +508,17 @@ STAL and \ATAL.
   general been implemented slightly differently. We believe that our
   implementation is equivalent while slightly simpler. In particular it has
   avoided the judgment $\Delta |- \tau = \tau$. We believe that we have achieved
-  the same goal simplyer using the syntactic equality from Agda's standard
-  library.
+  the same goal, in a more simple fashion, using the syntactic equality from
+  Agda's standard library.
 \end{itemize}
 
-To sum up: We believe that \ATAL is fundamentally compatible with STAL though
-somewhat simpler, with the only significant missing features being compound
-stacks (and hence exceptions) along with existential types. Additionally many
-examples of existential types usage in STAL seems to be rewritable using
-parametric polymorphism instead.\footnote{The author have not yet seen an
-  example that could not be rewritten. He conjectures that all cases can in fact
-  be rewritten, though he has not spent much time pondering it in depth.}
+To summarize: We believe that \ATAL is fundamentally compatible with STAL
+(though somewhat simpler), with the only significant missing features being
+compound stacks (and hence exceptions) along with existential
+types. Additionally many examples of existential type usage in STAL seems to be
+re-writable using parametric polymorphism.\footnote{The author have not yet seen
+  an example that could not be rewritten. He conjectures that all cases can in
+  fact be rewritten, though he has not spent much time pondering it in depth.}
 
 \section{Semantics for \ATAL}
 

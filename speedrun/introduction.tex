@@ -1,4 +1,4 @@
-\chapter{Typed Assembly Language, Safety and Formalizations}
+\chapter{Typed Assembly Language, Safety and Formalization}
 \label{chap:introduction}
 
 \section{The Security Ecosystem}
@@ -26,11 +26,11 @@ been developed.
     protections, they are sufficiently different from most other such
     protections that they deserve their own point.}
 \item Static analysis, fuzzing and type systems try to detect vulnerabilities in
-  programs before they are deployed. Compiler modifcations such as stack-cookies
-  or printf-hardening try to generate code that is hard to exploit even in the
-  event of an exploit. By using a modern languages one might avoid whole classes
-  of bugs. We will collectively refer to these and similar approaches as
-  ``compile-time protections''.
+  programs before they are deployed. Compiler modifications such as
+  stack-cookies or \texttt{printf}-hardening try to generate code that is hard
+  to exploit even in the event of an exploit. By using a modern languages one
+  might avoid whole classes of bugs. We will collectively refer to these and
+  similar approaches as ``compile-time protections''.
 \end{itemize}
 
 \subsection{Trusted Computing Base}
@@ -125,7 +125,7 @@ Language''\cite{TAL} by Morrisett et al. Its core idea is to add types to binary
 programs or programs written in assembler code. As an example, consider
 \cref{fig:example}. This is two versions of the same program: an infinite loop
 for calculating Fibonacci numbers. The only difference between the versions is
-syntax; one uses Mips\cite{mipssys} and can be interfaced with existing tools,
+syntax; one uses MIPS\cite{mipssys} and can be interfaced with existing tools,
 while the other is our internal representation of the same program.
 
 \begin{figure}
@@ -167,7 +167,7 @@ while the other is our internal representation of the same program.
   \>[5]\AgdaInductiveConstructor{jmp} \AgdaInductiveConstructor{$\Lambda$} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{∙} \AgdaInductiveConstructor{globval} \AgdaNumber{2} \AgdaInductiveConstructor{⟦} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\rho$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{⟧}\<%
 \end{code}
 \caption{Two presentations of the same program, which is an infinite loop that
-    will forever calculate the Fibonacci numbers. The first version is valid Mips
+    will forever calculate the Fibonacci numbers. The first version is valid MIPS
     and has the type annotations as comments. The second version is the one used
     internally in our Agda implementation.}
   \label{fig:example}

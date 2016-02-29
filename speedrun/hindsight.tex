@@ -184,7 +184,7 @@ accepted into the Agda standard library.
 Ideally one would prefer to deal with proving stuff about equalities as little
 as possible when doing Agda, as they quickly become very cumbersome to work
 with. As long as a single or two invocations of the congruence, transitivity or
-reflexivity will suffice, it is somewhat managable, but sometimes much more
+reflexivity will suffice, it is somewhat manageable, but sometimes much more
 convoluted proofs are (unfortunately) necessary.
 
 To deal with this, the standard library has a tool called Equality
@@ -195,7 +195,7 @@ equalities.\footnote{It is likely best thought of as an embedded domain-specific
 
 They are in principle simply a way of chaining a lot of equalities using
 transitivity, however in practice it does not feel that way. It allows one to
-write long-yet-managable proofs such as:
+write long-yet-manageable proofs such as:
 
 \begin{code}
 \>[2]\AgdaIndent{4}{}\<[4]%
@@ -251,7 +251,7 @@ one might as well have as strong a hacksaw as possible.''
 
 \section{Managing Name using Records and Modules}
 A recent feature in Agda, is that records can be used in more-or-less the same
-way as Haskell typeclasses. It should not be underestimated how useful it is,
+way as Haskell type-classes. It should not be underestimated how useful it is,
 even beyond how it is used in Haskell. This was used a lot during the project,
 in particular for two purposes:
 
