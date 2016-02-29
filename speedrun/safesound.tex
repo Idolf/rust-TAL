@@ -2,14 +2,14 @@
 \label{chap:safesound}
 
 In this chapter we will discuss the construction of our sandbox. We will discuss
-how it would work in practice including why we believe that it should be safe
+how it would work in practice, including why we believe that it should be safe
 given reasonable assumptions.
 
 \section{Defining Safety}
 
 Before going into the detail, it is beneficial to discuss exactly what we mean
 by ``safety''. We will first discuss what we mean by a safe system. As a naive
-definition one might the following:
+definition one might use the following:
 
 \vspace{0.3cm}
 \begin{addmargin}{1cm}
@@ -32,7 +32,7 @@ to the specific user. A slightly better definition would be:
 While somewhat impractical, this definition has the nice feature, that one can
 actually strive to implement it, even if one could never prove such a general
 statement. An interesting detail is that it shows that, while safety can depend
-on context and is often very hard to prove, some systems would always be
+on context, and is often very hard to prove, some systems would always be
 considered unsafe.
 
 The definition is still too vague though -- to get closer to a \emph{provable}
@@ -74,12 +74,13 @@ something similar to this:
 \vspace{0.3cm}
 
 \section{Assumptions}
-It turns that it is not possible to prove safety unconditionally. The system
-might for instance be hit by cosmic radiation causing a bit-flip at just the
-wrong time. We will instead prove safety given a collection of reasonable
-assumptions, that would hold in most real-world situations. Which assumptions we
-depend on our circumstances or exactly what we consider dangerous, so we could
-consider many potentially assumptions:
+It turns out, that it is not possible to prove safety unconditionally. The
+system might, for instance, be hit by cosmic radiation causing a bit-flip at
+just the wrong time. We will instead prove safety given a collection of
+reasonable assumptions, that would hold in most real-world situations. Which
+assumptions we depend on, could change depending on our circumstances or exactly
+what we consider dangerous. For instance, these are examples that some systems
+migh depend on:
 
 \begin{enumerate}
 \item We might assume that the CPU follows the CPU specification.
@@ -134,7 +135,7 @@ How could we build such a platform for her? One solution would be as follows:
 \end{itemize}
 
 While this solution will work it is certainly not optimal: The OS and sandbox
-are fairly large components, so assuming them correct seems dishonest. Certainly
+are fairly large components, so assuming they are correct seems dishonest. Certainly
 we can do better:
 
 \begin{itemize}
