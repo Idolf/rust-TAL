@@ -190,8 +190,8 @@ reasonable. The only real issues is whether we can trust the proof
 system.
 
 There are even some additional advantages to this model: Most of our components
-do not need to be trusted beyond limitations. The proof checker needs only check
-\emph{our proofs} correctly and have a correct code extraction
+do only need to be trusted with arbitrary inputs. The proof checker needs only
+check \emph{our proofs} correctly and have a correct code extraction
 procedure. Furthermore OS and CPU do not need to be correct in the face of
 \emph{any possible} program, only those permitted by the type system.
 
@@ -206,11 +206,10 @@ further:
 
 \paragraph{Simplify the model.} We can try to simplify the model and bring it
 closer to the real world. The closer the two models are, the fewer things could
-possibly be wrong. We can achieve some of these benefits by implementing erasure
-theorems inside the proof system, however it can never bridge the gap
-completely, as we still need to assume that our models definition of safety
-corresponds to the real-world definition, which is unfortunately somewhat
-underspecified.
+be wrong. Erasure theorems are an example of how to simplify the model, however
+they cannot bridge the gap completely. We still need to assume that our models
+definition of safety corresponds to the real-world definition, which is
+unfortunately somewhat underspecified.
 
 \paragraph{Improve the proof system.} We might try to improve the proof system
 in several ways. We might try to simplify the implementation or get it peer
@@ -226,5 +225,3 @@ OS-specific features (and in particular protections) might be better implemented
 using our proof system instead of the OS. This move of responsibility from the
 OS to the proof system will strictly decrease our TCB, since the proof system
 does not have to increase in size to accommodate the change.
-
-\section{Erasure and Safety}
