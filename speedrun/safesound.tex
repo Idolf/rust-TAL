@@ -1,13 +1,15 @@
 \chapter{Safety and Soundness}
 \label{chap:safesound}
 
-\hightodo{Write the Safety and Soundness chapter}
+In this chapter we will discuss the construction of our sandbox. We will discuss
+how it would work in practice including why we believe that it should be safe
+given reasonable assumptions.
 
 \section{Defining Safety}
 
 Before going into the detail, it is beneficial to discuss exactly what we mean
-by ``safety''. We will first discuss what we mean by a secure ``system'' such as
-an entire computer. As a naive definition one might the following:
+by ``safety''. We will first discuss what we mean by a safe system. As a naive
+definition one might the following:
 
 \vspace{0.3cm}
 \begin{addmargin}{1cm}
@@ -23,15 +25,15 @@ to the specific user. A slightly better definition would be:
 \vspace{0.3cm}
 \begin{addmargin}{1cm}
   {\it A ``safe'' system will never do anything potentially dangerous that a
-    reasonably well-educated user would expect it not to.}
+    reasonably well-educated user would not expect it to.}
 \end{addmargin}
 \vspace{0.3cm}
 
 While somewhat impractical, this definition has the nice feature, that one can
-actually strive to follow it -- even if one cannot prove such a general
-statement. An interesting fact is also, that while safety can depend on context
-and is often very hard to prove, some systems would always be considered
-insecure.
+actually strive to implement it, even if one could never prove such a general
+statement. An interesting detail is that it shows that, while safety can depend
+on context and is often very hard to prove, some systems would always be
+considered unsafe.
 
 The definition is still too vague though -- to get closer to a \emph{provable}
 definition, we will avoid mentioning the user:
@@ -55,8 +57,8 @@ be unimaginably large. Instead of a blacklist we will use a whitelist:
 \end{addmargin}
 \vspace{0.3cm}
 
-Ideally this list would likely be just as large as the blacklist -- however in
-this case we can approximate it by using a subset of the list! Indeed, if we
+In principle this list would likely be just as large as the blacklist -- however
+in this case we can approximate it by using a subset of the list! Indeed, if we
 used the empty list, then we would only have safe systems (the ones that do
 nothing).
 
@@ -71,31 +73,155 @@ something similar to this:
 \end{addmargin}
 \vspace{0.3cm}
 
-This definition turns out to be unusable in practice, as it depends on e.g. how
-the CPU has been implemented and ultimately on whether or not our physical
-models of reality are correct. We will instead use:
+\section{Assumptions}
+It turns that it is not possible to prove safety unconditionally. The system
+might for instance be hit by cosmic radiation causing a bit-flip at just the
+wrong time. We will instead prove safety given a collection of reasonable
+assumptions, that would hold in most real-world situations. Which assumptions we
+depend on our circumstances or exactly what we consider dangerous, so we could
+consider many potentially assumptions:
 
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it Assume we have a platform on which we can run programs. This platform
-    consists of a secure and an insecure part, and are we are allowed to make
-    certain assumptions on the secure part (e.g. ``the kernel does not contain
-    bugs'', ``the sandbox is implemented correctly''). \textbf{A safe program
-      for that platform} is any program where running it on the platform results
-    in a safe system. The secure part is known as the \textbf{Trusted Computing
-      Base}.}
-\end{addmargin}
-\vspace{0.3cm}
+\begin{enumerate}
+\item We might assume that the CPU follows the CPU specification.
+\item We might assume that the kernel is bug-free.
+\item We might assume that any potential attacker does not have access to more
+  than 1 zetaflop of computations per second or more than 1 zetabyte of storage.
+\item We might assume that a specific trusted third party is indeed trustworthy.
+\item We might assume that the attacker is merely curious but not malicious.
+\item We might assume that the user will never make a mistake.
+\end{enumerate}
 
-It is fairly obvious that one wants the trusted computing base to be as small as
-possible. We can now include reformulation of the soundness theorem in the
-context of safe programs.
+We might then prove that our system is safe under these assumptions. For
+instance we could imagine a system that was proven safe assuming \textbf{(1),
+  (2), (6)} and either \textbf{(4)} or \textbf{(5)} holds.
 
-\vspace{0.3cm}
-\begin{addmargin}{1cm}
-  {\it Assume we have a set of possible programs, a mathematical description of
-    how these programs are run and a type system for the programs. This type
-    system is \textbf{sound} if all well-typed programs are also safe programs
-    on any platform, that enforce that mathematical description.}
-\end{addmargin}
-\vspace{0.3cm}
+Clearly we want to depend on as few assumptions as possible. Traditionally most
+of these assumptions have been grouped into one of these categories:
+
+\begin{itemize}
+\item The \emph{Trusted Computing Base} is the collection of all software that
+  we have assumed correct.
+\item The \emph{Threat Model} is the description of what dangerous behavior we
+  wish to avoid along with assumptions about any potential attackers'
+  motivations and capabilities.
+\end{itemize}
+
+While these two concepts are not enough to capture all combinations of
+assumptions we might encounter, they are a very good approximation in most
+cases.
+
+\section{The Case for Building a TAL}
+Lets us consider the following scenario: We would like to protect a user. This
+user has a computer on which she stores some secret inforamtion. The user is
+able to download untrusted files from the internet in a secure manner (i.e., she
+can download them without compromising her safety, but she cannot currently
+interact with them in any way).
+
+We would like to build her platform, such that she can run programs downloaded
+from the internet without compromising the security of her information. These
+programs should not interact with any other part of the system unless permission
+for that interaction have been given by the user. Our threat model includes a
+very capable adversary: He can change any binary the user downloads and forge
+any cryptographic signature she might wish to verify -- however he cannot
+interact with the system in any ways besides affecting the files downloaded.
+
+How could we build such a platform for her? One solution would be as follows:
+
+\begin{itemize}
+\item Build a sandbox.
+\item Let the sandbox, OS and CPU be part of the Trusted Computing Base.
+\item Run the downloaded programs inside the sandbox.
+\end{itemize}
+
+While this solution will work it is certainly not optimal: The OS and sandbox
+are fairly large components, so assuming them correct seems dishonest. Certainly
+we can do better:
+
+\begin{itemize}
+\item Design a type system for our programs. This should be a type system for
+  real-world programs, which can be run natively (though the system might
+  contain programs in simplified form as part of its design).
+\item Design a type-checker for the type system.
+\item Let the type-checker, OS and CPU be part of the Trusted Computing Base.
+\item Prove by hand that the TAL is sound.
+\item Additionally assume that programs that are well-typed will also be safe
+  programs.
+\item Run the type-checker on the downloaded programs, but only run the program
+  itself if it is well-typed.
+\end{itemize}
+
+This might be a better solution than the sandbox solution, however it has
+several weak points:
+
+\begin{itemize}
+\item The type-checker have been assumed correct, but we have no real reason to
+  believe it to be so. Not only might it accept programs that are not
+  well-typed, but it might even contain critical bugs that will allow the
+  attacker to get the secret information before even running the program.
+\item We simply assumed without proof that well-typed program are safe.
+\end{itemize}
+
+It is possible to solve both of these problems, though not without introducing
+additional (smaller) problems:
+
+\begin{itemize}
+\item Design a type system for our programs as we did before.
+\item Design a proof system with a proof checker, which supports code
+  extraction.\footnote{Technically we do not need code extraction, just a way to
+    execute programs inside the system in real-world data.}
+\item Implement a type-checker inside the proof system.
+\item Implement a model for how programs are evaluated inside the proof system
+  (i.e., a small-step semantics). This should include a definition of that
+  constitutes a safe program inside the model.
+\item Use the proof system to prove that the type-checker is correct.
+\item Use the proof system to prove that well-typed programs are safe
+  \emph{inside the model} (i.e., a proof of soundness).
+\item Assume that our model is at least somewhat correct. Specifically assume
+  that programs that are safe in the model are also safe in the real-world.
+\item Let the proof system, OS and CPU be part of the Trusted Computing Base.
+\item Run the type-checker on the downloaded programs, but only run the program
+  itself if it is well-typed.
+\end{itemize}
+
+This is significantly better than before. Besides our Trusted Computing Base, we
+now only have a single assumption, and this assumption is at least somewhat
+reasonable. The only real issues is whether we can trust the proof
+system.
+
+There are even some additional advantages to this model: Most of our components
+do not need to be trusted beyond limitations. The proof checker needs only check
+\emph{our proofs} correctly and have a correct code extraction
+procedure. Furthermore OS and CPU do not need to be correct in the face of
+\emph{any possible} program, only those permitted by the type system.
+
+If this procedure ever becomes efficient and usable enough to take of, it should
+improve real-world security significantly. However there are still some possible
+points of improvement.
+
+\section{Further improvements}
+
+There are still a few avenues available to us, for reducing assumptions even
+further:
+
+\paragraph{Simplify the model.} We can try to simplify the model and bring it
+closer to the real world. The closer the two models are, the fewer things could
+possibly be wrong. We can achieve some of these benefits by implementing erasure
+theorems inside the proof system, however it can never bridge the gap
+completely, as we still need to assume that our models definition of safety
+corresponds to the real-world definition, which is unfortunately somewhat
+underspecified.
+
+\paragraph{Improve the proof system.} We might try to improve the proof system
+in several ways. We might try to simplify the implementation or get it peer
+reviewed to alleviate some of our uncertainties. This might be an easier task
+than reviewing e.g. a sandbox, and might be applicable in a broader set of
+circumstances. We might also try to implement the proofs in other proof systems,
+though we will need to take care that the proofs are equivalent. Alternatively
+we could try to verify the proof system inside another proof system.
+
+\paragraph{Simplify the OS.} One can to a certain extend simplify the OS,
+especially if one is only optimizing for this specific scenario. Many
+OS-specific features (and in particular protections) might be better implemented
+using our proof system instead of the OS. This move of responsibility from the
+OS to the proof system will strictly decrease our TCB, since the proof system
+does not have to increase in size to accomodate the change.

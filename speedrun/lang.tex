@@ -273,11 +273,11 @@ achieving just this in \cref{fig:parexample}.
   only use a subset of the possible types (specifically function types and tuple
   types). Some informal examples of types encodable in this system are ``an
   integer'', ``a basic block taking an integer as argument'' or ``a tuple of two
-  integers''. \todo{Write something similar to: The syntax
-    $\forall[\Delta] \Gamma$ should be interpreted as the type of a basic block
-    with type parameters $\Delta$ taking registers with types $\Gamma$. This
-    could intuitively be interpreted as a function taking $\Gamma$ as an
-    argument and never returning.}
+  integers''. For an example of the types of basic blocks, see
+  \cref{fig:parexample}. The syntax $\forall[\Delta] \Gamma$ should be
+  interpreted as the type of a basic block with type parameters $\Delta$ taking
+  registers with types $\Gamma$. This could intuitively be interpreted as a
+  function-like object taking $\Gamma$ as an argument and never returning.
 \item \emph{Type assignments} are the assumptions used in types. They are used
   for parametric polymorphism.
 \item \emph{Stack types} are the type of stacks.
@@ -369,13 +369,17 @@ The other differences are:
 \begin{figure}
 \begin{align*}
 &\mathtt{code}[ \alpha_1, \rho_1 ]\\
-&\ \ \ \{\mathtt{sp} |-> \rho_1, \mathtt{r}_1 |-> \mathtt{int}, \mathtt{r}_2 |-> \forall[\alpha_2] \{\mathtt{sp} |-> \rho_1, \dots\}, \mathtt{r}_3 |-> \forall[\alpha_3] \{\mathtt{sp} |-> \rho_1, \dots\}, \mathtt{r}_4 |-> \alpha_1\} \\
-&\ \ \ \mathtt{beq}\ \mathtt{r}_1, (\Lambda\ \nil \cdot \mathtt{r}_2 [...]) ; \\
-&\ \ \ \mathtt{jmp}\ (\Lambda\ \nil \cdot \mathtt{r}_2 [...])
+&\ \ \ \{\mathtt{sp} |-> \rho_1, \\
+&\ \ \ \ \ \ \mathtt{r}_1 |-> \mathtt{int},\\
+&\ \ \ \ \ \ \mathtt{r}_2 |-> \forall[\alpha_2] \{\mathtt{sp} |-> \rho_1, \mathtt{r}_1 |-> \mathtt{int}, \mathtt{r}_2 |-> \alpha_2, \mathtt{r}_3 |-> \alpha_2, \mathtt{r}_4 |-> \alpha_1\},\\
+&\ \ \ \ \ \ \mathtt{r}_3 |-> \forall[\alpha_2] \{\mathtt{sp} |-> \rho_1, \mathtt{r}_1 |-> \mathtt{int}, \mathtt{r}_2 |-> \alpha_2, \mathtt{r}_3 |-> \alpha_2, \mathtt{r}_4 |-> \alpha_1\},\\
+&\ \ \ \ \ \ \mathtt{r}_4 |-> \alpha_1\} \\
+&\ \ \ \mathtt{beq}\ \mathtt{r}_1, (\Lambda\ \nil \cdot \mathtt{r}_2 [... / \alpha_2]) ; \\
+&\ \ \ \mathtt{jmp}\ (\Lambda\ \nil \cdot \mathtt{r}_2 [... / \alpha_2])
 \end{align*}
-\caption{Example of how to use parametric polymorphism. Some of the details have
-  been left out for clarity. For the full details, see the definition
-  \texttt{condjmp} in \texttt{Example.agda}.}
+\caption{Example of how to use parametric polymorphism. The details of the
+  instantiation have been left our for clarity. For the full details, see the
+  definition \texttt{condjmp} in \texttt{Example.agda}.}
 \label{fig:parexample}
 \end{figure}
 \todo{Reread the polymorphism example and text \emph{carefully}.}

@@ -18,13 +18,13 @@ been developed.
 \item Sandboxes and virtual machines are two examples of systems that try to
   limit what a program is \emph{able} to do at run-time. They do this by
   limiting the actions available to programs, for instance by not exposing
-  dangerous APIs. Other examples from this category are POSIX user permissions,
-  memory protections and firewalls. We will collectively refer to these and
-  similar approaches as ``run-time protections''.  \footnote{While anti-virus
-    and code-signing certificates principally belong to the category of run-time
+  dangerous APIs. Other examples from this category are POSIX user
+  permissions\cite{posix}, memory protections\cite{intelsys} and
+  firewalls. These and similar protections are often called ``run-time
+  monitors'' or ``run-time protections''.  \footnote{While anti-virus and
+    code-signing certificates principally belong to the category of run-time
     protections, they are sufficiently different from most other such
-    protections that they deserve their own point.  }
-  \todo{Run-time monitors?}
+    protections that they deserve their own point.}
 \item Static analysis, fuzzing and type systems try to detect vulnerabilities in
   programs before they are deployed. Compiler modifcations such as stack-cookies
   or printf-hardening try to generate code that is hard to exploit even in the
@@ -120,13 +120,13 @@ that this is the case.
 \section{Typed Assembly Language}
 
 This thesis discusses a technique known as Typed Assembly Language (TAL). It was
-first introduced in the paper ``From System F to Typed Assembly Language'' by
-Morrisett et al. Its core idea is to add types to binary programs or programs
-written in assembler code. As an example, consider \cref{fig:example}. This is
-two versions of the same program: an infinite loop for calculating Fibonacci
-numbers. The only difference between the versions is syntax; one uses Mips and
-can be interfaced with existing tools, while the other is our internal
-representation of the same program.
+first introduced in the paper ``From System F to Typed Assembly
+Language''\cite{TAL} by Morrisett et al. Its core idea is to add types to binary
+programs or programs written in assembler code. As an example, consider
+\cref{fig:example}. This is two versions of the same program: an infinite loop
+for calculating Fibonacci numbers. The only difference between the versions is
+syntax; one uses Mips\cite{mipssys} and can be interfaced with existing tools,
+while the other is our internal representation of the same program.
 
 \begin{figure}
 \begin{verbatim}
@@ -330,6 +330,5 @@ lessons from doing a project of this size in Agda. This includes both
 observations specific to implement a TAL-like language in Agda, but also a few
 more general tricks for making Agda easier to work with. It is meant to be
 readable independently of the other chapters. \textbf{\Cref{chap:future}}
-discusses how the work could be extended and relates it to other work. In
-particular the differences between STAL and \ATAL will be discussed. Finally,
+discusses how the work could be extended and relates it to other work. Finally,
 \textbf{\Cref{chap:conclusion}} summaries my contributions and concludes.
