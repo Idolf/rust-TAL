@@ -382,7 +382,6 @@ The other differences are:
   definition \texttt{condjmp} in \texttt{Example.agda}.}
 \label{fig:parexample}
 \end{figure}
-\todo{Reread the polymorphism example and text \emph{carefully}.}
 
 \subsection{Notes on the Agda Implementation}
 
@@ -585,7 +584,11 @@ register file: \\
   }
 \end{mathpar}
 
-\todo{More text about small-step judgments}
+The judgment $\evalcode{\high G}{\high w}{\high I}$ is the judgment which
+fetches a basic block from the global collection. In \ATALe this is very simple:
+The word value must be a $\texttt{globval}$ and we use this to look up the basic
+block. In \ATAL this is complicated by the fact we use this judgment to run
+substitutions on the fetched basic block.
 
 \fbox{$\evalcode{\high G}{\high w}{I}$}
 \begin{mathpar}
@@ -602,7 +605,8 @@ register file: \\
 }
 \end{mathpar}
 
-\todo{Even more text about small-step judgments}
+Finally the core of our small-step relation. We have a single judgment for each
+instruction, except for \texttt{beq}, where we have a conditional jump.
 
 \fbox{$\execis{\high G}{\high H, \high R, \high I}{\high H', \high R', \high I'}$}
 \begin{mathpar}
