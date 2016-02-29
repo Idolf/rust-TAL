@@ -255,7 +255,17 @@ The syntax for \ATAL is presented \cref{fig:syntax} and is very similar to that
 of \ATALe. The biggest addition is the type system which is present during the
 run-time. This type system includes the parametric polymorphism and subtyping.
 
-\hightodo{Explain parametric polymorphism and subtyping.}
+Specifically we allow our basic blocks to have parametric polymorphism. The
+parameters are specified by the $\Delta$ that is part of global values. This
+polymorphism allows us generalize the type code blocks not only over the type of
+the registers it accepts, but also the stack.
+
+As an example, consider a basic block which takes four arguments. The first
+argument is an integer, while the second and third are references to other basic
+blocks. However we wish this basic block to be as general as possible -- it
+should not make any assumptions upon the value of the forth argument, but simply
+pass it along to the function it wishes to jump to. We have written an example
+achieving just this in \cref{fig:parexample}.
 
 \begin{itemize}
 \item The \emph{base types} are best thought of as the types of word values and
@@ -274,10 +284,10 @@ run-time. This type system includes the parametric polymorphism and subtyping.
 \item \emph{Global label assignments} are the types of global collections.
 \item \emph{Heap label assignments} are the types of heap collections.
 \item \emph{Register assignments} are the types of register files.
-\item An \emph{instantiation} is an encoding of a substitution. This substitution can
-  be applied to an expression. For instance we will write $\tau[\theta]$ as
-  substitution for base types and similar for other construction. As an example
-  we have
+\item An \emph{instantiation} is an encoding of a substitution. This
+  substitution can be applied to an expression. For instance we will write
+  $\tau[\theta]$ as substitution for base types and similar for other
+  construction. As an example we have
   $(\langle \alpha_1, \alpha_2 \rangle)[\mathtt{int} / \alpha_1] = \langle
   \mathtt{int}, \alpha_2 \rangle$.
 \item Sometimes it is useful to run more than one instantiation. The syntactic
@@ -354,6 +364,19 @@ The other differences are:
   }
   \caption{The syntax for \ATAL}
   \label{fig:syntax}
+\end{figure}
+
+\begin{figure}
+\begin{align*}
+&\mathtt{code}[ \alpha_1, \rho_1 ]\\
+&\ \ \ \{\mathtt{sp} |-> \rho_1, \mathtt{r}_1 |-> \mathtt{int}, \mathtt{r}_2 |-> \forall[\alpha_2] \{\mathtt{sp} |-> \rho_1, \dots\}, \mathtt{r}_3 |-> \forall[\alpha_3] \{\mathtt{sp} |-> \rho_1, \dots\}, \mathtt{r}_4 |-> \alpha_1\} \\
+&\ \ \ \mathtt{beq}\ \mathtt{r}_1, (\Lambda\ \nil \cdot \mathtt{r}_2 [...]) ; \\
+&\ \ \ \mathtt{jmp}\ (\Lambda\ \nil \cdot \mathtt{r}_2 [...])
+\end{align*}
+\caption{Example of how to use parametric polymorphism. Some of the details have
+  been left out for clarity. For the full details, see the definition
+  \texttt{condjmp} in \texttt{Example.agda}.}
+\label{fig:parexample}
 \end{figure}
 
 \subsection{Notes on the Agda Implementation}
@@ -472,9 +495,10 @@ what we believe to be a comprehensive list.
   will introduce the last change of importance. In STAL, there were two sources
   of subtyping: A tuple could be cast to a less initialized one and a function
   could be cast to one that had more requirements for its registers. \ATAL only
-  has the first source of subtyping, though it is the authors belief that any
-  use if this feature could alternatively have been achieved using parametric
-  polymorphism.
+  has the first source of subtyping. It is the authors belief that any use if
+  this feature could alternatively have been achieved using parametric
+  polymorphism, though as seen in \cref{fig:parexample} the result is not
+  necessarily pretty.
 \item Also in \cref{chap:types}, we will see that our typing judgments have in
   general been implemented slightly differently. We believe that our
   implementation is equivalent while slightly simpler. In particular it has

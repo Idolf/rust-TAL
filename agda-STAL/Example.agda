@@ -31,8 +31,17 @@ badloop =
   registerₐ [] (int ∷ int ∷ int ∷ int ∷ []) ∙
     jmp Λ [] ∙ globval 3 ⟦ α (tuple ((α⁼ 0 , uninit) ∷ (α⁼ 0 , uninit) ∷ [])) ∷ [] ⟧
 
+condjmp =
+  code[ α ∷ ρ ∷ [] ]
+  registerₐ (ρ⁼ 1) (int ∷
+                    (∀[ α ∷ [] ] (registerₐ (ρ⁼ 2) (int ∷ α⁼ 0 ∷ α⁼ 0 ∷ α⁼ 1 ∷ []))) ∷
+                    (∀[ α ∷ [] ] (registerₐ (ρ⁼ 2) (int ∷ α⁼ 0 ∷ α⁼ 0 ∷ α⁼ 1 ∷ []))) ∷
+                    α⁼ 0 ∷ []) ∙
+    beq (# 0) (Λ [] ∙ reg (# 2) ⟦ α (∀[ α ∷ [] ] (registerₐ (ρ⁼ 2) (int ∷ α⁼ 1 ∷ α⁼ 0 ∷ α⁼ 0 ∷ []))) ∷ [] ⟧) ~>
+    jmp       (Λ [] ∙ reg (# 3) ⟦ α (∀[ α ∷ [] ] (registerₐ (ρ⁼ 2) (int ∷ α⁼ 1 ∷ α⁼ 0 ∷ α⁼ 0 ∷ []))) ∷ [] ⟧)
+
 myglobals : Globals
-myglobals = infloop ∷ addloop ∷ fiboloop ∷ badloop ∷ []
+myglobals = infloop ∷ addloop ∷ fiboloop ∷ badloop ∷ condjmp ∷ []
 
 myheap : Heap
 myheap = []
