@@ -1,9 +1,27 @@
 \chapter{Type System for \ATAL}
 \label{chap:types}
 
-\hightodo{Write \emph{something} about the type system!}
+This chapter presents our type system. It is divided into two parts. The first
+part is deals with validity of types and subtyping, while the second deals with
+the actual typing relations.
 
 \section{Judgments About Types}
+
+This first part is relatively boring and can be summarized as:
+
+\begin{itemize}
+\item Types are valid in a specific context, long as the De Bruijn indices are
+  valid.
+\item Subtyping is a transitive relation. Subtyping implies validity and validity implies reflexivity.
+\item
+  $\langle \tau_1^{\phi_1}, \dots, \tau_k^{\mathtt{init}}, \dots,
+  \tau_n^{\phi_n} \rangle$ is a subtype of
+  $\langle \tau_1^{\phi_1}, \dots, \tau_k^{\mathtt{uninit}}, \dots,
+  \tau_n^{\phi_n} \rangle$.
+\item Other constructs form the obvious subtyping relation.
+\item The Agda-version of the judgments can be seen in file
+  \texttt{Judgments/Types.agda}.
+\end{itemize}
 
 \begin{tabular}{|c|p{7.5 cm}|}
   \hline
@@ -22,12 +40,7 @@
   $\subtype{\Delta}{\Gamma_1}{\Gamma_2}$ & $\Gamma_1$ is a subtype of $\Gamma_2$ \\
   $\subtype{}{\Psi_{\mathrm{h},1}}{\Psi_{\mathrm{h}_2}}$ & $\Psi_{\mathrm{h},1}$ is a subtype of $\Psi_{\mathrm{h},2}$ \\
   \hline
-
-  $\Delta |- \theta : a$ & $\theta$ is a valid instantiation of the variable $a$ \\
-  $\Delta |- \Theta : \Delta'$ & $\Theta$ are valid instantiations of the variables $\Delta'$ \\
-  \hline
 \end{tabular}
-
 
 \subsection{Valid Types}
 \fbox{$\valid{\Delta}{\tau}$}
@@ -88,7 +101,10 @@
 \infer{
   \subtype{}{\phi_1}{\phi_1'} \and
   \dots \and
-  \subtype{}{\phi_n}{\phi_n'}
+  \subtype{}{\phi_n}{\phi_n'} \\
+  \valid{\Delta}{\tau_1} \and
+  \dots \and
+  \valid{\Delta}{\tau_n}
 }{
   \subtype{\Delta}
           {\langle \tau_1^{\phi_1}, \dots, \tau_n^{\phi_n} \rangle}
@@ -159,25 +175,10 @@
 }
 \end{mathpar}
 
-\fbox{$\ofinstantiations{\Delta}{\Theta}{\Delta}$}
-\begin{mathpar}
-\infer{ }{
-  \ofinstantiations{\Delta}{\nil}{\nil}
-} \and
-\infer{
-  \ofinstantiation{\Delta' ++ \Delta}{\theta}{a} \and
-  \ofinstantiations{\Delta}{\Theta}{\Delta'}
-}{
-  \ofinstantiations{\Delta}{(\theta :: \Theta)}{(a :: \Delta')}
-}
-\end{mathpar}
-
-\subsection{Notes on the Agda Implementation}
-\texttt{Judgments/Types.agda} and some of \texttt{Judgments/Terms.agda}.
-
 \subsection{Lemmas}
 
-\texttt{Lemmas/Types.agda} and \texttt{Lemmas/TypeSubstitution.agda}.
+The files \texttt{Lemmas/Types.agda} and \texttt{Lemmas/TypeSubstitution.agda}
+contains some lemmas about types, the most important of which are:
 
 \begin{lemma}
   \label{lemma:typdec}
@@ -205,9 +206,31 @@
 \end{lemma}
 
 \section{Judgments About Values}
+
+This section is about typing judgments. There it has been split up into multiple
+parts:
+
+\begin{itemize}
+\item The first part is about validity of instantiations.
+\item The second part is about validity of code. There are three basic code
+  primitives. Small values are a way to generate a word value from
+  registers. Instructions can be though of as ``functions'' from register types
+  to register types, and are typed as such. Finally instruction sequences can be
+  thought of as ``functions'' that might not return. None of these depend on the
+  heap, though they might depend on type parameters.
+\item The third part is typing judgments about memory constructs. Most of them
+  may depend on the heap, but none of them can be parameterized over types.
+\item The final part is where we make everything fit together. It contains no
+  real surprises, but be useful for understanding the other parts.
+\end{itemize}
+
 \begin{tabular}{|c|p{7.5 cm}|}
   \hline
   Judgment & \multicolumn{1}{|c|}{Meaning} \\
+  \hline
+
+  $\Delta |- \theta : a$ & $\theta$ is a valid instantiation of the variable $a$ \\
+  $\Delta |- \Theta : \Delta'$ & $\Theta$ are valid instantiations of the variables $\Delta'$ \\
   \hline
 
   $\Psi_{\mathrm{g}}, \Delta |- \high v : \Gamma => \tau$ & $\high v$ is a well-formed small value evaluating register files of type $\Gamma$ to word values of type $\tau$ \\
@@ -231,6 +254,19 @@
 \end{tabular}
 
 \subsection{Evaluation Types}
+
+\fbox{$\ofinstantiations{\Delta}{\Theta}{\Delta}$}
+\begin{mathpar}
+\infer{ }{
+  \ofinstantiations{\Delta}{\nil}{\nil}
+} \and
+\infer{
+  \ofinstantiation{\Delta' ++ \Delta}{\theta}{a} \and
+  \ofinstantiations{\Delta}{\Theta}{\Delta'}
+}{
+  \ofinstantiations{\Delta}{(\theta :: \Theta)}{(a :: \Delta')}
+}
+\end{mathpar}
 
 \fbox{$\ofvval{\Psi_{\mathrm{g}},\Delta}{\high v}{\Gamma => \tau}$}
 \begin{mathpar}
