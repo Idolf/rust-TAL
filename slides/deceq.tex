@@ -1,9 +1,78 @@
-\section{Decidability in Agda}
+\section{Decidable Equality in Agda}
 \begin{frame}
 \frametitle{Table of Contents}
 \tableofcontents[currentsection]
 \end{frame}
 
-\begin{frame}{}{}
-  {[Empty slide]}
+\begin{frame}{What is Agda?}
+  \begin{itemize}
+  \item Programming Language similar to Haskell.
+  \item Proof system with features similar to Coq.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Propositions as Types}
+  We identify a proposition $P$ by a type.
+
+  \begin{itemize}
+  \item We represent logical implication $P => Q$ as a function $P -> Q$.
+  \item We represent logical conjunction $P \land Q$ by a tuple $(P, Q)$.
+  \item We represent $P \lor Q$ by the Haskell-type $Either\ P\ Q$.
+  \item We represent logical negation $\neg P$ by a function $P -> \bot$, where
+    $\bot$ is a type without any constructors.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Decidability in Agda (1/2)}
+  In classical logic, we can simply assume $P \lor \neg P$. We cannot do this in
+  Agda:
+
+  \begin{itemize}
+  \item Assume $P = NP \lor P \neq NP$.
+  \item Pattern match on the result.
+  \item ???
+  \item PROFIT!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Decidibility in Agda (2/2)}
+  \textbf{Definition:} A proposition is decidable if there is a procedure for
+  concluding either $P$ or $\neg P$.
+
+  \pause If $P$ decidable in Agda, we write $Dec\ P$.
+\end{frame}
+
+\begin{frame}[fragile]{Equality in Programming}
+  Equality is very common in programming:
+
+\begin{lstlisting}
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a%b
+    return a
+    while x != 0:
+
+class Point:
+   ...
+
+   def __eq__(self, other):
+       return self.x == other.x and self.y == other.y
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Equality in Programming}
+  Equality is very common in programming:
+
+\begin{lstlisting}
+data Person = Person { firstName :: String
+                     , lastName :: String
+                     , age :: Int
+                     } deriving (Eq)
+
+main = print (dropWhile (==john) persons)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Equality in Agda}
+  Demo time!
 \end{frame}
