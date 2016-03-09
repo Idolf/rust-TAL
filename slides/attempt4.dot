@@ -1,0 +1,25 @@
+digraph {
+    rankdir = LR;
+    subgraph cluster_0 {
+       sml[label="SML source code"];
+       interm[label="Raw binary executable"];
+       proof[label="Types for the program"];
+       sml->{proof interm};
+       label = "Developer";
+   }
+
+   proof->run[style="invis"];
+
+   subgraph cluster_1 {
+       proof1[label="Types for the program"];
+       interm1[label="Raw binary executable"];
+       raw[label="Raw binary executable (finalized)"];
+       check[label="Run the type-checker!"];
+       run[label="Run it!"];
+
+       interm1 -> raw -> run;
+       {interm1 proof1} -> check;
+
+       label = "User";
+   }
+}

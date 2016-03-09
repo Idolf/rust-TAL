@@ -1,0 +1,19 @@
+digraph {
+    rankdir = LR;
+    subgraph cluster_0 {
+        rust[label="Rust source code"];
+        label = "Developer";
+   }
+
+   rust->raw[style="invis"];
+
+   subgraph cluster_1 {
+       rust1[label="Rust source code"];
+       llvm[label="LLVM bitcode"];
+       asm[label="Assembler code"];
+       raw[label="Raw binary executable"];
+       run[label="Run it!"];
+       rust1 -> llvm -> asm -> raw -> run;
+       label = "User";
+   }
+}

@@ -43,9 +43,144 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{First attempt}
-  \textbf{Idea:} Do not distribute raw executable programs. Distribute programs
-  in a high-level language (such as Haskell or Rust). \pause
+\begin{frame}[fragile]{First attempt}
+  \textbf{Idea:} Code in a high-level Language!
 
-  \pause \includegraphics[width=0.8\textwidth]{attempt1_dot.pdf}
+  \pause\includegraphics[width=\textwidth]{attempt1_dot.pdf}
+\end{frame}
+
+\begin{frame}{Programs}{}
+  \begin{tikzpicture}[mystyle]
+    \node[draw,circle,fill,red] (a) at (0,6.7) {};
+    \node[right] at (0,6.7) {\footnotesize \ all programs};
+    \draw[fill,red] (0,0) rectangle (10, 6);
+
+    \node[draw,circle,fill,blue] (b) at (0,6.3) {};
+    \node[right] at (0,6.3) {\footnotesize \ safe programs};
+    \draw[fill,blue] (5,3) ellipse (4.0 and 2.2);
+
+    \pause
+    \node[draw,circle,fill,yellow] (b) at (2.5,6.7) {};
+    \node[right] at (2.5,6.7) {\footnotesize \ rust programs};
+    \draw[fill,yellow] (7,3) circle (2.5);
+
+    \node[draw,circle,fill,green] (b) at (2.5,6.3) {};
+    \node[right] at (2.5,6.3) {\footnotesize \ rust programs without \texttt{unsafe}};
+    \draw[fill,green] (7,2.65) circle (1.5);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{First attempt}
+  \textbf{Idea:} Code in a high-level Language!
+
+  \includegraphics[width=\textwidth]{attempt1_dot.pdf}
+
+  \pause How does the user know that it is safe?
+\end{frame}
+
+\begin{frame}[fragile]{Second attempt}
+  \textbf{Idea:} Distribute programs in a high-level language.
+
+  \pause \includegraphics[width=\textwidth]{attempt2_dot.pdf}
+\end{frame}
+
+\begin{frame}{Trusted Computing Base}
+  \textbf{Definition:} The Trusted Computing Base (TCB) of a computer system is
+  the set of software and hardware that is critical to its security.
+\end{frame}
+
+\begin{frame}[fragile]{Second attempt}
+  \textbf{Idea:} Distribute programs in a high-level language.
+
+  \includegraphics[width=\textwidth]{attempt2_dot.pdf}
+
+  \pause This might work, \textbf{but}: The Rust compiler is huge; too big to be
+  trusted. (It is also too slow to be practical).
+\end{frame}
+
+\begin{frame}{Programs}{}
+  \begin{tikzpicture}[mystyle]
+    \node[draw,circle,fill,red] (a) at (0,6.7) {};
+    \node[right] at (0,6.7) {\footnotesize \ all programs};
+    \draw[fill,red] (0,0) rectangle (10, 6);
+
+    \node[draw,circle,fill,blue] (b) at (0,6.3) {};
+    \node[right] at (0,6.3) {\footnotesize \ safe programs};
+    \draw[fill,blue] (5,3) ellipse (4.0 and 2.2);
+
+    \node[draw,circle,fill,yellow] (b) at (2.5,6.7) {};
+    \node[right] at (2.5,6.7) {\footnotesize \ rust programs};
+    \draw[fill,yellow] (7,3) circle (2.5);
+
+    \node[draw,circle,fill,green] (b) at (2.5,6.3) {};
+    \node[right] at (2.5,6.3) {\footnotesize \ rust programs without \texttt{unsafe}};
+    \draw[fill,green] (7,2.65) circle (1.5);
+
+    \pause
+    \draw[->] (9,0.5) -- (7.9,1.3);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Third attempt}
+  \textbf{Idea:} Distribute programs in bytecode.
+
+  \pause \includegraphics[width=\textwidth]{attempt3_dot.pdf}
+
+  \pause Better. TCB = JIT-compiler and standard-library.
+\end{frame}
+
+\begin{frame}[fragile]{Typed Assembly Language}
+  \textbf{Idea:} Distribute a proof along with programs.
+
+  \pause \includegraphics[width=\textwidth]{attempt4_dot.pdf}
+
+  \pause TCB = Type-checker, finalizer and optionally a standard-library. But we
+  can do better!
+\end{frame}
+
+\begin{frame}{Typed Assembly Language}{}
+  \begin{tikzpicture}[mystyle]
+    \node[draw,circle,fill,red] (a) at (0,7.0) {};
+    \node[right] at (0,7.0) {\footnotesize \ all programs};
+
+    \node[draw,circle,fill,green] (a) at (2.5,7.0) {};
+    \node[right] at (2.5,7.0) {\footnotesize \ safe programs};
+
+    \node[draw,circle,fill,blue] (a) at (5.0,7.0) {};
+    \node[right] at (5.0,7.0) {\footnotesize \ well-typed programs};
+
+    \node at (1.4, 6.2) {$ATAL$};
+    \node at (4.4, 6.2) {$ATAL_e$};
+    \node at (7.4, 6.2) {native};
+
+    \draw[fill,red] (0,0) rectangle (2.8, 6);
+    \draw[fill,red] (3,0) rectangle (5.8, 6);
+    \draw[fill,red] (6,0) rectangle (8.8, 6);
+
+    \draw[fill,green] (1.4,3) ellipse (1.3 and 2.9);
+    \draw[fill,green] (4.4,3) ellipse (1.3 and 2.9);
+    \draw[fill,green] (7.4,3) ellipse (1.3 and 2.9);
+
+    \draw[fill,blue] (1.6,3.1) ellipse (1 and 2.4);
+
+    \draw[->] (2.5,6.1) to [out=45, in=135] (3.5,6.1);
+    \draw[->] (5.5,6.1) to [out=45, in=135] (6.5,6.1);
+    \node at (3.0,6.5) {erasure};
+    \node at (6.0,6.55) {assembler};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Typed Assembly Language}
+  \textbf{Naive:} TCB = type-checker, erasure, assembler.
+
+  \pause
+  \textbf{Smarter:}
+
+  \begin{itemize}
+  \item Implement type-checker and erasure in Agda.
+  \item Prove that type-checker is correct.
+  \item Prove that erasure is correct.
+  \end{itemize}
+
+  TCB = Agda, assembler.
 \end{frame}

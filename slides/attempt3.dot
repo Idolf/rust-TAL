@@ -1,0 +1,20 @@
+digraph {
+    rankdir = LR;
+    subgraph cluster_0 {
+        closure[label="Clojure source code"];
+        jvm[label="JVM bytecode"];
+        closure->jvm;
+
+        label = "Developer";
+   }
+
+   closure->raw[style="invis"];
+
+   subgraph cluster_1 {
+       jvm1[label="JVM bytecode"];
+       raw[label="Raw code"];
+       run[label="Run it!"];
+       jvm1 -> raw -> run;
+       label = "User";
+   }
+}
