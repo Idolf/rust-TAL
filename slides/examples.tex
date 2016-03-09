@@ -1,0 +1,346 @@
+
+% \begin{frame}
+%   \frametitle{Motivation}
+%   \begin{itemize}
+%   \item We want to add \emph{coroutines} to Janus. These are like
+%   subroutines/functions, except their execution can be \emph{paused},
+%   and be resumed by anybody who has a ``pointer'' to it.
+
+%   \pause\item As a first class citizen of the language, they allow
+%   \emph{the user} to implement many powerful mechanisms, such as
+%   simple concurrent programming, ``unix pipe''-like data transfering,
+%   and higher order functions (map, fold, filter).
+
+%   \pause\item They also form the theoretical foundation of language features
+%   such as generators from Python.
+%   \end{itemize}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Intuition}
+%   When a coroutine is not active, we maintain the following state
+%   about it:
+%     \begin{itemize}
+%     \pause\item The function which the coroutine is an instance of
+%     \pause\item A store with variables specific to \emph{this} coruotine
+%       (arguments, local variables)
+%     \pause\item A unique label indicating where the coroutine should be run
+%       from next time it is resumed
+%       \pause\begin{itemize}
+%       \item $\go$ if just created, or just finished
+%       \item $\pausel_i$ when last suspended at unique label $i$
+%       \end{itemize}
+%     \end{itemize}
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Example -- fibonacci}
+%   \begin{lstlisting}
+% procedure fib (int n, int x1, int x2)[int ret]
+%   x1 += 1
+%   x2 += 1
+%   from x1 = x2
+%   do n -= 1
+%      ret += x1
+%      yield
+%   loop x1 += x2
+%        x1 <=> x2
+%   until n = 0
+
+% procedure main()
+%   int a,b,c,d,arg1,arg2,arg3
+%   local x = nil; create x (4,0,0)
+%   resume x (a); resume x (b); resume x (c);
+%   resume x (d);
+%   uncreate x (arg1,arg2,arg3); delocal x = nil
+%   \end{lstlisting}
+% $a=1,b=2,c=3,d=0 \qquad arg1=0, arg2=3, arg3=5$
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Informal semantics -- \texttt{create}}
+%   \begin{align*}
+%     &\<procedure> f(y_0, \dots, y_n)[z_0, \dots, z_k] \\
+%     &\quad\quad\dots \\
+%     &\<create> c\; f(x_0, x_1, \dots, x_n)
+%   \end{align*}
+
+%   \begin{itemize}
+%     \pause\item Replaces the value of $x_0$: $v_0 |-> 0$.
+%     \pause\item Replaces the value of $x_1$: $v_1 |-> 0$.
+%     \pause\item \dots
+%     \item Replaces the value of $x_n$: $v_n |-> 0$.
+%     \pause\item Replaces the value of $c$: $\nil |-> Coroutine(f, [y_0=v_0, \dots, y_n=v_n],\start)$.
+%   \end{itemize}
+%   \pause \texttt{uncreate} does the opposite.
+% \end{frame}
+
+
+% \begin{frame}
+%   \frametitle{Informal semantics -- \texttt{resume}}
+%   \begin{align*}
+%     &\<procedure> f(y_0, \dots, y_n)[z_0, \dots, z_k] \\
+%     &\quad\quad\dots \\
+%     &\<resume> c(x_0, x_1, \dots, x_k)
+%   \end{align*}
+
+%   \begin{itemize}
+%     \pause\item $c = Coroutine(f, store,label)$
+%     \pause\item $x_0 = v_0, \dots, x_k = v_k$.
+%     \pause\item Run procedure $f$ starting from $label$. For local variables use $store ++ [z_0 = v_0, \dots, z_k = v_k]$.
+%     \pause\item When it is done, split resulting store into $store' ++ [z_0 = v_0', \dots, z_k = v_k']$.
+%     \pause\item Save $x_0 = v_0', \dots, x_k = v_k'$.
+%     \pause\item Save $c = Coroutine(f, store', label')$.
+%   \end{itemize}
+
+%   \pause \texttt{unresume} does the opposite.
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Example}
+%   \begin{lstlisting}
+% procedure map_func(v)[x]
+%   x += v
+
+% procedure fold_func(r)[x]
+%   r += x
+
+% procedure main
+%   ...
+%   create c map_func(5)
+%   call map(c, my_stack)
+%   ...
+%   create c fold_func(0)
+%   call fold(c, my_stack)
+%   ...
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Example}
+%   \begin{lstlisting}
+% procedure traverse(c, s)[]
+%   if empty(s)
+%   then skip
+%   else
+%     local x = 0
+%       pop(x, s)
+%       resume c(x)
+%       call traverse(c, s)
+%       push(x, s)
+%     delocal x = 0
+%   fi empty(s)
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{The statements of Janus}
+%   \begin{tabular}{rl}
+%     $s ::=$
+%     & $x *= e \mid x\texttt{[}e\texttt{]} *= e$\\
+%     & $\<if> e \<then> s \<else> s \<fi> e$\\
+%     & $\<from> e \<do> s \<loop> s \<until> e$\\
+%     & $\<push>(x,x) \mid \<pop>(x,x)$\\
+%     & $\<local> x = e \:\: s \:\: \<delocal> x = e$\\
+%     & $\<skip> \mid s \: s$\\
+%     & \only<1>{$\<call> f(x,\ldots,x) \mid \<uncall> f(x,\dots,x)$}
+%       \only<2->{\sout{$\<call> f(x,\ldots,x) \mid \<uncall> f(x,\dots,x)$}}\\
+%     & \only<3->{$\<create> x \; q(x,\ldots,x) \mid \<uncreate> x \; q(x,\ldots,x)$}\\
+%     & \only<3->{$\<resume> x(x,\ldots,x) \mid \<unresume> x(x,\ldots,x)$}\\
+%     & \only<3->{$\<yield>$}
+%   \end{tabular}
+%   \vspace{0.3cm}
+
+%   \pause\pause\pause Procedures definitions extended to $\<procedure> f(x,\dots,x)[x,\dots,x]$.
+% \end{frame}
+
+
+% \begin{frame}
+%   \frametitle{Formal semantics}
+
+%   Judgments:
+%   \begin{itemize}
+%   \pause\item $\sigma |- e => v$
+%   \pause\item $\sigma, S |- s => \sigma', S'$
+%   \end{itemize}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Formal semantics (example 1/4)}
+
+% \begin{align*}
+% \inference[]{
+%   \sigma |-_{expr} e_1 /=> 0 &
+%   \sigma, \go |-_{stmt} s_1 => \sigma', \go &
+%   \sigma' |-_{expr} e_2 /=> 0
+% }{
+%   \sigma, \go |-_{stmt} \<if> e_1 \<then> s_1 \<else> s_2 \<fi> e_2 => \sigma', \go
+% }
+% \end{align*}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Formal semantics (example 2/4)}
+
+% \begin{align*}
+% \inference[]{
+%   \sigma |-_{expr} e_1 /=> 0 &
+%   \sigma, \go |-_{stmt} s_1 => \sigma', \pausel_i
+% }{
+%   \sigma, \go |-_{stmt} \<if> e_1 \<then> s_1 \<else> s_2 \<fi> e_2 => \sigma', \pausel_i
+% }
+% \end{align*}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Formal semantics (example 3/4)}
+
+% \begin{align*}
+% \inference[]{
+%   \sigma, \pausel_i |-_{stmt} s_1 => \sigma', \go &
+%   \sigma |-_{expr} e_2 /=> 0
+% }{
+%   \sigma, \pausel_i |-_{stmt} \<if> e_1 \<then> s_1 \<else> s_2 \<fi> e_2 => \sigma', \go
+% }
+% \end{align*}
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Example -- finding the \texttt{yield}}
+%   \begin{lstlisting}[escapechar=€]
+% if cond1
+% then ...
+%      yield€$_i$€
+% else ...
+%      yield€$_j$€
+% fi cond2
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Formal semantics (example 4/4)}
+
+% \begin{align*}
+% \inference[]{
+%   \<yield>_i \in s_1 &
+%   \sigma, \pausel_i |-_{stmt} s_1 => \sigma', \pausel_j &
+% }{
+%   \sigma, \pausel_i |-_{stmt} \<if> e_1 \<then> s_1 \<else> s_2 \<fi> e_2 => \sigma', \pausel_j
+% }
+% \end{align*}
+% \end{frame}
+
+
+% \begin{frame}[fragile]
+%   \frametitle{Ensuring reversibility}
+
+%   As with regular Janus, there are quite a few failure modes:
+
+%   \pause
+%   \begin{lstlisting}
+%     x += x
+%   \end{lstlisting}
+
+%   \pause
+%   \begin{lstlisting}
+%   procedure f(x,y)
+%     x += y
+%   ...
+%   call f(x,x)
+%   \end{lstlisting}
+
+%   \pause
+%   \begin{lstlisting}
+%   procedure f(x)
+%     x += y
+%   ...
+%   procedure main
+%     int y
+%     call f(y)
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Ensuring reversibility (cont.)}
+
+%   However there is also a new variant:
+
+%   \pause
+%   \begin{lstlisting}
+%   procedure f()[c]
+%     local c2 = nil
+%     c <=> c2
+%     yield
+%     ...
+
+%   procedure main
+%     ...
+%     create c f()
+%     resume c(c)
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Ensuring reversibility (cont.)}
+
+%   However there is also a new variant:
+
+%   \begin{lstlisting}
+%   procedure f()[]
+%     local c2 = nil
+%     c <=> c2
+%     yield
+%     ...
+
+%   procedure main
+%     coroutine c
+%     create c f()
+%     resume c()
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Ensuring reversibility (cont.)}
+
+%   Our solution:
+
+%   \begin{itemize}
+%     \pause\item When doing $\<create>$, aliases are banned (they could be
+%     allowed safely, but not with an obvious semantic).
+%     \pause\item When doing $\<resume>$, aliases are banned and all variables
+%     must be local.
+%   \end{itemize}
+
+%   \pause This is sufficient to ensure reversibility.
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Implementing call (and other sugar)}
+%   \verb|call f(x_1,...,x_n)| where \texttt{f} has no $\<yield>$ can
+%   be translated to
+%   \begin{lstlisting}
+% local c = nil
+% create c f(x0,x1,x2)
+% resume c ()
+% uncreate c(x0,x1,x2)
+% delocal c = nil
+%   \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}[fragile]
+%   \frametitle{Implementing call (and other sugar)}
+%   \verb|call f(x_1,...,x_n)| where \texttt{f} \emph{has} a $\<yield>$ can
+%   be translated to
+%   \begin{lstlisting}
+% local c = nil
+% create c f(x0,x1,x2)
+
+% from isgo(c)
+% do resume c()
+% loop yield
+% until isgo(c)
+
+% uncreate c(x0,x1,x2)
+% delocal c = nil
+%   \end{lstlisting}
+% \end{frame}

@@ -1,0 +1,53 @@
+\section{Introduction to Typed Assembly Language}
+\begin{frame}
+\frametitle{Table of Contents}
+\tableofcontents[currentsection]
+\end{frame}
+
+\begin{frame}{Our goal}
+  \begin{itemize}
+  \item Fast
+  \item \only<1-3>{Safe}\only<4->{\sout{Safe}\ \ Verifiably safe}
+  \item Practical
+  \item Low-level
+  \end{itemize}
+
+  \pause Use Rust...? \pause Not quite good enough.
+\end{frame}
+
+\begin{frame}{Programs}{}
+  \begin{tikzpicture}[mystyle]
+    \node[draw,circle,fill,red] (a) at (0,6.5) {};
+    \node[right] at (0,6.5) {\footnotesize \ all programs};
+    \draw[fill,red] (0,0) rectangle (10, 6);
+
+    \pause
+    \node[draw,circle,fill,blue] (b) at (2.5,6.5) {};
+    \node[right,blue] at (2.5,6.5) {\footnotesize \ safe programs};
+    \draw[fill,blue] (5,3) ellipse (4.0 and 2.2);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Safety?}
+  \textbf{Definition:} A safe program is one that does not access unmapped
+  memory.
+
+  \pause \textbf{Implications:}
+
+  \begin{itemize}
+  \pause\item Has no buffer overflows
+  \pause\item Has no pointer corruption
+  \pause\item Cannot execute arbitrary shellcode
+  \pause\item Will allow coorporative sharing of a unified memory space
+  \pause\item Will allow low-overhead sandboxes!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{First attempt}
+  \textbf{Idea:} Do not distribute raw executable programs. Distribute programs
+  in a high-level language (such as Haskell or Rust). \pause
+
+  \begin{tikzpicture}
+    \node at (0,0) {Rust program}
+    \node at (0,0) {Rust program};
+\end{frame}

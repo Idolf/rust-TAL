@@ -1,0 +1,29 @@
+\usetheme[nat]{Frederiksberg}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}     % math mode
+\usepackage{semantic}
+\usepackage{ulem}
+\usepackage{tikz}
+\usetikzlibrary{shapes,backgrounds}
+
+\mathlig{|->}{\mapsto}
+\mathlig{~~>}{\rightsquigarrow}
+\mathlig{[[}{\llbracket}
+\mathlig{]]}{\rrbracket}
+\mathlig{<}{\langle}
+\mathlig{>}{\rangle}
+\mathlig{/=>}{\not\Rightarrow}
+\mathlig{?}{\;?\;}
+\mathlig{*=}{\mathrel{\odot}=}
+\mathlig{++}{\mdoubleplus}
+
+\newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
+\newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-1mu+}}}
+
+\title{Typed Assembly Language}
+\author{Mathias Svensson}
+\date{\today}
+
+\tikzset{%
+    mystyle/.style={rounded corners,very thick,fill,opacity=0.5, fill}
+}

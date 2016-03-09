@@ -1,0 +1,9 @@
+digraph {
+    rankdir = LR;
+    rust[label="Rust source code"];
+    llvm[label="LLVM bitcode"];
+    asm[label="Assembler code"];
+    raw[label="Raw binary executable"];
+
+    rust -> llvm -> asm -> raw;
+}
