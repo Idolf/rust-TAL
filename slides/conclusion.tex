@@ -4,6 +4,28 @@
 \tableofcontents[currentsection]
 \end{frame}
 
-\begin{frame}{}{}
-  {[Empty slide]}
+\begin{frame}{Conclusion -- my results}
+  \begin{itemize}
+  \pause\item Encoded \ATAL and \ATALe in Agda.
+  \pause\item Defined what is meant by safety in those two languages.
+  \pause\item Implemented erasure from \ATAL to \ATALe.
+  \pause\item Shown that erasure preserves safety.
+  \pause\item Implemented a type-checker.
+  \pause\item Shown that, if the type-checker accepts a program, then that
+  program is safe.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion -- what remains}
+  If you wish to further remove the assembler from the TCB, then the following
+  is also needed:
+
+  \begin{itemize}
+  \item Implement the assembler from \ATALe to native.
+  \item Define safety in the native context.
+  \item Show that the assembler preserves safety.
+  \end{itemize}
+
+  \pause The last two are somewhere between complicated and impossible depending
+  on your philosophical point of view.
 \end{frame}

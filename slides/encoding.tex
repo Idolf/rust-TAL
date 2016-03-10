@@ -1,9 +1,97 @@
-\section{Encoding TAL in Agda}
+\section{Constructing programs in TAL}
 \begin{frame}
 \frametitle{Table of Contents}
 \tableofcontents[currentsection]
 \end{frame}
 
-\begin{frame}{}{}
-  {[Empty slide]}
+\begin{frame}[fragile]{Constructing a TAL-program by Hand (1/2)}
+\begin{lstlisting}
+void fiboloop(int a, int b) {
+  while(1) {
+    int tmp = a;
+    a += b;
+    b = tmp;
+  }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Constructing a TAL-program by Hand (2/2)}
+  \begin{enumerate}
+  \item Turn it into assembler grouped into basic blocks (i.e., a control flow
+    graph).
+  \item Assign types to blocks. Specifically, what is in the registers and on
+    the stack.
+  \item Encode into type-checkable form.
+  \item Check it!
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{Step 1 -- basic blocks (1/2)}
+  Demo!
+\end{frame}
+
+\begin{frame}[fragile]{Step 1 -- basic blocks (2/2)}
+  \begin{lstlisting}
+    fibonacci:
+      sub $sp, $sp, 4
+      sw $a0, 0($sp)
+      add $a0, $a0, $a1
+      lw $a1, 0($sp)
+      add $sp, $sp, 4
+      j fibonacci
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Step 2 -- types}
+  \begin{lstlisting}
+    // < T1, T2, S >
+    // {a0: int, a1: int, a2: T1, a3: T2, sp: S}
+    fibonacci:
+      sub $sp, $sp, 4
+      sw $a0, 0($sp)
+      add $a0, $a0, $a1
+      lw $a1, 0($sp)
+      add $sp, $sp, 4
+      j fibonacci // < T1, T2, S >
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Step 3 -- Agda-encoding}
+{\small
+\begin{code}
+\\
+\\
+\\
+\>\AgdaFunction{fiboloop} \AgdaSymbol{=}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaInductiveConstructor{code[} \AgdaInductiveConstructor{$\alpha$} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\rho$} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{]}\<%
+\\
+\>[0]\AgdaIndent{2}{}\<[2]%
+\>[2]\AgdaInductiveConstructor{registerₐ} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaInductiveConstructor{int} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{int} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{0} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{1} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]}\AgdaSymbol{)} \AgdaInductiveConstructor{∙}\<%
+\\
+\>[2]\AgdaIndent{5}{}\<[5]%
+\>[5]\AgdaInductiveConstructor{salloc} \AgdaNumber{1} \AgdaInductiveConstructor{\textasciitilde>}\<%
+\\
+\>[2]\AgdaIndent{5}{}\<[5]%
+\>[5]\AgdaInductiveConstructor{sst} \AgdaNumber{0} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{0}\AgdaSymbol{)} \AgdaInductiveConstructor{\textasciitilde>}\<%
+\\
+\>[2]\AgdaIndent{5}{}\<[5]%
+\>[5]\AgdaInductiveConstructor{add} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{0}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{0}\AgdaSymbol{)} \AgdaSymbol{(}\AgdaInductiveConstructor{reg} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{1}\AgdaSymbol{))} \AgdaInductiveConstructor{\textasciitilde>}\<%
+\\
+\>[2]\AgdaIndent{5}{}\<[5]%
+\>[5]\AgdaInductiveConstructor{sld} \AgdaSymbol{(}\AgdaFunction{\#} \AgdaNumber{1}\AgdaSymbol{)} \AgdaNumber{0} \AgdaInductiveConstructor{\textasciitilde>}\<%
+\\
+\>[2]\AgdaIndent{5}{}\<[5]%
+\>[5]\AgdaInductiveConstructor{sfree} \AgdaNumber{1} \AgdaInductiveConstructor{\textasciitilde>}\<%
+\\
+\>[2]\AgdaIndent{5}{}\<[5]%
+\>[5]\AgdaInductiveConstructor{jmp} \AgdaInductiveConstructor{$\Lambda$} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{∙} \AgdaInductiveConstructor{globval} \AgdaNumber{0} \AgdaInductiveConstructor{⟦} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\alpha$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\alpha$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{$\rho$} \AgdaSymbol{(}\AgdaInductiveConstructor{$\rho$⁼} \AgdaNumber{2}\AgdaSymbol{)} \AgdaInductiveConstructor{∷} \AgdaInductiveConstructor{[]} \AgdaInductiveConstructor{⟧}\<%
+\end{code}
+}
+\end{frame}
+
+\begin{frame}{Step 4 -- Check it!}
+  Demo!
 \end{frame}

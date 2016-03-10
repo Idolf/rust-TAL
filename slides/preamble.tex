@@ -1,10 +1,28 @@
 \usetheme[nat]{Frederiksberg}
+\usepackage[utf8x]{inputenc}
+\usepackage[greek,english]{babel}
 \usepackage{lmodern}
-\usepackage{amsmath,amssymb}     % math mode
+\usepackage{amsmath, amssymb, amsthm}
 \usepackage{semantic}
+\usepackage{stmaryrd}
+\usepackage{mathpartir}
 \usepackage{ulem}
 \usepackage{tikz}
 \usetikzlibrary{shapes,backgrounds}
+\usepackage{agda}
+\DeclareUnicodeCharacter{8799}{\ensuremath{\stackrel{?}{=}}}
+\DeclareUnicodeCharacter{8347}{\ensuremath{{}_{\mathrm{s}}}}
+\DeclareUnicodeCharacter{8344}{\ensuremath{{}_{\mathrm{m}}}}
+\DeclareUnicodeCharacter{8345}{\ensuremath{{}_{\mathrm{n}}}}
+\DeclareUnicodeCharacter{8336}{\ensuremath{{}_{\mathrm{a}}}}
+\DeclareUnicodeCharacter{8341}{\ensuremath{{}_{\mathrm{h}}}}
+\DeclareUnicodeCharacter{8759}{\ensuremath{::}}
+\DeclareUnicodeCharacter{8718}{\ensuremath{\qed}}
+
+\newcommand \greek[1] {{\text{\selectlanguage{greek}#1\selectlanguage{english}}}}
+\newcommand \ttalpha{\greek{\ttfamily\textalpha}}
+\newcommand \ttrho{\greek{\ttfamily\textrho}}
+
 
 \mathlig{|->}{\mapsto}
 \mathlig{~~>}{\rightsquigarrow}
@@ -30,7 +48,7 @@
 
 \usepackage{listings}                            % code listings
 \lstset{
-  %language=ML,                 % the language of the code
+  language=C,                 % the language of the code
   basicstyle=\ttfamily\scriptsize,      % the size of the fonts that are used for the code
 %  numbers=left,                    % where to put the line-numbers
 %  numberstyle=\tiny\color{gray},   % the style that is used for the line-numbers
@@ -47,7 +65,11 @@
   breaklines=true,                  % sets automatic line breaking
   breakatwhitespace=false,          % sets if automatic breaks should only happen at whitespace
   keywordstyle=\color{blue},            % keyword style
-  commentstyle=\color{dkgreen},       % comment style
+  % commentstyle=\color{dkgreen},       % comment style
   stringstyle=\color{mauve},            % string literal style
   escapeinside={\%*}{*)},                % if you want to add LaTeX within your code
 }
+
+
+\newcommand \ATAL {ATAL}
+\newcommand \ATALe {\ensuremath{\textrm{ATAL}_{\mathrm{e}}}}
